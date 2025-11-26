@@ -33,18 +33,39 @@ export const MOCK_ITEMS: Item[] = [
   }
 ];
 
-// Initial zones arranged in a contiguous Axial Cluster (Center + Ring)
+// Initial zones arranged in an asymmetric, organic cluster (Connected Graph) without holes
 export const MOCK_ZONES: Zone[] = [
-  // Center
+  // --- Center Hub ---
   { id: 'z1', x: 0, y: 0, ownerId: 'user_1', name: 'Parco Sempione', defenseLevel: 2, recordKm: 120, interestRate: 2.5 },
   
-  // Ring around center
+  // --- First Ring (Complete) ---
   { id: 'z2', x: 1, y: 0, ownerId: 'user_2', name: 'City Life', defenseLevel: 1, recordKm: 80, interestRate: 1.8 },
   { id: 'z3', x: 1, y: -1, ownerId: 'user_1', name: 'Bosco Verticale', defenseLevel: 0, recordKm: 50, interestRate: 1.2 },
   { id: 'z4', x: 0, y: -1, ownerId: 'user_2', name: 'Brera', defenseLevel: 0, recordKm: 30, interestRate: 3.0 },
-  { id: 'z5', x: -1, y: 0, ownerId: 'user_3', name: 'Castello', defenseLevel: 2, recordKm: 200, interestRate: 2.0 },
+  { id: 'z_fill_1', x: -1, y: 0, ownerId: 'user_3', name: 'Castello Sforzesco', defenseLevel: 4, recordKm: 200, interestRate: 2.9 }, // Filled Gap
   { id: 'z6', x: -1, y: 1, ownerId: 'user_3', name: 'Navigli', defenseLevel: 0, recordKm: 15, interestRate: 1.5 },
   { id: 'z7', x: 0, y: 1, ownerId: 'user_1', name: 'Duomo', defenseLevel: 3, recordKm: 150, interestRate: 2.8 },
+
+  // --- Extended Tendrils & Fillers ---
+  { id: 'z8', x: 2, y: -1, ownerId: 'user_2', name: 'Città Studi', defenseLevel: 1, recordKm: 45, interestRate: 1.6 },
+  { id: 'z10', x: 1, y: -2, ownerId: 'user_1', name: 'Stazione Centrale', defenseLevel: 2, recordKm: 90, interestRate: 2.2 },
+  
+  { id: 'z12', x: -1, y: -1, ownerId: 'user_3', name: 'Chinatown', defenseLevel: 1, recordKm: 55, interestRate: 1.7 },
+  { id: 'z_fill_2', x: -2, y: -1, ownerId: 'user_2', name: 'Tre Torri', defenseLevel: 1, recordKm: 35, interestRate: 1.4 }, // Connector
+
+  { id: 'z14', x: -2, y: 1, ownerId: 'user_1', name: 'Baggio', defenseLevel: 0, recordKm: 10, interestRate: 1.1 },
+  { id: 'z13', x: -2, y: 0, ownerId: 'user_3', name: 'San Siro', defenseLevel: 3, recordKm: 210, interestRate: 2.4 },
+  
+  // Southern Extension
+  { id: 'z17', x: 0, y: 2, ownerId: 'user_3', name: 'Porta Romana', defenseLevel: 2, recordKm: 100, interestRate: 2.3 },
+  { id: 'z_fill_3', x: 1, y: 1, ownerId: 'user_2', name: 'Missori', defenseLevel: 0, recordKm: 25, interestRate: 1.9 }, // Connector
+  
+  // Eastern Extension
+  { id: 'z19', x: 2, y: 0, ownerId: 'user_1', name: 'Porta Venezia', defenseLevel: 2, recordKm: 110, interestRate: 2.6 },
+  { id: 'z20', x: 3, y: -1, ownerId: 'user_3', name: 'Lambrate', defenseLevel: 0, recordKm: 40, interestRate: 1.9 },
+  
+  // Far West Outpost
+  { id: 'z21', x: -3, y: 1, ownerId: 'user_2', name: 'Bisceglie', defenseLevel: 1, recordKm: 20, interestRate: 1.4 },
 ];
 
 export const MOCK_USERS: Record<string, { id: string; name: string; totalKm: number; avatar: string }> = {
