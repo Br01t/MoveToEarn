@@ -1,6 +1,3 @@
-
-
-
 import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import LandingPage from './components/LandingPage';
@@ -10,20 +7,22 @@ import Wallet from './components/Wallet';
 import Inventory from './components/Inventory';
 import Leaderboard from './components/Leaderboard';
 import Profile from './components/Profile';
+import Admin from './components/Admin';
 import Footer from './components/Footer';
 import GameRules from './components/pages/GameRules';
 import Privacy from './components/pages/Privacy';
 import Terms from './components/pages/Terms';
 import Community from './components/pages/Community';
 import { User, Zone, Item, ViewState, InventoryItem } from './types';
-import { MOCK_ZONES, INITIAL_USER, MOCK_USERS, MINT_COST } from './constants';
+import { MOCK_ZONES, INITIAL_USER, MOCK_USERS, MOCK_ITEMS, MINT_COST } from './constants';
 
 const App: React.FC = () => {
   // --- Game State ---
   const [user, setUser] = useState<User | null>(null);
   const [currentView, setCurrentView] = useState<ViewState>('LANDING');
   const [zones, setZones] = useState<Zone[]>(MOCK_ZONES);
-  const [usersMock] = useState(MOCK_USERS);
+  const [usersMock, setUsersMock] = useState(MOCK_USERS);
+  const [marketItems, setMarketItems] = useState<Item[]>(MOCK_ITEMS);
 
   // --- Actions ---
 
@@ -102,7 +101,17 @@ const App: React.FC = () => {
 
           alert(`Run Synced! You reinforced your zone "${existingZone.name}".\n\n+${runReward.toFixed(2)} RUN earned.`);
       } else {
-          // Enemy Zone
+          // Enemy Zone Check for Shield
+          if (existingZone.shieldExpiresAt && existingZone.shieldExpiresAt > Date.now()) {
+              alert(`Cannot contest "${existingZone.name}"!\n\nThis zone is currently SHIELDED by the owner.`);
+               setUser(prev => prev ? { 
+                ...prev, 
+                runBalance: prev.runBalance + runReward, 
+                totalKm: prev.totalKm + km 
+              } : null);
+              return;
+          }
+
           const ownerName = existingZone.ownerId ? (usersMock[existingZone.ownerId]?.name || 'Unknown') : 'Unknown';
           const contestFee = 50;
           
@@ -118,7 +127,7 @@ const App: React.FC = () => {
             if (potentialBalance >= contestFee) {
                // Conquest Logic
                setZones(prev => prev.map(z => {
-                   if (z.id === existingZone.id) return { ...z, ownerId: user.id, recordKm: km };
+                   if (z.id === existingZone.id) return { ...z, ownerId: user.id, recordKm: km, shieldExpiresAt: undefined, boostExpiresAt: undefined };
                    return z;
                }));
                setUser(prev => prev ? {
@@ -197,6 +206,12 @@ const App: React.FC = () => {
     if (!user) return;
     const CONTEST_COST = 50;
 
+    const targetZone = zones.find(z => z.id === zoneId);
+    if (targetZone && targetZone.shieldExpiresAt && targetZone.shieldExpiresAt > Date.now()) {
+        alert("This zone is SHIELDED and cannot be attacked right now.");
+        return;
+    }
+
     if (user.runBalance < CONTEST_COST) {
       alert("Not enough RUN tokens to contest!");
       return;
@@ -207,7 +222,7 @@ const App: React.FC = () => {
     if (confirm) {
         setZones(prev => prev.map(z => {
           if (z.id === zoneId) {
-            return { ...z, ownerId: user.id, recordKm: z.recordKm + 5 }; // Boost record slightly on conquest
+            return { ...z, ownerId: user.id, recordKm: z.recordKm + 5, shieldExpiresAt: undefined, boostExpiresAt: undefined }; // Boost record slightly on conquest
           }
           return z;
         }));
@@ -219,22 +234,31 @@ const App: React.FC = () => {
 
   const handleBoostZone = (zoneId: string) => {
     if (!user) return;
-    const BOOST_COST = 100; // GOV
+    const boostItem = user.inventory.find(i => i.type === 'BOOST');
     
-    if (user.govBalance < BOOST_COST) {
-        alert(`Insufficient GOV balance. Boost costs ${BOOST_COST} GOV.`);
+    if (!boostItem) {
+        alert("You need a Boost item (e.g., Nanofiber Shoes) from the Marketplace to boost yields.");
         return;
     }
 
-    const confirm = window.confirm(`Boost Yield for 100 GOV?\nThis will permanently increase the zone's interest rate by 0.5%.`);
+    const confirm = window.confirm(`Use '${boostItem.name}' to activate SUPER BOOST?\n\nThis will increase the zone's yield by +${boostItem.effectValue}% for 24 HOURS.`);
     if(confirm) {
-        setZones(prev => prev.map(z => {
-            if (z.id === zoneId) {
-                return { ...z, interestRate: parseFloat((z.interestRate + 0.5).toFixed(1)) };
-            }
-            return z;
-        }));
-        setUser(prev => prev ? { ...prev, govBalance: prev.govBalance - BOOST_COST } : null);
+        handleUseItem(boostItem, zoneId);
+    }
+  };
+
+  const handleDefendZone = (zoneId: string) => {
+    if (!user) return;
+    const defenseItem = user.inventory.find(i => i.type === 'DEFENSE');
+
+    if (!defenseItem) {
+        alert("You need a Defense item (e.g., Zone Shield) from the Marketplace.");
+        return;
+    }
+
+    const confirm = window.confirm(`Use '${defenseItem.name}' to activate SHIELD?\n\nThis will protect the zone from attacks for 24 HOURS.`);
+    if (confirm) {
+        handleUseItem(defenseItem, zoneId);
     }
   };
 
@@ -249,7 +273,6 @@ const App: React.FC = () => {
     let newInventory = [...user.inventory];
     
     if (existingIdx >= 0) {
-      // Properly immutable update
       newInventory[existingIdx] = {
         ...newInventory[existingIdx],
         quantity: newInventory[existingIdx].quantity + 1
@@ -276,18 +299,22 @@ const App: React.FC = () => {
     let effectMessage = "";
     const updatedZones = [...zones];
     
+    const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+
     if (item.type === 'DEFENSE') {
        updatedZones[zoneIndex] = {
          ...targetZone,
-         defenseLevel: targetZone.defenseLevel + item.effectValue
+         defenseLevel: targetZone.defenseLevel + item.effectValue,
+         shieldExpiresAt: Date.now() + ONE_DAY_MS
        };
-       effectMessage = `Zone Defense increased by +${item.effectValue} levels!`;
+       effectMessage = `Zone Shielded for 24 hours! Defense increased by +${item.effectValue} levels.`;
     } else if (item.type === 'BOOST') {
       updatedZones[zoneIndex] = {
         ...targetZone,
-        interestRate: parseFloat((targetZone.interestRate + item.effectValue).toFixed(1))
+        interestRate: parseFloat((targetZone.interestRate + item.effectValue).toFixed(1)),
+        boostExpiresAt: Date.now() + ONE_DAY_MS
       };
-      effectMessage = `Zone Yield increased by +${item.effectValue}% permanently!`;
+      effectMessage = `Zone Yield Super-Charged by +${item.effectValue}% for 24 hours!`;
     }
 
     setZones(updatedZones);
@@ -326,17 +353,47 @@ const App: React.FC = () => {
      }
   };
 
-  // --- Effects ---
+  // --- Admin Actions ---
+  const handleAddItem = (item: Item) => {
+    setMarketItems(prev => [...prev, item]);
+  };
+
+  const handleRemoveItem = (id: string) => {
+    setMarketItems(prev => prev.filter(i => i.id !== id));
+  };
+
+  const handleTriggerBurn = () => {
+    alert("Burn Protocol Initiated.\n\n5,000,000 RUN tokens have been removed from the circulating supply.");
+  };
+
+  const handleDistributeRewards = () => {
+     if(!user) return;
+     const rewardAmount = 500;
+     setUser(prev => prev ? { ...prev, govBalance: prev.govBalance + rewardAmount } : null);
+     alert(`Rewards Distributed!\n\nAll active users (including you) received ${rewardAmount} GOV.`);
+  };
+
+  const handleResetSeason = () => {
+     const confirm = window.confirm("Are you sure? This will reset the Leaderboard.");
+     if (confirm) {
+        const resetUsers = { ...usersMock };
+        Object.keys(resetUsers).forEach(key => {
+            resetUsers[key] = { ...resetUsers[key], totalKm: 0 };
+        });
+        setUsersMock(resetUsers);
+        setUser(prev => prev ? { ...prev, totalKm: 0 } : null);
+        alert("Season Reset Successful. All distances set to 0.");
+     }
+  };
+
   // AUTOMATIC INTEREST GENERATION
   useEffect(() => {
     if (!user) return;
     
     const interval = setInterval(() => {
-      // Calculate total interest from owned zones
       let totalGain = 0;
       zones.forEach(z => {
         if (z.ownerId === user.id) {
-          // Simplified formula: 0.5 * interestRate every 10 seconds
           const rate = z.interestRate || 1;
           const gain = 0.5 * rate; 
           totalGain += gain;
@@ -346,15 +403,16 @@ const App: React.FC = () => {
       if (totalGain > 0) {
         setUser(prev => prev ? { ...prev, runBalance: prev.runBalance + totalGain } : null);
       }
-    }, 10000); // Every 10 seconds
+    }, 10000); 
 
     return () => clearInterval(interval);
-  }, [user?.id, zones]); // Re-run if zones change (e.g. user buys new zone)
+  }, [user?.id, zones]); 
 
-  // --- Render ---
-
-  if (currentView === 'LANDING' || !user) {
-    return <LandingPage onLogin={handleLogin} />;
+  // Routing Logic
+  const publicViews = ['RULES', 'PRIVACY', 'TERMS', 'COMMUNITY'];
+  // If not logged in and not on a public page, or explicitly on LANDING, show Landing Page.
+  if (currentView === 'LANDING' || (!user && !publicViews.includes(currentView))) {
+    return <LandingPage onLogin={handleLogin} onNavigate={setCurrentView} />;
   }
 
   return (
@@ -370,29 +428,40 @@ const App: React.FC = () => {
         <div className="flex-1 relative">
             {currentView === 'DASHBOARD' && (
             <Dashboard 
-                user={user} 
+                user={user!} 
                 zones={zones} 
                 onSyncRun={handleSyncRun}
                 onClaim={handleClaimZone}
                 onBoost={handleBoostZone}
+                onDefend={handleDefendZone}
             />
             )}
             {currentView === 'MARKETPLACE' && (
-            <Marketplace user={user} onBuy={handleBuyItem} />
+            <Marketplace user={user!} items={marketItems} onBuy={handleBuyItem} />
             )}
             {currentView === 'WALLET' && (
-            <Wallet user={user} onExchange={handleExchange} />
+            <Wallet user={user!} onExchange={handleExchange} />
             )}
             {currentView === 'INVENTORY' && (
-            <Inventory user={user} zones={zones} onUseItem={handleUseItem} />
+            <Inventory user={user!} zones={zones} onUseItem={handleUseItem} />
             )}
             {currentView === 'LEADERBOARD' && (
-            <Leaderboard users={usersMock} currentUser={user} zones={zones} />
+            <Leaderboard users={usersMock} currentUser={user!} zones={zones} />
             )}
             {currentView === 'PROFILE' && (
-            <Profile user={user} zones={zones} onUpdateUser={handleUpdateUser} />
+            <Profile user={user!} zones={zones} onUpdateUser={handleUpdateUser} />
             )}
-            {currentView === 'RULES' && <GameRules />}
+            {currentView === 'ADMIN' && (
+              <Admin 
+                marketItems={marketItems}
+                onAddItem={handleAddItem}
+                onRemoveItem={handleRemoveItem}
+                onTriggerBurn={handleTriggerBurn}
+                onDistributeRewards={handleDistributeRewards}
+                onResetSeason={handleResetSeason}
+              />
+            )}
+            {currentView === 'RULES' && <GameRules onBack={() => setCurrentView(user ? 'DASHBOARD' : 'LANDING')} />}
             {currentView === 'PRIVACY' && <Privacy />}
             {currentView === 'TERMS' && <Terms />}
             {currentView === 'COMMUNITY' && <Community />}

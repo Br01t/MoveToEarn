@@ -1,4 +1,5 @@
 
+
 import { Item, User, Zone } from './types';
 
 export const MINT_COST = 50;
@@ -36,10 +37,31 @@ export const MOCK_ITEMS: Item[] = [
 // Initial zones arranged in an asymmetric, organic cluster (Connected Graph) without holes
 export const MOCK_ZONES: Zone[] = [
   // --- Center Hub ---
-  { id: 'z1', x: 0, y: 0, ownerId: 'user_1', name: 'Parco Sempione', defenseLevel: 2, recordKm: 120, interestRate: 2.5 },
+  // Zone with Active Boost for Demo
+  { 
+    id: 'z1', 
+    x: 0, 
+    y: 0, 
+    ownerId: 'user_1', 
+    name: 'Parco Sempione', 
+    defenseLevel: 2, 
+    recordKm: 120, 
+    interestRate: 4.5, 
+    boostExpiresAt: Date.now() + 1000 * 60 * 60 * 12 // Expire in 12 hours
+  },
   
   // --- First Ring (Complete) ---
-  { id: 'z2', x: 1, y: 0, ownerId: 'user_2', name: 'City Life', defenseLevel: 1, recordKm: 80, interestRate: 1.8 },
+  { 
+    id: 'z2', 
+    x: 1, 
+    y: 0, 
+    ownerId: 'user_2', 
+    name: 'City Life', 
+    defenseLevel: 5, 
+    recordKm: 80, 
+    interestRate: 1.8,
+    shieldExpiresAt: Date.now() + 1000 * 60 * 60 * 20 // Active Shield for demo
+  },
   { id: 'z3', x: 1, y: -1, ownerId: 'user_1', name: 'Bosco Verticale', defenseLevel: 0, recordKm: 50, interestRate: 1.2 },
   { id: 'z4', x: 0, y: -1, ownerId: 'user_2', name: 'Brera', defenseLevel: 0, recordKm: 30, interestRate: 3.0 },
   { id: 'z_fill_1', x: -1, y: 0, ownerId: 'user_3', name: 'Castello Sforzesco', defenseLevel: 4, recordKm: 200, interestRate: 2.9 }, // Filled Gap
@@ -111,10 +133,10 @@ export const INITIAL_USER: User = {
     {
       id: 'boost_run',
       name: 'Nanofiber Shoes',
-      description: '+0.2% permanent Interest Rate increase on a zone.',
+      description: '+1.0% Interest Rate boost for 24 hours.',
       priceGov: 100,
       type: 'BOOST',
-      effectValue: 0.2,
+      effectValue: 1.0,
       icon: 'Zap',
       quantity: 1
     }

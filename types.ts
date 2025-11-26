@@ -1,5 +1,6 @@
 
-export type ViewState = 'LANDING' | 'DASHBOARD' | 'MARKETPLACE' | 'INVENTORY' | 'LEADERBOARD' | 'WALLET' | 'PROFILE' | 'RULES' | 'PRIVACY' | 'TERMS' | 'COMMUNITY';
+
+export type ViewState = 'LANDING' | 'DASHBOARD' | 'MARKETPLACE' | 'INVENTORY' | 'LEADERBOARD' | 'WALLET' | 'PROFILE' | 'RULES' | 'PRIVACY' | 'TERMS' | 'COMMUNITY' | 'ADMIN';
 
 export interface User {
   id: string;
@@ -18,10 +19,11 @@ export interface Zone {
   y: number;
   ownerId: string | null;
   name: string;
-  // accumulatedInterest removed as it is now automatic
   defenseLevel: number;
   recordKm: number; // Max KM run in this zone by owner
   interestRate: number; // Percentage yield per run, e.g. 1.5%
+  boostExpiresAt?: number; // Timestamp when the yield boost expires
+  shieldExpiresAt?: number; // Timestamp when the defense shield expires
 }
 
 export interface Item {

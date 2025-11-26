@@ -1,15 +1,16 @@
 
+
 import React, { useState } from 'react';
 import { Item, User } from '../types';
-import { MOCK_ITEMS } from '../constants';
-import { Shield, Zap, ShoppingCart, X, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Shield, Zap, ShoppingCart, X, AlertTriangle, CheckCircle, Package } from 'lucide-react';
 
 interface MarketplaceProps {
   user: User;
+  items: Item[];
   onBuy: (item: Item) => void;
 }
 
-const Marketplace: React.FC<MarketplaceProps> = ({ user, onBuy }) => {
+const Marketplace: React.FC<MarketplaceProps> = ({ user, items, onBuy }) => {
   const [confirmItem, setConfirmItem] = useState<Item | null>(null);
 
   const handleBuyClick = (item: Item) => {
@@ -36,44 +37,52 @@ const Marketplace: React.FC<MarketplaceProps> = ({ user, onBuy }) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {MOCK_ITEMS.map((item) => {
-           const Icon = item.type === 'DEFENSE' ? Shield : Zap;
-           const canAfford = user.govBalance >= item.priceGov;
+      {items.length === 0 ? (
+        <div className="text-center py-12 bg-gray-800 rounded-xl border border-gray-700">
+          <Package className="mx-auto h-12 w-12 text-gray-600 mb-4" />
+          <h3 className="text-xl font-bold text-white">Market Empty</h3>
+          <p className="text-gray-400">No items available currently. Check back later.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {items.map((item) => {
+            const Icon = item.type === 'DEFENSE' ? Shield : Zap;
+            const canAfford = user.govBalance >= item.priceGov;
 
-           return (
-            <div key={item.id} className="bg-gray-800 border border-gray-700 rounded-xl overflow-hidden hover:border-cyan-500 transition-colors group flex flex-col">
-              <div className="p-6 flex-1">
-                <div className="flex items-center justify-between mb-4">
-                  <div className={`p-3 rounded-lg ${item.type === 'DEFENSE' ? 'bg-blue-500/10 text-blue-400' : 'bg-yellow-500/10 text-yellow-400'}`}>
-                    <Icon size={32} />
+            return (
+              <div key={item.id} className="bg-gray-800 border border-gray-700 rounded-xl overflow-hidden hover:border-cyan-500 transition-colors group flex flex-col">
+                <div className="p-6 flex-1">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className={`p-3 rounded-lg ${item.type === 'DEFENSE' ? 'bg-blue-500/10 text-blue-400' : 'bg-yellow-500/10 text-yellow-400'}`}>
+                      <Icon size={32} />
+                    </div>
+                    <span className="text-xs font-bold px-2 py-1 rounded bg-gray-700 text-gray-300">{item.type}</span>
                   </div>
-                  <span className="text-xs font-bold px-2 py-1 rounded bg-gray-700 text-gray-300">{item.type}</span>
+                  <h3 className="text-xl font-bold text-white mb-2">{item.name}</h3>
+                  <p className="text-gray-400 text-sm mb-6 min-h-[3rem]">{item.description}</p>
+                  
+                  <div className="flex items-center justify-between mt-auto pt-4 border-t border-gray-700">
+                    <span className="text-2xl font-bold text-cyan-400">{item.priceGov} <span className="text-sm text-gray-500">GOV</span></span>
+                    <button
+                      onClick={() => canAfford && handleBuyClick(item)}
+                      disabled={!canAfford}
+                      className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all ${
+                        canAfford 
+                        ? 'bg-cyan-500 hover:bg-cyan-600 text-black shadow-lg shadow-cyan-500/20' 
+                        : 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                      }`}
+                    >
+                      <ShoppingCart size={18} />
+                      {canAfford ? 'Buy' : 'Low Funds'}
+                    </button>
+                  </div>
                 </div>
-                <h3 className="text-xl font-bold text-white mb-2">{item.name}</h3>
-                <p className="text-gray-400 text-sm mb-6 min-h-[3rem]">{item.description}</p>
-                
-                <div className="flex items-center justify-between mt-auto pt-4 border-t border-gray-700">
-                  <span className="text-2xl font-bold text-cyan-400">{item.priceGov} <span className="text-sm text-gray-500">GOV</span></span>
-                  <button
-                    onClick={() => canAfford && handleBuyClick(item)}
-                    disabled={!canAfford}
-                    className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all ${
-                      canAfford 
-                      ? 'bg-cyan-500 hover:bg-cyan-600 text-black shadow-lg shadow-cyan-500/20' 
-                      : 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                    }`}
-                  >
-                    <ShoppingCart size={18} />
-                    {canAfford ? 'Buy' : 'Low Funds'}
-                  </button>
-                </div>
+                <div className="bg-cyan-500/5 h-1 w-full scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
               </div>
-              <div className="bg-cyan-500/5 h-1 w-full scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
-            </div>
-           );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Confirmation Modal */}
       {confirmItem && (

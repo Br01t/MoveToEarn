@@ -1,7 +1,6 @@
-
 import React, { useState, useRef, useEffect } from 'react';
-import { User, Zone } from '../types';
-import { Play, ZoomIn, ZoomOut, Move, X, UploadCloud, MapPin, CheckCircle, Zap, Search, Filter } from 'lucide-react';
+import { User, Zone, InventoryItem } from '../types';
+import { Play, ZoomIn, ZoomOut, Move, X, UploadCloud, MapPin, CheckCircle, Zap, Search, Filter, ShoppingBag, Clock, Shield } from 'lucide-react';
 
 interface DashboardProps {
   user: User;
@@ -9,12 +8,13 @@ interface DashboardProps {
   onSyncRun: (data: { km: number, name: string }) => void;
   onClaim: (zoneId: string) => void;
   onBoost: (zoneId: string) => void;
+  onDefend: (zoneId: string) => void;
 }
 
 // Hexagon Configuration
 const HEX_SIZE = 100; // Increased size for better visibility
 
-const Dashboard: React.FC<DashboardProps> = ({ user, zones, onSyncRun, onClaim, onBoost }) => {
+const Dashboard: React.FC<DashboardProps> = ({ user, zones, onSyncRun, onClaim, onBoost, onDefend }) => {
   const [selectedZone, setSelectedZone] = useState<Zone | null>(null);
   
   // Search & Filter State
@@ -39,11 +39,25 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, onSyncRun, onClaim, 
     .filter(z => z.ownerId === user.id)
     .reduce((acc, z) => acc + (0.5 * z.interestRate), 0) * 6; // Per minute estimate (since loop is 10s)
 
+  // Find inventory items
+  const boostItem: InventoryItem | undefined = user.inventory.find(i => i.type === 'BOOST');
+  const defenseItem: InventoryItem | undefined = user.inventory.find(i => i.type === 'DEFENSE');
+
   // --- Map Math Helpers ---
   const getHexPosition = (q: number, r: number) => {
     const x = HEX_SIZE * Math.sqrt(3) * (q + r / 2);
     const y = HEX_SIZE * 3/2 * r;
     return { x, y };
+  };
+
+  // Helper to check boost status
+  const isBoostActive = (zone: Zone) => {
+    return zone.boostExpiresAt && zone.boostExpiresAt > Date.now();
+  };
+
+  // Helper to check shield status
+  const isShieldActive = (zone: Zone) => {
+    return zone.shieldExpiresAt && zone.shieldExpiresAt > Date.now();
   };
 
   // --- Effects ---
@@ -58,7 +72,6 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, onSyncRun, onClaim, 
         const pos = getHexPosition(newZone.x, newZone.y);
         
         // Center the view on this new zone
-        // Formula: NewTranslate = ScreenCenter - (ZonePos * Scale)
         const newX = window.innerWidth / 2 - pos.x * view.scale;
         const newY = window.innerHeight / 2 - pos.y * view.scale;
 
@@ -141,13 +154,17 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, onSyncRun, onClaim, 
   };
 
   const getFillId = (zone: Zone) => {
+      if (isBoostActive(zone)) return "url(#grad-boosted-zone)";
+      if (isShieldActive(zone)) return "url(#grad-shielded-zone)"; 
       if (zone.ownerId === user.id) return "url(#grad-my-zone)";
       return "url(#grad-enemy-zone)";
   };
 
   const getStrokeColor = (zone: Zone) => {
-    if (zone.ownerId === user.id) return '#34d399'; // Brighter Emerald
-    return '#f87171'; // Brighter Red
+    if (isBoostActive(zone)) return '#f59e0b'; // Amber/Gold
+    if (isShieldActive(zone)) return '#06b6d4'; // Cyan/Blue
+    if (zone.ownerId === user.id) return '#34d399'; // Emerald
+    return '#f87171'; // Red
   };
 
   return (
@@ -212,6 +229,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, onSyncRun, onClaim, 
           <div className="bg-gray-800/90 backdrop-blur p-2 rounded-lg border border-gray-700 text-xs text-white flex flex-col gap-1 mb-2">
               <span className="flex items-center gap-2"><div className="w-3 h-3 bg-emerald-400 rounded-sm shadow shadow-emerald-500/50"></div> My Zones</span>
               <span className="flex items-center gap-2"><div className="w-3 h-3 bg-red-400 rounded-sm shadow shadow-red-500/50"></div> Enemy</span>
+              <span className="flex items-center gap-2"><div className="w-3 h-3 bg-amber-400 rounded-sm shadow shadow-amber-500/50"></div> Boosted</span>
+              <span className="flex items-center gap-2"><div className="w-3 h-3 bg-cyan-400 rounded-sm shadow shadow-cyan-500/50"></div> Shielded</span>
           </div>
 
           <button onClick={zoomIn} className="p-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg border border-gray-600 shadow-lg"><ZoomIn size={20}/></button>
@@ -262,6 +281,20 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, onSyncRun, onClaim, 
               <stop offset="100%" style={{ stopColor: '#fca5a5', stopOpacity: 0.9 }} /> {/* Bright Coral */}
             </linearGradient>
 
+            {/* GOLD Gradient for BOOSTED Zones */}
+            <linearGradient id="grad-boosted-zone" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style={{ stopColor: '#78350f', stopOpacity: 0.9 }} /> {/* Deep Amber */}
+              <stop offset="60%" style={{ stopColor: '#d97706', stopOpacity: 0.9 }} /> {/* Vivid Amber */}
+              <stop offset="100%" style={{ stopColor: '#fbbf24', stopOpacity: 0.95 }} /> {/* Bright Gold */}
+            </linearGradient>
+
+            {/* CYAN Gradient for SHIELDED Zones */}
+            <linearGradient id="grad-shielded-zone" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style={{ stopColor: '#164e63', stopOpacity: 0.9 }} /> {/* Deep Cyan */}
+              <stop offset="60%" style={{ stopColor: '#0891b2', stopOpacity: 0.9 }} /> {/* Vivid Cyan */}
+              <stop offset="100%" style={{ stopColor: '#67e8f9', stopOpacity: 0.95 }} /> {/* Bright Cyan */}
+            </linearGradient>
+
             <filter id="glow">
                 <feGaussianBlur stdDeviation="3.5" result="coloredBlur"/>
                 <feMerge>
@@ -275,6 +308,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, onSyncRun, onClaim, 
               {zones.map((zone) => {
                 const pos = getHexPosition(zone.x, zone.y);
                 const isSelected = selectedZone?.id === zone.id;
+                const boosted = isBoostActive(zone);
+                const shielded = isShieldActive(zone);
                 const strokeColor = getStrokeColor(zone);
                 const fillUrl = getFillId(zone);
 
@@ -302,6 +337,32 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, onSyncRun, onClaim, 
                         opacity="0.2" 
                         filter="blur(20px)"
                         transform="scale(1.2)"
+                      />
+                    )}
+
+                    {/* Extra Ring for Boosted Zones */}
+                    {boosted && isMatch && (
+                       <polygon 
+                        points={getHexPoints()} 
+                        fill="none"
+                        stroke="#fbbf24"
+                        strokeWidth="3"
+                        opacity="0.6"
+                        transform="scale(1.1)"
+                        className="animate-pulse"
+                      />
+                    )}
+                    
+                    {/* Extra Ring for Shielded Zones */}
+                    {shielded && isMatch && !boosted && (
+                       <polygon 
+                        points={getHexPoints()} 
+                        fill="none"
+                        stroke="#06b6d4"
+                        strokeWidth="3"
+                        opacity="0.6"
+                        transform="scale(1.1)"
+                        className="animate-pulse"
                       />
                     )}
                     
@@ -337,13 +398,34 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, onSyncRun, onClaim, 
                         height={HEX_SIZE * 2} 
                         pointerEvents="none"
                     >
-                        <div className="w-full h-full flex flex-col items-center justify-center text-center p-2 leading-none pointer-events-none">
+                        <div className="w-full h-full flex flex-col items-center justify-center text-center p-2 leading-none pointer-events-none relative">
+                          
+                          {/* Name */}
                           <span className="text-sm font-black text-white uppercase tracking-wider drop-shadow-lg break-words w-4/5 mb-1 transition-transform duration-300 group-hover:scale-110" style={{ textShadow: '0 2px 4px rgba(0,0,0,1)' }}>
                             {zone.name}
                           </span>
-                          <span className={`text-lg font-bold text-white drop-shadow-md px-2 rounded-full border border-white/10 transition-colors duration-300 ${zone.ownerId === user.id ? 'bg-emerald-900/60' : 'bg-red-900/60'}`}>
+
+                          {/* Interest Rate */}
+                          <span className={`text-lg font-bold text-white drop-shadow-md px-2 rounded-full border border-white/10 transition-colors duration-300 ${zone.ownerId === user.id ? (boosted ? 'bg-amber-600/80 border-amber-400' : (shielded ? 'bg-cyan-800/80 border-cyan-500' : 'bg-emerald-900/60')) : 'bg-red-900/60'}`}>
                             {zone.interestRate}%
                           </span>
+
+                          {/* Status Icons (Centered Below %) */}
+                          {(shielded || boosted) && (
+                              <div className="flex items-center justify-center gap-1 mt-1">
+                                {shielded && (
+                                    <div className="bg-cyan-900/90 p-1.5 rounded-full border border-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.8)] animate-pulse z-10">
+                                        <Shield size={16} className="text-cyan-200 fill-cyan-400/30" />
+                                    </div>
+                                )}
+                                {boosted && (
+                                    <div className="bg-amber-900/90 p-1.5 rounded-full border border-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.8)] animate-pulse z-10">
+                                        <Zap size={16} className="text-amber-200 fill-amber-400/30" />
+                                    </div>
+                                )}
+                              </div>
+                          )}
+
                         </div>
                     </foreignObject>
                   </g>
@@ -382,8 +464,42 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, onSyncRun, onClaim, 
                )}
                <div className="flex justify-between text-sm bg-black/40 p-3 rounded-lg border border-white/5">
                  <span className="text-gray-400">Yield Rate</span>
-                 <span className="text-cyan-400 font-bold">{selectedZone.interestRate}% <span className="text-xs text-gray-500 font-normal">/ day</span></span>
+                 <div className="text-right">
+                   <span className={`font-bold ${isBoostActive(selectedZone) ? 'text-amber-400' : 'text-cyan-400'}`}>
+                     {selectedZone.interestRate}%
+                   </span>
+                   <span className="text-xs text-gray-500 font-normal block">/ day</span>
+                 </div>
                </div>
+               
+               {/* Boost Timer Status */}
+               {isBoostActive(selectedZone) && selectedZone.boostExpiresAt && (
+                 <div className="flex items-center justify-between text-sm bg-amber-500/10 p-3 rounded-lg border border-amber-500/30">
+                   <span className="text-amber-400 flex items-center gap-1"><Clock size={14}/> Boosted</span>
+                   <span className="text-amber-100 font-mono">
+                     {(() => {
+                        const mins = Math.max(0, Math.floor((selectedZone.boostExpiresAt - Date.now()) / 60000));
+                        const hrs = Math.floor(mins / 60);
+                        return `${hrs}h ${mins % 60}m`;
+                     })()} left
+                   </span>
+                 </div>
+               )}
+
+               {/* Shield Timer Status */}
+               {isShieldActive(selectedZone) && selectedZone.shieldExpiresAt && (
+                 <div className="flex items-center justify-between text-sm bg-cyan-500/10 p-3 rounded-lg border border-cyan-500/30">
+                   <span className="text-cyan-400 flex items-center gap-1"><Shield size={14}/> Shield Active</span>
+                   <span className="text-cyan-100 font-mono">
+                     {(() => {
+                        const mins = Math.max(0, Math.floor((selectedZone.shieldExpiresAt - Date.now()) / 60000));
+                        const hrs = Math.floor(mins / 60);
+                        return `${hrs}h ${mins % 60}m`;
+                     })()} left
+                   </span>
+                 </div>
+               )}
+
                <div className="flex justify-between text-sm bg-black/40 p-3 rounded-lg border border-white/5">
                  <span className="text-gray-400">Record</span>
                  <span className="text-white font-mono">{selectedZone.recordKm.toFixed(1)} km</span>
@@ -394,12 +510,42 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, onSyncRun, onClaim, 
                {/* Context Actions based on Ownership */}
                {selectedZone.ownerId === user.id ? (
                   <>
-                    <button 
-                        onClick={() => onBoost(selectedZone.id)}
-                        className="w-full py-3 bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg border border-yellow-400/20"
-                    >
-                        <Zap size={18} fill="currentColor" /> Boost Yield (100 GOV)
-                    </button>
+                    <div className="flex gap-2">
+                        {/* Boost Button */}
+                        {!isBoostActive(selectedZone) ? (
+                            <button 
+                                onClick={() => onBoost(selectedZone.id)}
+                                disabled={!boostItem}
+                                className={`flex-1 py-3 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all border ${boostItem ? 'bg-amber-600 hover:bg-amber-500 border-amber-400/20 shadow-lg' : 'bg-gray-800 text-gray-500 border-gray-700 cursor-not-allowed'}`}
+                                title={boostItem ? "Activate Boost" : "Need Boost Item"}
+                            >
+                                <Zap size={18} fill={boostItem ? "currentColor" : "none"} />
+                                {boostItem ? "Boost" : "No Item"}
+                            </button>
+                        ) : (
+                            <div className="flex-1 py-3 bg-gray-800 text-amber-500 font-bold rounded-xl flex items-center justify-center gap-2 border border-amber-500/20">
+                                <Zap size={18} /> Active
+                            </div>
+                        )}
+
+                        {/* Defense Button */}
+                        {!isShieldActive(selectedZone) ? (
+                            <button 
+                                onClick={() => onDefend(selectedZone.id)}
+                                disabled={!defenseItem}
+                                className={`flex-1 py-3 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all border ${defenseItem ? 'bg-cyan-600 hover:bg-cyan-500 border-cyan-400/20 shadow-lg' : 'bg-gray-800 text-gray-500 border-gray-700 cursor-not-allowed'}`}
+                                title={defenseItem ? "Deploy Shield" : "Need Shield Item"}
+                            >
+                                <Shield size={18} fill={defenseItem ? "currentColor" : "none"} />
+                                {defenseItem ? "Shield" : "No Item"}
+                            </button>
+                        ) : (
+                             <div className="flex-1 py-3 bg-gray-800 text-cyan-400 font-bold rounded-xl flex items-center justify-center gap-2 border border-cyan-500/20">
+                                <Shield size={18} /> Active
+                            </div>
+                        )}
+                    </div>
+
                     <button 
                         onClick={() => openSyncModal(selectedZone)}
                         className="w-full py-3 bg-emerald-900/50 hover:bg-emerald-800/50 text-emerald-400 font-bold rounded-xl flex items-center justify-center gap-2 transition-all border border-emerald-500/30"
