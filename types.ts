@@ -30,14 +30,15 @@ export interface Item {
   id: string;
   name: string;
   description: string;
-  priceGov: number;
-  type: 'DEFENSE' | 'BOOST';
+  priceRun: number; // Changed from priceGov to priceRun
+  quantity: number; // Market Stock
+  type: 'DEFENSE' | 'BOOST' | 'CURRENCY'; // Added CURRENCY for GOV packs
   effectValue: number;
   icon: string;
 }
 
 export interface InventoryItem extends Item {
-  quantity: number;
+  quantity: number; // Amount owned (overrides Item.quantity)
 }
 
 export interface LeaderboardEntry {

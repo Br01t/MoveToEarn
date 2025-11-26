@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Item, User } from '../types';
-import { Shield, Zap, ShoppingCart, X, AlertTriangle, CheckCircle, Package } from 'lucide-react';
+import { Shield, Zap, ShoppingCart, X, AlertTriangle, CheckCircle, Package, Coins } from 'lucide-react';
 
 interface MarketplaceProps {
   user: User;
@@ -29,11 +29,11 @@ const Marketplace: React.FC<MarketplaceProps> = ({ user, items, onBuy }) => {
       <div className="flex justify-between items-center mb-8">
         <div>
            <h2 className="text-3xl font-bold text-white">Marketplace</h2>
-           <p className="text-gray-400">Use GOV tokens to upgrade your strategy.</p>
+           <p className="text-gray-400">Spend RUN tokens to upgrade gear or buy GOV packs.</p>
         </div>
-        <div className="bg-gray-800 px-4 py-2 rounded-lg border border-cyan-500/30 text-cyan-400 font-mono font-bold flex items-center gap-2">
-          <Zap size={16} />
-          {user.govBalance} GOV
+        <div className="bg-gray-800 px-4 py-2 rounded-lg border border-emerald-500/30 text-emerald-400 font-mono font-bold flex items-center gap-2">
+          <CheckCircle size={16} />
+          {user.runBalance.toFixed(2)} RUN
         </div>
       </div>
 
@@ -46,38 +46,44 @@ const Marketplace: React.FC<MarketplaceProps> = ({ user, items, onBuy }) => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {items.map((item) => {
-            const Icon = item.type === 'DEFENSE' ? Shield : Zap;
-            const canAfford = user.govBalance >= item.priceGov;
+            const Icon = item.type === 'DEFENSE' ? Shield : (item.type === 'CURRENCY' ? Coins : Zap);
+            const canAfford = user.runBalance >= item.priceRun;
+            const hasStock = item.quantity > 0;
 
             return (
-              <div key={item.id} className="bg-gray-800 border border-gray-700 rounded-xl overflow-hidden hover:border-cyan-500 transition-colors group flex flex-col">
+              <div key={item.id} className={`bg-gray-800 border border-gray-700 rounded-xl overflow-hidden transition-colors group flex flex-col ${hasStock ? 'hover:border-emerald-500' : 'opacity-70'}`}>
                 <div className="p-6 flex-1">
                   <div className="flex items-center justify-between mb-4">
-                    <div className={`p-3 rounded-lg ${item.type === 'DEFENSE' ? 'bg-blue-500/10 text-blue-400' : 'bg-yellow-500/10 text-yellow-400'}`}>
+                    <div className={`p-3 rounded-lg ${item.type === 'DEFENSE' ? 'bg-blue-500/10 text-blue-400' : (item.type === 'CURRENCY' ? 'bg-cyan-500/10 text-cyan-400' : 'bg-yellow-500/10 text-yellow-400')}`}>
                       <Icon size={32} />
                     </div>
-                    <span className="text-xs font-bold px-2 py-1 rounded bg-gray-700 text-gray-300">{item.type}</span>
+                    <div className="flex flex-col items-end gap-1">
+                        <span className="text-xs font-bold px-2 py-1 rounded bg-gray-700 text-gray-300">{item.type}</span>
+                        <span className={`text-xs font-bold ${hasStock ? (item.quantity < 10 ? 'text-orange-400' : 'text-emerald-400') : 'text-red-500'}`}>
+                            {hasStock ? `${item.quantity} Left` : 'Sold Out'}
+                        </span>
+                    </div>
                   </div>
                   <h3 className="text-xl font-bold text-white mb-2">{item.name}</h3>
                   <p className="text-gray-400 text-sm mb-6 min-h-[3rem]">{item.description}</p>
                   
                   <div className="flex items-center justify-between mt-auto pt-4 border-t border-gray-700">
-                    <span className="text-2xl font-bold text-cyan-400">{item.priceGov} <span className="text-sm text-gray-500">GOV</span></span>
+                    <span className="text-2xl font-bold text-emerald-400">{item.priceRun} <span className="text-sm text-gray-500">RUN</span></span>
                     <button
-                      onClick={() => canAfford && handleBuyClick(item)}
-                      disabled={!canAfford}
+                      onClick={() => canAfford && hasStock && handleBuyClick(item)}
+                      disabled={!canAfford || !hasStock}
                       className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all ${
-                        canAfford 
-                        ? 'bg-cyan-500 hover:bg-cyan-600 text-black shadow-lg shadow-cyan-500/20' 
+                        canAfford && hasStock
+                        ? 'bg-emerald-500 hover:bg-emerald-600 text-black shadow-lg shadow-emerald-500/20' 
                         : 'bg-gray-700 text-gray-500 cursor-not-allowed'
                       }`}
                     >
                       <ShoppingCart size={18} />
-                      {canAfford ? 'Buy' : 'Low Funds'}
+                      {!hasStock ? 'Sold Out' : (canAfford ? 'Buy' : 'Low Funds')}
                     </button>
                   </div>
                 </div>
-                <div className="bg-cyan-500/5 h-1 w-full scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
+                {hasStock && <div className="bg-emerald-500/5 h-1 w-full scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>}
               </div>
             );
           })}
@@ -104,16 +110,21 @@ const Marketplace: React.FC<MarketplaceProps> = ({ user, items, onBuy }) => {
                    </div>
                    <div>
                       <div className="text-white font-bold">{confirmItem.name}</div>
-                      <div className="text-cyan-400 font-bold">{confirmItem.priceGov} GOV</div>
+                      <div className="text-emerald-400 font-bold">{confirmItem.priceRun} RUN</div>
                    </div>
                 </div>
 
                 <div className="flex items-start gap-3 bg-yellow-500/10 p-3 rounded-lg">
                    <AlertTriangle className="text-yellow-500 shrink-0" size={18} />
                    <p className="text-xs text-yellow-200">
-                     Are you sure you want to spend <strong>{confirmItem.priceGov} GOV</strong>? This action cannot be undone.
+                     Are you sure you want to spend <strong>{confirmItem.priceRun} RUN</strong>?
                    </p>
                 </div>
+                {confirmItem.type === 'CURRENCY' && (
+                     <p className="text-xs text-center text-cyan-400">
+                         You will immediately receive {confirmItem.effectValue} GOV.
+                     </p>
+                )}
              </div>
 
              <div className="p-6 pt-0 flex gap-3">
@@ -125,7 +136,7 @@ const Marketplace: React.FC<MarketplaceProps> = ({ user, items, onBuy }) => {
                </button>
                <button 
                  onClick={confirmPurchase}
-                 className="flex-1 py-3 bg-cyan-500 hover:bg-cyan-400 text-black font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
+                 className="flex-1 py-3 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
                >
                  <CheckCircle size={18} /> Confirm
                </button>

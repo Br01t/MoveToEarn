@@ -1,3 +1,5 @@
+
+
 import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import LandingPage from './components/LandingPage';
@@ -14,7 +16,7 @@ import Privacy from './components/pages/Privacy';
 import Terms from './components/pages/Terms';
 import Community from './components/pages/Community';
 import { User, Zone, Item, ViewState, InventoryItem } from './types';
-import { MOCK_ZONES, INITIAL_USER, MOCK_USERS, MOCK_ITEMS, MINT_COST } from './constants';
+import { MOCK_ZONES, INITIAL_USER, MOCK_USERS, MOCK_ITEMS, MINT_COST, MINT_REWARD_GOV, CONQUEST_REWARD_GOV } from './constants';
 
 const App: React.FC = () => {
   // --- Game State ---
@@ -120,7 +122,8 @@ const App: React.FC = () => {
             `Owner: ${ownerName}\n` +
             `Your Run: ${km} km\n` +
             `Earned: +${runReward.toFixed(2)} RUN\n\n` +
-            `Do you want to CONTEST this zone? (Cost: ${contestFee} RUN)`
+            `Do you want to CONTEST this zone? (Cost: ${contestFee} RUN)\n` +
+            `Reward: +${CONQUEST_REWARD_GOV} GOV`
           );
 
           if (wantToContest) {
@@ -133,9 +136,10 @@ const App: React.FC = () => {
                setUser(prev => prev ? {
                    ...prev,
                    runBalance: prev.runBalance + runReward - contestFee,
+                   govBalance: prev.govBalance + CONQUEST_REWARD_GOV, // Reward GOV
                    totalKm: prev.totalKm + km
                } : null);
-               alert(`Victory! "${existingZone.name}" is now yours.`);
+               alert(`Victory! "${existingZone.name}" is now yours.\n\nReward: +${CONQUEST_REWARD_GOV} GOV`);
                return; // Exit early
             } else {
                alert(`Insufficient funds to contest. (Cost: ${contestFee}, You have: ${potentialBalance.toFixed(2)})`);
@@ -167,8 +171,8 @@ const App: React.FC = () => {
           `You discovered: "${name}"\n\n` +
           `Reward: +${runReward.toFixed(2)} RUN\n` +
           `Claim Cost: -${MINT_COST} RUN\n` +
+          `Bonus Reward: +${MINT_REWARD_GOV} GOV\n` +
           `----------------\n` +
-          `Net Change: ${(runReward - MINT_COST).toFixed(2)} RUN\n\n` +
           `Do you want to mint and claim this zone?`
       );
       
@@ -188,9 +192,10 @@ const App: React.FC = () => {
           setUser(prev => prev ? { 
             ...prev, 
             runBalance: prev.runBalance + runReward - MINT_COST, 
+            govBalance: prev.govBalance + MINT_REWARD_GOV, // Reward GOV
             totalKm: prev.totalKm + km 
           } : null);
-          alert(`Zone Created! "${newZone.name}" is now on the map.`);
+          alert(`Zone Created! "${newZone.name}" is now on the map.\nYou received ${MINT_REWARD_GOV} GOV tokens.`);
       } else {
           // Just give rewards if they decline to mint
           setUser(prev => prev ? { 
@@ -227,8 +232,12 @@ const App: React.FC = () => {
           return z;
         }));
 
-        setUser(prev => prev ? { ...prev, runBalance: prev.runBalance - CONTEST_COST } : null);
-        alert("Zone Conquered! You are the new owner.");
+        setUser(prev => prev ? { 
+            ...prev, 
+            runBalance: prev.runBalance - CONTEST_COST,
+            govBalance: prev.govBalance + CONQUEST_REWARD_GOV 
+        } : null);
+        alert(`Zone Conquered! You received +${CONQUEST_REWARD_GOV} GOV.`);
     }
   };
 
@@ -264,11 +273,40 @@ const App: React.FC = () => {
 
   const handleBuyItem = (item: Item) => {
     if (!user) return;
-    if (user.govBalance < item.priceGov) return;
-
-    const newItem: InventoryItem = { ...item, quantity: 1 };
     
-    // Check if exists in inventory
+    // Check Stock
+    if (item.quantity <= 0) {
+        alert("Sorry, this item is out of stock!");
+        return;
+    }
+
+    // New Logic: Spend RUN to buy items
+    if (user.runBalance < item.priceRun) {
+        alert("Insufficient RUN balance!");
+        return;
+    }
+
+    // Update Market Stock
+    setMarketItems(prev => prev.map(i => {
+        if (i.id === item.id) {
+            return { ...i, quantity: i.quantity - 1 };
+        }
+        return i;
+    }));
+
+    // New Logic: Handle Currency Packs (Immediate Consumption)
+    if (item.type === 'CURRENCY') {
+        setUser(prev => prev ? {
+            ...prev,
+            runBalance: prev.runBalance - item.priceRun,
+            govBalance: prev.govBalance + item.effectValue
+        } : null);
+        alert(`Purchase Successful!\n\n-${item.priceRun} RUN\n+${item.effectValue} GOV`);
+        return;
+    }
+
+    // Standard Inventory Logic for other items
+    const newItem: InventoryItem = { ...item, quantity: 1 };
     const existingIdx = user.inventory.findIndex(i => i.id === item.id);
     let newInventory = [...user.inventory];
     
@@ -283,7 +321,7 @@ const App: React.FC = () => {
 
     setUser(prev => prev ? {
       ...prev,
-      govBalance: prev.govBalance - item.priceGov,
+      runBalance: prev.runBalance - item.priceRun,
       inventory: newInventory
     } : null);
   };
@@ -332,25 +370,12 @@ const App: React.FC = () => {
     alert(`Success! Used ${item.name} on "${targetZone.name}".\n${effectMessage}`);
   };
 
-  const handleExchange = (from: 'RUN' | 'GOV', amount: number) => {
-     if (!user) return;
-     const RATE = 10; // 10 RUN = 1 GOV
-
-     if (from === 'RUN') {
-        const received = amount / RATE;
-        setUser(prev => prev ? {
-           ...prev,
-           runBalance: prev.runBalance - amount,
-           govBalance: prev.govBalance + received
-        } : null);
-     } else {
-        const received = amount * RATE;
-        setUser(prev => prev ? {
-           ...prev,
-           govBalance: prev.govBalance - amount,
-           runBalance: prev.runBalance + received
-        } : null);
-     }
+  const handleBuyFiat = (amountUSD: number) => {
+      if (!user) return;
+      // Mock exchange rate: 1 USD = 10 GOV
+      const govAmount = amountUSD * 10;
+      setUser(prev => prev ? { ...prev, govBalance: prev.govBalance + govAmount } : null);
+      alert(`Payment Successful!\n\n+$${amountUSD} processed.\n+${govAmount} GOV added to wallet.`);
   };
 
   // --- Admin Actions ---
@@ -366,11 +391,33 @@ const App: React.FC = () => {
     alert("Burn Protocol Initiated.\n\n5,000,000 RUN tokens have been removed from the circulating supply.");
   };
 
+  // UPDATED REWARD LOGIC: Proportional distribution
   const handleDistributeRewards = () => {
      if(!user) return;
-     const rewardAmount = 500;
-     setUser(prev => prev ? { ...prev, govBalance: prev.govBalance + rewardAmount } : null);
-     alert(`Rewards Distributed!\n\nAll active users (including you) received ${rewardAmount} GOV.`);
+     
+     // Calculate rewards based on performance (Stats Mock)
+     // 1 GOV per 5 KM
+     const kmReward = Math.floor(user.totalKm / 5);
+     // 10 GOV per Zone Owned
+     const zonesOwned = zones.filter(z => z.ownerId === user.id).length;
+     const zoneReward = zonesOwned * 10;
+     
+     const totalReward = kmReward + zoneReward;
+
+     if (totalReward === 0) {
+        alert("No rewards earned. Run more KM or conquer zones to qualify!");
+        return;
+     }
+
+     setUser(prev => prev ? { ...prev, govBalance: prev.govBalance + totalReward } : null);
+     
+     alert(
+         `Weekly Rewards Distributed!\n\n` +
+         `Distance Bonus (${user.totalKm.toFixed(1)}km): +${kmReward} GOV\n` +
+         `Territory Bonus (${zonesOwned} zones): +${zoneReward} GOV\n` +
+         `----------------\n` +
+         `Total Airdrop: +${totalReward} GOV`
+     );
   };
 
   const handleResetSeason = () => {
@@ -440,7 +487,7 @@ const App: React.FC = () => {
             <Marketplace user={user!} items={marketItems} onBuy={handleBuyItem} />
             )}
             {currentView === 'WALLET' && (
-            <Wallet user={user!} onExchange={handleExchange} />
+            <Wallet user={user!} onBuyFiat={handleBuyFiat} />
             )}
             {currentView === 'INVENTORY' && (
             <Inventory user={user!} zones={zones} onUseItem={handleUseItem} />
