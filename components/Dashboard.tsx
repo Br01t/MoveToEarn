@@ -198,7 +198,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, onSyncRun, onClaim, 
          {earningRate > 0 && (
             <div className="bg-emerald-900/50 backdrop-blur-md px-4 py-2 rounded-lg border border-emerald-500/30 shadow-xl flex items-center gap-2 pointer-events-auto">
                 <span className="text-xs text-emerald-300 uppercase font-bold tracking-wider">Earning</span>
-                <span className="font-mono text-white font-bold">~{earningRate.toFixed(1)}/min</span>
+                <span className="font-mono text-white font-bold">~ RUN {earningRate.toFixed(1)}/min</span>
             </div>
          )}
       </div>

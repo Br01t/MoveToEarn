@@ -1,15 +1,14 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import App from './App';
+// index.tsx
+import React from "react";
+import ReactDOM from "react-dom";
+import App from "./App";
 
-const rootElement = document.getElementById('root');
-if (!rootElement) {
-  throw new Error("Could not find root element to mount to");
-}
+const rootElement = document.getElementById("root");
+if (!rootElement) throw new Error("Root element not found");
 
-const root = ReactDOM.createRoot(rootElement);
-root.render(
+ReactDOM.render(
   <React.StrictMode>
     <App />
-  </React.StrictMode>
+  </React.StrictMode>,
+  rootElement
 );
