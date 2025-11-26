@@ -1,11 +1,13 @@
 import React from 'react';
 import { Activity, Shield, Coins, TrendingUp } from 'lucide-react';
+import { ViewState } from '../types';
 
 interface LandingPageProps {
   onLogin: () => void;
+  onNavigate: (view: ViewState) => void;
 }
 
-const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
+const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
   return (
     <div className="min-h-screen bg-gray-900 flex flex-col relative overflow-hidden">
       {/* Background decoration */}
@@ -18,7 +20,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
         <div className="text-3xl font-bold text-white tracking-tighter">
           Zone<span className="text-emerald-400">Run</span>
         </div>
-        {/* Connect Wallet button moved to Wallet page as requested */}
+        {/* Top right button removed as requested */}
       </header>
 
       <main className="relative z-10 flex-1 flex flex-col justify-center items-center px-4 text-center">
@@ -37,8 +39,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
             >
               Start Running
             </button>
-            <button className="w-full sm:w-auto px-8 py-4 bg-transparent border border-gray-700 text-white font-bold text-lg rounded-xl hover:border-emerald-500 transition-colors">
-              Read Whitepaper
+            <button 
+              onClick={() => onNavigate('RULES')}
+              className="w-full sm:w-auto px-8 py-4 bg-transparent border border-gray-700 text-white font-bold text-lg rounded-xl hover:border-emerald-500 transition-colors"
+            >
+              How to Play
             </button>
           </div>
         </div>

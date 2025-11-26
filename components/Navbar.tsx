@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { ViewState, User } from '../types';
-import { Map, ShoppingBag, Trophy, Wallet, LogOut, Package, User as UserIcon } from 'lucide-react';
+import { Map, ShoppingBag, Trophy, Wallet, LogOut, Package, User as UserIcon, Settings } from 'lucide-react';
 
 interface NavbarProps {
   currentView: ViewState;
@@ -13,13 +13,13 @@ interface NavbarProps {
 const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, user, onLogout }) => {
   if (!user) return null;
 
-  const NavItem = ({ view, icon: Icon, label }: { view: ViewState; icon: any; label: string }) => (
+  const NavItem = ({ view, icon: Icon, label, isAdmin = false }: { view: ViewState; icon: any; label: string; isAdmin?: boolean }) => (
     <button
       onClick={() => onNavigate(view)}
       className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors ${
         currentView === view
-          ? 'bg-emerald-500/20 text-emerald-400'
-          : 'text-gray-400 hover:text-white hover:bg-gray-800'
+          ? isAdmin ? 'bg-red-500/20 text-red-400' : 'bg-emerald-500/20 text-emerald-400'
+          : isAdmin ? 'text-gray-500 hover:text-red-400 hover:bg-gray-800' : 'text-gray-400 hover:text-white hover:bg-gray-800'
       }`}
     >
       <Icon size={20} />
@@ -44,6 +44,9 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, user, onLogout
             <NavItem view="LEADERBOARD" icon={Trophy} label="Rank" />
             <NavItem view="WALLET" icon={Wallet} label="Wallet" />
             <NavItem view="PROFILE" icon={UserIcon} label="Profile" />
+            {/* Admin Link - In a real app this would be hidden behind a role check */}
+            <div className="h-6 w-px bg-gray-700 mx-2 hidden md:block"></div>
+            <NavItem view="ADMIN" icon={Settings} label="Admin" isAdmin={true} />
           </div>
 
           <div className="flex items-center ml-4">
