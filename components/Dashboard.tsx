@@ -146,8 +146,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, onSyncRun, onClaim, 
   };
 
   const getStrokeColor = (zone: Zone) => {
-    if (zone.ownerId === user.id) return '#10b981'; // Emerald
-    return '#ef4444'; // Red
+    if (zone.ownerId === user.id) return '#34d399'; // Brighter Emerald
+    return '#f87171'; // Brighter Red
   };
 
   return (
@@ -210,8 +210,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, onSyncRun, onClaim, 
       {/* Map Controls */}
       <div className="absolute top-4 right-4 z-20 flex flex-col gap-2">
           <div className="bg-gray-800/90 backdrop-blur p-2 rounded-lg border border-gray-700 text-xs text-white flex flex-col gap-1 mb-2">
-              <span className="flex items-center gap-2"><div className="w-3 h-3 bg-emerald-500 rounded-sm"></div> My Zones</span>
-              <span className="flex items-center gap-2"><div className="w-3 h-3 bg-red-500 rounded-sm"></div> Enemy</span>
+              <span className="flex items-center gap-2"><div className="w-3 h-3 bg-emerald-400 rounded-sm shadow shadow-emerald-500/50"></div> My Zones</span>
+              <span className="flex items-center gap-2"><div className="w-3 h-3 bg-red-400 rounded-sm shadow shadow-red-500/50"></div> Enemy</span>
           </div>
 
           <button onClick={zoomIn} className="p-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg border border-gray-600 shadow-lg"><ZoomIn size={20}/></button>
@@ -248,16 +248,22 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, onSyncRun, onClaim, 
           className="touch-none"
         >
           <defs>
+            {/* Vibrant Neon Gradient for User Zones */}
             <linearGradient id="grad-my-zone" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style={{ stopColor: '#064e3b', stopOpacity: 1 }} />
-              <stop offset="100%" style={{ stopColor: '#10b981', stopOpacity: 0.8 }} />
+              <stop offset="0%" style={{ stopColor: '#064e3b', stopOpacity: 0.9 }} /> {/* Deep Emerald */}
+              <stop offset="60%" style={{ stopColor: '#10b981', stopOpacity: 0.85 }} /> {/* Vivid Emerald */}
+              <stop offset="100%" style={{ stopColor: '#6ee7b7', stopOpacity: 0.9 }} /> {/* Bright Mint */}
             </linearGradient>
+            
+            {/* Vibrant Neon Gradient for Enemy Zones */}
             <linearGradient id="grad-enemy-zone" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style={{ stopColor: '#450a0a', stopOpacity: 1 }} />
-              <stop offset="100%" style={{ stopColor: '#b91c1c', stopOpacity: 0.8 }} />
+              <stop offset="0%" style={{ stopColor: '#450a0a', stopOpacity: 0.9 }} /> {/* Deep Red */}
+              <stop offset="60%" style={{ stopColor: '#dc2626', stopOpacity: 0.85 }} /> {/* Vivid Red */}
+              <stop offset="100%" style={{ stopColor: '#fca5a5', stopOpacity: 0.9 }} /> {/* Bright Coral */}
             </linearGradient>
+
             <filter id="glow">
-                <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
+                <feGaussianBlur stdDeviation="3.5" result="coloredBlur"/>
                 <feMerge>
                     <feMergeNode in="coloredBlur"/>
                     <feMergeNode in="SourceGraphic"/>
@@ -285,7 +291,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, onSyncRun, onClaim, 
                     key={zone.id} 
                     transform={`translate(${pos.x},${pos.y})`}
                     onClick={(e) => { e.stopPropagation(); setSelectedZone(zone); }}
-                    className={`transition-all duration-300 ${isMatch ? 'cursor-pointer hover:opacity-100' : 'pointer-events-none'}`}
+                    className={`transition-all duration-300 group ${isMatch ? 'cursor-pointer' : 'pointer-events-none'}`}
                     style={{ opacity: isMatch ? (isSelected ? 1 : 0.9) : 0.05, filter: isMatch ? 'none' : 'grayscale(100%)' }}
                   >
                     {/* Glow effect for selected */}
@@ -294,8 +300,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, onSyncRun, onClaim, 
                         points={getHexPoints()} 
                         fill={strokeColor} 
                         opacity="0.2" 
-                        filter="blur(15px)"
-                        transform="scale(1.15)"
+                        filter="blur(20px)"
+                        transform="scale(1.2)"
                       />
                     )}
                     
@@ -304,17 +310,23 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, onSyncRun, onClaim, 
                       points={getHexPoints()}
                       fill={fillUrl}
                       stroke={strokeColor}
-                      strokeWidth={isSelected ? 6 : 3}
+                      strokeWidth={isSelected ? 4 : 2}
                       strokeLinejoin="round"
+                      className="transition-all duration-300 group-hover:brightness-125 group-hover:stroke-[3px] group-hover:drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]"
+                      style={{
+                        // Apply extra glow via filter if selected
+                        filter: isSelected ? 'drop-shadow(0 0 8px rgba(255,255,255,0.4))' : 'none'
+                      }}
                     />
                     
-                    {/* Inner Border Line (Tech Look) */}
+                    {/* Inner Border Line (Tech Look) - Brighter on hover */}
                     <polygon
                        points={getHexPoints()}
                        fill="none"
-                       stroke="rgba(255,255,255,0.1)"
+                       stroke="rgba(255,255,255,0.2)"
                        strokeWidth="1"
                        transform="scale(0.85)"
+                       className="transition-all duration-300 opacity-50 group-hover:opacity-100 group-hover:stroke-white/40"
                     />
                     
                     {/* Zone Content */}
@@ -326,10 +338,10 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, onSyncRun, onClaim, 
                         pointerEvents="none"
                     >
                         <div className="w-full h-full flex flex-col items-center justify-center text-center p-2 leading-none pointer-events-none">
-                          <span className="text-sm font-black text-white uppercase tracking-wider drop-shadow-lg break-words w-4/5 mb-1" style={{ textShadow: '0 2px 4px rgba(0,0,0,1)' }}>
+                          <span className="text-sm font-black text-white uppercase tracking-wider drop-shadow-lg break-words w-4/5 mb-1 transition-transform duration-300 group-hover:scale-110" style={{ textShadow: '0 2px 4px rgba(0,0,0,1)' }}>
                             {zone.name}
                           </span>
-                          <span className="text-lg font-bold text-white drop-shadow-md bg-black/40 px-2 rounded-full border border-white/10">
+                          <span className={`text-lg font-bold text-white drop-shadow-md px-2 rounded-full border border-white/10 transition-colors duration-300 ${zone.ownerId === user.id ? 'bg-emerald-900/60' : 'bg-red-900/60'}`}>
                             {zone.interestRate}%
                           </span>
                         </div>

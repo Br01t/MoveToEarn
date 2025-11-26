@@ -1,4 +1,6 @@
 
+
+
 import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import LandingPage from './components/LandingPage';
@@ -43,6 +45,7 @@ const App: React.FC = () => {
   };
 
   // Helper: Find a random open hex coordinate adjacent to existing map
+  // Modified to use a Random Walker approach for organic/irregular growth
   const findOpenNeighbor = (currentZones: Zone[]): { x: number, y: number } => {
     // Directions for Hex Axial Coordinates (q, r)
     // (1, 0), (1, -1), (0, -1), (-1, 0), (-1, 1), (0, 1)
@@ -52,22 +55,26 @@ const App: React.FC = () => {
     ];
 
     const occupied = new Set(currentZones.map(z => `${z.x},${z.y}`));
-    const candidates: { x: number, y: number }[] = [];
+    
+    // Shuffle existing zones to pick a random "sprouting" point.
+    // This creates tendrils and irregular shapes rather than filling the perimeter uniformly.
+    const shuffledZones = [...currentZones].sort(() => 0.5 - Math.random());
 
-    currentZones.forEach(zone => {
-      directions.forEach(dir => {
-        const nx = zone.x + dir.q;
-        const ny = zone.y + dir.r;
-        if (!occupied.has(`${nx},${ny}`)) {
-          candidates.push({ x: nx, y: ny });
+    for (const zone of shuffledZones) {
+        // Shuffle directions to pick a random side to grow from
+        const shuffledDirs = [...directions].sort(() => 0.5 - Math.random());
+
+        for (const dir of shuffledDirs) {
+            const nx = zone.x + dir.q;
+            const ny = zone.y + dir.r;
+            if (!occupied.has(`${nx},${ny}`)) {
+                return { x: nx, y: ny };
+            }
         }
-      });
-    });
+    }
 
-    if (candidates.length === 0) return { x: 3, y: 0 }; // Fallback should not happen if zones exist
-    // Pick random candidate
-    const randomIndex = Math.floor(Math.random() * candidates.length);
-    return candidates[randomIndex];
+    // Fallback if somehow map is fully enclosed (impossible with open grid)
+    return { x: 5, y: 5 }; 
   };
 
   const handleSyncRun = (data: { km: number, name: string }) => {
