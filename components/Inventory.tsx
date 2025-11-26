@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 import { InventoryItem, User, Zone } from '../types';
 import { Shield, Zap, Package, MapPin, X, ArrowRight, Info } from 'lucide-react';
@@ -45,7 +46,7 @@ const Inventory: React.FC<InventoryProps> = ({ user, zones, onUseItem }) => {
               <div 
                 key={`${item.id}-${idx}`} 
                 onClick={() => handleItemClick(item)}
-                className="bg-gray-800 border border-gray-700 rounded-lg p-5 flex flex-col justify-between group hover:border-emerald-500/30 transition-colors cursor-pointer"
+                className="bg-gray-800 border border-gray-700 rounded-lg p-5 flex flex-col justify-between group hover:border-emerald-500/30 transition-colors cursor-pointer relative"
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-4">
@@ -57,9 +58,12 @@ const Inventory: React.FC<InventoryProps> = ({ user, zones, onUseItem }) => {
                       <span className="text-xs font-bold px-2 py-0.5 rounded bg-gray-700 text-gray-300">{item.type}</span>
                     </div>
                   </div>
-                  <div className="bg-gray-900 px-3 py-1 rounded text-sm font-bold text-white border border-gray-700">
-                    x{item.quantity}
-                  </div>
+                  {/* Quantity Badge */}
+                  {item.quantity > 0 && (
+                      <div className="bg-emerald-900/80 border border-emerald-500/50 px-3 py-1 rounded-full text-sm font-bold text-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.2)]">
+                        x{item.quantity}
+                      </div>
+                  )}
                 </div>
                 
                 {/* Truncated description for the card view */}
@@ -91,7 +95,7 @@ const Inventory: React.FC<InventoryProps> = ({ user, zones, onUseItem }) => {
                     </h3>
                     <div className="flex gap-2 mt-2">
                         <span className="text-xs font-bold px-2 py-0.5 rounded bg-gray-700 text-gray-300">{selectedItem.type}</span>
-                        <span className="text-xs font-bold px-2 py-0.5 rounded bg-gray-700 text-emerald-400">Owned: {selectedItem.quantity}</span>
+                        <span className="text-xs font-bold px-2 py-0.5 rounded bg-emerald-900 text-emerald-400 border border-emerald-500/30">Owned: {selectedItem.quantity}</span>
                     </div>
                  </div>
               </div>

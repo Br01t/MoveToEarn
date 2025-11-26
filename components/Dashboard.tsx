@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { User, Zone, InventoryItem } from '../types';
-import { Play, ZoomIn, ZoomOut, Move, X, UploadCloud, MapPin, CheckCircle, Zap, Search, Filter, ShoppingBag, Clock, Shield } from 'lucide-react';
+import { Play, ZoomIn, ZoomOut, Move, X, UploadCloud, MapPin, CheckCircle, Zap, Search, ShoppingBag, Clock, Shield, Globe } from 'lucide-react';
 
 interface DashboardProps {
   user: User;
@@ -20,6 +20,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, onSyncRun, onClaim, 
   // Search & Filter State
   const [searchTerm, setSearchTerm] = useState('');
   const [filterMode, setFilterMode] = useState<'ALL' | 'MINE' | 'ENEMY'>('ALL');
+  const [filterCountry, setFilterCountry] = useState<string>('ALL');
 
   // Sync Modal State
   const [showSyncModal, setShowSyncModal] = useState(false);
@@ -42,6 +43,20 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, onSyncRun, onClaim, 
   // Find inventory items
   const boostItem: InventoryItem | undefined = user.inventory.find(i => i.type === 'BOOST');
   const defenseItem: InventoryItem | undefined = user.inventory.find(i => i.type === 'DEFENSE');
+
+  // Extract available countries from zones
+  const countries = useMemo(() => {
+    const countrySet = new Set<string>();
+    zones.forEach(z => {
+      const match = z.name.match(/\(([A-Z]{2})\)$/);
+      if (match && match[1]) {
+        countrySet.add(match[1]);
+      } else {
+        countrySet.add('Other');
+      }
+    });
+    return Array.from(countrySet).sort();
+  }, [zones]);
 
   // --- Map Math Helpers ---
   const getHexPosition = (q: number, r: number) => {
@@ -201,6 +216,22 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, onSyncRun, onClaim, 
                   onChange={(e) => setSearchTerm(e.target.value)}
               />
           </div>
+          
+          {/* Nation Filter */}
+          <div className="relative">
+             <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+             <select 
+               value={filterCountry}
+               onChange={(e) => setFilterCountry(e.target.value)}
+               className="w-full bg-gray-900/80 text-white rounded-lg pl-9 pr-3 py-2 text-sm border border-gray-600 focus:border-emerald-500 focus:outline-none appearance-none cursor-pointer"
+             >
+               <option value="ALL">All Nations</option>
+               {countries.map(c => (
+                 <option key={c} value={c}>{c}</option>
+               ))}
+             </select>
+          </div>
+
           {/* Filters */}
           <div className="flex gap-2">
               <button 
@@ -317,6 +348,16 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, onSyncRun, onClaim, 
                 let isMatch = true;
                 if (filterMode === 'MINE' && zone.ownerId !== user.id) isMatch = false;
                 if (filterMode === 'ENEMY' && zone.ownerId === user.id) isMatch = false;
+                
+                // Country Filter
+                if (filterCountry !== 'ALL') {
+                    if (filterCountry === 'Other') {
+                        if (zone.name.match(/\([A-Z]{2}\)$/)) isMatch = false;
+                    } else {
+                        if (!zone.name.endsWith(`(${filterCountry})`)) isMatch = false;
+                    }
+                }
+
                 if (searchTerm && !zone.name.toLowerCase().includes(searchTerm.toLowerCase())) {
                     isMatch = false;
                 }

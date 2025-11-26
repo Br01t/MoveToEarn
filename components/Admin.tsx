@@ -1,7 +1,8 @@
 
+
 import React, { useState } from 'react';
 import { Item } from '../types';
-import { Settings, Plus, Trash2, Flame, Gift, RefreshCw, Save, X, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Settings, Plus, Trash2, Flame, Gift, RefreshCw, Save, X, AlertTriangle, CheckCircle, Package } from 'lucide-react';
 
 interface AdminProps {
   marketItems: Item[];
@@ -30,13 +31,15 @@ const Admin: React.FC<AdminProps> = ({
   const [newItem, setNewItem] = useState<{
     name: string;
     description: string;
-    priceGov: string;
-    type: 'DEFENSE' | 'BOOST';
+    priceRun: string;
+    quantity: string;
+    type: 'DEFENSE' | 'BOOST' | 'CURRENCY';
     effectValue: string;
   }>({
     name: '',
     description: '',
-    priceGov: '100',
+    priceRun: '100',
+    quantity: '100',
     type: 'DEFENSE',
     effectValue: '1'
   });
@@ -45,21 +48,28 @@ const Admin: React.FC<AdminProps> = ({
     e.preventDefault();
     if (!newItem.name || !newItem.description) return;
 
+    // Determine Icon based on Type
+    let iconName = 'Zap';
+    if (newItem.type === 'DEFENSE') iconName = 'Shield';
+    if (newItem.type === 'CURRENCY') iconName = 'Coins';
+
     const item: Item = {
       id: `item_${Date.now()}`,
       name: newItem.name,
       description: newItem.description,
-      priceGov: parseFloat(newItem.priceGov),
+      priceRun: parseFloat(newItem.priceRun),
+      quantity: parseInt(newItem.quantity), // Market Stock
       type: newItem.type,
       effectValue: parseFloat(newItem.effectValue),
-      icon: newItem.type === 'DEFENSE' ? 'Shield' : 'Zap'
+      icon: iconName
     };
 
     onAddItem(item);
     setNewItem({
       name: '',
       description: '',
-      priceGov: '100',
+      priceRun: '100',
+      quantity: '100',
       type: 'DEFENSE',
       effectValue: '1'
     });
@@ -140,35 +150,47 @@ const Admin: React.FC<AdminProps> = ({
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs text-gray-400 mb-1">Price (GOV)</label>
+                  <label className="block text-xs text-gray-400 mb-1">Price (RUN)</label>
                   <input 
                     type="number" 
                     required
-                    value={newItem.priceGov}
-                    onChange={e => setNewItem({...newItem, priceGov: e.target.value})}
+                    value={newItem.priceRun}
+                    onChange={e => setNewItem({...newItem, priceRun: e.target.value})}
                     className="w-full bg-gray-900 border border-gray-600 rounded p-2 text-white focus:border-emerald-500 outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-400 mb-1">Effect Power</label>
+                  <label className="block text-xs text-gray-400 mb-1">Effect Value</label>
                   <input 
                     type="number" 
                     required
                     value={newItem.effectValue}
                     onChange={e => setNewItem({...newItem, effectValue: e.target.value})}
                     className="w-full bg-gray-900 border border-gray-600 rounded p-2 text-white focus:border-emerald-500 outline-none"
+                    placeholder={newItem.type === 'CURRENCY' ? 'GOV Amount' : 'Boost/Def Lvl'}
                   />
                 </div>
+              </div>
+              <div>
+                 <label className="block text-xs text-gray-400 mb-1">Stock Quantity</label>
+                 <input 
+                   type="number" 
+                   required
+                   value={newItem.quantity}
+                   onChange={e => setNewItem({...newItem, quantity: e.target.value})}
+                   className="w-full bg-gray-900 border border-gray-600 rounded p-2 text-white focus:border-emerald-500 outline-none"
+                 />
               </div>
               <div>
                 <label className="block text-xs text-gray-400 mb-1">Type</label>
                 <select 
                    value={newItem.type}
-                   onChange={e => setNewItem({...newItem, type: e.target.value as 'DEFENSE' | 'BOOST'})}
+                   onChange={e => setNewItem({...newItem, type: e.target.value as 'DEFENSE' | 'BOOST' | 'CURRENCY'})}
                    className="w-full bg-gray-900 border border-gray-600 rounded p-2 text-white focus:border-emerald-500 outline-none"
                 >
                   <option value="DEFENSE">Defense (Shield)</option>
                   <option value="BOOST">Boost (Yield)</option>
+                  <option value="CURRENCY">Currency Pack (GOV)</option>
                 </select>
               </div>
               <button type="submit" className="w-full py-3 bg-emerald-500 text-black font-bold rounded-lg hover:bg-emerald-400 transition-colors flex items-center justify-center gap-2">
@@ -186,10 +208,12 @@ const Admin: React.FC<AdminProps> = ({
                  <div>
                     <h4 className="font-bold text-white text-lg">{item.name}</h4>
                     <p className="text-xs text-gray-400">{item.description}</p>
-                    <div className="mt-2 flex gap-3 text-sm">
-                      <span className="text-cyan-400 font-bold">{item.priceGov} GOV</span>
+                    <div className="mt-2 flex gap-3 text-sm items-center">
+                      <span className="text-emerald-400 font-bold">{item.priceRun} RUN</span>
                       <span className="text-gray-500">|</span>
                       <span className="text-emerald-400">{item.type} +{item.effectValue}</span>
+                      <span className="text-gray-500">|</span>
+                      <span className="flex items-center gap-1 text-gray-300"><Package size={14}/> Stock: {item.quantity}</span>
                     </div>
                  </div>
                  <button 
@@ -328,11 +352,11 @@ const Admin: React.FC<AdminProps> = ({
                   </div>
                   <div className="flex justify-between">
                      <span className="text-gray-400">Amount per User:</span>
-                     <span className="text-white font-bold">500.00</span>
+                     <span className="text-white font-bold">Dynamic (Based on Stats)</span>
                   </div>
                </div>
                <p className="text-sm text-gray-400">
-                 Funds will be transferred from the Treasury Wallet to user accounts immediately.
+                 Calculated based on Total KM and Owned Zones of each user.
                </p>
             </div>
             <div className="p-6 pt-0 flex gap-3">

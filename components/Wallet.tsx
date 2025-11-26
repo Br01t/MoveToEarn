@@ -1,11 +1,12 @@
+
 import React, { useState } from 'react';
 import { User } from '../types';
-import { ArrowRightLeft, Flame, TrendingUp, Link as LinkIcon, Wallet as WalletIcon, CheckCircle } from 'lucide-react';
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
+import { Flame, Link as LinkIcon, Wallet as WalletIcon, CheckCircle, CreditCard, DollarSign } from 'lucide-react';
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from 'recharts';
 
 interface WalletProps {
   user: User;
-  onExchange: (from: 'RUN' | 'GOV', amount: number) => void;
+  onBuyFiat: (amountUSD: number) => void;
 }
 
 // Mock chart data for RUN
@@ -30,30 +31,15 @@ const govData = [
   { name: 'Sun', value: 5.25 },
 ];
 
-const Wallet: React.FC<WalletProps> = ({ user, onExchange }) => {
-  const [exchangeAmount, setExchangeAmount] = useState<string>('');
-  const [direction, setDirection] = useState<'RUN_TO_GOV' | 'GOV_TO_RUN'>('RUN_TO_GOV');
+const Wallet: React.FC<WalletProps> = ({ user, onBuyFiat }) => {
+  const [fiatAmount, setFiatAmount] = useState<string>('');
   const [isWalletConnected, setIsWalletConnected] = useState(false);
 
-  // Exchange rate: 10 RUN = 1 GOV
-  const RATE = 10; 
-
-  const handleSwap = () => {
-    const val = parseFloat(exchangeAmount);
-    if (isNaN(val) || val <= 0) return;
-    
-    if (direction === 'RUN_TO_GOV') {
-        if (user.runBalance >= val) onExchange('RUN', val);
-    } else {
-        if (user.govBalance >= val) onExchange('GOV', val);
-    }
-    setExchangeAmount('');
-  };
-
-  const getEstimatedOutput = () => {
-    const val = parseFloat(exchangeAmount);
-    if (isNaN(val)) return 0;
-    return direction === 'RUN_TO_GOV' ? val / RATE : val * RATE;
+  const handleFiatPurchase = () => {
+      const val = parseFloat(fiatAmount);
+      if (isNaN(val) || val <= 0) return;
+      onBuyFiat(val);
+      setFiatAmount('');
   };
 
   return (
@@ -86,57 +72,47 @@ const Wallet: React.FC<WalletProps> = ({ user, onExchange }) => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         
-        {/* Swap Card */}
-        <div className="bg-gray-800 rounded-xl border border-gray-700 p-8">
-          <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
-            <ArrowRightLeft className="text-emerald-400" /> Token Swap
-          </h2>
+        {/* Transaction Card */}
+        <div className="bg-gray-800 rounded-xl border border-gray-700 p-8 h-fit">
+          <div className="mb-6">
+             <h2 className="text-2xl font-bold text-white mb-2 flex items-center gap-2">
+                <CreditCard className="text-cyan-400" /> Buy GOV Token
+             </h2>
+             <p className="text-gray-400 text-sm">Purchase Governance tokens directly with fiat currency to increase your voting power.</p>
+          </div>
 
-          <div className="space-y-6">
-            <div className="bg-gray-900 p-4 rounded-lg border border-gray-700">
-              <label className="block text-xs text-gray-400 mb-2">You Pay</label>
-              <div className="flex justify-between items-center">
-                <input 
-                  type="number" 
-                  value={exchangeAmount}
-                  onChange={(e) => setExchangeAmount(e.target.value)}
-                  placeholder="0.00"
-                  className="bg-transparent text-2xl font-bold text-white focus:outline-none w-1/2"
-                />
-                <button 
-                  onClick={() => setDirection(direction === 'RUN_TO_GOV' ? 'GOV_TO_RUN' : 'RUN_TO_GOV')}
-                  className="bg-gray-800 px-3 py-1 rounded text-sm font-bold border border-gray-600 hover:border-white transition-colors"
-                >
-                  {direction === 'RUN_TO_GOV' ? 'RUN' : 'GOV'}
-                </button>
+          <div className="space-y-6 animate-fade-in">
+              <div className="bg-gray-900 p-4 rounded-lg border border-gray-700">
+                  <label className="block text-xs text-gray-400 mb-2">Pay with USD ($)</label>
+                  <div className="flex justify-between items-center">
+                      <input 
+                      type="number" 
+                      value={fiatAmount}
+                      onChange={(e) => setFiatAmount(e.target.value)}
+                      placeholder="100.00"
+                      className="bg-transparent text-2xl font-bold text-white focus:outline-none w-2/3"
+                      />
+                      <DollarSign className="text-gray-500" />
+                  </div>
               </div>
-              <div className="text-right text-xs text-gray-500 mt-2">
-                Balance: {direction === 'RUN_TO_GOV' ? user.runBalance.toFixed(2) : user.govBalance.toFixed(2)}
+              
+              <div className="bg-gray-900 p-4 rounded-lg border border-gray-700">
+                  <label className="block text-xs text-gray-400 mb-2">You Receive (Est.)</label>
+                  <div className="flex justify-between items-center">
+                      <span className="text-2xl font-bold text-cyan-400">
+                          {fiatAmount ? (parseFloat(fiatAmount) * 10).toFixed(2) : '0.00'}
+                      </span>
+                      <span className="font-bold text-gray-300">GOV</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">Rate: $1.00 ≈ 10.00 GOV</p>
               </div>
-            </div>
 
-            <div className="flex justify-center">
-              <button onClick={() => setDirection(prev => prev === 'RUN_TO_GOV' ? 'GOV_TO_RUN' : 'RUN_TO_GOV')} className="p-2 bg-gray-700 rounded-full hover:bg-gray-600 transition-colors">
-                <ArrowRightLeft size={20} className="text-gray-300" />
+              <button 
+                  onClick={handleFiatPurchase}
+                  className="w-full py-4 bg-cyan-500 hover:bg-cyan-400 text-black font-bold rounded-lg transition-colors shadow-lg shadow-cyan-500/20"
+              >
+                  Purchase GOV
               </button>
-            </div>
-
-            <div className="bg-gray-900 p-4 rounded-lg border border-gray-700">
-              <label className="block text-xs text-gray-400 mb-2">You Receive (Estimated)</label>
-              <div className="flex justify-between items-center">
-                <span className="text-2xl font-bold text-emerald-400">{getEstimatedOutput().toFixed(2)}</span>
-                <span className="font-bold text-gray-300">
-                  {direction === 'RUN_TO_GOV' ? 'GOV' : 'RUN'}
-                </span>
-              </div>
-            </div>
-
-            <button 
-              onClick={handleSwap}
-              className="w-full py-4 bg-gradient-to-r from-emerald-500 to-cyan-500 text-black font-bold rounded-lg hover:opacity-90 transition-opacity"
-            >
-              Swap Tokens
-            </button>
           </div>
         </div>
 
