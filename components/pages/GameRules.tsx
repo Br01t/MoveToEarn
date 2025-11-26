@@ -53,7 +53,7 @@ const GameRules: React.FC<GameRulesProps> = ({ onBack }) => {
            </p>
            <ul className="list-disc list-inside text-gray-400 text-sm space-y-2">
              <li><strong>Mint Zone:</strong> Pay 50 RUN to create a new zone. <span className="text-cyan-400">Reward: +5 GOV</span>.</li>
-             <li><strong>Conquer:</strong> Pay 50 RUN to take a zone. <span className="text-cyan-400">Reward: +10 GOV</span>.</li>
+             <li><strong>Conquer:</strong> Pay 500 RUN to take a zone. <span className="text-cyan-400">Reward: +10 GOV</span>.</li>
              <li><strong>Missions:</strong> Complete goals (e.g., "Own 10 distinct Zones" or "Capture a Capital City") for bounties.</li>
              <li><strong>Market:</strong> Buy "Supply Crates" using RUN.</li>
              <li><strong>Fiat:</strong> Purchase directly with USD in Wallet.</li>
@@ -71,11 +71,11 @@ const GameRules: React.FC<GameRulesProps> = ({ onBack }) => {
            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
               <div className="bg-black/30 p-3 rounded-lg border border-white/5">
                  <div className="text-amber-400 font-bold flex items-center gap-1 mb-1"><Zap size={16}/> Yield Boost</div>
-                 <p className="text-xs text-gray-400">Increases zone interest rate massively for 24 hours.</p>
+                 <p className="text-xs text-gray-400">Increases zone interest rate massively for a period of time.</p>
               </div>
               <div className="bg-black/30 p-3 rounded-lg border border-white/5">
                  <div className="text-cyan-400 font-bold flex items-center gap-1 mb-1"><Shield size={16}/> Zone Shield</div>
-                 <p className="text-xs text-gray-400">Protects a zone from being conquered for 24 hours.</p>
+                 <p className="text-xs text-gray-400">Protects a zone from being conquered for a period of time.</p>
               </div>
               <div className="bg-black/30 p-3 rounded-lg border border-white/5">
                  <div className="text-emerald-400 font-bold flex items-center gap-1 mb-1"><Coins size={16}/> GOV Packs</div>
