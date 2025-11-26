@@ -1,6 +1,7 @@
 
+
 import React from 'react';
-import { Scroll, Map, Shield, Coins, TrendingUp, Zap, Footprints, ArrowLeft, ShoppingBag, Route, Upload } from 'lucide-react';
+import { Scroll, Map, Shield, Coins, TrendingUp, Zap, Footprints, ArrowLeft, ShoppingBag, Route, Upload, Globe } from 'lucide-react';
 
 interface GameRulesProps {
   onBack?: () => void;
@@ -43,7 +44,7 @@ const GameRules: React.FC<GameRulesProps> = ({ onBack }) => {
            </ul>
         </div>
 
-        {/* 2. Validation (NEW) */}
+        {/* 2. Validation */}
         <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 hover:border-emerald-500/50 transition-colors">
            <h2 className="text-xl font-bold text-white mb-3 flex items-center gap-2">
              <Route className="text-amber-400"/> 2. Validation & Zoning
@@ -58,10 +59,38 @@ const GameRules: React.FC<GameRulesProps> = ({ onBack }) => {
            </ul>
         </div>
 
-        {/* 3. How to get GOV */}
+        {/* 3. Dynamic Map (NEW) */}
         <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 hover:border-emerald-500/50 transition-colors md:col-span-2">
            <h2 className="text-xl font-bold text-white mb-3 flex items-center gap-2">
-             <Map className="text-purple-400"/> 3. How to get GOV
+             <Globe className="text-blue-400"/> 3. Dynamic Map & Naming Protocol
+           </h2>
+           <p className="text-gray-400 text-sm leading-relaxed mb-4">
+             The ZoneRun map is infinite and generated dynamically by player actions. It is a "Digital Twin" of the real world.
+           </p>
+           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+               <div className="bg-black/20 p-4 rounded-lg border border-gray-700">
+                  <strong className="text-white block mb-2 text-sm">Proximity Clustering</strong>
+                  <p className="text-xs text-gray-400 leading-relaxed">
+                    New zones are not placed randomly. They attach to existing zones based on real-world proximity. 
+                    If you create a zone for "Central Park, NY", it will appear visually separated from "Milan, IT" but adjacent to other NY zones. 
+                    This creates organic "clusters" of activity on the digital map.
+                  </p>
+               </div>
+               <div className="bg-black/20 p-4 rounded-lg border border-gray-700">
+                  <strong className="text-white block mb-2 text-sm">Naming & Approval</strong>
+                  <p className="text-xs text-gray-400 leading-relaxed">
+                    When you are the first to run in a new area, you define its name (e.g., "Hyde Park, London").
+                    Names must follow the format: <em>[Locality], [City] ([Country Code])</em>.
+                    All names are subject to DAO/Admin validation to prevent duplicates or offensive content.
+                  </p>
+               </div>
+           </div>
+        </div>
+
+        {/* 4. How to get GOV */}
+        <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 hover:border-emerald-500/50 transition-colors md:col-span-2">
+           <h2 className="text-xl font-bold text-white mb-3 flex items-center gap-2">
+             <Map className="text-purple-400"/> 4. How to get GOV
            </h2>
            <p className="text-gray-400 text-sm leading-relaxed mb-2">
              GOV tokens are scarce. There are only 5 ways to get them:
@@ -86,10 +115,10 @@ const GameRules: React.FC<GameRulesProps> = ({ onBack }) => {
            </div>
         </div>
 
-        {/* 4. Market */}
+        {/* 5. Market */}
         <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 border border-emerald-500/30">
            <h2 className="text-xl font-bold text-white mb-3 flex items-center gap-2">
-             <ShoppingBag className="text-emerald-400"/> 4. Marketplace
+             <ShoppingBag className="text-emerald-400"/> 5. Marketplace
            </h2>
            <p className="text-gray-300 text-sm leading-relaxed mb-3">
              The Marketplace accepts <strong>RUN</strong> only. Use your running earnings to gain a strategic advantage.
@@ -110,10 +139,10 @@ const GameRules: React.FC<GameRulesProps> = ({ onBack }) => {
            </div>
         </div>
 
-        {/* 5. Burn Cycle */}
+        {/* 6. Burn Cycle */}
         <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 hover:border-emerald-500/50 transition-colors">
            <h2 className="text-xl font-bold text-white mb-3 flex items-center gap-2">
-             <Coins className="text-red-400"/> 5. Burn & Rewards
+             <Coins className="text-red-400"/> 6. Burn & Rewards
            </h2>
            <p className="text-gray-400 text-sm leading-relaxed mb-4">
              Weekly "Burn Events" remove RUN from circulation.
