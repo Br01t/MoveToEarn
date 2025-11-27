@@ -1,7 +1,7 @@
 
 
 import React from 'react';
-import { Scroll, Map, Shield, Coins, TrendingUp, Zap, Footprints, ArrowLeft, ShoppingBag, Route, Upload, Globe } from 'lucide-react';
+import { Scroll, Map, Shield, Coins, TrendingUp, Zap, Footprints, ArrowLeft, ShoppingBag, Route, Upload, Globe, Crown } from 'lucide-react';
 
 interface GameRulesProps {
   onBack?: () => void;
@@ -29,18 +29,22 @@ const GameRules: React.FC<GameRulesProps> = ({ onBack }) => {
       </p>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* 1. Basics */}
+        {/* 1. Moving & Revenue Sharing */}
         <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 hover:border-emerald-500/50 transition-colors">
            <h2 className="text-xl font-bold text-white mb-3 flex items-center gap-2">
-             <Footprints className="text-emerald-400"/> 1. Moving & Earning
+             <Footprints className="text-emerald-400"/> 1. Moving & Revenue Sharing
            </h2>
-           <p className="text-gray-400 text-sm leading-relaxed mb-2">
-             Physical activity is the engine of the economy.
+           <p className="text-gray-400 text-sm leading-relaxed mb-3">
+             Every run generates value. That value is split between the runner and the zone stakeholders.
            </p>
-           <ul className="list-disc list-inside text-gray-400 text-sm space-y-2">
-             <li><strong>Rate:</strong> 1 KM = 10 RUN tokens.</li>
-             <li><strong>Yield:</strong> Owned zones generate passive RUN automatically.</li>
-             <li><strong>Manual Sync:</strong> Input your data to claim rewards.</li>
+           <ul className="list-disc list-inside text-gray-400 text-sm space-y-3">
+             <li><strong>Base Rate:</strong> 1 KM = 10 RUN tokens (goes to the Runner).</li>
+             <li>
+                <strong>Owner's Tax:</strong> Zone Owners automatically earn a % of <span className="text-white font-bold">ALL runs</span> performed by other users in their territory.
+             </li>
+             <li>
+                <strong>Top Runner Rewards:</strong> You don't own the zone? No problem. The <span className="text-emerald-400 font-bold">Best Runners</span> (by total KM in that specific zone) receive a proportional share of the zone's daily yield.
+             </li>
            </ul>
         </div>
 
@@ -50,7 +54,7 @@ const GameRules: React.FC<GameRulesProps> = ({ onBack }) => {
              <Route className="text-amber-400"/> 2. Validation & Zoning
            </h2>
            <p className="text-gray-400 text-sm leading-relaxed mb-2">
-             Runs are validated using Start & End points (User Input / Strava Screenshot).
+             Runs are validated using Start & End points (User input / Strava, Garmin, ... screenshot).
            </p>
            <ul className="list-disc list-inside text-gray-400 text-sm space-y-2">
              <li><strong>5km Radius Rule:</strong> We calculate the area between your Start and End points.</li>
