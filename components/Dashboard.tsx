@@ -1,3 +1,5 @@
+
+
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { User, Zone, InventoryItem } from '../types';
 import { Play, ZoomIn, ZoomOut, Move, X, UploadCloud, MapPin, CheckCircle, Zap, Search, ShoppingBag, Clock, Shield, Globe } from 'lucide-react';
@@ -48,7 +50,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, onSyncRun, onClaim, 
   const countries = useMemo(() => {
     const countrySet = new Set<string>();
     zones.forEach(z => {
-      const match = z.name.match(/\(([A-Z]{2})\)$/);
+      // Regex updated to match " - CC" format
+      const match = z.name.match(/\-\s([A-Z]{2})$/);
       if (match && match[1]) {
         countrySet.add(match[1]);
       } else {
@@ -198,7 +201,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, onSyncRun, onClaim, 
          {earningRate > 0 && (
             <div className="bg-emerald-900/50 backdrop-blur-md px-4 py-2 rounded-lg border border-emerald-500/30 shadow-xl flex items-center gap-2 pointer-events-auto">
                 <span className="text-xs text-emerald-300 uppercase font-bold tracking-wider">Earning</span>
-                <span className="font-mono text-white font-bold">~ RUN {earningRate.toFixed(1)}/min</span>
+                <span className="font-mono text-white font-bold">~{earningRate.toFixed(1)}/min</span>
             </div>
          )}
       </div>
@@ -352,9 +355,9 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, onSyncRun, onClaim, 
                 // Country Filter
                 if (filterCountry !== 'ALL') {
                     if (filterCountry === 'Other') {
-                        if (zone.name.match(/\([A-Z]{2}\)$/)) isMatch = false;
+                        if (zone.name.match(/\-\s[A-Z]{2}$/)) isMatch = false;
                     } else {
-                        if (!zone.name.endsWith(`(${filterCountry})`)) isMatch = false;
+                        if (!zone.name.endsWith(` - ${filterCountry}`)) isMatch = false;
                     }
                 }
 
@@ -433,35 +436,39 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, onSyncRun, onClaim, 
                     
                     {/* Zone Content */}
                     <foreignObject 
-                        x={-HEX_SIZE} 
-                        y={-HEX_SIZE} 
-                        width={HEX_SIZE * 2} 
-                        height={HEX_SIZE * 2} 
+                        x={-HEX_SIZE * 1.5} 
+                        y={-HEX_SIZE * 1.5} 
+                        width={HEX_SIZE * 3} 
+                        height={HEX_SIZE * 3} 
                         pointerEvents="none"
                     >
-                        <div className="w-full h-full flex flex-col items-center justify-center text-center p-2 leading-none pointer-events-none relative">
+                        <div className="w-full h-full flex flex-col items-center justify-center text-center p-0 leading-none pointer-events-none relative px-2">
                           
-                          {/* Name */}
-                          <span className="text-sm font-black text-white uppercase tracking-wider drop-shadow-lg break-words w-4/5 mb-1 transition-transform duration-300 group-hover:scale-110" style={{ textShadow: '0 2px 4px rgba(0,0,0,1)' }}>
-                            {zone.name}
-                          </span>
+                          {/* Name - Updated for Wrapping */}
+                          <div className="flex items-center justify-center w-full mb-0.5 px-3">
+                             <span className="text-xs sm:text-sm font-black text-white tracking-wider drop-shadow-lg leading-tight whitespace-normal break-words max-w-[150px] transition-transform duration-300 group-hover:scale-105" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>
+                               {zone.name}
+                             </span>
+                          </div>
 
                           {/* Interest Rate */}
-                          <span className={`text-lg font-bold text-white drop-shadow-md px-2 rounded-full border border-white/10 transition-colors duration-300 ${zone.ownerId === user.id ? (boosted ? 'bg-amber-600/80 border-amber-400' : (shielded ? 'bg-cyan-800/80 border-cyan-500' : 'bg-emerald-900/60')) : 'bg-red-900/60'}`}>
-                            {zone.interestRate}%
-                          </span>
+                          <div className="flex justify-center w-full mt-0.5">
+                            <span className={`text-lg font-bold text-white drop-shadow-md px-2 py-0.5 rounded-full border border-white/20 transition-colors duration-300 ${zone.ownerId === user.id ? (boosted ? 'bg-amber-600/90 border-amber-400' : (shielded ? 'bg-cyan-800/90 border-cyan-500' : 'bg-emerald-900/80')) : 'bg-red-900/80'}`}>
+                              {zone.interestRate}%
+                            </span>
+                          </div>
 
                           {/* Status Icons (Centered Below %) */}
                           {(shielded || boosted) && (
-                              <div className="flex items-center justify-center gap-1 mt-1">
+                              <div className="flex items-center justify-center gap-2 mt-1">
                                 {shielded && (
-                                    <div className="bg-cyan-900/90 p-1.5 rounded-full border border-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.8)] animate-pulse z-10">
-                                        <Shield size={16} className="text-cyan-200 fill-cyan-400/30" />
+                                    <div className="bg-cyan-950 p-1.5 rounded-full border border-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.8)] animate-pulse z-10">
+                                        <Shield size={22} className="text-cyan-100 fill-cyan-400/50" />
                                     </div>
                                 )}
                                 {boosted && (
-                                    <div className="bg-amber-900/90 p-1.5 rounded-full border border-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.8)] animate-pulse z-10">
-                                        <Zap size={16} className="text-amber-200 fill-amber-400/30" />
+                                    <div className="bg-amber-950 p-1.5 rounded-full border border-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.8)] animate-pulse z-10">
+                                        <Zap size={22} className="text-amber-100 fill-amber-400/50" />
                                     </div>
                                 )}
                               </div>
@@ -487,9 +494,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, onSyncRun, onClaim, 
               <X size={20} />
             </button>
 
-            <h3 className="font-bold text-xl text-white mb-1 pr-6 tracking-tight">{selectedZone.name}</h3>
-            <p className="text-xs text-gray-500 font-mono mb-4 uppercase tracking-widest">Hex [{selectedZone.x}, {selectedZone.y}]</p>
-
+            <h3 className="font-bold text-xl text-white mb-4 pr-6 tracking-tight break-words">{selectedZone.name}</h3>
+            
             <div className="space-y-3 mb-6">
                <div className="flex justify-between text-sm bg-black/40 p-3 rounded-lg border border-white/5">
                  <span className="text-gray-400">Status</span>

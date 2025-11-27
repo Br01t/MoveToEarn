@@ -54,7 +54,7 @@ const GameRules: React.FC<GameRulesProps> = ({ onBack }) => {
              <Route className="text-amber-400"/> 2. Validation & Zoning
            </h2>
            <p className="text-gray-400 text-sm leading-relaxed mb-2">
-             Runs are validated using Start & End points (User input / Strava, Garmin, ... screenshot).
+             Runs are validated using Start & End points (User Input / Strava Screenshot).
            </p>
            <ul className="list-disc list-inside text-gray-400 text-sm space-y-2">
              <li><strong>5km Radius Rule:</strong> We calculate the area between your Start and End points.</li>
@@ -84,7 +84,7 @@ const GameRules: React.FC<GameRulesProps> = ({ onBack }) => {
                   <strong className="text-white block mb-2 text-sm">Naming & Approval</strong>
                   <p className="text-xs text-gray-400 leading-relaxed">
                     When you are the first to run in a new area, you define its name (e.g., "Hyde Park, London").
-                    Names must follow the format: <em>[Locality], [City] ([Country Code])</em>.
+                    Names must follow the format: <em>[Locality], [City] - [Country Code]</em>.
                     All names are subject to DAO/Admin validation to prevent duplicates or offensive content.
                   </p>
                </div>

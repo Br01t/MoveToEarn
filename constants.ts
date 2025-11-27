@@ -49,20 +49,20 @@ export const MOCK_ZONES: Zone[] = [
     x: 0, 
     y: 0, 
     ownerId: 'user_1', 
-    name: 'Parco Sempione, Milan (IT)', 
+    name: 'Parco Sempione, Milan - IT', 
     defenseLevel: 2, 
     recordKm: 120, 
     interestRate: 4.5, 
     boostExpiresAt: Date.now() + 1000 * 60 * 60 * 12 
   },
-  { id: 'z_mi_1', x: 1, y: 0, ownerId: 'user_2', name: 'Duomo, Milan (IT)', defenseLevel: 3, recordKm: 150, interestRate: 2.8 },
-  { id: 'z_mi_2', x: 1, y: -1, ownerId: 'user_1', name: 'Brera, Milan (IT)', defenseLevel: 0, recordKm: 30, interestRate: 3.0 },
-  { id: 'z_mi_3', x: 0, y: -1, ownerId: 'user_3', name: 'Garibaldi, Milan (IT)', defenseLevel: 1, recordKm: 40, interestRate: 2.1 },
-  { id: 'z_mi_4', x: -1, y: 0, ownerId: 'user_2', name: 'City Life, Milan (IT)', defenseLevel: 4, recordKm: 90, interestRate: 3.5 },
-  { id: 'z_mi_5', x: -1, y: 1, ownerId: 'user_3', name: 'Navigli, Milan (IT)', defenseLevel: 0, recordKm: 15, interestRate: 1.5 },
-  { id: 'z_mi_6', x: 0, y: 1, ownerId: 'user_1', name: 'Porta Romana, Milan (IT)', defenseLevel: 2, recordKm: 60, interestRate: 2.2 },
+  { id: 'z_mi_1', x: 1, y: 0, ownerId: 'user_2', name: 'Duomo, Milan - IT', defenseLevel: 3, recordKm: 150, interestRate: 2.8 },
+  { id: 'z_mi_2', x: 1, y: -1, ownerId: 'user_1', name: 'Brera, Milan - IT', defenseLevel: 0, recordKm: 30, interestRate: 3.0 },
+  { id: 'z_mi_3', x: 0, y: -1, ownerId: 'user_3', name: 'Garibaldi, Milan - IT', defenseLevel: 1, recordKm: 40, interestRate: 2.1 },
+  { id: 'z_mi_4', x: -1, y: 0, ownerId: 'user_2', name: 'City Life, Milan - IT', defenseLevel: 4, recordKm: 90, interestRate: 3.5 },
+  { id: 'z_mi_5', x: -1, y: 1, ownerId: 'user_3', name: 'Navigli, Milan - IT', defenseLevel: 0, recordKm: 15, interestRate: 1.5 },
+  { id: 'z_mi_6', x: 0, y: 1, ownerId: 'user_1', name: 'Porta Romana, Milan - IT', defenseLevel: 2, recordKm: 60, interestRate: 2.2 },
   // Extended Milan edges
-  { id: 'z_mi_7', x: -2, y: 1, ownerId: 'user_1', name: 'San Siro, Milan (IT)', defenseLevel: 2, recordKm: 110, interestRate: 2.6 },
+  { id: 'z_mi_7', x: -2, y: 1, ownerId: 'user_1', name: 'San Siro, Milan - IT', defenseLevel: 2, recordKm: 110, interestRate: 2.6 },
 
 
   // --- CLUSTER 2: NEW YORK (USA) - TOP RIGHT ---
@@ -74,34 +74,34 @@ export const MOCK_ZONES: Zone[] = [
     x: 3, 
     y: -2, 
     ownerId: 'user_2', 
-    name: 'Central Park, NY (US)', 
+    name: 'Central Park, NY - US', 
     defenseLevel: 5, 
     recordKm: 80, 
     interestRate: 1.8,
     shieldExpiresAt: Date.now() + 1000 * 60 * 60 * 20 
   },
-  { id: 'z_ny_2', x: 4, y: -3, ownerId: 'user_3', name: 'Manhattan, NY (US)', defenseLevel: 2, recordKm: 55, interestRate: 2.0 },
-  { id: 'z_ny_3', x: 3, y: -3, ownerId: 'user_2', name: 'Brooklyn Bridge, NY (US)', defenseLevel: 1, recordKm: 40, interestRate: 1.9 },
-  { id: 'z_ny_4', x: 4, y: -2, ownerId: 'user_1', name: 'Times Square, NY (US)', defenseLevel: 0, recordKm: 25, interestRate: 1.4 },
+  { id: 'z_ny_2', x: 4, y: -3, ownerId: 'user_3', name: 'Manhattan, NY - US', defenseLevel: 2, recordKm: 55, interestRate: 2.0 },
+  { id: 'z_ny_3', x: 3, y: -3, ownerId: 'user_2', name: 'Brooklyn Bridge, NY - US', defenseLevel: 1, recordKm: 40, interestRate: 1.9 },
+  { id: 'z_ny_4', x: 4, y: -2, ownerId: 'user_1', name: 'Times Square, NY - US', defenseLevel: 0, recordKm: 25, interestRate: 1.4 },
 
 
   // --- CLUSTER 3: LONDON (UK) - TOP LEFT ---
   // Shifted West/NorthWest to ensure separation from Milan's West side.
   // Closest Milan Point: (-1, 0) and (-2, 1). London starts at (-3, -1).
   // Gap: (-2, 0) and (-2, -1) are empty.
-  { id: 'z_ld_1', x: -3, y: -1, ownerId: 'user_1', name: 'Hyde Park, London (UK)', defenseLevel: 3, recordKm: 70, interestRate: 3.2 },
-  { id: 'z_ld_2', x: -4, y: -1, ownerId: 'user_3', name: 'Soho, London (UK)', defenseLevel: 1, recordKm: 35, interestRate: 1.6 },
-  { id: 'z_ld_3', x: -3, y: -2, ownerId: 'user_1', name: 'Camden Town, London (UK)', defenseLevel: 0, recordKm: 45, interestRate: 2.1 },
+  { id: 'z_ld_1', x: -3, y: -1, ownerId: 'user_1', name: 'Hyde Park, London - UK', defenseLevel: 3, recordKm: 70, interestRate: 3.2 },
+  { id: 'z_ld_2', x: -4, y: -1, ownerId: 'user_3', name: 'Soho, London - UK', defenseLevel: 1, recordKm: 35, interestRate: 1.6 },
+  { id: 'z_ld_3', x: -3, y: -2, ownerId: 'user_1', name: 'Camden Town, London - UK', defenseLevel: 0, recordKm: 45, interestRate: 2.1 },
 
 
   // --- CLUSTER 4: TOKYO (JP) - BOTTOM RIGHT ---
   // Shifted South/SouthEast to ensure separation from Milan's South side.
   // Closest Milan Point: (0, 1) and (1, 0). Tokyo starts at (2, 2).
   // Gap: (1, 1) and (1, 2) are empty.
-  { id: 'z_tk_1', x: 2, y: 2, ownerId: 'user_3', name: 'Shibuya, Tokyo (JP)', defenseLevel: 4, recordKm: 200, interestRate: 2.9 },
-  { id: 'z_tk_2', x: 3, y: 1, ownerId: 'user_2', name: 'Shinjuku, Tokyo (JP)', defenseLevel: 2, recordKm: 110, interestRate: 2.5 },
-  { id: 'z_tk_3', x: 2, y: 3, ownerId: 'user_3', name: 'Akihabara, Tokyo (JP)', defenseLevel: 1, recordKm: 85, interestRate: 1.8 },
-  { id: 'z_tk_4', x: 1, y: 3, ownerId: 'user_1', name: 'Roppongi, Tokyo (JP)', defenseLevel: 1, recordKm: 95, interestRate: 2.2 },
+  { id: 'z_tk_1', x: 2, y: 2, ownerId: 'user_3', name: 'Shibuya, Tokyo - JP', defenseLevel: 4, recordKm: 200, interestRate: 2.9 },
+  { id: 'z_tk_2', x: 3, y: 1, ownerId: 'user_2', name: 'Shinjuku, Tokyo - JP', defenseLevel: 2, recordKm: 110, interestRate: 2.5 },
+  { id: 'z_tk_3', x: 2, y: 3, ownerId: 'user_3', name: 'Akihabara, Tokyo - JP', defenseLevel: 1, recordKm: 85, interestRate: 1.8 },
+  { id: 'z_tk_4', x: 1, y: 3, ownerId: 'user_1', name: 'Roppongi, Tokyo - JP', defenseLevel: 1, recordKm: 95, interestRate: 2.2 },
 ];
 
 export const MOCK_USERS: Record<string, { id: string; name: string; totalKm: number; avatar: string }> = {
