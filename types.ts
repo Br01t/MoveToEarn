@@ -1,6 +1,27 @@
 
+export type ViewState = 'LANDING' | 'DASHBOARD' | 'MARKETPLACE' | 'INVENTORY' | 'LEADERBOARD' | 'WALLET' | 'PROFILE' | 'MISSIONS' | 'RULES' | 'HOW_TO_PLAY' | 'PRIVACY' | 'TERMS' | 'COMMUNITY' | 'ADMIN';
 
-export type ViewState = 'LANDING' | 'DASHBOARD' | 'MARKETPLACE' | 'INVENTORY' | 'LEADERBOARD' | 'WALLET' | 'PROFILE' | 'RULES' | 'PRIVACY' | 'TERMS' | 'COMMUNITY' | 'ADMIN';
+export type Rarity = 'COMMON' | 'RARE' | 'EPIC' | 'LEGENDARY';
+
+export interface Mission {
+  id: string;
+  title: string;
+  description: string;
+  rewardGov: number;
+  conditionType: 'TOTAL_KM' | 'OWN_ZONES';
+  conditionValue: number;
+  rarity: Rarity;
+}
+
+export interface Badge {
+  id: string;
+  name: string;
+  description: string;
+  icon: string; // Lucide icon name
+  conditionType: 'TOTAL_KM' | 'OWN_ZONES';
+  conditionValue: number;
+  rarity: Rarity;
+}
 
 export interface User {
   id: string;
@@ -10,7 +31,10 @@ export interface User {
   runBalance: number;
   govBalance: number;
   totalKm: number;
+  isPremium: boolean; // Subscription status
   inventory: InventoryItem[];
+  completedMissionIds: string[];
+  earnedBadgeIds: string[];
 }
 
 export interface Zone {
@@ -53,5 +77,7 @@ export interface GameState {
   zones: Zone[];
   users: Record<string, Omit<User, 'inventory' | 'runBalance' | 'govBalance'>>; // Public user info
   items: Item[];
+  missions: Mission[];
+  badges: Badge[];
   marketTaxRate: number; // Dynamic burning rate
 }

@@ -1,26 +1,65 @@
 
 import React, { useState } from 'react';
-import { User, Zone } from '../types';
-import { Save, User as UserIcon, Mail, MapPin, Activity, Coins, Shield } from 'lucide-react';
+import { User, Zone, Mission, Badge, Rarity } from '../types';
+import { Save, User as UserIcon, Mail, MapPin, Activity, Coins, Shield, Crown, CheckCircle, Award, Target, Flag } from 'lucide-react';
+import { PREMIUM_COST } from '../constants';
+import Pagination from './Pagination';
 
 interface ProfileProps {
   user: User;
   zones: Zone[];
+  missions?: Mission[];
+  badges?: Badge[];
   onUpdateUser: (updates: Partial<User>) => void;
+  onUpgradePremium: () => void;
 }
 
-const Profile: React.FC<ProfileProps> = ({ user, zones, onUpdateUser }) => {
+const BADGES_PER_PAGE = 8;
+const MISSIONS_PER_PAGE = 5;
+
+const Profile: React.FC<ProfileProps> = ({ user, zones, missions = [], badges = [], onUpdateUser, onUpgradePremium }) => {
   const [name, setName] = useState(user.name);
   const [email, setEmail] = useState(user.email || '');
   const [isEditing, setIsEditing] = useState(false);
+  
+  const [badgePage, setBadgePage] = useState(1);
+  const [missionPage, setMissionPage] = useState(1);
 
   const myZones = zones.filter(z => z.ownerId === user.id);
-  // Calculate potential yield per hour for display instead of pending
-  const totalYieldRate = myZones.reduce((acc, z) => acc + z.interestRate, 0);
+  
+  // Get earned badges objects
+  const earnedBadges = badges.filter(b => user.earnedBadgeIds.includes(b.id));
+  const completedMissions = missions.filter(m => user.completedMissionIds.includes(m.id));
+
+  // Pagination for Badges
+  const totalBadgePages = Math.ceil(earnedBadges.length / BADGES_PER_PAGE);
+  const currentBadges = earnedBadges.slice((badgePage - 1) * BADGES_PER_PAGE, badgePage * BADGES_PER_PAGE);
+
+  // Pagination for Missions
+  const totalMissionPages = Math.ceil(completedMissions.length / MISSIONS_PER_PAGE);
+  const currentMissions = completedMissions.slice((missionPage - 1) * MISSIONS_PER_PAGE, missionPage * MISSIONS_PER_PAGE);
 
   const handleSave = () => {
     onUpdateUser({ name, email });
     setIsEditing(false);
+  };
+
+  const renderIcon = (iconName: string) => {
+    switch(iconName) {
+        case 'Flag': return <Flag size={20} />;
+        case 'Crown': return <Crown size={20} />;
+        case 'Award': return <Award size={20} />;
+        default: return <Award size={20} />;
+    }
+  };
+
+  const getRarityColor = (rarity: Rarity) => {
+      switch(rarity) {
+          case 'LEGENDARY': return 'text-yellow-400 border-yellow-500/50 bg-yellow-900/20';
+          case 'EPIC': return 'text-purple-400 border-purple-500/50 bg-purple-900/20';
+          case 'RARE': return 'text-cyan-400 border-cyan-500/50 bg-cyan-900/20';
+          default: return 'text-gray-300 border-gray-600 bg-gray-800';
+      }
   };
 
   return (
@@ -30,15 +69,20 @@ const Profile: React.FC<ProfileProps> = ({ user, zones, onUpdateUser }) => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column: User Details */}
         <div className="lg:col-span-1 space-y-6">
-          <div className="bg-gray-800 rounded-xl border border-gray-700 p-6 flex flex-col items-center text-center shadow-lg">
+          <div className="bg-gray-800 rounded-xl border border-gray-700 p-6 flex flex-col items-center text-center shadow-lg relative overflow-hidden">
+             {user.isPremium && (
+                <div className="absolute top-0 right-0 bg-gradient-to-r from-yellow-600 to-yellow-400 text-black text-xs font-bold px-3 py-1 rounded-bl-lg flex items-center gap-1 z-10">
+                    <Crown size={12} fill="black" /> PRO AGENT
+                </div>
+             )}
             <div className="relative mb-4">
               <img 
                 src={user.avatar} 
                 alt="Profile" 
-                className="w-32 h-32 rounded-full border-4 border-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.3)]" 
+                className={`w-32 h-32 rounded-full border-4 shadow-[0_0_20px_rgba(16,185,129,0.3)] ${user.isPremium ? 'border-yellow-400' : 'border-emerald-500'}`} 
               />
               <div className="absolute bottom-0 right-0 bg-gray-900 p-2 rounded-full border border-gray-700">
-                <Shield size={16} className="text-emerald-400" />
+                <Shield size={16} className={user.isPremium ? 'text-yellow-400' : 'text-emerald-400'} />
               </div>
             </div>
             
@@ -97,6 +141,31 @@ const Profile: React.FC<ProfileProps> = ({ user, zones, onUpdateUser }) => {
             )}
           </div>
 
+          {/* Premium Card */}
+          <div className="bg-gray-800 rounded-xl border border-gray-700 p-6 shadow-lg">
+             <div className="flex items-center gap-2 mb-4">
+               <Crown className={user.isPremium ? 'text-yellow-400' : 'text-gray-500'} />
+               <h4 className="font-bold text-white">Subscription Status</h4>
+             </div>
+             
+             {user.isPremium ? (
+               <div className="bg-yellow-500/10 border border-yellow-500/30 p-4 rounded-lg">
+                  <p className="text-yellow-400 font-bold text-sm mb-1">Premium Active</p>
+                  <p className="text-xs text-yellow-200/70">Auto-sync enabled. Priority support active.</p>
+               </div>
+             ) : (
+               <div className="space-y-4">
+                  <p className="text-sm text-gray-400">Upgrade to Pro to unlock automatic Strava sync and more.</p>
+                  <button 
+                    onClick={onUpgradePremium}
+                    className="w-full py-2 bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400 text-black font-bold rounded-lg transition-colors flex items-center justify-center gap-2 text-sm"
+                  >
+                     <Crown size={14} /> Upgrade ({PREMIUM_COST} GOV)
+                  </button>
+               </div>
+             )}
+          </div>
+
           <div className="bg-gray-800 rounded-xl border border-gray-700 p-6 shadow-lg">
              <h4 className="font-bold text-white mb-4 flex items-center gap-2">
                <Activity size={18} className="text-emerald-400" /> Stats Overview
@@ -118,9 +187,10 @@ const Profile: React.FC<ProfileProps> = ({ user, zones, onUpdateUser }) => {
           </div>
         </div>
 
-        {/* Right Column: Financials & Zones */}
+        {/* Right Column: Financials, Zones, Achievements */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Wallet Summary Card */}
+          
+          {/* Financials */}
           <div className="bg-gradient-to-r from-gray-800 to-gray-800 rounded-xl border border-gray-700 p-6 relative overflow-hidden">
              <div className="absolute top-0 right-0 p-4 opacity-5">
                <Coins size={150} />
@@ -130,47 +200,69 @@ const Profile: React.FC<ProfileProps> = ({ user, zones, onUpdateUser }) => {
                <div className="bg-gray-900/50 p-4 rounded-xl border border-gray-600/50">
                  <p className="text-gray-400 text-sm mb-1">RUN Balance</p>
                  <p className="text-3xl font-bold text-emerald-400">{user.runBalance.toFixed(2)}</p>
-                 <p className="text-xs text-emerald-500/70 mt-2">Auto-Compounding Enabled</p>
                </div>
                <div className="bg-gray-900/50 p-4 rounded-xl border border-gray-600/50">
                  <p className="text-gray-400 text-sm mb-1">GOV Balance</p>
                  <p className="text-3xl font-bold text-cyan-400">{user.govBalance.toFixed(2)}</p>
-                 <p className="text-xs text-cyan-500/70 mt-2">Governance Power</p>
                </div>
              </div>
           </div>
 
-          {/* Owned Zones Grid */}
-          <div className="bg-gray-800 rounded-xl border border-gray-700 p-6 min-h-[300px]">
+          {/* Achievements Section */}
+          <div className="bg-gray-800 rounded-xl border border-gray-700 p-6">
             <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-               <MapPin className="text-emerald-400" /> My Territories
+               <Award className="text-yellow-400" /> Achievements
             </h3>
             
-            {myZones.length === 0 ? (
-               <div className="text-center text-gray-500 py-10">
-                  <MapPin size={48} className="mx-auto mb-3 opacity-20" />
-                  <p>You haven't conquered any zones yet.</p>
-                  <p className="text-sm">Start running to claim your first territory!</p>
-               </div>
-            ) : (
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {myZones.map(zone => (
-                    <div key={zone.id} className="bg-gray-900/50 p-4 rounded-lg border border-gray-700 flex justify-between items-center group hover:border-emerald-500/30 transition-colors">
-                       <div>
-                          <h5 className="font-bold text-white group-hover:text-emerald-400 transition-colors">{zone.name}</h5>
-                          <div className="text-xs text-gray-500 mt-1 flex gap-3">
-                             <span>Yield: {zone.interestRate}%</span>
-                             <span>Def: Lvl {zone.defenseLevel}</span>
-                          </div>
-                       </div>
-                       <div className="text-right">
-                          <span className="block text-xs text-gray-400">Status</span>
-                          <span className="font-mono font-bold text-emerald-400">Active</span>
-                       </div>
-                    </div>
-                  ))}
-               </div>
-            )}
+            <div className="space-y-6">
+                {/* Badges */}
+                <div>
+                   <h4 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3">Earned Badges</h4>
+                   {earnedBadges.length > 0 ? (
+                       <>
+                         <div className="flex flex-wrap gap-4">
+                             {currentBadges.map(badge => (
+                                 <div key={badge.id} className={`p-3 rounded-lg flex items-center gap-3 pr-5 border ${getRarityColor(badge.rarity)}`} title={badge.description}>
+                                      <div>
+                                          {renderIcon(badge.icon)}
+                                      </div>
+                                      <div>
+                                          <div className="text-sm font-bold">{badge.name}</div>
+                                          <div className="text-[10px] font-bold opacity-70">{badge.rarity}</div>
+                                      </div>
+                                 </div>
+                             ))}
+                         </div>
+                         <Pagination currentPage={badgePage} totalPages={totalBadgePages} onPageChange={setBadgePage} />
+                       </>
+                   ) : (
+                       <p className="text-gray-500 text-sm">No badges earned yet.</p>
+                   )}
+                </div>
+
+                {/* Completed Missions */}
+                <div>
+                   <h4 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3">Completed Missions</h4>
+                   {completedMissions.length > 0 ? (
+                       <>
+                         <div className="space-y-2">
+                             {currentMissions.map(mission => (
+                                 <div key={mission.id} className="flex justify-between items-center bg-gray-900/50 p-3 rounded-lg border border-emerald-500/30">
+                                     <div className="flex flex-col">
+                                         <span className="text-sm text-white font-medium">{mission.title}</span>
+                                         <span className="text-[10px] text-gray-500">{mission.rarity}</span>
+                                     </div>
+                                     <span className="text-xs font-mono text-emerald-400">+{mission.rewardGov} GOV</span>
+                                 </div>
+                             ))}
+                         </div>
+                         <Pagination currentPage={missionPage} totalPages={totalMissionPages} onPageChange={setMissionPage} />
+                       </>
+                   ) : (
+                       <p className="text-gray-500 text-sm">No missions completed yet.</p>
+                   )}
+                </div>
+            </div>
           </div>
         </div>
       </div>

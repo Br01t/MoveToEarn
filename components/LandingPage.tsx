@@ -23,7 +23,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
         </div>
       </header>
 
-      <main className="relative z-10 flex-1 flex flex-col justify-center items-center px-4 text-center">
+      <main className="relative z-10 flex-1 flex flex-col justify-center items-center px-4 text-center pb-20">
         <div className="max-w-4xl mx-auto space-y-8">
           <h1 className="text-5xl md:text-7xl font-extrabold text-white tracking-tight mb-4">
             Run. Conquer. <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-500">Govern.</span>
@@ -72,10 +72,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
           />
         </div>
       </main>
-
-      <footer className="relative z-10 py-8 text-center text-gray-600 text-sm">
-        &copy; 2025 ZoneRun Project. MVP Version.
-      </footer>
     </div>
   );
 };
