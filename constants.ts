@@ -1,10 +1,10 @@
 
-
-import { Item, User, Zone } from './types';
+import { Item, User, Zone, Mission, Badge } from './types';
 
 export const MINT_COST = 50; // RUN
 export const MINT_REWARD_GOV = 5; // GOV earned for creating a zone
 export const CONQUEST_REWARD_GOV = 10; // GOV earned for conquering
+export const PREMIUM_COST = 50; // GOV per month
 
 export const MOCK_ITEMS: Item[] = [
   {
@@ -36,6 +36,198 @@ export const MOCK_ITEMS: Item[] = [
     type: 'CURRENCY',
     effectValue: 50,
     icon: 'Coins'
+  }
+];
+
+export const MOCK_MISSIONS: Mission[] = [
+  // DISTANCE MISSIONS
+  {
+    id: 'm_dist_1',
+    title: 'First Steps',
+    description: 'Run your first 10 KM total.',
+    rewardGov: 5,
+    conditionType: 'TOTAL_KM',
+    conditionValue: 10,
+    rarity: 'COMMON'
+  },
+  {
+    id: 'm_dist_2',
+    title: 'Weekend Warrior',
+    description: 'Accumulate 25 KM total distance.',
+    rewardGov: 10,
+    conditionType: 'TOTAL_KM',
+    conditionValue: 25,
+    rarity: 'COMMON'
+  },
+  {
+    id: 'm1',
+    title: 'Marathon Beginner',
+    description: 'Run a total of 50 KM.',
+    rewardGov: 20,
+    conditionType: 'TOTAL_KM',
+    conditionValue: 50,
+    rarity: 'RARE'
+  },
+  {
+    id: 'm_dist_3',
+    title: 'Century Runner',
+    description: 'Reach 100 KM in career distance.',
+    rewardGov: 35,
+    conditionType: 'TOTAL_KM',
+    conditionValue: 100,
+    rarity: 'RARE'
+  },
+  {
+    id: 'm3',
+    title: 'Ultra Runner',
+    description: 'Reach a total distance of 500 KM.',
+    rewardGov: 100,
+    conditionType: 'TOTAL_KM',
+    conditionValue: 500,
+    rarity: 'EPIC'
+  },
+  {
+    id: 'm_dist_4',
+    title: 'Globetrotter',
+    description: 'Log an impressive 1,000 KM.',
+    rewardGov: 250,
+    conditionType: 'TOTAL_KM',
+    conditionValue: 1000,
+    rarity: 'LEGENDARY'
+  },
+
+  // OWNERSHIP MISSIONS
+  {
+    id: 'm_own_1',
+    title: 'Scout',
+    description: 'Claim ownership of your first zone.',
+    rewardGov: 10,
+    conditionType: 'OWN_ZONES',
+    conditionValue: 1,
+    rarity: 'COMMON'
+  },
+  {
+    id: 'm2',
+    title: 'Landlord',
+    description: 'Own at least 3 zones simultaneously.',
+    rewardGov: 50,
+    conditionType: 'OWN_ZONES',
+    conditionValue: 3,
+    rarity: 'RARE'
+  },
+  {
+    id: 'm_own_2',
+    title: 'District Manager',
+    description: 'Control 5 distinct zones on the map.',
+    rewardGov: 75,
+    conditionType: 'OWN_ZONES',
+    conditionValue: 5,
+    rarity: 'RARE'
+  },
+  {
+    id: 'm_own_3',
+    title: 'Regional Governor',
+    description: 'Expand your territory to 10 zones.',
+    rewardGov: 150,
+    conditionType: 'OWN_ZONES',
+    conditionValue: 10,
+    rarity: 'EPIC'
+  },
+  {
+    id: 'm_own_4',
+    title: 'Emperor',
+    description: 'Dominate the map with 20 zones.',
+    rewardGov: 500,
+    conditionType: 'OWN_ZONES',
+    conditionValue: 20,
+    rarity: 'LEGENDARY'
+  }
+];
+
+export const MOCK_BADGES: Badge[] = [
+  // DISTANCE BADGES
+  {
+    id: 'b_warmup',
+    name: 'Warm Up',
+    description: 'Completed 5 KM.',
+    icon: 'Flag',
+    conditionType: 'TOTAL_KM',
+    conditionValue: 5,
+    rarity: 'COMMON'
+  },
+  {
+    id: 'b2',
+    name: 'Elite Runner',
+    description: 'Clocked over 100 KM total distance.',
+    icon: 'Award',
+    conditionType: 'TOTAL_KM',
+    conditionValue: 100,
+    rarity: 'RARE'
+  },
+  {
+    id: 'b_iron',
+    name: 'Iron Legs',
+    description: 'Surpassed the 500 KM mark.',
+    icon: 'Award',
+    conditionType: 'TOTAL_KM',
+    conditionValue: 500,
+    rarity: 'EPIC'
+  },
+  {
+    id: 'b_titan',
+    name: 'Titan',
+    description: 'A legendary 2,000 KM career.',
+    icon: 'Crown',
+    conditionType: 'TOTAL_KM',
+    conditionValue: 2000,
+    rarity: 'LEGENDARY'
+  },
+
+  // OWNERSHIP BADGES
+  {
+    id: 'b1',
+    name: 'Pioneer',
+    description: 'Owned your first zone.',
+    icon: 'Flag',
+    conditionType: 'OWN_ZONES',
+    conditionValue: 1,
+    rarity: 'COMMON'
+  },
+  {
+    id: 'b_settler',
+    name: 'Settler',
+    description: 'Established a foothold with 3 zones.',
+    icon: 'Flag',
+    conditionType: 'OWN_ZONES',
+    conditionValue: 3,
+    rarity: 'RARE'
+  },
+  {
+    id: 'b3',
+    name: 'Tycoon',
+    description: 'Control an empire of 10 zones.',
+    icon: 'Crown',
+    conditionType: 'OWN_ZONES',
+    conditionValue: 10,
+    rarity: 'EPIC'
+  },
+  {
+    id: 'b_warlord',
+    name: 'Warlord',
+    description: 'Conquered 25 zones.',
+    icon: 'Crown',
+    conditionType: 'OWN_ZONES',
+    conditionValue: 25,
+    rarity: 'EPIC'
+  },
+  {
+    id: 'b_king',
+    name: 'Kingpin',
+    description: 'The map is yours. 50 zones owned.',
+    icon: 'Crown',
+    conditionType: 'OWN_ZONES',
+    conditionValue: 50,
+    rarity: 'LEGENDARY'
   }
 ];
 
@@ -115,7 +307,10 @@ const DEFAULT_USER_STATE = {
   runBalance: 0,
   govBalance: 0,
   totalKm: 0,
-  inventory: []
+  isPremium: false,
+  inventory: [],
+  completedMissionIds: [],
+  earnedBadgeIds: []
 };
 
 // MVP DEMO USER: Explicitly overrides defaults to provide a populated experience for the demo
@@ -133,6 +328,8 @@ export const INITIAL_USER: User = {
   runBalance: 2500.50, // More RUN for testing new economy
   govBalance: 50.00, // Lower initial GOV (harder to get now)
   totalKm: 450,
+  completedMissionIds: ['m_dist_1', 'm_dist_2', 'm1', 'm_own_1'], // Completed a few starter missions
+  earnedBadgeIds: ['b1', 'b2'], // Already has Pioneer and Elite Runner
   inventory: [
     {
       id: 'shield_lvl1',

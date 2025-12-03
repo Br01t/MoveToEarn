@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { ViewState, User } from '../types';
-import { Map, ShoppingBag, Trophy, Wallet, LogOut, Package, User as UserIcon, Settings } from 'lucide-react';
+import { Map, ShoppingBag, Trophy, Wallet, LogOut, Package, User as UserIcon, Settings, Target, Menu } from 'lucide-react';
 
 interface NavbarProps {
   currentView: ViewState;
@@ -13,54 +13,83 @@ interface NavbarProps {
 const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, user, onLogout }) => {
   if (!user) return null;
 
-  const NavItem = ({ view, icon: Icon, label, isAdmin = false }: { view: ViewState; icon: any; label: string; isAdmin?: boolean }) => (
-    <button
-      onClick={() => onNavigate(view)}
-      className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors ${
-        currentView === view
-          ? isAdmin ? 'bg-red-500/20 text-red-400' : 'bg-emerald-500/20 text-emerald-400'
-          : isAdmin ? 'text-gray-500 hover:text-red-400 hover:bg-gray-800' : 'text-gray-400 hover:text-white hover:bg-gray-800'
-      }`}
-    >
-      <Icon size={20} />
-      <span className="hidden md:inline font-medium">{label}</span>
-    </button>
-  );
+  const NavItem = ({ view, icon: Icon, label, isAdmin = false, mobileLabel }: { view: ViewState; icon: any; label: string; isAdmin?: boolean; mobileLabel?: string }) => {
+    const isActive = currentView === view;
+    const activeClass = isAdmin ? 'text-red-400 bg-red-500/10' : 'text-emerald-400 bg-emerald-500/10';
+    const inactiveClass = isAdmin ? 'text-gray-500 hover:text-red-400' : 'text-gray-400 hover:text-white';
+
+    return (
+      <button
+        onClick={() => onNavigate(view)}
+        className={`flex flex-col md:flex-row items-center justify-center md:space-x-2 px-1 md:px-3 py-1 md:py-2 rounded-lg transition-colors ${
+          isActive ? activeClass : inactiveClass
+        }`}
+      >
+        <Icon size={20} className={isActive ? 'stroke-2' : 'stroke-1'} />
+        <span className="text-[10px] md:text-sm font-medium mt-1 md:mt-0">{mobileLabel || label}</span>
+      </button>
+    );
+  };
 
   return (
-    <nav className="bg-gray-900 border-b border-gray-800 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          <div className="flex items-center">
-            <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-500 cursor-pointer" onClick={() => onNavigate('DASHBOARD')}>
-              ZoneRun
-            </span>
-          </div>
-          
-          <div className="flex items-center space-x-1 md:space-x-2 lg:space-x-4">
-            <NavItem view="DASHBOARD" icon={Map} label="Map" />
-            <NavItem view="MARKETPLACE" icon={ShoppingBag} label="Market" />
-            <NavItem view="INVENTORY" icon={Package} label="Items" />
-            <NavItem view="LEADERBOARD" icon={Trophy} label="Rank" />
-            <NavItem view="WALLET" icon={Wallet} label="Wallet" />
-            <NavItem view="PROFILE" icon={UserIcon} label="Profile" />
-            {/* Admin Link - In a real app this would be hidden behind a role check */}
-            <div className="h-6 w-px bg-gray-700 mx-2 hidden md:block"></div>
-            <NavItem view="ADMIN" icon={Settings} label="Admin" isAdmin={true} />
-          </div>
+    <>
+      {/* DESKTOP TOP BAR */}
+      <nav className="bg-gray-900 border-b border-gray-800 sticky top-0 z-50 h-16 hidden md:block">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
+          <div className="flex items-center justify-between h-full">
+            <div className="flex items-center">
+              <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-500 cursor-pointer" onClick={() => onNavigate('DASHBOARD')}>
+                ZoneRun
+              </span>
+            </div>
+            
+            <div className="flex items-center space-x-1 lg:space-x-2">
+              <NavItem view="DASHBOARD" icon={Map} label="Map" />
+              <NavItem view="MARKETPLACE" icon={ShoppingBag} label="Market" />
+              <NavItem view="INVENTORY" icon={Package} label="Inventory" />
+              <NavItem view="MISSIONS" icon={Target} label="Missions" />
+              <NavItem view="LEADERBOARD" icon={Trophy} label="Rank" />
+              <NavItem view="WALLET" icon={Wallet} label="Wallet" />
+              <NavItem view="PROFILE" icon={UserIcon} label="Profile" />
+              <div className="h-6 w-px bg-gray-700 mx-2"></div>
+              <NavItem view="ADMIN" icon={Settings} label="Admin" isAdmin={true} />
+            </div>
 
-          <div className="flex items-center ml-4">
-            <button
-              onClick={onLogout}
-              className="p-2 text-gray-500 hover:text-red-400 transition-colors"
-              title="Logout"
-            >
-              <LogOut size={20} />
-            </button>
+            <div className="flex items-center ml-4">
+              <button
+                onClick={onLogout}
+                className="p-2 text-gray-500 hover:text-red-400 transition-colors"
+                title="Logout"
+              >
+                <LogOut size={20} />
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-    </nav>
+      </nav>
+
+      {/* MOBILE TOP BAR (Logo + Actions) */}
+      <nav className="bg-gray-900 border-b border-gray-800 sticky top-0 z-50 h-14 md:hidden flex justify-between items-center px-4">
+          <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-500" onClick={() => onNavigate('DASHBOARD')}>
+            ZoneRun
+          </span>
+          <div className="flex items-center gap-3">
+             <button onClick={() => onNavigate('ADMIN')} className={`text-gray-400 ${currentView === 'ADMIN' ? 'text-red-400' : ''}`}><Settings size={20}/></button>
+             <button onClick={onLogout} className="text-gray-400"><LogOut size={20}/></button>
+          </div>
+      </nav>
+
+      {/* MOBILE BOTTOM NAV BAR */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-gray-950 border-t border-gray-800 z-50 pb-safe">
+        <div className="flex justify-around items-center p-2">
+           <NavItem view="DASHBOARD" icon={Map} label="Map" mobileLabel="Map" />
+           <NavItem view="MISSIONS" icon={Target} label="Missions" mobileLabel="Goals" />
+           <NavItem view="MARKETPLACE" icon={ShoppingBag} label="Market" mobileLabel="Shop" />
+           <NavItem view="INVENTORY" icon={Package} label="Inventory" mobileLabel="Items" />
+           <NavItem view="PROFILE" icon={UserIcon} label="Profile" mobileLabel="Profile" />
+        </div>
+      </nav>
+    </>
   );
 };
 
