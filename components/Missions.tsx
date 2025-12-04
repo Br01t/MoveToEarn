@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Mission, Badge, User, Zone, Rarity } from '../types';
-import { Target, Award, CheckCircle, Lock, Flag, Crown, Star, Hexagon, Filter, Zap, Mountain, Globe, Home, Landmark, Swords, Footprints, Rocket, Tent, Timer, Building2 } from 'lucide-react';
+import { Target, Award, CheckCircle, Lock, Flag, Crown, Star, Hexagon, Filter, Zap, Mountain, Globe, Home, Landmark, Swords, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users } from 'lucide-react';
 import Pagination from './Pagination';
 
 interface MissionsProps {
@@ -72,6 +72,11 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
           case 'Tent': return <Tent className={className} />;
           case 'Timer': return <Timer className={className} />;
           case 'Building2': return <Building2 className={className} />;
+          case 'Moon': return <Moon className={className} />;
+          case 'Sun': return <Sun className={className} />;
+          case 'ShieldCheck': return <ShieldCheck className={className} />;
+          case 'Gem': return <Gem className={className} />;
+          case 'Users': return <Users className={className} />;
           default: return <Award className={className} />;
       }
   };
