@@ -23,6 +23,15 @@ export interface Badge {
   rarity: Rarity;
 }
 
+export interface RunEntry {
+  id: string;
+  location: string;
+  km: number;
+  timestamp: number;
+  govEarned?: number;
+  runEarned: number;
+}
+
 export interface User {
   id: string;
   name: string;
@@ -33,8 +42,10 @@ export interface User {
   totalKm: number;
   isPremium: boolean; // Subscription status
   inventory: InventoryItem[];
+  runHistory: RunEntry[];
   completedMissionIds: string[];
   earnedBadgeIds: string[];
+  favoriteBadgeId?: string; // The badge displayed next to name
 }
 
 export interface Zone {

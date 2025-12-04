@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Mission, Badge, User, Zone, Rarity } from '../types';
-import { Target, Award, CheckCircle, Lock, Flag, Crown, Star, Hexagon } from 'lucide-react';
+import { Target, Award, CheckCircle, Lock, Flag, Crown, Star, Hexagon, Filter, Zap, Mountain, Globe, Home, Landmark, Swords, Footprints, Rocket, Tent, Timer, Building2 } from 'lucide-react';
 import Pagination from './Pagination';
 
 interface MissionsProps {
@@ -17,12 +17,19 @@ const BADGES_PER_PAGE = 12;
 const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) => {
   const [missionPage, setMissionPage] = useState(1);
   const [badgePage, setBadgePage] = useState(1);
+  const [missionFilter, setMissionFilter] = useState<'ALL' | Rarity>('ALL');
 
   const ownedZonesCount = zones.filter(z => z.ownerId === user.id).length;
 
+  // Filter Logic - Missions
+  const filteredMissions = missions.filter(m => {
+      if (missionFilter === 'ALL') return true;
+      return m.rarity === missionFilter;
+  });
+
   // Pagination Logic - Missions
-  const totalMissionPages = Math.ceil(missions.length / MISSIONS_PER_PAGE);
-  const currentMissions = missions.slice(
+  const totalMissionPages = Math.ceil(filteredMissions.length / MISSIONS_PER_PAGE);
+  const currentMissions = filteredMissions.slice(
     (missionPage - 1) * MISSIONS_PER_PAGE,
     missionPage * MISSIONS_PER_PAGE
   );
@@ -54,6 +61,17 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
           case 'Flag': return <Flag className={className} />;
           case 'Crown': return <Crown className={className} />;
           case 'Award': return <Award className={className} />;
+          case 'Zap': return <Zap className={className} />;
+          case 'Mountain': return <Mountain className={className} />;
+          case 'Globe': return <Globe className={className} />;
+          case 'Home': return <Home className={className} />;
+          case 'Landmark': return <Landmark className={className} />;
+          case 'Swords': return <Swords className={className} />;
+          case 'Footprints': return <Footprints className={className} />;
+          case 'Rocket': return <Rocket className={className} />;
+          case 'Tent': return <Tent className={className} />;
+          case 'Timer': return <Timer className={className} />;
+          case 'Building2': return <Building2 className={className} />;
           default: return <Award className={className} />;
       }
   };
@@ -66,31 +84,47 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
               text: 'text-gray-400', 
               bg: 'bg-gray-800', 
               badge: 'bg-gray-700 text-gray-300',
-              progress: 'bg-gray-500'
+              progress: 'bg-gray-500',
+              doneBadge: 'bg-gray-700 text-gray-300'
           };
           case 'RARE': return { 
               border: 'border-cyan-500', 
               text: 'text-cyan-400', 
-              bg: 'bg-cyan-900/10', 
+              bg: 'bg-cyan-900/20', 
               badge: 'bg-cyan-900 text-cyan-400 border border-cyan-500/30',
-              progress: 'bg-cyan-500'
+              progress: 'bg-cyan-500',
+              doneBadge: 'bg-cyan-500 text-black'
           };
           case 'EPIC': return { 
               border: 'border-purple-500', 
               text: 'text-purple-400', 
-              bg: 'bg-purple-900/10', 
+              bg: 'bg-purple-900/20', 
               badge: 'bg-purple-900 text-purple-400 border border-purple-500/30',
-              progress: 'bg-purple-500'
+              progress: 'bg-purple-500',
+              doneBadge: 'bg-purple-500 text-black'
           };
           case 'LEGENDARY': return { 
               border: 'border-yellow-500', 
               text: 'text-yellow-400', 
-              bg: 'bg-yellow-900/10', 
+              bg: 'bg-yellow-900/20', 
               badge: 'bg-yellow-900 text-yellow-400 border border-yellow-500/50',
-              progress: 'bg-yellow-500'
+              progress: 'bg-yellow-500',
+              doneBadge: 'bg-yellow-500 text-black'
           };
-          default: return { border: 'border-gray-600', text: 'text-gray-400', bg: 'bg-gray-800', badge: 'bg-gray-700', progress: 'bg-gray-500' };
+          default: return { 
+              border: 'border-gray-600', 
+              text: 'text-gray-400', 
+              bg: 'bg-gray-800', 
+              badge: 'bg-gray-700', 
+              progress: 'bg-gray-500',
+              doneBadge: 'bg-emerald-500 text-black'
+          };
       }
+  };
+
+  const handleFilterChange = (filter: 'ALL' | Rarity) => {
+      setMissionFilter(filter);
+      setMissionPage(1); // Reset to first page
   };
 
   return (
@@ -104,71 +138,117 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
             </h1>
             <p className="text-gray-400 text-sm">Complete tasks to earn GOV rewards.</p>
          </div>
-         
-         {/* LEGEND */}
-         <div className="bg-gray-800 border border-gray-700 p-3 rounded-lg flex flex-wrap gap-3 text-[10px] font-bold uppercase tracking-wider">
-             <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-gray-500"></div> Common</div>
-             <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-cyan-500 shadow-[0_0_6px_rgba(6,182,212,0.8)]"></div> Rare</div>
-             <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-purple-500 shadow-[0_0_6px_rgba(168,85,247,0.8)]"></div> Epic</div>
-             <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-yellow-500 shadow-[0_0_6px_rgba(234,179,8,0.8)]"></div> Legendary</div>
-         </div>
       </div>
 
       {/* ACTIVE MISSIONS */}
       <div>
-        <h2 className="text-lg font-bold text-white mb-4 border-l-4 border-emerald-500 pl-3">Missions Log</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {currentMissions.map(mission => {
-                const isCompleted = user.completedMissionIds.includes(mission.id);
-                const progress = getProgress(mission.conditionType, mission.conditionValue);
-                const style = getRarityStyles(mission.rarity);
-                
-                return (
-                    <div key={mission.id} className={`rounded-lg border p-4 flex flex-col justify-between relative overflow-hidden transition-all ${style.border} ${isCompleted ? 'bg-gray-800/80' : style.bg}`}>
-                        
-                        {/* Header: Title + Badges */}
-                        <div className="flex justify-between items-start mb-2">
-                            <h3 className={`font-bold text-sm pr-2 ${isCompleted ? 'text-white line-through opacity-70' : style.text}`}>{mission.title}</h3>
-                            <div className="flex flex-col items-end gap-1 shrink-0">
-                                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${style.badge}`}>
-                                    {mission.rarity}
-                                </span>
-                                {isCompleted && (
-                                    <span className="bg-emerald-500 text-black text-[9px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1">
-                                        <CheckCircle size={8} /> DONE
-                                    </span>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Description */}
-                        <p className={`text-xs text-gray-400 mb-3 leading-tight ${isCompleted ? 'opacity-50' : ''}`}>{mission.description}</p>
-                        
-                        {/* Progress Bar */}
-                        <div className="mb-3">
-                            <div className="flex justify-between text-[10px] mb-1 font-mono">
-                                <span className="text-gray-500">Progress</span>
-                                <span className={isCompleted ? 'text-emerald-400' : 'text-gray-300'}>
-                                    {getCurrentValue(mission.conditionType)} / {mission.conditionValue}
-                                </span>
-                            </div>
-                            <div className="w-full bg-gray-900 rounded-full h-1.5 border border-gray-700/50">
-                                <div 
-                                    className={`h-full rounded-full transition-all duration-500 ${isCompleted ? 'bg-emerald-500' : style.progress}`} 
-                                    style={{ width: `${progress}%` }}
-                                ></div>
-                            </div>
-                        </div>
-
-                        {/* Footer: Reward */}
-                        <div className={`flex justify-between items-center pt-2 border-t ${isCompleted ? 'border-gray-700/30 opacity-50' : 'border-gray-700/50'}`}>
-                            <span className="text-[10px] text-gray-500 font-bold uppercase">Reward</span>
-                            <span className="text-emerald-400 text-xs font-bold font-mono">+{mission.rewardGov} GOV</span>
-                        </div>
-                    </div>
-                );
-            })}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+            <h2 className="text-lg font-bold text-white border-l-4 border-emerald-500 pl-3">Missions Log</h2>
+            
+            {/* Filter Controls */}
+            <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
+                <button 
+                   onClick={() => handleFilterChange('ALL')}
+                   className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-colors whitespace-nowrap ${missionFilter === 'ALL' ? 'bg-white text-black' : 'bg-gray-800 text-gray-400 hover:text-white'}`}
+                >
+                    All
+                </button>
+                <button 
+                   onClick={() => handleFilterChange('COMMON')}
+                   className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-colors whitespace-nowrap ${missionFilter === 'COMMON' ? 'bg-gray-500 text-white' : 'bg-gray-800 text-gray-500 hover:text-gray-300'}`}
+                >
+                    Common
+                </button>
+                <button 
+                   onClick={() => handleFilterChange('RARE')}
+                   className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-colors whitespace-nowrap ${missionFilter === 'RARE' ? 'bg-cyan-500 text-black' : 'bg-gray-800 text-cyan-500 hover:bg-cyan-900/20'}`}
+                >
+                    Rare
+                </button>
+                <button 
+                   onClick={() => handleFilterChange('EPIC')}
+                   className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-colors whitespace-nowrap ${missionFilter === 'EPIC' ? 'bg-purple-500 text-white' : 'bg-gray-800 text-purple-500 hover:bg-purple-900/20'}`}
+                >
+                    Epic
+                </button>
+                <button 
+                   onClick={() => handleFilterChange('LEGENDARY')}
+                   className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-colors whitespace-nowrap ${missionFilter === 'LEGENDARY' ? 'bg-yellow-500 text-black' : 'bg-gray-800 text-yellow-500 hover:bg-yellow-900/20'}`}
+                >
+                    Legendary
+                </button>
+            </div>
         </div>
+
+        {filteredMissions.length === 0 ? (
+            <div className="text-center py-12 bg-gray-800 rounded-xl border border-gray-700 border-dashed">
+                <Filter className="mx-auto text-gray-600 mb-2" />
+                <p className="text-gray-500 text-sm">No missions found for this rarity.</p>
+                <button onClick={() => handleFilterChange('ALL')} className="text-emerald-400 text-xs mt-2 hover:underline">Clear Filter</button>
+            </div>
+        ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {currentMissions.map(mission => {
+                    const isCompleted = user.completedMissionIds.includes(mission.id);
+                    const progress = getProgress(mission.conditionType, mission.conditionValue);
+                    const style = getRarityStyles(mission.rarity);
+                    
+                    // Active missions are darker/neutral to encourage unlocking. 
+                    // Completed missions show full rarity colors.
+                    const containerClass = isCompleted 
+                        ? `${style.bg} ${style.border}` 
+                        : 'bg-gray-800 border-gray-700';
+
+                    return (
+                        <div key={mission.id} className={`rounded-lg border p-4 flex flex-col justify-between relative overflow-hidden transition-all ${containerClass}`}>
+                            
+                            {/* Header: Title + Badges */}
+                            <div className="flex justify-between items-start mb-2">
+                                <h3 className={`font-bold text-sm pr-2 ${isCompleted ? 'text-white' : 'text-gray-200'}`}>
+                                    {mission.title}
+                                </h3>
+                                <div className="flex flex-col items-end gap-1 shrink-0">
+                                    {/* Badge is always colored to show potential value */}
+                                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${style.badge}`}>
+                                        {mission.rarity}
+                                    </span>
+                                    {isCompleted && (
+                                        <span className={`${style.doneBadge} text-[9px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1`}>
+                                            <CheckCircle size={8} /> DONE
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Description */}
+                            <p className={`text-xs text-gray-400 mb-3 leading-tight ${isCompleted ? 'opacity-70' : ''}`}>{mission.description}</p>
+                            
+                            {/* Progress Bar */}
+                            <div className="mb-3">
+                                <div className="flex justify-between text-[10px] mb-1 font-mono">
+                                    <span className="text-gray-500">Progress</span>
+                                    <span className={isCompleted ? style.text : 'text-gray-300'}>
+                                        {getCurrentValue(mission.conditionType)} / {mission.conditionValue}
+                                    </span>
+                                </div>
+                                <div className="w-full bg-gray-900 rounded-full h-1.5 border border-gray-700/50">
+                                    <div 
+                                        className={`h-full rounded-full transition-all duration-500 ${isCompleted ? style.progress : style.progress}`} 
+                                        style={{ width: `${progress}%` }}
+                                    ></div>
+                                </div>
+                            </div>
+
+                            {/* Footer: Reward */}
+                            <div className={`flex justify-between items-center pt-2 border-t ${isCompleted ? 'border-gray-700/30 opacity-70' : 'border-gray-700/50'}`}>
+                                <span className="text-[10px] text-gray-500 font-bold uppercase">Reward</span>
+                                <span className={`${isCompleted ? style.text : 'text-emerald-400'} text-xs font-bold font-mono`}>+{mission.rewardGov} GOV</span>
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+        )}
         <Pagination 
           currentPage={missionPage} 
           totalPages={totalMissionPages} 
