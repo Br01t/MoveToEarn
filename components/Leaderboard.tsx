@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { User, Zone, Badge, Rarity } from '../types';
-import { Trophy, Medal, Map, Award, Flag, Crown, Zap, Mountain, Globe, Home, Landmark, Swords, Footprints, Rocket, Tent, Timer, Building2 } from 'lucide-react';
+import { Trophy, Medal, Map, Award, Flag, Crown, Zap, Mountain, Globe, Home, Landmark, Swords, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users } from 'lucide-react';
 
 interface MockUser {
   id: string;
@@ -52,6 +52,11 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
           case 'Tent': return <Tent className={className} />;
           case 'Timer': return <Timer className={className} />;
           case 'Building2': return <Building2 className={className} />;
+          case 'Moon': return <Moon className={className} />;
+          case 'Sun': return <Sun className={className} />;
+          case 'ShieldCheck': return <ShieldCheck className={className} />;
+          case 'Gem': return <Gem className={className} />;
+          case 'Users': return <Users className={className} />;
           default: return <Award className={className} />;
       }
   };
