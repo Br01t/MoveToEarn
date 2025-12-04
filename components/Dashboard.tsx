@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { User, Zone, InventoryItem, ViewState } from '../types';
 import { Play, ZoomIn, ZoomOut, Move, X, UploadCloud, MapPin, CheckCircle, Zap, Search, ShoppingBag, Clock, Shield, Globe, Image as ImageIcon, Trash2, FileText, Crown, Loader, AlertTriangle, Lock, Filter, ChevronDown, ChevronUp, HelpCircle, Activity, History, Calendar } from 'lucide-react';
 import { PREMIUM_COST } from '../constants';
+import Pagination from './Pagination';
 
 interface DashboardProps {
   user: User;
@@ -16,6 +17,7 @@ interface DashboardProps {
 
 // Hexagon Configuration
 const HEX_SIZE = 100; // Increased size for better visibility
+const RUNS_PER_PAGE = 5;
 
 const Dashboard: React.FC<DashboardProps> = ({ user, zones, onSyncRun, onClaim, onBoost, onDefend, onNavigate }) => {
   const [selectedZone, setSelectedZone] = useState<Zone | null>(null);
@@ -28,6 +30,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, onSyncRun, onClaim, 
   const [isLegendOpen, setIsLegendOpen] = useState(false); // Legend collapse state
   const [isLastRunOpen, setIsLastRunOpen] = useState(false); // Last Run collapse state
   const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [historyPage, setHistoryPage] = useState(1);
 
   // Sync Modal State
   const [showSyncModal, setShowSyncModal] = useState(false);
@@ -74,6 +77,13 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, onSyncRun, onClaim, 
   }, [zones]);
 
   const lastRun = user.runHistory[0];
+
+  // Pagination for History Modal
+  const totalHistoryPages = Math.ceil(user.runHistory.length / RUNS_PER_PAGE);
+  const currentHistoryRuns = user.runHistory.slice(
+      (historyPage - 1) * RUNS_PER_PAGE,
+      historyPage * RUNS_PER_PAGE
+  );
 
   // --- Map Math Helpers ---
   const getHexPosition = (q: number, r: number) => {
@@ -274,22 +284,22 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, onSyncRun, onClaim, 
       </div>
 
       {/* LEFT TOOLBAR: SEARCH & LAST RUN */}
-      <div className="absolute top-14 left-2 z-20 flex flex-col gap-2 items-start">
+      <div className="absolute top-14 left-2 z-20 flex flex-col gap-2 items-start pointer-events-none">
           
           {/* 1. SEARCH TOGGLE */}
-          <div className={`flex flex-col items-start transition-all duration-300 ${isFilterOpen ? 'w-64' : 'w-10'}`}>
+          <div className={`flex flex-col items-start transition-all duration-300 pointer-events-auto ${isFilterOpen ? 'w-64 z-50' : 'w-10 z-40'}`}>
             <button 
                 onClick={() => {
                     setIsFilterOpen(!isFilterOpen);
                     if (isLastRunOpen) setIsLastRunOpen(false); // Close other menu
                 }} 
-                className="w-10 h-10 bg-gray-800/90 backdrop-blur-md rounded-full border border-gray-700 shadow-lg flex items-center justify-center text-white hover:text-emerald-400 z-30 relative"
+                className="w-10 h-10 bg-gray-800/90 backdrop-blur-md rounded-full border border-gray-700 shadow-lg flex items-center justify-center text-white hover:text-emerald-400 relative shrink-0"
             >
                 {isFilterOpen ? <X size={20}/> : <Search size={20}/>}
             </button>
 
             {isFilterOpen && (
-                <div className="absolute top-12 left-0 w-64 bg-gray-800/90 backdrop-blur-md rounded-xl border border-gray-700 shadow-xl p-3 flex flex-col gap-3 animate-fade-in origin-top-left">
+                <div className="mt-2 w-full bg-gray-800/90 backdrop-blur-md rounded-xl border border-gray-700 shadow-xl p-3 flex flex-col gap-3 animate-fade-in origin-top-left">
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={14} />
                         <input 
@@ -324,19 +334,19 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, onSyncRun, onClaim, 
 
           {/* 2. LAST RUN TOGGLE */}
           {lastRun && (
-             <div className="relative">
+             <div className="relative pointer-events-auto z-30">
                  <button 
                     onClick={() => {
                         setIsLastRunOpen(!isLastRunOpen);
                         if (isFilterOpen) setIsFilterOpen(false); // Close other menu
                     }}
-                    className={`w-10 h-10 bg-gray-800/90 backdrop-blur-md rounded-full border border-gray-700 shadow-lg flex items-center justify-center transition-colors z-30 ${isLastRunOpen ? 'text-white border-emerald-500' : 'text-emerald-400 hover:text-white'}`}
+                    className={`w-10 h-10 bg-gray-800/90 backdrop-blur-md rounded-full border border-gray-700 shadow-lg flex items-center justify-center transition-colors ${isLastRunOpen ? 'text-white border-emerald-500' : 'text-emerald-400 hover:text-white'}`}
                  >
                      <Activity size={20} />
                  </button>
 
                  {isLastRunOpen && (
-                     <div className="absolute top-0 left-12 w-56 bg-gray-800/90 backdrop-blur-md border border-gray-700 rounded-xl p-3 shadow-lg animate-fade-in origin-top-left z-30">
+                     <div className="mt-2 w-56 bg-gray-800/90 backdrop-blur-md border border-gray-700 rounded-xl p-3 shadow-lg animate-fade-in origin-top-left">
                         <div className="flex items-center gap-2 mb-2">
                             <Activity size={14} className="text-emerald-400" />
                             <span className="text-xs font-bold text-gray-300 uppercase tracking-wide">Latest Activity</span>
@@ -351,6 +361,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, onSyncRun, onClaim, 
                         <button 
                             onClick={() => {
                                 setIsLastRunOpen(false);
+                                setHistoryPage(1);
                                 setShowHistoryModal(true);
                             }}
                             className="w-full py-1.5 bg-gray-700/50 hover:bg-emerald-500/20 hover:text-emerald-400 text-xs text-gray-400 rounded transition-colors flex items-center justify-center gap-1"
@@ -853,17 +864,17 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, onSyncRun, onClaim, 
                      </h3>
                      <button onClick={() => setShowHistoryModal(false)} className="text-gray-400 hover:text-white"><X size={20}/></button>
                   </div>
-                  <div className="p-4 overflow-y-auto space-y-3">
+                  <div className="p-4 overflow-y-auto space-y-3 flex-1">
                      {user.runHistory.length === 0 ? (
                          <div className="text-center py-8 text-gray-500">No runs recorded yet.</div>
                      ) : (
-                         user.runHistory.map(run => (
+                         currentHistoryRuns.map(run => (
                              <div key={run.id} className="bg-gray-900 border border-gray-700 p-4 rounded-xl flex justify-between items-center">
                                  <div>
                                      <div className="font-bold text-white text-sm">{run.location}</div>
                                      <div className="text-xs text-gray-500 flex items-center gap-2 mt-1">
                                          <Calendar size={10} />
-                                         {new Date(run.timestamp).toLocaleString()}
+                                         {new Date(run.timestamp).toLocaleDateString()}
                                      </div>
                                  </div>
                                  <div className="text-right">
@@ -876,6 +887,10 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, onSyncRun, onClaim, 
                              </div>
                          ))
                      )}
+                  </div>
+                  {/* Pagination Footer */}
+                  <div className="p-4 border-t border-gray-700 bg-gray-900 rounded-b-2xl">
+                    <Pagination currentPage={historyPage} totalPages={totalHistoryPages} onPageChange={setHistoryPage} />
                   </div>
               </div>
           </div>

@@ -150,7 +150,7 @@ export const MOCK_BADGES: Badge[] = [
     id: 'b_warmup',
     name: 'Warm Up',
     description: 'Completed 5 KM.',
-    icon: 'Footprints', // Changed from Flag
+    icon: 'Footprints', 
     conditionType: 'TOTAL_KM',
     conditionValue: 5,
     rarity: 'COMMON'
@@ -159,7 +159,7 @@ export const MOCK_BADGES: Badge[] = [
     id: 'b2',
     name: 'Elite Runner',
     description: 'Clocked over 100 KM total distance.',
-    icon: 'Zap', // Changed from Award
+    icon: 'Timer', // Changed to Timer
     conditionType: 'TOTAL_KM',
     conditionValue: 100,
     rarity: 'RARE'
@@ -168,7 +168,7 @@ export const MOCK_BADGES: Badge[] = [
     id: 'b_iron',
     name: 'Iron Legs',
     description: 'Surpassed the 500 KM mark.',
-    icon: 'Mountain', // Changed from Award
+    icon: 'Mountain', 
     conditionType: 'TOTAL_KM',
     conditionValue: 500,
     rarity: 'EPIC'
@@ -177,7 +177,7 @@ export const MOCK_BADGES: Badge[] = [
     id: 'b_titan',
     name: 'Titan',
     description: 'A legendary 2,000 KM career.',
-    icon: 'Globe', // Changed from Crown
+    icon: 'Rocket', // Changed to Rocket
     conditionType: 'TOTAL_KM',
     conditionValue: 2000,
     rarity: 'LEGENDARY'
@@ -197,7 +197,7 @@ export const MOCK_BADGES: Badge[] = [
     id: 'b_settler',
     name: 'Settler',
     description: 'Established a foothold with 3 zones.',
-    icon: 'Home', // Changed from Flag
+    icon: 'Tent', // Changed to Tent
     conditionType: 'OWN_ZONES',
     conditionValue: 3,
     rarity: 'RARE'
@@ -206,7 +206,7 @@ export const MOCK_BADGES: Badge[] = [
     id: 'b3',
     name: 'Tycoon',
     description: 'Control an empire of 10 zones.',
-    icon: 'Landmark', // Changed from Crown
+    icon: 'Building2', // Changed to Building
     conditionType: 'OWN_ZONES',
     conditionValue: 10,
     rarity: 'EPIC'
@@ -215,7 +215,7 @@ export const MOCK_BADGES: Badge[] = [
     id: 'b_warlord',
     name: 'Warlord',
     description: 'Conquered 25 zones.',
-    icon: 'Swords', // Changed from Crown
+    icon: 'Swords', 
     conditionType: 'OWN_ZONES',
     conditionValue: 25,
     rarity: 'EPIC'
@@ -335,7 +335,17 @@ export const INITIAL_USER: User = {
   earnedBadgeIds: ['b1', 'b2'], // Already has Pioneer and Elite Runner
   runHistory: [
     { id: 'run_init_1', location: 'Parco Sempione, Milan - IT', km: 5.5, timestamp: Date.now() - 86400000, runEarned: 55 },
-    { id: 'run_init_2', location: 'Duomo, Milan - IT', km: 3.2, timestamp: Date.now() - 172800000, runEarned: 32 }
+    { id: 'run_init_2', location: 'Duomo, Milan - IT', km: 3.2, timestamp: Date.now() - 172800000, runEarned: 32 },
+    { id: 'run_fake_1', location: 'Central Park, NY - US', km: 8.5, timestamp: Date.now() - 259200000, runEarned: 85, govEarned: 5 },
+    { id: 'run_fake_2', location: 'Hyde Park, London - UK', km: 6.0, timestamp: Date.now() - 345600000, runEarned: 60 },
+    { id: 'run_fake_3', location: 'San Siro, Milan - IT', km: 10.2, timestamp: Date.now() - 432000000, runEarned: 102, govEarned: 10 },
+    { id: 'run_fake_4', location: 'Shibuya, Tokyo - JP', km: 4.5, timestamp: Date.now() - 518400000, runEarned: 45 },
+    { id: 'run_fake_5', location: 'Brooklyn Bridge, NY - US', km: 7.1, timestamp: Date.now() - 604800000, runEarned: 71 },
+    { id: 'run_fake_6', location: 'Porta Romana, Milan - IT', km: 3.8, timestamp: Date.now() - 691200000, runEarned: 38 },
+    { id: 'run_fake_7', location: 'Camden Town, London - UK', km: 5.9, timestamp: Date.now() - 777600000, runEarned: 59 },
+    { id: 'run_fake_8', location: 'Roppongi, Tokyo - JP', km: 6.5, timestamp: Date.now() - 864000000, runEarned: 65, govEarned: 5 },
+    { id: 'run_fake_9', location: 'City Life, Milan - IT', km: 12.0, timestamp: Date.now() - 950400000, runEarned: 120 },
+    { id: 'run_fake_10', location: 'Times Square, NY - US', km: 4.0, timestamp: Date.now() - 1036800000, runEarned: 40 }
   ],
   inventory: [
     {
