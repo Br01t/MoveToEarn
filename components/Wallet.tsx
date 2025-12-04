@@ -1,39 +1,67 @@
 
 import React, { useState } from 'react';
 import { User } from '../types';
-import { Flame, Link as LinkIcon, Wallet as WalletIcon, CheckCircle, CreditCard, DollarSign } from 'lucide-react';
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from 'recharts';
+import { Flame, Link as LinkIcon, Wallet as WalletIcon, CheckCircle, CreditCard, Euro, TrendingUp, Lock, Activity, ArrowRight, Crown, History, ArrowUpRight, ArrowDownLeft, X } from 'lucide-react';
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
+import Pagination from './Pagination';
 
 interface WalletProps {
   user: User;
-  onBuyFiat: (amountUSD: number) => void;
+  onBuyFiat: (amount: number) => void;
 }
 
-// Mock chart data for RUN
-const runData = [
-  { name: 'Mon', value: 0.45 },
-  { name: 'Tue', value: 0.48 },
-  { name: 'Wed', value: 0.52 },
-  { name: 'Thu', value: 0.49 },
-  { name: 'Fri', value: 0.55 },
-  { name: 'Sat', value: 0.60 },
-  { name: 'Sun', value: 0.65 },
+const TRANSACTIONS_PER_PAGE = 7;
+
+// Mock Data: RUN Supply (Inflationary - Linear/Exponential growth)
+const runSupplyData = [
+  { month: 'Jan', supply: 10.5 },
+  { month: 'Feb', supply: 12.2 },
+  { month: 'Mar', supply: 14.8 },
+  { month: 'Apr', supply: 18.5 },
+  { month: 'May', supply: 23.0 },
+  { month: 'Jun', supply: 28.5 },
+  { month: 'Jul', supply: 35.0 },
 ];
 
-// Mock chart data for GOV
-const govData = [
-  { name: 'Mon', value: 4.20 },
-  { name: 'Tue', value: 4.15 },
-  { name: 'Wed', value: 4.30 },
-  { name: 'Thu', value: 4.50 },
-  { name: 'Fri', value: 4.80 },
-  { name: 'Sat', value: 5.10 },
-  { name: 'Sun', value: 5.25 },
+// Mock Data: GOV Supply (Hard Cap - Logarithmic approach)
+const govSupplyData = [
+  { month: 'Jan', supply: 10 },
+  { month: 'Feb', supply: 25 },
+  { month: 'Mar', supply: 38 },
+  { month: 'Apr', supply: 45 },
+  { month: 'May', supply: 48 },
+  { month: 'Jun', supply: 49.2 },
+  { month: 'Jul', supply: 49.8 }, // Approaching 50M Cap
+];
+
+// Expanded Mock Transactions
+const mockTransactions = [
+    { id: 1, type: 'IN', token: 'RUN', amount: '+55.00', label: 'Run Reward', date: '2h ago', status: 'Confirmed' },
+    { id: 2, type: 'OUT', token: 'RUN', amount: '-250.00', label: 'Market Purchase', date: '5h ago', status: 'Confirmed' },
+    { id: 3, type: 'IN', token: 'GOV', amount: '+10.00', label: 'Zone Conquest', date: '1d ago', status: 'Confirmed' },
+    { id: 4, type: 'OUT', token: 'RUN', amount: '-50.00', label: 'Mint Fee', date: '2d ago', status: 'Confirmed' },
+    { id: 5, type: 'IN', token: 'RUN', amount: '+12.50', label: 'Run Reward', date: '3d ago', status: 'Confirmed' },
+    { id: 6, type: 'OUT', token: 'GOV', amount: '-50.00', label: 'Premium Sub', date: '4d ago', status: 'Confirmed' },
+    { id: 7, type: 'IN', token: 'GOV', amount: '+500.00', label: 'Fiat Purchase', date: '5d ago', status: 'Confirmed' },
+    { id: 8, type: 'OUT', token: 'RUN', amount: '-500.00', label: 'Boost Item', date: '6d ago', status: 'Confirmed' },
+    { id: 9, type: 'IN', token: 'RUN', amount: '+8.20', label: 'Run Reward', date: '1w ago', status: 'Confirmed' },
+    { id: 10, type: 'IN', token: 'RUN', amount: '+15.00', label: 'Daily Yield', date: '1w ago', status: 'Confirmed' },
+    { id: 11, type: 'OUT', token: 'RUN', amount: '-50.00', label: 'Mint Fee', date: '1w ago', status: 'Confirmed' },
+    { id: 12, type: 'IN', token: 'GOV', amount: '+5.00', label: 'Mint Reward', date: '1w ago', status: 'Confirmed' },
+    { id: 13, type: 'IN', token: 'GOV', amount: '+25.00', label: 'Mission Reward', date: '2w ago', status: 'Confirmed' },
+    { id: 14, type: 'IN', token: 'RUN', amount: '+100.00', label: 'Welcome Bonus', date: '2w ago', status: 'Confirmed' },
+    { id: 15, type: 'OUT', token: 'RUN', amount: '-250.00', label: 'Shield Item', date: '2w ago', status: 'Confirmed' },
+    { id: 16, type: 'IN', token: 'RUN', amount: '+4.50', label: 'Run Reward', date: '3w ago', status: 'Confirmed' },
+    { id: 17, type: 'IN', token: 'RUN', amount: '+11.20', label: 'Daily Yield', date: '3w ago', status: 'Confirmed' },
 ];
 
 const Wallet: React.FC<WalletProps> = ({ user, onBuyFiat }) => {
   const [fiatAmount, setFiatAmount] = useState<string>('');
   const [isWalletConnected, setIsWalletConnected] = useState(false);
+  
+  // History Modal State
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [historyPage, setHistoryPage] = useState(1);
 
   const handleFiatPurchase = () => {
       const val = parseFloat(fiatAmount);
@@ -42,148 +70,349 @@ const Wallet: React.FC<WalletProps> = ({ user, onBuyFiat }) => {
       setFiatAmount('');
   };
 
+  // Pagination Logic
+  const totalHistoryPages = Math.ceil(mockTransactions.length / TRANSACTIONS_PER_PAGE);
+  const currentHistory = mockTransactions.slice(
+      (historyPage - 1) * TRANSACTIONS_PER_PAGE,
+      historyPage * TRANSACTIONS_PER_PAGE
+  );
+
   return (
-    <div className="max-w-7xl mx-auto p-6 space-y-8">
+    <div className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
       
-      {/* Wallet Connection Status */}
-      <div className="bg-gray-800 rounded-xl border border-gray-700 p-6 flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex items-center gap-4">
-             <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isWalletConnected ? 'bg-emerald-500/20 text-emerald-400' : 'bg-gray-700 text-gray-400'}`}>
-                <WalletIcon size={24} />
-             </div>
-             <div>
-                <h3 className="text-white font-bold text-lg">External Wallet</h3>
-                <p className="text-gray-400 text-sm">
-                  {isWalletConnected ? 'Connected: 0x71C...9A23' : 'Connect your Web3 wallet to withdraw tokens.'}
-                </p>
-             </div>
-          </div>
-          <button 
+      {/* HEADER */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-2">
+         <div>
+            <h1 className="text-3xl font-bold text-white flex items-center gap-2">
+               <WalletIcon className="text-emerald-400" size={32} /> Wallet & Economy
+            </h1>
+            <p className="text-gray-400 text-sm">Manage assets and monitor protocol health.</p>
+         </div>
+         
+         {/* External Wallet Connect */}
+         <button 
             onClick={() => setIsWalletConnected(!isWalletConnected)}
-            className={`px-6 py-2 rounded-lg font-bold flex items-center gap-2 transition-all ${
+            className={`px-4 py-2 rounded-xl font-bold flex items-center gap-2 transition-all border ${
               isWalletConnected 
-                ? 'bg-emerald-900/50 text-emerald-400 border border-emerald-500/30' 
-                : 'bg-white text-gray-900 hover:bg-gray-100'
+                ? 'bg-emerald-900/20 text-emerald-400 border-emerald-500/50' 
+                : 'bg-gray-800 text-gray-400 border-gray-600 hover:bg-gray-700'
             }`}
           >
-             {isWalletConnected ? <><CheckCircle size={18}/> Connected</> : <><LinkIcon size={18}/> Connect Wallet</>}
+             {isWalletConnected ? <><CheckCircle size={16}/> 0x71...9A23</> : <><LinkIcon size={16}/> Connect Web3</>}
           </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      {/* PERSONAL BALANCE CARDS */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-gray-800 rounded-2xl border border-gray-700 p-6 flex items-center justify-between shadow-lg relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+                  <Activity size={100} />
+              </div>
+              <div>
+                  <p className="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Available RUN</p>
+                  <h2 className="text-3xl font-mono font-bold text-emerald-400">{user.runBalance.toFixed(2)}</h2>
+                  <p className="text-xs text-gray-500 mt-1">Utility Token (Spendable)</p>
+              </div>
+              <div className="bg-emerald-500/10 p-4 rounded-full text-emerald-400 border border-emerald-500/20">
+                  <Activity size={32} />
+              </div>
+          </div>
+
+          <div className="bg-gray-800 rounded-2xl border border-gray-700 p-6 flex items-center justify-between shadow-lg relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+                  <Crown size={100} />
+              </div>
+              <div>
+                  <p className="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Available GOV</p>
+                  <h2 className="text-3xl font-mono font-bold text-cyan-400">{user.govBalance.toFixed(2)}</h2>
+                  <p className="text-xs text-gray-500 mt-1">Governance Token (Store of Value)</p>
+              </div>
+               <div className="bg-cyan-500/10 p-4 rounded-full text-cyan-400 border border-cyan-500/20">
+                  <Crown size={32} />
+              </div>
+          </div>
+      </div>
+
+      {/* MAIN CONTENT GRID */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* Transaction Card */}
-        <div className="bg-gray-800 rounded-xl border border-gray-700 p-8 h-fit">
-          <div className="mb-6">
-             <h2 className="text-2xl font-bold text-white mb-2 flex items-center gap-2">
-                <CreditCard className="text-cyan-400" /> Buy GOV Token
-             </h2>
-             <p className="text-gray-400 text-sm">Purchase Governance tokens directly with fiat currency to increase your voting power.</p>
-          </div>
+        {/* --- LEFT COL: FIAT ON-RAMP & HISTORY --- */}
+        <div className="flex flex-col gap-6 h-full">
+            
+            {/* BUY CARD */}
+            <div className="bg-gray-800 rounded-2xl border border-gray-700 p-6 relative overflow-hidden shrink-0">
+                <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
+                    <CreditCard size={120} className="text-white" />
+                </div>
+                
+                <div className="relative z-10">
+                    <h2 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
+                        Buy GOV Token
+                    </h2>
+                    <p className="text-gray-400 text-xs mb-6">
+                        Direct purchase via SEPA/Credit Card. <br/>
+                        Rate: <span className="text-white font-mono">€1.00 ≈ 10.00 GOV</span>
+                    </p>
 
-          <div className="space-y-6 animate-fade-in">
-              <div className="bg-gray-900 p-4 rounded-lg border border-gray-700">
-                  <label className="block text-xs text-gray-400 mb-2">Pay with USD ($)</label>
-                  <div className="flex justify-between items-center">
-                      <input 
-                      type="number" 
-                      value={fiatAmount}
-                      onChange={(e) => setFiatAmount(e.target.value)}
-                      placeholder="100.00"
-                      className="bg-transparent text-2xl font-bold text-white focus:outline-none w-2/3"
-                      />
-                      <DollarSign className="text-gray-500" />
-                  </div>
-              </div>
-              
-              <div className="bg-gray-900 p-4 rounded-lg border border-gray-700">
-                  <label className="block text-xs text-gray-400 mb-2">You Receive (Est.)</label>
-                  <div className="flex justify-between items-center">
-                      <span className="text-2xl font-bold text-cyan-400">
-                          {fiatAmount ? (parseFloat(fiatAmount) * 10).toFixed(2) : '0.00'}
-                      </span>
-                      <span className="font-bold text-gray-300">GOV</span>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-2">Rate: $1.00 ≈ 10.00 GOV</p>
-              </div>
+                    <div className="space-y-4">
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">You Pay</label>
+                            <div className="flex items-center bg-gray-900 border border-gray-600 rounded-xl px-4 py-3 focus-within:border-emerald-500 transition-colors">
+                                <Euro size={20} className="text-gray-400 mr-2" />
+                                <input 
+                                    type="number" 
+                                    value={fiatAmount}
+                                    onChange={(e) => setFiatAmount(e.target.value)}
+                                    placeholder="50.00"
+                                    className="bg-transparent text-white font-bold w-full focus:outline-none"
+                                />
+                                <span className="text-xs font-bold text-gray-500">EUR</span>
+                            </div>
+                        </div>
 
-              <button 
-                  onClick={handleFiatPurchase}
-                  className="w-full py-4 bg-cyan-500 hover:bg-cyan-400 text-black font-bold rounded-lg transition-colors shadow-lg shadow-cyan-500/20"
-              >
-                  Purchase GOV
-              </button>
-          </div>
+                        <div className="flex justify-center text-gray-500">
+                            <ArrowRight size={16} className="rotate-90 md:rotate-0" />
+                        </div>
+                        
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">You Receive</label>
+                            <div className="flex items-center bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3">
+                                <Crown size={20} className="text-cyan-400 mr-2" fill="currentColor" fillOpacity={0.2} />
+                                <span className="text-white font-bold w-full">
+                                    {fiatAmount ? (parseFloat(fiatAmount) * 10).toFixed(2) : '0.00'}
+                                </span>
+                                <span className="text-xs font-bold text-cyan-400">GOV</span>
+                            </div>
+                        </div>
+
+                        <button 
+                            onClick={handleFiatPurchase}
+                            className="w-full py-4 mt-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-black font-bold rounded-xl transition-all shadow-lg shadow-emerald-900/20"
+                        >
+                            Proceed to Payment
+                        </button>
+                        <p className="text-[10px] text-center text-gray-500">Secured by Stripe via MoonPay</p>
+                    </div>
+                </div>
+            </div>
+
+            {/* RECENT TRANSACTIONS PREVIEW */}
+            <div className="bg-gray-800 rounded-2xl border border-gray-700 p-6 flex-1 flex flex-col">
+                <div className="flex justify-between items-center mb-4">
+                   <h3 className="font-bold text-white flex items-center gap-2 text-sm">
+                       <History size={16} className="text-gray-400"/> Recent Activity
+                   </h3>
+                   <button 
+                     onClick={() => {
+                         setHistoryPage(1);
+                         setShowHistoryModal(true);
+                     }}
+                     className="text-[10px] text-emerald-400 hover:underline"
+                   >
+                       View All
+                   </button>
+                </div>
+                <div className="space-y-3 flex-1">
+                    {mockTransactions.slice(0, 4).map((tx) => (
+                        <div key={tx.id} className="flex justify-between items-center bg-gray-900/50 p-3 rounded-lg border border-gray-700/50 hover:border-gray-600 transition-colors">
+                            <div className="flex items-center gap-3">
+                                <div className={`p-2 rounded-lg ${tx.type === 'IN' ? 'bg-emerald-900/20 text-emerald-400' : 'bg-gray-700/30 text-gray-400'}`}>
+                                    {tx.type === 'IN' ? <ArrowDownLeft size={16} /> : <ArrowUpRight size={16} />}
+                                </div>
+                                <div>
+                                    <div className="text-xs font-bold text-gray-200">{tx.label}</div>
+                                    <div className="text-[10px] text-gray-500">{tx.date}</div>
+                                </div>
+                            </div>
+                            <div className="text-right">
+                                <div className={`font-mono text-xs font-bold ${tx.token === 'GOV' ? 'text-cyan-400' : (tx.type === 'IN' ? 'text-emerald-400' : 'text-white')}`}>
+                                    {tx.amount} {tx.token}
+                                </div>
+                                <div className="text-[10px] text-gray-500">{tx.status}</div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
         </div>
 
-        {/* Info & Stats */}
-        <div className="space-y-8">
-           {/* Burn Mechanism Card */}
-           <div className="bg-gray-800 rounded-xl border border-gray-700 p-8 relative overflow-hidden">
-             <div className="absolute top-0 right-0 p-4 opacity-10">
-               <Flame size={120} className="text-red-500" />
-             </div>
-             <h2 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
-                <Flame className="text-red-500" /> Weekly Burn Event
-             </h2>
-             <p className="text-gray-400 text-sm mb-4 leading-relaxed">
-               Every week, a percentage of the total RUN supply is burned to stabilize the economy. 
-               Active users are rewarded with newly minted <span className="text-cyan-400 font-bold">GOV</span> tokens 
-               based on their <span className="text-white">Total Distance (KM)</span> and <span className="text-white">Zones Owned</span>.
-             </p>
-             <div className="w-full bg-gray-700 rounded-full h-2.5 mb-1">
-               <div className="bg-red-500 h-2.5 rounded-full" style={{ width: '45%' }}></div>
-             </div>
-             <p className="text-xs text-right text-gray-500">Next Burn: 2 Days 04:23:12</p>
-           </div>
+        {/* --- RIGHT COL: CHARTS --- */}
+        <div className="lg:col-span-2 space-y-6 h-full flex flex-col">
+            
+            {/* RUN SUPPLY CHART */}
+            <div className="bg-gray-800 rounded-2xl border border-gray-700 p-6 flex-1">
+                <div className="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                            <Activity className="text-emerald-400" size={18} /> 
+                            RUN Supply
+                        </h3>
+                        <p className="text-xs text-gray-400">Total Circulating Supply (Millions)</p>
+                    </div>
+                    <div className="text-right">
+                        <div className="text-xs font-bold bg-emerald-900/30 text-emerald-400 px-2 py-1 rounded border border-emerald-500/20 uppercase tracking-wider">
+                            Inflationary
+                        </div>
+                    </div>
+                </div>
+                
+                <div className="h-48 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={runSupplyData}>
+                            <defs>
+                                <linearGradient id="colorRun" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                                </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#374151" vertical={false} />
+                            <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#9ca3af'}} />
+                            <YAxis hide domain={['auto', 'auto']} />
+                            <Tooltip 
+                                contentStyle={{ backgroundColor: '#111827', borderColor: '#374151', borderRadius: '8px', color: '#fff', fontSize: '12px' }}
+                                itemStyle={{ color: '#10b981' }}
+                                formatter={(value: number) => [`${value}M`, 'Supply']}
+                            />
+                            <Area type="monotone" dataKey="supply" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorRun)" />
+                        </AreaChart>
+                    </ResponsiveContainer>
+                </div>
+                <div className="mt-2 flex items-center gap-2 text-xs text-gray-500 bg-gray-900/50 p-2 rounded">
+                   <TrendingUp size={12} className="text-emerald-500" />
+                   <span>Supply increases with physical activity. Controlled via Weekly Burn.</span>
+                </div>
+            </div>
 
-           {/* Charts Grid */}
-           <div className="grid grid-cols-1 gap-4">
-              {/* RUN Chart */}
-              <div className="bg-gray-800 rounded-xl border border-gray-700 p-4 h-48">
-                <h3 className="text-xs font-bold text-emerald-400 mb-2 flex items-center gap-2 uppercase tracking-wider">
-                  RUN Price
-                </h3>
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={runData}>
-                    <defs>
-                      <linearGradient id="colorRun" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <XAxis dataKey="name" hide />
-                    <YAxis domain={['auto', 'auto']} hide />
-                    <Tooltip contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', color: '#fff', fontSize: '12px' }} />
-                    <Area type="monotone" dataKey="value" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorRun)" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-
-              {/* GOV Chart */}
-              <div className="bg-gray-800 rounded-xl border border-gray-700 p-4 h-48">
-                <h3 className="text-xs font-bold text-cyan-400 mb-2 flex items-center gap-2 uppercase tracking-wider">
-                  GOV Price
-                </h3>
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={govData}>
-                    <defs>
-                      <linearGradient id="colorGov" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="#06b6d4" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <XAxis dataKey="name" hide />
-                    <YAxis domain={['auto', 'auto']} hide />
-                    <Tooltip contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', color: '#fff', fontSize: '12px' }} />
-                    <Area type="monotone" dataKey="value" stroke="#06b6d4" strokeWidth={2} fillOpacity={1} fill="url(#colorGov)" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-           </div>
+            {/* GOV SUPPLY CHART */}
+            <div className="bg-gray-800 rounded-2xl border border-gray-700 p-6 flex-1">
+                <div className="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                            <Lock className="text-cyan-400" size={18} /> 
+                            GOV Supply
+                        </h3>
+                        <p className="text-xs text-gray-400">Minted vs Max Cap (Millions)</p>
+                    </div>
+                    <div className="text-right">
+                        <div className="text-xs font-bold bg-cyan-900/30 text-cyan-400 px-2 py-1 rounded border border-cyan-500/20 uppercase tracking-wider">
+                            Hard Cap: 50M
+                        </div>
+                    </div>
+                </div>
+                
+                <div className="h-48 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={govSupplyData}>
+                            <defs>
+                                <linearGradient id="colorGov" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.3}/>
+                                    <stop offset="95%" stopColor="#06b6d4" stopOpacity={0}/>
+                                </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#374151" vertical={false} />
+                            <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#9ca3af'}} />
+                            <YAxis hide domain={[0, 55]} /> {/* Fixed domain to show cap approach */}
+                            <Tooltip 
+                                contentStyle={{ backgroundColor: '#111827', borderColor: '#374151', borderRadius: '8px', color: '#fff', fontSize: '12px' }}
+                                itemStyle={{ color: '#06b6d4' }}
+                                formatter={(value: number) => [`${value}M`, 'Circulating']}
+                            />
+                            {/* The Cap Line */}
+                            <Area type="monotone" dataKey="supply" stroke="#06b6d4" strokeWidth={3} fillOpacity={1} fill="url(#colorGov)" />
+                        </AreaChart>
+                    </ResponsiveContainer>
+                </div>
+                 <div className="mt-2 flex items-center gap-2 text-xs text-gray-500 bg-gray-900/50 p-2 rounded">
+                   <Lock size={12} className="text-cyan-500" />
+                   <span>Deflationary pressure increases as supply approaches the 50M Limit.</span>
+                </div>
+            </div>
 
         </div>
       </div>
+      
+      {/* Burn Stats Footer */}
+      <div className="bg-gray-800 rounded-2xl border border-red-900/30 p-6 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
+          <div className="absolute left-0 top-0 w-1 h-full bg-red-600"></div>
+          <div className="absolute -right-10 -bottom-10 opacity-10 pointer-events-none">
+             <Flame size={150} className="text-red-500" />
+          </div>
+          
+          <div className="flex items-center gap-4 relative z-10">
+             <div className="bg-red-500/10 p-4 rounded-full">
+                <Flame size={32} className="text-red-500 animate-pulse" />
+             </div>
+             <div>
+                <h3 className="text-lg font-bold text-white">Protocol Burn Event</h3>
+                <p className="text-gray-400 text-sm">Next scheduled burn in <span className="text-white font-mono">48:20:10</span></p>
+             </div>
+          </div>
+
+          <div className="flex gap-8 text-center relative z-10">
+             <div>
+                <span className="block text-2xl font-bold text-white">4.2M</span>
+                <span className="text-xs text-gray-500 uppercase font-bold">RUN Burned (Total)</span>
+             </div>
+             <div>
+                <span className="block text-2xl font-bold text-white">12.5%</span>
+                <span className="text-xs text-gray-500 uppercase font-bold">Current Tax Rate</span>
+             </div>
+          </div>
+      </div>
+
+      {/* FULL HISTORY MODAL */}
+      {showHistoryModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in">
+           <div className="bg-gray-800 rounded-2xl border border-gray-700 w-full max-w-2xl shadow-2xl flex flex-col max-h-[85vh]">
+              {/* Header */}
+              <div className="p-6 border-b border-gray-700 flex justify-between items-center bg-gray-900 rounded-t-2xl">
+                 <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                     <History className="text-emerald-400" /> Transaction History
+                 </h3>
+                 <button onClick={() => setShowHistoryModal(false)} className="text-gray-400 hover:text-white transition-colors bg-gray-800 p-2 rounded-full hover:bg-gray-700">
+                    <X size={20}/>
+                 </button>
+              </div>
+              
+              {/* List */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-3">
+                 {currentHistory.map((tx) => (
+                    <div key={tx.id} className="flex justify-between items-center bg-gray-900/50 p-4 rounded-xl border border-gray-700 hover:border-emerald-500/30 transition-colors">
+                        <div className="flex items-center gap-4">
+                            <div className={`p-3 rounded-xl ${tx.type === 'IN' ? 'bg-emerald-900/20 text-emerald-400' : 'bg-gray-700/30 text-gray-400'}`}>
+                                {tx.type === 'IN' ? <ArrowDownLeft size={20} /> : <ArrowUpRight size={20} />}
+                            </div>
+                            <div>
+                                <div className="font-bold text-white text-sm">{tx.label}</div>
+                                <div className="text-xs text-gray-500 font-mono mt-0.5">{tx.date}</div>
+                            </div>
+                        </div>
+                        <div className="text-right">
+                            <div className={`font-mono text-sm font-bold ${tx.token === 'GOV' ? 'text-cyan-400' : (tx.type === 'IN' ? 'text-emerald-400' : 'text-white')}`}>
+                                {tx.amount} {tx.token}
+                            </div>
+                            <div className="text-[10px] font-bold uppercase tracking-wider text-gray-600 flex items-center justify-end gap-1">
+                                {tx.status === 'Confirmed' && <CheckCircle size={10} className="text-emerald-500" />}
+                                {tx.status}
+                            </div>
+                        </div>
+                    </div>
+                 ))}
+              </div>
+
+              {/* Pagination */}
+              <div className="p-4 border-t border-gray-700 bg-gray-900 rounded-b-2xl">
+                  <Pagination 
+                     currentPage={historyPage} 
+                     totalPages={totalHistoryPages} 
+                     onPageChange={setHistoryPage} 
+                  />
+              </div>
+           </div>
+        </div>
+      )}
+
     </div>
   );
 };
