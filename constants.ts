@@ -150,7 +150,7 @@ export const MOCK_BADGES: Badge[] = [
     id: 'b_warmup',
     name: 'Warm Up',
     description: 'Completed 5 KM.',
-    icon: 'Flag',
+    icon: 'Footprints', // Changed from Flag
     conditionType: 'TOTAL_KM',
     conditionValue: 5,
     rarity: 'COMMON'
@@ -159,7 +159,7 @@ export const MOCK_BADGES: Badge[] = [
     id: 'b2',
     name: 'Elite Runner',
     description: 'Clocked over 100 KM total distance.',
-    icon: 'Award',
+    icon: 'Zap', // Changed from Award
     conditionType: 'TOTAL_KM',
     conditionValue: 100,
     rarity: 'RARE'
@@ -168,7 +168,7 @@ export const MOCK_BADGES: Badge[] = [
     id: 'b_iron',
     name: 'Iron Legs',
     description: 'Surpassed the 500 KM mark.',
-    icon: 'Award',
+    icon: 'Mountain', // Changed from Award
     conditionType: 'TOTAL_KM',
     conditionValue: 500,
     rarity: 'EPIC'
@@ -177,7 +177,7 @@ export const MOCK_BADGES: Badge[] = [
     id: 'b_titan',
     name: 'Titan',
     description: 'A legendary 2,000 KM career.',
-    icon: 'Crown',
+    icon: 'Globe', // Changed from Crown
     conditionType: 'TOTAL_KM',
     conditionValue: 2000,
     rarity: 'LEGENDARY'
@@ -197,7 +197,7 @@ export const MOCK_BADGES: Badge[] = [
     id: 'b_settler',
     name: 'Settler',
     description: 'Established a foothold with 3 zones.',
-    icon: 'Flag',
+    icon: 'Home', // Changed from Flag
     conditionType: 'OWN_ZONES',
     conditionValue: 3,
     rarity: 'RARE'
@@ -206,7 +206,7 @@ export const MOCK_BADGES: Badge[] = [
     id: 'b3',
     name: 'Tycoon',
     description: 'Control an empire of 10 zones.',
-    icon: 'Crown',
+    icon: 'Landmark', // Changed from Crown
     conditionType: 'OWN_ZONES',
     conditionValue: 10,
     rarity: 'EPIC'
@@ -215,7 +215,7 @@ export const MOCK_BADGES: Badge[] = [
     id: 'b_warlord',
     name: 'Warlord',
     description: 'Conquered 25 zones.',
-    icon: 'Crown',
+    icon: 'Swords', // Changed from Crown
     conditionType: 'OWN_ZONES',
     conditionValue: 25,
     rarity: 'EPIC'
@@ -296,10 +296,10 @@ export const MOCK_ZONES: Zone[] = [
   { id: 'z_tk_4', x: 1, y: 3, ownerId: 'user_1', name: 'Roppongi, Tokyo - JP', defenseLevel: 1, recordKm: 95, interestRate: 2.2 },
 ];
 
-export const MOCK_USERS: Record<string, { id: string; name: string; totalKm: number; avatar: string }> = {
-  'user_1': { id: 'user_1', name: 'RunnerOne', totalKm: 450, avatar: 'https://picsum.photos/seed/u1/200' },
-  'user_2': { id: 'user_2', name: 'CryptoJogger', totalKm: 320, avatar: 'https://picsum.photos/seed/u2/200' },
-  'user_3': { id: 'user_3', name: 'SpeedDemon', totalKm: 890, avatar: 'https://picsum.photos/seed/u3/200' },
+export const MOCK_USERS: Record<string, { id: string; name: string; totalKm: number; avatar: string; favoriteBadgeId?: string }> = {
+  'user_1': { id: 'user_1', name: 'RunnerOne', totalKm: 450, avatar: 'https://picsum.photos/seed/u1/200', favoriteBadgeId: 'b1' },
+  'user_2': { id: 'user_2', name: 'CryptoJogger', totalKm: 320, avatar: 'https://picsum.photos/seed/u2/200', favoriteBadgeId: 'b_warmup' },
+  'user_3': { id: 'user_3', name: 'SpeedDemon', totalKm: 890, avatar: 'https://picsum.photos/seed/u3/200', favoriteBadgeId: 'b_titan' },
 };
 
 // Default User Template: Defines the standard "new user" state (Empty)
@@ -309,8 +309,10 @@ const DEFAULT_USER_STATE = {
   totalKm: 0,
   isPremium: false,
   inventory: [],
+  runHistory: [],
   completedMissionIds: [],
-  earnedBadgeIds: []
+  earnedBadgeIds: [],
+  favoriteBadgeId: undefined
 };
 
 // MVP DEMO USER: Explicitly overrides defaults to provide a populated experience for the demo
@@ -319,6 +321,7 @@ export const INITIAL_USER: User = {
   name: 'RunnerOne',
   email: 'runner.one@zonerun.eth',
   avatar: 'https://picsum.photos/seed/u1/200',
+  favoriteBadgeId: 'b1', // Pioneer Badge equipped by default
   
   // Apply Default State
   ...DEFAULT_USER_STATE,
@@ -330,6 +333,10 @@ export const INITIAL_USER: User = {
   totalKm: 450,
   completedMissionIds: ['m_dist_1', 'm_dist_2', 'm1', 'm_own_1'], // Completed a few starter missions
   earnedBadgeIds: ['b1', 'b2'], // Already has Pioneer and Elite Runner
+  runHistory: [
+    { id: 'run_init_1', location: 'Parco Sempione, Milan - IT', km: 5.5, timestamp: Date.now() - 86400000, runEarned: 55 },
+    { id: 'run_init_2', location: 'Duomo, Milan - IT', km: 3.2, timestamp: Date.now() - 172800000, runEarned: 32 }
+  ],
   inventory: [
     {
       id: 'shield_lvl1',
