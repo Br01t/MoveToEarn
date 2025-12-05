@@ -1,16 +1,26 @@
-
 export type ViewState = 'LANDING' | 'DASHBOARD' | 'MARKETPLACE' | 'INVENTORY' | 'LEADERBOARD' | 'WALLET' | 'PROFILE' | 'MISSIONS' | 'RULES' | 'HOW_TO_PLAY' | 'PRIVACY' | 'TERMS' | 'COMMUNITY' | 'ADMIN';
 
 export type Rarity = 'COMMON' | 'RARE' | 'EPIC' | 'LEGENDARY';
+
+// New types for the 100 items
+export type AchievementCategory = 'Distance' | 'Speed' | 'Technical' | 'TimeOfDay' | 'Zone' | 'Streak' | 'Exploration' | 'Social' | 'Meta' | 'Special' | 'Event' | 'Training' | 'Performance' | 'Endurance' | 'Economy' | 'Onboarding';
+export type Difficulty = 'Easy' | 'Medium' | 'Hard' | 'Expert' | 'Special';
 
 export interface Mission {
   id: string;
   title: string;
   description: string;
   rewardGov: number;
-  conditionType: 'TOTAL_KM' | 'OWN_ZONES';
-  conditionValue: number;
   rarity: Rarity;
+  
+  // Legacy System (Preserved but optional)
+  conditionType?: 'TOTAL_KM' | 'OWN_ZONES';
+  conditionValue?: number;
+
+  // New System (For the 100 new missions)
+  logicId?: number; // 1-100 from PDF
+  category?: AchievementCategory;
+  difficulty?: Difficulty;
 }
 
 export interface Badge {
@@ -18,9 +28,16 @@ export interface Badge {
   name: string;
   description: string;
   icon: string; // Lucide icon name
-  conditionType: 'TOTAL_KM' | 'OWN_ZONES';
-  conditionValue: number;
   rarity: Rarity;
+
+  // Legacy System (Preserved but optional)
+  conditionType?: 'TOTAL_KM' | 'OWN_ZONES';
+  conditionValue?: number;
+
+  // New System
+  logicId?: number;
+  category?: AchievementCategory;
+  difficulty?: Difficulty;
 }
 
 export interface RunEntry {
@@ -30,6 +47,12 @@ export interface RunEntry {
   timestamp: number;
   govEarned?: number;
   runEarned: number;
+
+  // New Metrics for 100 Missions logic
+  duration?: number; // minutes
+  elevation?: number; // meters
+  maxSpeed?: number; // km/h
+  avgSpeed?: number; // km/h
 }
 
 export interface User {
@@ -40,12 +63,12 @@ export interface User {
   runBalance: number;
   govBalance: number;
   totalKm: number;
-  isPremium: boolean; // Subscription status
+  isPremium: boolean;
   inventory: InventoryItem[];
   runHistory: RunEntry[];
   completedMissionIds: string[];
   earnedBadgeIds: string[];
-  favoriteBadgeId?: string; // The badge displayed next to name
+  favoriteBadgeId?: string;
 }
 
 export interface Zone {
@@ -55,25 +78,25 @@ export interface Zone {
   ownerId: string | null;
   name: string;
   defenseLevel: number;
-  recordKm: number; // Max KM run in this zone by owner
-  interestRate: number; // Percentage yield per run, e.g. 1.5%
-  boostExpiresAt?: number; // Timestamp when the yield boost expires
-  shieldExpiresAt?: number; // Timestamp when the defense shield expires
+  recordKm: number;
+  interestRate: number;
+  boostExpiresAt?: number;
+  shieldExpiresAt?: number;
 }
 
 export interface Item {
   id: string;
   name: string;
   description: string;
-  priceRun: number; // Changed from priceGov to priceRun
-  quantity: number; // Market Stock
-  type: 'DEFENSE' | 'BOOST' | 'CURRENCY'; // Added CURRENCY for GOV packs
+  priceRun: number;
+  quantity: number;
+  type: 'DEFENSE' | 'BOOST' | 'CURRENCY';
   effectValue: number;
   icon: string;
 }
 
 export interface InventoryItem extends Item {
-  quantity: number; // Amount owned (overrides Item.quantity)
+  quantity: number;
 }
 
 export interface LeaderboardEntry {
@@ -86,9 +109,9 @@ export interface LeaderboardEntry {
 export interface GameState {
   currentUser: User | null;
   zones: Zone[];
-  users: Record<string, Omit<User, 'inventory' | 'runBalance' | 'govBalance'>>; // Public user info
+  users: Record<string, Omit<User, 'inventory' | 'runBalance' | 'govBalance'>>;
   items: Item[];
   missions: Mission[];
   badges: Badge[];
-  marketTaxRate: number; // Dynamic burning rate
+  marketTaxRate: number;
 }
