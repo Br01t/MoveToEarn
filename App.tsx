@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import Navbar from "./components/Navbar";
 import LandingPage from "./components/LandingPage";
@@ -15,6 +16,7 @@ import HowToPlay from "./components/pages/HowToPlay";
 import Privacy from "./components/pages/Privacy";
 import Terms from "./components/pages/Terms";
 import Community from "./components/pages/Community";
+import AchievementModal from "./components/AchievementModal";
 import { User, Zone, Item, ViewState, InventoryItem, Mission, Badge, RunEntry } from "./types";
 import {
   MOCK_ZONES,
@@ -28,6 +30,7 @@ import {
   MOCK_MISSIONS,
   MOCK_BADGES,
 } from "./constants";
+import { Layers, CheckCircle } from "lucide-react";
 
 const App: React.FC = () => {
   // --- Game State ---
@@ -40,6 +43,12 @@ const App: React.FC = () => {
   // Missions & Badges State
   const [missions, setMissions] = useState<Mission[]>(MOCK_MISSIONS);
   const [badges, setBadges] = useState<Badge[]>(MOCK_BADGES);
+
+  // --- Achievement Notification Queue ---
+  const [achievementQueue, setAchievementQueue] = useState<{ type: 'MISSION' | 'BADGE'; item: Mission | Badge }[]>([]);
+  
+  // --- Claim All Summary Popup State ---
+  const [claimSummary, setClaimSummary] = useState<{ count: number; totalGov: number } | null>(null);
 
   // --- Actions ---
 
@@ -88,6 +97,13 @@ const App: React.FC = () => {
     const potentialBalance = user.runBalance + runReward;
     const existingZone = zones.find((z) => z.name.toLowerCase().trim() === name.toLowerCase().trim());
 
+    // Generate random realistic metrics for the run if not provided
+    // In a real app, these come from the GPX file
+    const duration = Math.floor(km * (5 + Math.random() * 2)); // approx 5-7 min/km
+    const elevation = Math.floor(km * (Math.random() * 20)); // random elevation
+    const maxSpeed = 10 + Math.random() * 15; // 10-25 km/h
+    const avgSpeed = (km / (duration / 60)); 
+
     // Create History Entry
     const newRun: RunEntry = {
       id: `run_${Date.now()}`,
@@ -95,6 +111,10 @@ const App: React.FC = () => {
       km: km,
       timestamp: Date.now(),
       runEarned: runReward,
+      duration,
+      elevation,
+      maxSpeed,
+      avgSpeed
     };
 
     let updatedUser = { ...user, runHistory: [newRun, ...user.runHistory] };
@@ -105,34 +125,9 @@ const App: React.FC = () => {
         setUser({ ...updatedUser, runBalance: updatedUser.runBalance + runReward, totalKm: updatedUser.totalKm + km });
         alert(`Run Synced! Reinforced "${existingZone.name}".\n+${runReward.toFixed(2)} RUN earned.`);
       } else {
-        if (existingZone.shieldExpiresAt && existingZone.shieldExpiresAt > Date.now()) {
-          alert(`Cannot contest "${existingZone.name}"!\n\nZone SHIELDED.`);
-          setUser({ ...updatedUser, runBalance: updatedUser.runBalance + runReward, totalKm: updatedUser.totalKm + km });
-          return;
-        }
-        const wantToContest = window.confirm(`Contest "${existingZone.name}"?\nCost: 50 RUN\nReward: +${CONQUEST_REWARD_GOV} GOV`);
-        if (wantToContest) {
-          if (potentialBalance >= 50) {
-            setZones((prev) =>
-              prev.map((z) => {
-                if (z.id === existingZone.id) return { ...z, ownerId: user.id, recordKm: km, shieldExpiresAt: undefined, boostExpiresAt: undefined };
-                return z;
-              })
-            );
-            updatedUser.runHistory[0].govEarned = CONQUEST_REWARD_GOV; // Track GOV in history
-            setUser({
-              ...updatedUser,
-              runBalance: updatedUser.runBalance + runReward - 50,
-              govBalance: updatedUser.govBalance + CONQUEST_REWARD_GOV,
-              totalKm: updatedUser.totalKm + km,
-            });
-            alert(`Victory! Zone conquered.\n+${CONQUEST_REWARD_GOV} GOV`);
-            return;
-          } else {
-            alert("Insufficient funds.");
-          }
-        }
+        // Logica di conquista è gestita nel bottone manuale ora, qui accumuliamo solo KM
         setUser({ ...updatedUser, runBalance: updatedUser.runBalance + runReward, totalKm: updatedUser.totalKm + km });
+        alert(`Run Synced! You ran in "${existingZone.name}".\nCheck the Zone Details to see if you can claim it!`);
       }
     } else {
       if (potentialBalance < MINT_COST) {
@@ -171,22 +166,28 @@ const App: React.FC = () => {
   const handleClaimZone = (zoneId: string) => {
     if (!user) return;
     const targetZone = zones.find((z) => z.id === zoneId);
-    if (targetZone?.shieldExpiresAt && targetZone.shieldExpiresAt > Date.now()) {
-      alert("Zone is SHIELDED.");
+    if (!targetZone) return;
+
+    if (targetZone.shieldExpiresAt && targetZone.shieldExpiresAt > Date.now()) {
+      alert("Zone is SHIELDED. Cannot claim.");
       return;
     }
     if (user.runBalance < 50) {
-      alert("Not enough RUN.");
+      alert("Not enough RUN to pay claim fee.");
       return;
     }
-    if (window.confirm("Contest for 50 RUN?")) {
+    
+    // Logic check handled in UI, but double check here could be good.
+    // Assuming UI prevents calling this if not #1.
+
+    if (window.confirm("Claim ownership for 50 RUN?")) {
       setZones((prev) =>
         prev.map((z) =>
-          z.id === zoneId ? { ...z, ownerId: user.id, recordKm: z.recordKm + 5, shieldExpiresAt: undefined, boostExpiresAt: undefined } : z
+          z.id === zoneId ? { ...z, ownerId: user.id, shieldExpiresAt: undefined, boostExpiresAt: undefined } : z
         )
       );
       setUser((prev) => (prev ? { ...prev, runBalance: prev.runBalance - 50, govBalance: prev.govBalance + CONQUEST_REWARD_GOV } : null));
-      alert(`Conquered! +${CONQUEST_REWARD_GOV} GOV.`);
+      alert(`Zone Claimed! +${CONQUEST_REWARD_GOV} GOV.`);
     }
   };
 
@@ -334,50 +335,231 @@ const App: React.FC = () => {
     return () => clearInterval(interval);
   }, [user?.id, zones]);
 
-  // Check Missions Completion
+  // --- AUTOMATED ACHIEVEMENT LOGIC ---
+
+  // Helper: Calculate Max Consecutive Days Streak
+  const calculateStreak = (history: RunEntry[]): number => {
+      if (history.length === 0) return 0;
+      
+      // Get unique days from timestamps (ignoring time)
+      const days = Array.from(new Set(history.map(run => {
+         const d = new Date(run.timestamp);
+         d.setHours(0,0,0,0);
+         return d.getTime();
+      }))).sort((a,b) => b - a); // Descending (newest first)
+
+      if (days.length === 0) return 0;
+
+      let streak = 1;
+      // Check for today or yesterday to start streak (allow 1 day gap if today haven't run yet?)
+      // For strict streak: recent day must be today or yesterday
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      const todayTime = today.getTime();
+      const diffSinceLastRun = (todayTime - days[0]) / (1000 * 60 * 60 * 24);
+
+      if (diffSinceLastRun > 1) return 0; // Streak broken
+
+      for (let i = 0; i < days.length - 1; i++) {
+          const current = days[i];
+          const prev = days[i+1];
+          const diffDays = (current - prev) / (1000 * 60 * 60 * 24);
+          if (diffDays === 1) {
+              streak++;
+          } else {
+              break;
+          }
+      }
+      return streak;
+  };
+
+  // Main Logic Checker
+  const checkAchievement = (item: Mission | Badge, currentUser: User, currentZones: Zone[]): boolean => {
+      // 1. LEGACY CHECK
+      if (item.conditionType === 'TOTAL_KM' && item.conditionValue) {
+          return currentUser.totalKm >= item.conditionValue;
+      }
+      if (item.conditionType === 'OWN_ZONES' && item.conditionValue) {
+          const owned = currentZones.filter(z => z.ownerId === currentUser.id).length;
+          return owned >= item.conditionValue;
+      }
+
+      // 2. NEW LOGIC SYSTEM (Based on logicId 1-100)
+      if (!item.logicId) return false;
+      const history = currentUser.runHistory;
+      const ownedZones = currentZones.filter(z => z.ownerId === currentUser.id);
+      
+      switch (item.logicId) {
+          // --- DISTANCE ---
+          case 1: return currentUser.totalKm >= 10;
+          case 2: return currentUser.totalKm >= 50;
+          case 3: return currentUser.totalKm >= 100;
+          case 4: return history.some(r => r.km >= 10.55);
+          case 5: return history.some(r => r.km >= 21);
+          case 6: return history.some(r => r.km >= 42.195);
+          case 7: return history.some(r => r.km >= 50);
+          case 8: return currentUser.totalKm >= 160;
+          case 9: return currentUser.totalKm >= 500;
+          case 10: return currentUser.totalKm >= 1000;
+          
+          // --- SPEED ---
+          case 11: return history.some(r => (r.maxSpeed || 0) >= 20);
+          case 12: return history.some(r => (r.maxSpeed || 0) >= 25);
+          case 13: return history.some(r => (r.avgSpeed || 0) >= 12 && r.km >= 2);
+          case 14: return history.some(r => (r.avgSpeed || 0) >= 15 && r.km >= 1);
+          case 15: return history.some(r => (r.avgSpeed || 0) >= 10 && r.km >= 10);
+          case 16: return history.some(r => {
+             // Pace 5:00 min/km = 12 km/h. Lower pace is faster speed.
+             return (r.avgSpeed || 0) >= 12 && r.km >= 5;
+          });
+
+          // --- TECHNICAL / ELEVATION ---
+          case 18: return history.some(r => (r.elevation || 0) >= 150);
+          case 19: return history.some(r => (r.elevation || 0) >= 500);
+          case 20: return history.some(r => (r.elevation || 0) >= 1000);
+          
+          // --- TIME OF DAY ---
+          case 21: return history.some(r => { const h = new Date(r.timestamp).getHours(); return h >= 5 && h < 7; });
+          case 22: return history.some(r => { 
+             const d = new Date(r.timestamp);
+             return d.getHours() === 4 && d.getMinutes() >= 30 || d.getHours() === 5 && d.getMinutes() <= 30; 
+          });
+          case 23: return history.some(r => { const h = new Date(r.timestamp).getHours(); return h >= 12 && h < 14; });
+          case 24: return history.some(r => { const h = new Date(r.timestamp).getHours(); return h >= 18 && h < 20; });
+          case 25: return history.some(r => { const h = new Date(r.timestamp).getHours(); return h >= 22 || h < 2; });
+          case 26: return history.some(r => { const h = new Date(r.timestamp).getHours(); return h === 0; });
+          case 28: return history.some(r => { const h = new Date(r.timestamp).getHours(); return h < 6; });
+          case 30: return new Set(history.map(r => new Date(r.timestamp).getHours())).size >= 24;
+
+          // --- STREAK ---
+          case 31: return calculateStreak(history) >= 3;
+          case 32: return calculateStreak(history) >= 7;
+          case 33: return calculateStreak(history) >= 14;
+          case 34: return calculateStreak(history) >= 30;
+          case 37: return new Set(history.map(r => new Date(r.timestamp).toDateString())).size >= 200;
+          case 38: 
+             // 20 runs in a month (check current month)
+             const currentMonthRuns = history.filter(r => {
+                 const d = new Date(r.timestamp);
+                 const now = new Date();
+                 return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+             });
+             return currentMonthRuns.length >= 20;
+          case 39: return new Set(history.map(r => new Date(r.timestamp).toDateString())).size >= 50;
+          case 40: return calculateStreak(history) >= 60;
+
+          // --- ZONE / EXPLORATION ---
+          case 41: return new Set(history.map(r => r.location)).size >= 10;
+          case 42: return new Set(history.map(r => r.location)).size >= 25;
+          case 43: return new Set(history.map(r => r.location)).size >= 50;
+          case 44: return new Set(history.map(r => r.location)).size >= 100;
+          case 47: return ownedZones.length >= 1;
+          case 48: return ownedZones.length >= 5;
+          case 49: return ownedZones.length >= 10;
+          case 50: return ownedZones.length >= 25;
+          case 51: return history.some(r => r.govEarned && r.govEarned >= 10); // Approximation of "Conquest" if govEarned is high
+          case 52: return history.filter(r => r.govEarned && r.govEarned >= 10).length >= 10;
+          case 53: return history.filter(r => r.govEarned && r.govEarned >= 10).length >= 25;
+          
+          // --- ENDURANCE ---
+          case 69: return history.some(r => (r.duration || 0) >= 90);
+          case 70: return history.some(r => (r.duration || 0) >= 120);
+
+          // --- META / COLLECTION ---
+          case 95: return currentUser.completedMissionIds.length >= 20;
+          case 96: return currentUser.earnedBadgeIds.length >= 20;
+          case 97: return currentUser.earnedBadgeIds.length >= 50;
+          case 100: 
+             const highTierBadges = badges.filter(b => currentUser.earnedBadgeIds.includes(b.id) && (b.rarity === 'EPIC' || b.rarity === 'LEGENDARY'));
+             return highTierBadges.length >= 10;
+
+          default: return false;
+      }
+  };
+
+  // Main Effect to Monitor and Award Achievements
   useEffect(() => {
     if (!user) return;
-    let newCompleted = [...user.completedMissionIds];
-    let newBadges = [...user.earnedBadgeIds];
-    let rewards = 0;
-    const ownedZones = zones.filter((z) => z.ownerId === user.id).length;
+    
+    let newCompletedMissions = [...user.completedMissionIds];
+    let newEarnedBadges = [...user.earnedBadgeIds];
+    let additionalGov = 0;
+    let hasChanges = false;
+    
+    // Temp queue to hold new unlocks in this cycle
+    const newUnlockQueue: { type: 'MISSION' | 'BADGE'; item: Mission | Badge }[] = [];
 
+    // 1. Check Missions
     missions.forEach((m) => {
-      if (!newCompleted.includes(m.id)) {
-        if (
-          (m.conditionType === "TOTAL_KM" && user.totalKm >= m.conditionValue) ||
-          (m.conditionType === "OWN_ZONES" && ownedZones >= m.conditionValue)
-        ) {
-          newCompleted.push(m.id);
-          rewards += m.rewardGov;
+      // If not already completed
+      if (!newCompletedMissions.includes(m.id)) {
+        if (checkAchievement(m, user, zones)) {
+           newCompletedMissions.push(m.id);
+           additionalGov += m.rewardGov;
+           hasChanges = true;
+           // Add to notification queue
+           newUnlockQueue.push({ type: 'MISSION', item: m });
         }
       }
     });
 
+    // 2. Check Badges
     badges.forEach((b) => {
-      if (!newBadges.includes(b.id)) {
-        if (
-          (b.conditionType === "TOTAL_KM" && user.totalKm >= b.conditionValue) ||
-          (b.conditionType === "OWN_ZONES" && ownedZones >= b.conditionValue)
-        ) {
-          newBadges.push(b.id);
+      // If not already earned
+      if (!newEarnedBadges.includes(b.id)) {
+        if (checkAchievement(b, user, zones)) {
+           newEarnedBadges.push(b.id);
+           hasChanges = true;
+           // Add to notification queue
+           newUnlockQueue.push({ type: 'BADGE', item: b });
         }
       }
     });
 
-    if (newCompleted.length > user.completedMissionIds.length || newBadges.length > user.earnedBadgeIds.length) {
+    // 3. Update User State if needed
+    if (hasChanges) {
       setUser((prev) =>
         prev
           ? {
               ...prev,
-              completedMissionIds: newCompleted,
-              earnedBadgeIds: newBadges,
-              govBalance: prev.govBalance + rewards,
+              completedMissionIds: newCompletedMissions,
+              earnedBadgeIds: newEarnedBadges,
+              govBalance: prev.govBalance + additionalGov,
             }
           : null
       );
+      
+      // Update global notification queue state
+      if (newUnlockQueue.length > 0) {
+          setAchievementQueue(prev => [...prev, ...newUnlockQueue]);
+      }
     }
-  }, [user?.totalKm, zones, missions, badges]);
+
+  }, [user?.totalKm, user?.runHistory, zones, missions, badges, user?.completedMissionIds.length, user?.earnedBadgeIds.length]);
+
+  // Handle closing a modal notification
+  const handleCloseNotification = () => {
+    setAchievementQueue(prev => prev.slice(1));
+  };
+
+  const handleClaimAllNotifications = () => {
+      // 1. Calculate totals
+      const totalGov = achievementQueue.reduce((acc, entry) => {
+          return acc + (entry.type === 'MISSION' ? (entry.item as Mission).rewardGov : 0);
+      }, 0);
+      const count = achievementQueue.length;
+
+      // 2. Clear Queue
+      setAchievementQueue([]);
+
+      // 3. Show Summary
+      setClaimSummary({ count, totalGov });
+
+      // 4. Auto-hide after 3 seconds
+      setTimeout(() => {
+          setClaimSummary(null);
+      }, 3000);
+  };
 
   // Main Render Logic
   const isLanding = currentView === "LANDING";
@@ -400,6 +582,8 @@ const App: React.FC = () => {
                 <Dashboard
                   user={user}
                   zones={zones}
+                  badges={badges}
+                  users={usersMock}
                   onSyncRun={handleSyncRun}
                   onClaim={handleClaimZone}
                   onBoost={handleBoostZone}
@@ -447,7 +631,7 @@ const App: React.FC = () => {
             </>
           )}
 
-          {/* Public Pages (Can be viewed without login if routed correctly, or from Landing) */}
+          {/* Public Pages */}
           {currentView === "RULES" && <GameRules onBack={() => setCurrentView(user ? "DASHBOARD" : "LANDING")} onNavigate={setCurrentView} />}
           {currentView === "HOW_TO_PLAY" && <HowToPlay onBack={() => setCurrentView(user ? "DASHBOARD" : "LANDING")} />}
           {currentView === "PRIVACY" && <Privacy />}
@@ -455,6 +639,36 @@ const App: React.FC = () => {
           {currentView === "COMMUNITY" && <Community />}
         </div>
       </main>
+
+      {/* Achievement Modal Overlay */}
+      {achievementQueue.length > 0 && (
+          <AchievementModal 
+              key={achievementQueue[0].item.id}
+              data={achievementQueue[0]} 
+              onClose={handleCloseNotification} 
+              onClaimAll={handleClaimAllNotifications}
+              remainingCount={achievementQueue.length - 1}
+          />
+      )}
+
+      {/* Batch Claim Summary Toast/Popup */}
+      {claimSummary && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center pointer-events-none">
+           <div className="bg-gray-900/95 backdrop-blur-xl border border-emerald-500/50 p-6 rounded-2xl shadow-[0_0_50px_rgba(16,185,129,0.3)] animate-slide-up flex flex-col items-center gap-2 pointer-events-auto transform scale-110">
+               <div className="p-3 bg-emerald-500/10 rounded-full mb-1">
+                 <Layers className="text-emerald-400" size={32} />
+               </div>
+               <h3 className="text-xl font-bold text-white tracking-tight">Batch Claimed!</h3>
+               <p className="text-gray-400 text-sm flex items-center gap-1">
+                   <CheckCircle size={12}/> {claimSummary.count} Achievements unlocked
+               </p>
+               
+               <div className="mt-2 text-3xl font-mono font-black text-cyan-400 drop-shadow-lg flex items-center gap-2">
+                   +{claimSummary.totalGov} GOV
+               </div>
+           </div>
+        </div>
+      )}
 
       {/* Footer is Global */}
       <Footer onNavigate={setCurrentView} currentView={currentView} />
