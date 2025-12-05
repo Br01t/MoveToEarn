@@ -1,13 +1,15 @@
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { User, Zone, InventoryItem, ViewState } from '../types';
-import { Play, ZoomIn, ZoomOut, Move, X, UploadCloud, MapPin, CheckCircle, Zap, Search, ShoppingBag, Clock, Shield, Globe, Image as ImageIcon, Trash2, FileText, Crown, Loader, AlertTriangle, Lock, Filter, ChevronDown, ChevronUp, HelpCircle, Activity, History, Calendar } from 'lucide-react';
+import { User, Zone, InventoryItem, ViewState, Badge, Rarity } from '../types';
+import { Play, ZoomIn, ZoomOut, Move, X, UploadCloud, MapPin, CheckCircle, Zap, Search, ShoppingBag, Clock, Shield, Globe, Image as ImageIcon, Trash2, FileText, Crown, Loader, AlertTriangle, Lock, Filter, ChevronDown, ChevronUp, HelpCircle, Activity, History, Calendar, Medal, Award, Flag, Mountain, Home, Landmark, Swords, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users } from 'lucide-react';
 import { PREMIUM_COST } from '../constants';
 import Pagination from './Pagination';
 
 interface DashboardProps {
   user: User;
   zones: Zone[];
+  users: Record<string, any>; // Receiving full user list for leaderboard calculation
+  badges: Badge[]; // Received for displaying owner badge
   onSyncRun: (data: { km: number, name: string }) => void;
   onClaim: (zoneId: string) => void;
   onBoost: (zoneId: string) => void;
@@ -19,7 +21,7 @@ interface DashboardProps {
 const HEX_SIZE = 100; // Increased size for better visibility
 const RUNS_PER_PAGE = 5;
 
-const Dashboard: React.FC<DashboardProps> = ({ user, zones, onSyncRun, onClaim, onBoost, onDefend, onNavigate }) => {
+const Dashboard: React.FC<DashboardProps> = ({ user, zones, users, badges, onSyncRun, onClaim, onBoost, onDefend, onNavigate }) => {
   const [selectedZone, setSelectedZone] = useState<Zone | null>(null);
   
   // Search & Filter State
@@ -100,6 +102,87 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, onSyncRun, onClaim, 
   // Helper to check shield status
   const isShieldActive = (zone: Zone) => {
     return zone.shieldExpiresAt && zone.shieldExpiresAt > Date.now();
+  };
+
+  // --- Zone Logic Helpers ---
+
+  // Helper: Get Rarity Color for Badge
+  const getRarityColor = (rarity: Rarity) => {
+      switch(rarity) {
+          case 'LEGENDARY': return 'text-yellow-400 border-yellow-500/50 bg-yellow-900/20';
+          case 'EPIC': return 'text-purple-400 border-purple-500/50 bg-purple-900/20';
+          case 'RARE': return 'text-cyan-400 border-cyan-500/50 bg-cyan-900/20';
+          default: return 'text-gray-300 border-gray-600 bg-gray-800';
+      }
+  };
+
+  // Helper: Render Badge Icon
+  const renderBadgeIcon = (iconName: string, className: string) => {
+      switch(iconName) {
+          case 'Flag': return <Flag className={className} />;
+          case 'Crown': return <Crown className={className} />;
+          case 'Award': return <Award className={className} />;
+          case 'Zap': return <Zap className={className} />;
+          case 'Mountain': return <Mountain className={className} />;
+          case 'Globe': return <Globe className={className} />;
+          case 'Home': return <Home className={className} />;
+          case 'Landmark': return <Landmark className={className} />;
+          case 'Swords': return <Swords className={className} />;
+          case 'Footprints': return <Footprints className={className} />;
+          case 'Rocket': return <Rocket className={className} />;
+          case 'Tent': return <Tent className={className} />;
+          case 'Timer': return <Timer className={className} />;
+          case 'Building2': return <Building2 className={className} />;
+          case 'Moon': return <Moon className={className} />;
+          case 'Sun': return <Sun className={className} />;
+          case 'ShieldCheck': return <ShieldCheck className={className} />;
+          case 'Gem': return <Gem className={className} />;
+          case 'Users': return <Users className={className} />;
+          default: return <Award className={className} />;
+      }
+  };
+
+  const getOwnerDetails = (ownerId: string | null) => {
+      if (!ownerId) return { name: 'Unclaimed', avatar: null, badge: null };
+      
+      let userData;
+      if (ownerId === user.id) {
+          userData = user;
+      } else {
+          userData = users[ownerId];
+      }
+
+      if (!userData) return { name: 'Unknown', avatar: null, badge: null };
+
+      const badge = userData.favoriteBadgeId ? badges.find(b => b.id === userData.favoriteBadgeId) : null;
+      
+      return { 
+          name: userData.name, 
+          avatar: userData.avatar,
+          badge: badge
+      };
+  };
+
+  const getZoneLeaderboard = (zoneName: string) => {
+      // 1. Get current user's actual stats for this zone
+      const myRuns = user.runHistory.filter(r => r.location === zoneName);
+      const myTotalKm = myRuns.reduce((acc, r) => acc + r.km, 0);
+
+      // 2. Generate simulated stats for other users (mock data)
+      // In a real app, this would query the backend.
+      const leaderboard = Object.values(users).map((u: any) => {
+          if (u.id === user.id) {
+              return { id: u.id, name: u.name, avatar: u.avatar, km: myTotalKm };
+          } else {
+              // Deterministic random KM based on user ID and zone name to keep it consistent but varied
+              const seed = (u.id.charCodeAt(u.id.length - 1) + zoneName.length) % 100;
+              const fakeKm = (u.totalKm * (seed / 100)) / 5; // A fraction of their total km
+              return { id: u.id, name: u.name, avatar: u.avatar, km: fakeKm };
+          }
+      });
+
+      // 3. Sort descending
+      return leaderboard.sort((a, b) => b.km - a.km).slice(0, 10);
   };
 
   // --- Effects ---
@@ -261,6 +344,13 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, onSyncRun, onClaim, 
     if (zone.ownerId === user.id) return '#34d399'; // Emerald
     return '#f87171'; // Red
   };
+
+  // --- Prep Render Data for selected zone ---
+  const ownerDetails = selectedZone ? getOwnerDetails(selectedZone.ownerId) : null;
+  const zoneLeaderboard = selectedZone ? getZoneLeaderboard(selectedZone.name) : [];
+  const topRunner = zoneLeaderboard.length > 0 ? zoneLeaderboard[0] : null;
+  const isTopRunner = topRunner ? topRunner.id === user.id : false;
+  const kmToTop = topRunner && !isTopRunner ? (topRunner.km - (zoneLeaderboard.find(u => u.id === user.id)?.km || 0)) : 0;
 
   return (
     <div className="relative w-full h-[calc(100vh-64px)] md:h-[calc(100vh-64px)] overflow-hidden bg-gray-900 shadow-inner">
@@ -556,94 +646,162 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, onSyncRun, onClaim, 
       </div>
 
       {/* ZONE DETAILS PANEL - Bottom Sheet Style on Mobile */}
-      {selectedZone && (
+      {selectedZone && ownerDetails && (
         <div 
-          className="fixed bottom-[56px] md:bottom-24 md:right-6 md:left-auto left-0 right-0 md:w-80 bg-gray-900/95 md:rounded-2xl rounded-t-2xl border-t md:border border-emerald-500/30 shadow-[0_-5px_20px_rgba(0,0,0,0.5)] overflow-hidden animate-slide-up z-40 max-h-[50vh] overflow-y-auto"
+          className="fixed bottom-[56px] md:bottom-24 md:right-6 md:left-auto left-0 right-0 md:w-80 bg-gray-900/95 md:rounded-2xl rounded-t-2xl border-t md:border border-emerald-500/30 shadow-[0_-5px_20px_rgba(0,0,0,0.5)] overflow-hidden animate-slide-up z-40 max-h-[70vh] flex flex-col"
         >
-          <div className="relative p-5">
+          <div className="relative p-5 flex flex-col h-full overflow-hidden">
             <button 
               onClick={() => setSelectedZone(null)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-white"
+              className="absolute top-4 right-4 text-gray-400 hover:text-white z-10"
             >
               <X size={20} />
             </button>
 
+            {/* Header */}
             <h3 className="font-bold text-lg md:text-xl text-white mb-4 pr-6 tracking-tight break-words">{selectedZone.name}</h3>
             
-            <div className="space-y-3 mb-6">
-               <div className="flex justify-between text-sm bg-black/40 p-2 md:p-3 rounded-lg border border-white/5">
-                 <span className="text-gray-400">Status</span>
-                 <span className={`font-bold uppercase tracking-wider ${selectedZone.ownerId === user.id ? 'text-emerald-400' : 'text-red-400'}`}>
-                   {selectedZone.ownerId === user.id ? 'Occupied (You)' : 'Hostile'}
-                 </span>
-               </div>
-               
-               <div className="flex justify-between text-sm bg-black/40 p-2 md:p-3 rounded-lg border border-white/5">
-                 <span className="text-gray-400">Yield Rate</span>
-                 <div className="text-right">
-                   <span className={`font-bold ${isBoostActive(selectedZone) ? 'text-amber-400' : 'text-cyan-400'}`}>
-                     {selectedZone.interestRate}%
-                   </span>
-                   <span className="text-xs text-gray-500 font-normal block">/ day</span>
-                 </div>
-               </div>
-               
-               {isBoostActive(selectedZone) && selectedZone.boostExpiresAt && (
+            <div className="overflow-y-auto flex-1 space-y-4 pr-1 scrollbar-hide">
+                {/* --- Owner Info --- */}
+                <div className="bg-black/40 p-3 rounded-lg border border-white/5 flex items-center gap-3">
+                    <div className="relative shrink-0">
+                        <img 
+                            src={ownerDetails.avatar || `https://ui-avatars.com/api/?name=${ownerDetails.name}&background=10b981&color=fff`} 
+                            className="w-10 h-10 rounded-full border border-gray-600 object-cover" 
+                            alt="Owner"
+                        />
+                        <div className="absolute -top-1 -right-1 bg-yellow-500 text-black p-0.5 rounded-full">
+                            <Crown size={8} />
+                        </div>
+                    </div>
+                    <div className="min-w-0">
+                        <div className="text-[10px] text-gray-400 uppercase font-bold">Zone Controller</div>
+                        <div className="flex items-center gap-2">
+                           <div className={`font-bold text-sm truncate ${selectedZone.ownerId === user.id ? 'text-emerald-400' : 'text-white'}`}>
+                                {ownerDetails.name} {selectedZone.ownerId === user.id && '(You)'}
+                           </div>
+                           {/* Owner Badge */}
+                           {ownerDetails.badge && (
+                               <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md border text-[9px] ${getRarityColor(ownerDetails.badge.rarity)}`} title={ownerDetails.badge.name}>
+                                   {renderBadgeIcon(ownerDetails.badge.icon, "w-3 h-3")}
+                               </div>
+                           )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* --- Stats Grid --- */}
+                <div className="grid grid-cols-2 gap-2">
+                    <div className="bg-black/40 p-2 rounded-lg border border-white/5 text-center">
+                         <div className="text-xs text-gray-400">Yield</div>
+                         <div className={`font-bold ${isBoostActive(selectedZone) ? 'text-amber-400' : 'text-cyan-400'}`}>
+                             {selectedZone.interestRate}%
+                         </div>
+                    </div>
+                    <div className="bg-black/40 p-2 rounded-lg border border-white/5 text-center">
+                         <div className="text-xs text-gray-400">Status</div>
+                         <div className={`font-bold text-xs uppercase pt-1 ${selectedZone.ownerId === user.id ? 'text-emerald-500' : 'text-red-500'}`}>
+                             {selectedZone.ownerId === user.id ? 'Occupied' : 'Hostile'}
+                         </div>
+                    </div>
+                </div>
+
+                {isBoostActive(selectedZone) && selectedZone.boostExpiresAt && (
                  <div className="flex items-center justify-between text-sm bg-amber-500/10 p-2 rounded-lg border border-amber-500/30">
                    <span className="text-amber-400 flex items-center gap-1 text-xs"><Clock size={12}/> Boosted</span>
                    <span className="text-amber-100 font-mono text-xs">
                      {Math.floor((selectedZone.boostExpiresAt - Date.now()) / 60000)}m left
                    </span>
                  </div>
-               )}
+                )}
 
-               {isShieldActive(selectedZone) && selectedZone.shieldExpiresAt && (
+                {isShieldActive(selectedZone) && selectedZone.shieldExpiresAt && (
                  <div className="flex items-center justify-between text-sm bg-cyan-500/10 p-2 rounded-lg border border-cyan-500/30">
                    <span className="text-cyan-400 flex items-center gap-1 text-xs"><Shield size={12}/> Shielded</span>
                    <span className="text-cyan-100 font-mono text-xs">
                      {Math.floor((selectedZone.shieldExpiresAt - Date.now()) / 60000)}m left
                    </span>
                  </div>
-               )}
+                )}
+
+                {/* --- Zone Leaderboard --- */}
+                <div className="bg-gray-800/50 rounded-lg border border-gray-700/50 p-3">
+                    <h4 className="text-xs font-bold text-gray-400 uppercase mb-3 flex items-center gap-1">
+                        <Medal size={12} className="text-yellow-500"/> Top Runners Here
+                    </h4>
+                    <div className="space-y-2 max-h-[120px] overflow-y-auto pr-1">
+                        {zoneLeaderboard.map((runner, index) => (
+                            <div key={runner.id} className={`flex items-center justify-between text-xs p-1 rounded transition-colors ${runner.id === user.id ? 'bg-emerald-900/20' : 'hover:bg-white/5'}`}>
+                                <div className="flex items-center gap-2">
+                                    <span className={`w-4 text-center font-bold ${index === 0 ? 'text-yellow-400' : (index === 1 ? 'text-gray-300' : (index === 2 ? 'text-amber-600' : 'text-gray-600'))}`}>
+                                        {index + 1}
+                                    </span>
+                                    <img src={runner.avatar} className="w-5 h-5 rounded-full bg-gray-700 object-cover" alt={runner.name}/>
+                                    <span className={`${runner.id === user.id ? 'text-emerald-400 font-bold' : 'text-gray-300'}`}>
+                                        {runner.name}
+                                    </span>
+                                </div>
+                                <div className="font-mono text-gray-400">
+                                    {runner.km.toFixed(1)} km
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
             </div>
 
-            <div className="space-y-3">
+            {/* Actions Footer */}
+            <div className="pt-4 mt-2 border-t border-gray-800 shrink-0">
+               {/* 
+                 Owner Logic: Boost / Shield 
+                 Contest Logic: Only if King of the Hill (#1 in local leaderboard)
+               */}
                {selectedZone.ownerId === user.id ? (
-                  <>
                     <div className="flex gap-2">
-                        {!isBoostActive(selectedZone) ? (
-                            <button 
-                                onClick={() => onBoost(selectedZone.id)}
-                                disabled={!boostItem}
-                                className={`flex-1 py-3 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all border text-xs md:text-sm ${boostItem ? 'bg-amber-600' : 'bg-gray-800 opacity-50'}`}
-                            >
-                                <Zap size={16} /> Boost
-                            </button>
-                        ) : (
-                            <div className="flex-1 py-3 bg-gray-800 text-amber-500 font-bold rounded-xl flex items-center justify-center gap-2 border border-amber-500/20 text-xs md:text-sm"><Zap size={16} /> Active</div>
-                        )}
+                          {!isBoostActive(selectedZone) ? (
+                              <button 
+                                  onClick={() => onBoost(selectedZone.id)}
+                                  disabled={!boostItem}
+                                  className={`flex-1 py-3 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all border text-xs md:text-sm ${boostItem ? 'bg-amber-600 hover:bg-amber-500' : 'bg-gray-800 opacity-50'}`}
+                              >
+                                  <Zap size={16} /> Boost
+                              </button>
+                          ) : (
+                              <div className="flex-1 py-3 bg-gray-800 text-amber-500 font-bold rounded-xl flex items-center justify-center gap-2 border border-amber-500/20 text-xs md:text-sm"><Zap size={16} /> Active</div>
+                          )}
 
-                        {!isShieldActive(selectedZone) ? (
-                            <button 
-                                onClick={() => onDefend(selectedZone.id)}
-                                disabled={!defenseItem}
-                                className={`flex-1 py-3 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all border text-xs md:text-sm ${defenseItem ? 'bg-cyan-600' : 'bg-gray-800 opacity-50'}`}
-                            >
-                                <Shield size={16} /> Shield
-                            </button>
-                        ) : (
-                             <div className="flex-1 py-3 bg-gray-800 text-cyan-400 font-bold rounded-xl flex items-center justify-center gap-2 border border-cyan-500/20 text-xs md:text-sm"><Shield size={16} /> Active</div>
-                        )}
+                          {!isShieldActive(selectedZone) ? (
+                              <button 
+                                  onClick={() => onDefend(selectedZone.id)}
+                                  disabled={!defenseItem}
+                                  className={`flex-1 py-3 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all border text-xs md:text-sm ${defenseItem ? 'bg-cyan-600 hover:bg-cyan-500' : 'bg-gray-800 opacity-50'}`}
+                              >
+                                  <Shield size={16} /> Shield
+                              </button>
+                          ) : (
+                              <div className="flex-1 py-3 bg-gray-800 text-cyan-400 font-bold rounded-xl flex items-center justify-center gap-2 border border-cyan-500/20 text-xs md:text-sm"><Shield size={16} /> Active</div>
+                          )}
                     </div>
-                  </>
                ) : (
+                  // Not Owner
                   <>
-                     <button 
-                        onClick={() => onClaim(selectedZone.id)}
-                        className="w-full py-3 bg-red-600 text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-lg text-sm"
-                    >
-                        Contest Ownership (50 RUN)
-                    </button>
+                     {isTopRunner ? (
+                         <button 
+                             onClick={() => onClaim(selectedZone.id)}
+                             className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-[0_0_15px_rgba(16,185,129,0.3)] animate-pulse"
+                         >
+                             <Swords size={18} /> Claim Ownership (50 RUN)
+                         </button>
+                     ) : (
+                         <div className="bg-red-900/20 border border-red-500/30 p-3 rounded-lg text-center">
+                             <div className="text-red-400 font-bold text-xs uppercase mb-1 flex items-center justify-center gap-2">
+                                <Lock size={12}/> Locked
+                             </div>
+                             <p className="text-gray-400 text-xs leading-tight">
+                                Run <strong>{kmToTop > 0 ? kmToTop.toFixed(1) : 0.1} km</strong> more in this zone to surpass the leader and enable conquest.
+                             </p>
+                         </div>
+                     )}
                   </>
                )}
             </div>
