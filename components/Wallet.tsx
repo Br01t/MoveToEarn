@@ -4,6 +4,7 @@ import { User } from '../types';
 import { Flame, Link as LinkIcon, Wallet as WalletIcon, CheckCircle, CreditCard, Euro, TrendingUp, Lock, Activity, ArrowRight, Crown, History, ArrowUpRight, ArrowDownLeft, X } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import Pagination from './Pagination';
+import { useLanguage } from '../LanguageContext';
 
 interface WalletProps {
   user: User;
@@ -56,6 +57,7 @@ const mockTransactions = [
 ];
 
 const Wallet: React.FC<WalletProps> = ({ user, onBuyFiat }) => {
+  const { t } = useLanguage();
   const [fiatAmount, setFiatAmount] = useState<string>('');
   const [isWalletConnected, setIsWalletConnected] = useState(false);
   
@@ -84,9 +86,9 @@ const Wallet: React.FC<WalletProps> = ({ user, onBuyFiat }) => {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-2">
          <div>
             <h1 className="text-3xl font-bold text-white flex items-center gap-2">
-               <WalletIcon className="text-emerald-400" size={32} /> Wallet & Economy
+               <WalletIcon className="text-emerald-400" size={32} /> {t('wallet.title')}
             </h1>
-            <p className="text-gray-400 text-sm">Manage assets and monitor protocol health.</p>
+            <p className="text-gray-400 text-sm">{t('wallet.subtitle')}</p>
          </div>
          
          {/* External Wallet Connect */}
@@ -98,7 +100,7 @@ const Wallet: React.FC<WalletProps> = ({ user, onBuyFiat }) => {
                 : 'bg-gray-800 text-gray-400 border-gray-600 hover:bg-gray-700'
             }`}
           >
-             {isWalletConnected ? <><CheckCircle size={16}/> 0x71...9A23</> : <><LinkIcon size={16}/> Connect Web3</>}
+             {isWalletConnected ? <><CheckCircle size={16}/> 0x71...9A23</> : <><LinkIcon size={16}/> {t('wallet.connect')}</>}
           </button>
       </div>
 
@@ -109,9 +111,9 @@ const Wallet: React.FC<WalletProps> = ({ user, onBuyFiat }) => {
                   <Activity size={100} />
               </div>
               <div>
-                  <p className="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Available RUN</p>
+                  <p className="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">{t('wallet.available_run')}</p>
                   <h2 className="text-3xl font-mono font-bold text-emerald-400">{user.runBalance.toFixed(2)}</h2>
-                  <p className="text-xs text-gray-500 mt-1">Utility Token (Spendable)</p>
+                  <p className="text-xs text-gray-500 mt-1">{t('wallet.utility_token')}</p>
               </div>
               <div className="bg-emerald-500/10 p-4 rounded-full text-emerald-400 border border-emerald-500/20">
                   <Activity size={32} />
@@ -123,9 +125,9 @@ const Wallet: React.FC<WalletProps> = ({ user, onBuyFiat }) => {
                   <Crown size={100} />
               </div>
               <div>
-                  <p className="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Available GOV</p>
+                  <p className="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">{t('wallet.available_gov')}</p>
                   <h2 className="text-3xl font-mono font-bold text-cyan-400">{user.govBalance.toFixed(2)}</h2>
-                  <p className="text-xs text-gray-500 mt-1">Governance Token (Store of Value)</p>
+                  <p className="text-xs text-gray-500 mt-1">{t('wallet.gov_token')}</p>
               </div>
                <div className="bg-cyan-500/10 p-4 rounded-full text-cyan-400 border border-cyan-500/20">
                   <Crown size={32} />
@@ -147,16 +149,16 @@ const Wallet: React.FC<WalletProps> = ({ user, onBuyFiat }) => {
                 
                 <div className="relative z-10">
                     <h2 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
-                        Buy GOV Token
+                        {t('wallet.buy_gov')}
                     </h2>
                     <p className="text-gray-400 text-xs mb-6">
-                        Direct purchase via SEPA/Credit Card. <br/>
-                        Rate: <span className="text-white font-mono">€1.00 ≈ 10.00 GOV</span>
+                        {t('wallet.buy_desc')} <br/>
+                        {t('wallet.rate')}: <span className="text-white font-mono">€1.00 ≈ 10.00 GOV</span>
                     </p>
 
                     <div className="space-y-4">
                         <div className="space-y-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">You Pay</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('wallet.you_pay')}</label>
                             <div className="flex items-center bg-gray-900 border border-gray-600 rounded-xl px-4 py-3 focus-within:border-emerald-500 transition-colors">
                                 <Euro size={20} className="text-gray-400 mr-2" />
                                 <input 
@@ -175,7 +177,7 @@ const Wallet: React.FC<WalletProps> = ({ user, onBuyFiat }) => {
                         </div>
                         
                         <div className="space-y-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">You Receive</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('wallet.you_receive')}</label>
                             <div className="flex items-center bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3">
                                 <Crown size={20} className="text-cyan-400 mr-2" fill="currentColor" fillOpacity={0.2} />
                                 <span className="text-white font-bold w-full">
@@ -189,9 +191,9 @@ const Wallet: React.FC<WalletProps> = ({ user, onBuyFiat }) => {
                             onClick={handleFiatPurchase}
                             className="w-full py-4 mt-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-black font-bold rounded-xl transition-all shadow-lg shadow-emerald-900/20"
                         >
-                            Proceed to Payment
+                            {t('wallet.proceed_payment')}
                         </button>
-                        <p className="text-[10px] text-center text-gray-500">Secured by Stripe via MoonPay</p>
+                        <p className="text-[10px] text-center text-gray-500">{t('wallet.secured_by')}</p>
                     </div>
                 </div>
             </div>
@@ -200,7 +202,7 @@ const Wallet: React.FC<WalletProps> = ({ user, onBuyFiat }) => {
             <div className="bg-gray-800 rounded-2xl border border-gray-700 p-6 flex-1 flex flex-col">
                 <div className="flex justify-between items-center mb-4">
                    <h3 className="font-bold text-white flex items-center gap-2 text-sm">
-                       <History size={16} className="text-gray-400"/> Recent Activity
+                       <History size={16} className="text-gray-400"/> {t('wallet.recent_activity')}
                    </h3>
                    <button 
                      onClick={() => {
@@ -209,7 +211,7 @@ const Wallet: React.FC<WalletProps> = ({ user, onBuyFiat }) => {
                      }}
                      className="text-[10px] text-emerald-400 hover:underline"
                    >
-                       View All
+                       {t('wallet.view_all')}
                    </button>
                 </div>
                 <div className="space-y-3 flex-1">
@@ -246,13 +248,13 @@ const Wallet: React.FC<WalletProps> = ({ user, onBuyFiat }) => {
                     <div>
                         <h3 className="text-lg font-bold text-white flex items-center gap-2">
                             <Activity className="text-emerald-400" size={18} /> 
-                            RUN Supply
+                            {t('wallet.run_supply')}
                         </h3>
-                        <p className="text-xs text-gray-400">Total Circulating Supply (Millions)</p>
+                        <p className="text-xs text-gray-400">{t('wallet.total_circulating')}</p>
                     </div>
                     <div className="text-right">
                         <div className="text-xs font-bold bg-emerald-900/30 text-emerald-400 px-2 py-1 rounded border border-emerald-500/20 uppercase tracking-wider">
-                            Inflationary
+                            {t('wallet.inflationary')}
                         </div>
                     </div>
                 </div>
@@ -280,7 +282,7 @@ const Wallet: React.FC<WalletProps> = ({ user, onBuyFiat }) => {
                 </div>
                 <div className="mt-2 flex items-center gap-2 text-xs text-gray-500 bg-gray-900/50 p-2 rounded">
                    <TrendingUp size={12} className="text-emerald-500" />
-                   <span>Supply increases with physical activity. Controlled via Weekly Burn.</span>
+                   <span>{t('wallet.supply_increases')}</span>
                 </div>
             </div>
 
@@ -290,13 +292,13 @@ const Wallet: React.FC<WalletProps> = ({ user, onBuyFiat }) => {
                     <div>
                         <h3 className="text-lg font-bold text-white flex items-center gap-2">
                             <Lock className="text-cyan-400" size={18} /> 
-                            GOV Supply
+                            {t('wallet.gov_supply')}
                         </h3>
-                        <p className="text-xs text-gray-400">Minted vs Max Cap (Millions)</p>
+                        <p className="text-xs text-gray-400">{t('wallet.minted_vs_cap')}</p>
                     </div>
                     <div className="text-right">
                         <div className="text-xs font-bold bg-cyan-900/30 text-cyan-400 px-2 py-1 rounded border border-cyan-500/20 uppercase tracking-wider">
-                            Hard Cap: 50M
+                            {t('wallet.hard_cap')}
                         </div>
                     </div>
                 </div>
@@ -325,7 +327,7 @@ const Wallet: React.FC<WalletProps> = ({ user, onBuyFiat }) => {
                 </div>
                  <div className="mt-2 flex items-center gap-2 text-xs text-gray-500 bg-gray-900/50 p-2 rounded">
                    <Lock size={12} className="text-cyan-500" />
-                   <span>Deflationary pressure increases as supply approaches the 50M Limit.</span>
+                   <span>{t('wallet.deflationary')}</span>
                 </div>
             </div>
 
@@ -344,19 +346,19 @@ const Wallet: React.FC<WalletProps> = ({ user, onBuyFiat }) => {
                 <Flame size={32} className="text-red-500 animate-pulse" />
              </div>
              <div>
-                <h3 className="text-lg font-bold text-white">Protocol Burn Event</h3>
-                <p className="text-gray-400 text-sm">Next scheduled burn in <span className="text-white font-mono">48:20:10</span></p>
+                <h3 className="text-lg font-bold text-white">{t('wallet.burn_event')}</h3>
+                <p className="text-gray-400 text-sm">{t('wallet.next_burn')} <span className="text-white font-mono">48:20:10</span></p>
              </div>
           </div>
 
           <div className="flex gap-8 text-center relative z-10">
              <div>
                 <span className="block text-2xl font-bold text-white">4.2M</span>
-                <span className="text-xs text-gray-500 uppercase font-bold">RUN Burned (Total)</span>
+                <span className="text-xs text-gray-500 uppercase font-bold">{t('wallet.run_burned')}</span>
              </div>
              <div>
                 <span className="block text-2xl font-bold text-white">12.5%</span>
-                <span className="text-xs text-gray-500 uppercase font-bold">Current Tax Rate</span>
+                <span className="text-xs text-gray-500 uppercase font-bold">{t('wallet.tax_rate')}</span>
              </div>
           </div>
       </div>
@@ -368,7 +370,7 @@ const Wallet: React.FC<WalletProps> = ({ user, onBuyFiat }) => {
               {/* Header */}
               <div className="p-6 border-b border-gray-700 flex justify-between items-center bg-gray-900 rounded-t-2xl">
                  <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                     <History className="text-emerald-400" /> Transaction History
+                     <History className="text-emerald-400" /> {t('wallet.trans_history')}
                  </h3>
                  <button onClick={() => setShowHistoryModal(false)} className="text-gray-400 hover:text-white transition-colors bg-gray-800 p-2 rounded-full hover:bg-gray-700">
                     <X size={20}/>

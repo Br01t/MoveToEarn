@@ -1,3 +1,4 @@
+
 export type ViewState = 'LANDING' | 'DASHBOARD' | 'MARKETPLACE' | 'INVENTORY' | 'LEADERBOARD' | 'WALLET' | 'PROFILE' | 'MISSIONS' | 'RULES' | 'HOW_TO_PLAY' | 'PRIVACY' | 'TERMS' | 'COMMUNITY' | 'ADMIN';
 
 export type Rarity = 'COMMON' | 'RARE' | 'EPIC' | 'LEGENDARY';
@@ -10,7 +11,7 @@ export interface Mission {
   id: string;
   title: string;
   description: string;
-  rewardGov: number;
+  rewardRun: number; // Changed from rewardGov
   rarity: Rarity;
   
   // Legacy System (Preserved but optional)
@@ -29,6 +30,7 @@ export interface Badge {
   description: string;
   icon: string; // Lucide icon name
   rarity: Rarity;
+  rewardRun?: number; // Added rewardRun
 
   // Legacy System (Preserved but optional)
   conditionType?: 'TOTAL_KM' | 'OWN_ZONES';

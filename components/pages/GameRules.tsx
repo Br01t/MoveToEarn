@@ -2,6 +2,7 @@
 import React from 'react';
 import { Scroll, Map, Shield, Coins, TrendingUp, Zap, Footprints, ArrowLeft, ShoppingBag, Route, Upload, Globe, Crown, Lock, FileText, CheckCircle, HelpCircle, AlertTriangle, Target, Calculator, Database, Siren, Flame, Gift, Clock, Trophy, Star, Medal } from 'lucide-react';
 import { ViewState } from '../../types';
+import { useLanguage } from '../../LanguageContext';
 
 interface GameRulesProps {
   onBack?: () => void;
@@ -9,6 +10,8 @@ interface GameRulesProps {
 }
 
 const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate }) => {
+  const { t } = useLanguage();
+
   return (
     <div className="min-h-screen bg-gray-900 relative overflow-hidden pb-20">
       
@@ -27,7 +30,7 @@ const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate }) => {
                 className="group flex items-center gap-2 text-gray-400 hover:text-white transition-colors bg-gray-800/50 px-4 py-2 rounded-lg border border-gray-700 hover:border-gray-500"
               >
                 <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" /> 
-                <span className="font-bold text-sm">Dashboard</span>
+                <span className="font-bold text-sm">{t('rules.back')}</span>
               </button>
             )}
             {onNavigate && (
@@ -36,7 +39,7 @@ const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate }) => {
                   className="flex items-center gap-2 bg-emerald-500/10 text-emerald-400 px-5 py-2.5 rounded-lg hover:bg-emerald-500 hover:text-black transition-all border border-emerald-500/30 hover:shadow-[0_0_20px_rgba(16,185,129,0.4)]"
               >
                   <HelpCircle size={18} /> 
-                  <span className="font-bold text-sm">Step-by-Step Guide</span>
+                  <span className="font-bold text-sm">{t('rules.guide')}</span>
               </button>
             )}
         </div>
@@ -47,12 +50,12 @@ const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate }) => {
                 <Scroll className="text-emerald-400" size={40} />
             </div>
             <h1 className="text-5xl md:text-7xl font-black text-white tracking-tighter uppercase">
-              Protocol <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-500">Whitepaper</span>
+              {t('rules.title')}
             </h1>
             <p className="text-xl text-gray-400 max-w-3xl mx-auto leading-relaxed">
-              Technical documentation for the ZoneRun Move-to-Earn ecosystem.
+              {t('rules.subtitle')}
               <br/>
-              <span className="text-sm font-mono text-gray-500 mt-2 block">v.1.0.4-MVP // PUBLIC RELEASE</span>
+              <span className="text-sm font-mono text-gray-500 mt-2 block">{t('rules.version')}</span>
             </p>
         </div>
 
@@ -61,7 +64,7 @@ const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate }) => {
           {/* SECTION: TOKENOMICS */}
           <section>
              <h2 className="text-3xl font-bold text-white mb-8 flex items-center gap-3 border-b border-gray-800 pb-4">
-                <Coins className="text-emerald-400" /> Token Economy
+                <Coins className="text-emerald-400" /> {t('rules.tokenomics.title')}
              </h2>
              
              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -71,26 +74,26 @@ const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate }) => {
                         <div className="flex items-center gap-3">
                             <div className="p-3 bg-emerald-500/20 rounded-lg text-emerald-400"><Footprints size={24}/></div>
                             <div>
-                                <h3 className="text-2xl font-bold text-white">RUN</h3>
-                                <span className="text-xs text-emerald-500 font-mono">UTILITY TOKEN</span>
+                                <h3 className="text-2xl font-bold text-white">{t('rules.tokenomics.run.title')}</h3>
+                                <span className="text-xs text-emerald-500 font-mono">{t('rules.tokenomics.run.subtitle')}</span>
                             </div>
                         </div>
                         <div className="text-right">
                            <span className="block text-xs text-gray-500 uppercase">Supply</span>
-                           <span className="font-mono text-white">Uncapped / Inflationary</span>
+                           <span className="font-mono text-white">{t('rules.tokenomics.run.supply')}</span>
                         </div>
                     </div>
                     <p className="text-gray-400 text-sm leading-relaxed mb-6">
-                        Generated exclusively through physical movement. It is the fuel of the ecosystem, used for all operational costs.
+                        {t('rules.tokenomics.run.desc')}
                     </p>
                     <div className="space-y-3">
                         <div className="flex items-center gap-3 text-sm text-gray-300">
-                           <span className="w-16 text-xs font-bold text-gray-500 uppercase">Source</span>
-                           <span>Running (10 RUN / KM)</span>
+                           <span className="w-16 text-xs font-bold text-gray-500 uppercase">{t('rules.tokenomics.run.source_label')}</span>
+                           <span>{t('rules.tokenomics.run.source')}</span>
                         </div>
                         <div className="flex items-center gap-3 text-sm text-gray-300">
-                           <span className="w-16 text-xs font-bold text-gray-500 uppercase">Sink</span>
-                           <span>Minting Zones, Marketplace, Contest Fees</span>
+                           <span className="w-16 text-xs font-bold text-gray-500 uppercase">{t('rules.tokenomics.run.sink_label')}</span>
+                           <span>{t('rules.tokenomics.run.sink')}</span>
                         </div>
                     </div>
                 </div>
@@ -101,69 +104,67 @@ const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate }) => {
                         <div className="flex items-center gap-3">
                             <div className="p-3 bg-cyan-500/20 rounded-lg text-cyan-400"><Crown size={24}/></div>
                             <div>
-                                <h3 className="text-2xl font-bold text-white">GOV</h3>
-                                <span className="text-xs text-cyan-500 font-mono">VALUE ACCUMULATION</span>
+                                <h3 className="text-2xl font-bold text-white">{t('rules.tokenomics.gov.title')}</h3>
+                                <span className="text-xs text-cyan-500 font-mono">{t('rules.tokenomics.gov.subtitle')}</span>
                             </div>
                         </div>
                         <div className="text-right">
                            <span className="block text-xs text-gray-500 uppercase">Supply</span>
-                           <span className="font-mono text-white">Deflationary / Hard Cap</span>
+                           <span className="font-mono text-white">{t('rules.tokenomics.gov.supply')}</span>
                         </div>
                     </div>
                     <p className="text-gray-400 text-sm leading-relaxed mb-6">
-                        The ultimate store of value. It represents prestige and accumulation of wealth within the game. It is not for voting, but for ranking and premium access.
+                        {t('rules.tokenomics.gov.desc')}
                     </p>
                     <div className="space-y-3">
                         <div className="flex items-center gap-3 text-sm text-gray-300">
-                           <span className="w-16 text-xs font-bold text-gray-500 uppercase">Source</span>
-                           <span>Missions, Conquests, Leaderboard Airdrops</span>
+                           <span className="w-16 text-xs font-bold text-gray-500 uppercase">{t('rules.tokenomics.gov.source_label')}</span>
+                           <span>{t('rules.tokenomics.gov.source')}</span>
                         </div>
                         <div className="flex items-center gap-3 text-sm text-gray-300">
-                           <span className="w-16 text-xs font-bold text-gray-500 uppercase">Sink</span>
-                           <span>Premium Subscriptions, Exclusive Cosmetic Badges</span>
+                           <span className="w-16 text-xs font-bold text-gray-500 uppercase">{t('rules.tokenomics.gov.sink_label')}</span>
+                           <span>{t('rules.tokenomics.gov.sink')}</span>
                         </div>
                     </div>
                 </div>
              </div>
           </section>
 
-          {/* SECTION: ACHIEVEMENTS & PROGRESSION (NEW) */}
+          {/* SECTION: ACHIEVEMENTS & PROGRESSION */}
           <section>
              <h2 className="text-3xl font-bold text-white mb-8 flex items-center gap-3 border-b border-gray-800 pb-4">
-                <Trophy className="text-yellow-400" /> Achievements & Progression
+                <Trophy className="text-yellow-400" /> {t('rules.ach.title')}
              </h2>
              
              <div className="space-y-6">
                  <p className="text-gray-400 text-sm leading-relaxed max-w-4xl">
-                     Beyond the simple "Move-to-Earn" mechanic of earning RUN for kilometers, the ZoneRun protocol rewards strategic playstyles through the <strong>Missions System</strong>. 
-                     Completing missions is the primary method for "mining" new GOV tokens into your wallet.
+                     {t('rules.ach.intro')}
                  </p>
 
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                      {/* Missions Logic */}
                      <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
                          <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                             <Target className="text-emerald-400" size={20} /> Mission Contracts
+                             <Target className="text-emerald-400" size={20} /> {t('rules.missions.title')}
                          </h3>
                          <p className="text-sm text-gray-400 mb-4">
-                             The system automatically tracks your stats across various categories (Speed, Distance, Exploration, Time of Day). 
-                             When criteria are met, the mission is marked as complete and <strong className="text-cyan-400">GOV is instantly credited</strong>.
+                             {t('rules.missions.desc')}
                          </p>
                          <div className="space-y-3">
                              <div className="bg-gray-900 p-3 rounded-lg border border-gray-600 flex justify-between items-center">
-                                 <span className="text-xs text-gray-300 font-bold uppercase">Common Tier</span>
+                                 <span className="text-xs text-gray-300 font-bold uppercase">{t('rules.tier.common')}</span>
                                  <span className="text-xs font-mono text-emerald-400">+10-20 GOV</span>
                              </div>
                              <div className="bg-cyan-900/20 p-3 rounded-lg border border-cyan-500/30 flex justify-between items-center">
-                                 <span className="text-xs text-cyan-300 font-bold uppercase">Rare Tier</span>
+                                 <span className="text-xs text-cyan-300 font-bold uppercase">{t('rules.tier.rare')}</span>
                                  <span className="text-xs font-mono text-cyan-400">+30-50 GOV</span>
                              </div>
                              <div className="bg-purple-900/20 p-3 rounded-lg border border-purple-500/30 flex justify-between items-center">
-                                 <span className="text-xs text-purple-300 font-bold uppercase">Epic Tier</span>
+                                 <span className="text-xs text-purple-300 font-bold uppercase">{t('rules.tier.epic')}</span>
                                  <span className="text-xs font-mono text-purple-400">+60-100 GOV</span>
                              </div>
                              <div className="bg-yellow-900/20 p-3 rounded-lg border border-yellow-500/30 flex justify-between items-center">
-                                 <span className="text-xs text-yellow-300 font-bold uppercase">Legendary Tier</span>
+                                 <span className="text-xs text-yellow-300 font-bold uppercase">{t('rules.tier.legendary')}</span>
                                  <span className="text-xs font-mono text-yellow-400">+150-500 GOV</span>
                              </div>
                          </div>
@@ -172,20 +173,19 @@ const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate }) => {
                      {/* Badges Logic */}
                      <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
                          <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                             <Medal className="text-yellow-400" size={20} /> Prestige Badges
+                             <Medal className="text-yellow-400" size={20} /> {t('rules.badges.title')}
                          </h3>
                          <p className="text-sm text-gray-400 mb-4">
-                             Badges are non-transferable cosmetic proofs of achievement. While they do not grant GOV directly, 
-                             collecting badges is required to unlock <strong>"Meta-Missions"</strong> (e.g., "The Collector", "Legendary Runner") which pay out the highest GOV rewards in the game.
+                             {t('rules.badges.desc')}
                          </p>
                          <ul className="space-y-3 text-sm text-gray-400">
                              <li className="flex gap-2">
                                  <Star size={16} className="text-yellow-400 mt-0.5" />
-                                 <span><strong>Visual Prestige:</strong> Equip your rarest badge to display it on the Global Leaderboard and Zone Ownership cards.</span>
+                                 <span><strong>{t('rules.badges.visual')}</strong> {t('rules.badges.visual_desc')}</span>
                              </li>
                              <li className="flex gap-2">
                                  <Target size={16} className="text-emerald-400 mt-0.5" />
-                                 <span><strong>Meta Progression:</strong> Collecting 10 Epic/Legendary badges unlocks the "Legendary Runner" mission worth 250 GOV.</span>
+                                 <span><strong>{t('rules.badges.meta')}</strong> {t('rules.badges.meta_desc')}</span>
                              </li>
                          </ul>
                      </div>
@@ -196,7 +196,7 @@ const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate }) => {
           {/* SECTION: BURN & REWARDS */}
           <section>
              <h2 className="text-3xl font-bold text-white mb-8 flex items-center gap-3 border-b border-gray-800 pb-4">
-                <Flame className="text-red-500" /> Weekly Burn & Rewards
+                <Flame className="text-red-500" /> {t('rules.burn.title')}
              </h2>
              
              <div className="bg-gray-800/60 rounded-xl border border-gray-700 p-8 relative overflow-hidden">
@@ -207,30 +207,28 @@ const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate }) => {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 relative z-10">
                     <div>
                         <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                           <Flame className="text-red-400"/> The Burn Protocol
+                           <Flame className="text-red-400"/> {t('rules.burn.proto_title')}
                         </h3>
                         <p className="text-gray-400 text-sm leading-relaxed mb-6">
-                           To maintain the value of RUN, the protocol executes a "Burn Event" every Sunday at 00:00 UTC. 
-                           A percentage (typically 10-20%) of the global floating RUN supply is permanently removed from circulation.
+                           {t('rules.burn.proto_desc')}
                         </p>
                         <div className="bg-red-900/20 border border-red-500/30 p-4 rounded-lg">
-                           <p className="text-red-200 text-xs font-mono">EFFECT: Increases scarcity of RUN tokens.</p>
+                           <p className="text-red-200 text-xs font-mono">{t('rules.burn.effect')}</p>
                         </div>
                     </div>
 
                     <div>
                         <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                           <TrendingUp className="text-cyan-400"/> Proportional Airdrop
+                           <TrendingUp className="text-cyan-400"/> {t('rules.burn.airdrop_title')}
                         </h3>
                         <p className="text-gray-400 text-sm leading-relaxed mb-4">
-                           Simultaneously, the protocol mints a fixed supply of GOV tokens and distributes them to active players.
-                           Your reward is calculated based on your contribution relative to the total network.
+                           {t('rules.burn.airdrop_desc')}
                         </p>
                         <div className="bg-gray-900 p-4 rounded-lg border border-gray-600 font-mono text-xs text-cyan-300 mb-2">
-                           Reward = (YourScore / GlobalScore) * Pool
+                           {t('rules.burn.formula')}
                         </div>
                         <div className="text-xs text-gray-500">
-                           <strong>YourScore</strong> = (TotalKM * 0.5) + (ZonesOwned * 10)
+                           {t('rules.burn.calc')}
                         </div>
                     </div>
                 </div>
@@ -240,36 +238,35 @@ const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate }) => {
           {/* SECTION: MATH & FORMULAS */}
           <section>
              <h2 className="text-3xl font-bold text-white mb-8 flex items-center gap-3 border-b border-gray-800 pb-4">
-                <Calculator className="text-blue-400" /> Game Math
+                <Calculator className="text-blue-400" /> {t('rules.math.title')}
              </h2>
              
              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                  <div className="lg:col-span-2 bg-gray-900 border border-gray-700 rounded-xl p-6 relative overflow-hidden">
                     <div className="absolute top-0 right-0 p-4 opacity-5"><Target size={120}/></div>
-                    <h3 className="text-xl font-bold text-white mb-4">Zone Yield Formula</h3>
+                    <h3 className="text-xl font-bold text-white mb-4">{t('rules.math.yield_title')}</h3>
                     <div className="font-mono text-sm bg-black/50 p-4 rounded-lg border border-gray-700 mb-4 text-green-400">
-                        Yield(min) = (InterestRate * ZoneLevel) / 2
+                        {t('rules.math.yield_formula')}
                     </div>
                     <p className="text-sm text-gray-400">
-                        Zones generate passive income every 10 minutes based on their Interest Rate. 
-                        The rate increases when the owner runs in their own zone (Reinforcement) or applies a Boost item.
+                        {t('rules.math.yield_desc')}
                     </p>
                  </div>
 
                  <div className="bg-gray-900 border border-gray-700 rounded-xl p-6">
-                    <h3 className="text-xl font-bold text-white mb-4">Conquest Logic</h3>
+                    <h3 className="text-xl font-bold text-white mb-4">{t('rules.math.conquest_title')}</h3>
                     <ul className="space-y-4 text-sm text-gray-300">
                         <li className="flex gap-2">
-                            <span className="font-bold text-red-400">Requirement:</span>
-                            <span>Run KM - Current Zone Record</span>
+                            <span className="font-bold text-red-400">{t('rules.math.req')}</span>
+                            <span>{t('rules.math.req_desc')}</span>
                         </li>
                         <li className="flex gap-2">
-                            <span className="font-bold text-red-400">Cost:</span>
-                            <span>50 RUN (Paid to Protocol)</span>
+                            <span className="font-bold text-red-400">{t('rules.math.cost')}</span>
+                            <span>{t('rules.math.cost_desc')}</span>
                         </li>
                         <li className="flex gap-2">
-                            <span className="font-bold text-emerald-400">Reward:</span>
-                            <span>Ownership + 10 GOV</span>
+                            <span className="font-bold text-emerald-400">{t('rules.math.reward')}</span>
+                            <span>{t('rules.math.reward_desc')}</span>
                         </li>
                     </ul>
                  </div>
@@ -279,7 +276,7 @@ const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate }) => {
           {/* SECTION: ITEM DATABASE */}
           <section>
              <h2 className="text-3xl font-bold text-white mb-8 flex items-center gap-3 border-b border-gray-800 pb-4">
-                <Database className="text-yellow-400" /> Item Database
+                <Database className="text-yellow-400" /> {t('rules.items.title')}
              </h2>
              
              <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden mb-6">
@@ -287,40 +284,40 @@ const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate }) => {
                     <table className="w-full text-left text-sm">
                         <thead className="bg-gray-900 text-gray-400 uppercase font-bold text-xs">
                             <tr>
-                                <th className="px-6 py-4">Item Name</th>
-                                <th className="px-6 py-4">Type</th>
-                                <th className="px-6 py-4">Cost (RUN)</th>
-                                <th className="px-6 py-4">Effect</th>
-                                <th className="px-6 py-4">Duration</th>
+                                <th className="px-6 py-4">{t('rules.items.col_name')}</th>
+                                <th className="px-6 py-4">{t('rules.items.col_type')}</th>
+                                <th className="px-6 py-4">{t('rules.items.col_cost')}</th>
+                                <th className="px-6 py-4">{t('rules.items.col_effect')}</th>
+                                <th className="px-6 py-4">{t('rules.items.col_duration')}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-700">
                             <tr className="hover:bg-gray-750">
                                 <td className="px-6 py-4 font-bold text-white flex items-center gap-2">
-                                    <Shield size={16} className="text-blue-400"/> Zone Shield v1
+                                    <Shield size={16} className="text-blue-400"/> {t('rules.items.shield')}
                                 </td>
                                 <td className="px-6 py-4"><span className="bg-blue-900/30 text-blue-400 px-2 py-1 rounded text-xs">DEFENSE</span></td>
                                 <td className="px-6 py-4 font-mono">250</td>
-                                <td className="px-6 py-4 text-gray-300">Prevents conquest attempts</td>
-                                <td className="px-6 py-4 text-gray-400">24 Hours</td>
+                                <td className="px-6 py-4 text-gray-300">{t('rules.items.shield_desc')}</td>
+                                <td className="px-6 py-4 text-gray-400">{t('rules.items.shield_dur')}</td>
                             </tr>
                             <tr className="hover:bg-gray-750">
                                 <td className="px-6 py-4 font-bold text-white flex items-center gap-2">
-                                    <Zap size={16} className="text-amber-400"/> Nanofiber Shoes
+                                    <Zap size={16} className="text-amber-400"/> {t('rules.items.shoes')}
                                 </td>
                                 <td className="px-6 py-4"><span className="bg-amber-900/30 text-amber-400 px-2 py-1 rounded text-xs">BOOST</span></td>
                                 <td className="px-6 py-4 font-mono">500</td>
-                                <td className="px-6 py-4 text-gray-300">+1.0% Yield Rate</td>
-                                <td className="px-6 py-4 text-gray-400">24 Hours</td>
+                                <td className="px-6 py-4 text-gray-300">{t('rules.items.shoes_desc')}</td>
+                                <td className="px-6 py-4 text-gray-400">{t('rules.items.shoes_dur')}</td>
                             </tr>
                             <tr className="hover:bg-gray-750">
                                 <td className="px-6 py-4 font-bold text-white flex items-center gap-2">
-                                    <ShoppingBag size={16} className="text-cyan-400"/> GOV Supply Crate
+                                    <ShoppingBag size={16} className="text-cyan-400"/> {t('rules.items.crate')}
                                 </td>
-                                <td className="px-6 py-4"><span className="bg-cyan-950 text-cyan-400 px-2 py-1 rounded text-xs border border-cyan-500/20 font-bold tracking-wide">SEASONAL / LIMITED</span></td>
+                                <td className="px-6 py-4"><span className="bg-cyan-950 text-cyan-400 px-2 py-1 rounded text-xs border border-cyan-500/20 font-bold tracking-wide">{t('rules.items.crate_tag')}</span></td>
                                 <td className="px-6 py-4 font-mono">1000</td>
-                                <td className="px-6 py-4 text-gray-300">Instant +50 GOV</td>
-                                <td className="px-6 py-4 text-gray-400">Instant</td>
+                                <td className="px-6 py-4 text-gray-300">{t('rules.items.crate_desc')}</td>
+                                <td className="px-6 py-4 text-gray-400">{t('rules.items.crate_dur')}</td>
                             </tr>
                         </tbody>
                     </table>
@@ -334,12 +331,10 @@ const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate }) => {
                  </div>
                  <div>
                      <h4 className="font-bold text-white text-lg mb-1 flex items-center gap-2">
-                         Limited Market Availability & Flash Drops
+                         {t('rules.market.flash_title')}
                      </h4>
                      <p className="text-gray-400 text-sm leading-relaxed">
-                         Premium items like the <strong>GOV Supply Crate</strong> are <u>not permanently in stock</u>. 
-                         They are released in limited quantities during specific <strong>Flash Drops</strong> or scheduled Seasonal Events. 
-                         Players must act quickly when stock arrives, as global quantities are strictly scarce.
+                         {t('rules.market.flash_desc')}
                      </p>
                  </div>
              </div>
@@ -348,38 +343,37 @@ const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate }) => {
           {/* SECTION: FAIR PLAY */}
           <section>
              <h2 className="text-3xl font-bold text-white mb-8 flex items-center gap-3 border-b border-gray-800 pb-4">
-                <Siren className="text-red-400" /> Fair Play & Anti-Cheat
+                <Siren className="text-red-400" /> {t('rules.fair.title')}
              </h2>
              
              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                  <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
-                    <h3 className="font-bold text-white mb-4">Speed Limitations</h3>
+                    <h3 className="font-bold text-white mb-4">{t('rules.fair.speed_title')}</h3>
                     <p className="text-gray-400 text-sm mb-4">
-                        The protocol is designed for walking, jogging, and running. 
-                        Activities exceeding human capabilities are automatically rejected by the Oracle.
+                        {t('rules.fair.speed_desc')}
                     </p>
                     <div className="flex gap-4">
                         <div className="bg-gray-900 p-3 rounded-lg border border-gray-600 text-center flex-1">
                             <span className="block text-2xl font-bold text-white">3</span>
-                            <span className="text-[10px] uppercase text-gray-500">Min KM/H</span>
+                            <span className="text-[10px] uppercase text-gray-500">{t('rules.fair.min_km')}</span>
                         </div>
                         <div className="bg-gray-900 p-3 rounded-lg border border-gray-600 text-center flex-1">
                             <span className="block text-2xl font-bold text-red-400">20</span>
-                            <span className="text-[10px] uppercase text-gray-500">Max KM/H</span>
+                            <span className="text-[10px] uppercase text-gray-500">{t('rules.fair.max_km')}</span>
                         </div>
                     </div>
                  </div>
 
                  <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
-                    <h3 className="font-bold text-white mb-4">Validation Process</h3>
+                    <h3 className="font-bold text-white mb-4">{t('rules.fair.valid_title')}</h3>
                     <ul className="space-y-3 text-sm text-gray-400">
                         <li className="flex gap-3 items-start">
                             <CheckCircle size={16} className="text-emerald-400 mt-0.5 shrink-0" />
-                            <span><strong>Standard (Free):</strong> Files (.gpx) are queued for "Anti-Fraud Parser" analysis. Delay: 1-5 minutes.</span>
+                            <span><strong>{t('rules.fair.valid_std')}</strong> {t('rules.fair.valid_std_desc')}</span>
                         </li>
                         <li className="flex gap-3 items-start">
                             <CheckCircle size={16} className="text-amber-400 mt-0.5 shrink-0" />
-                            <span><strong>Premium (Pro):</strong> Direct API connection to Strava/Garmin. Trusted device data is accepted instantly.</span>
+                            <span><strong>{t('rules.fair.valid_pro')}</strong> {t('rules.fair.valid_pro_desc')}</span>
                         </li>
                     </ul>
                  </div>
@@ -389,7 +383,7 @@ const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate }) => {
         </div>
 
         <div className="text-center mt-24 pt-8 border-t border-gray-800 text-gray-600 text-xs font-mono">
-            ZONE RUN PROTOCOL // DECENTRALIZED MOVE-TO-EARN // 2025
+            {t('rules.footer_text')}
         </div>
 
       </div>

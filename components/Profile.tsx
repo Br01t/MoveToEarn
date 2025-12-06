@@ -4,6 +4,7 @@ import { User, Zone, Mission, Badge, Rarity } from '../types';
 import { Save, User as UserIcon, Mail, Activity, Coins, Shield, Crown, Award, History, Clock, CheckCircle, TrendingUp, BarChart3, MapPin, Camera, X, Flag, Zap, Mountain, Globe, Home, Landmark, Swords, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users } from 'lucide-react';
 import { PREMIUM_COST } from '../constants';
 import Pagination from './Pagination';
+import { useLanguage } from '../LanguageContext';
 
 interface ProfileProps {
   user: User;
@@ -19,6 +20,7 @@ const RUNS_PER_PAGE = 8;
 const COMPLETED_MISSIONS_PER_PAGE = 5;
 
 const Profile: React.FC<ProfileProps> = ({ user, zones, missions = [], badges = [], onUpdateUser, onUpgradePremium }) => {
+  const { t } = useLanguage();
   const [name, setName] = useState(user.name);
   const [email, setEmail] = useState(user.email || '');
   const [avatar, setAvatar] = useState(user.avatar);
@@ -138,7 +140,7 @@ const Profile: React.FC<ProfileProps> = ({ user, zones, missions = [], badges = 
               <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-30"></div>
               {user.isPremium && (
                  <div className="absolute top-4 right-4 bg-yellow-500 text-black text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-lg z-10">
-                    <Crown size={12} fill="black" /> PREMIUM AGENT
+                    <Crown size={12} fill="black" /> {t('profile.premium_agent')}
                  </div>
               )}
           </div>
@@ -172,13 +174,13 @@ const Profile: React.FC<ProfileProps> = ({ user, zones, missions = [], badges = 
                             <button onClick={() => setIsEditing(true)} className="text-gray-500 hover:text-emerald-400 p-1 hover:bg-gray-700/50 rounded-lg transition-colors"><Save size={18}/></button>
                         </div>
                         <p className="text-gray-400 flex items-center gap-2 text-sm mt-1">
-                            <Mail size={14} className="text-emerald-500" /> {user.email || 'No secure contact linked'}
+                            <Mail size={14} className="text-emerald-500" /> {user.email || t('profile.no_email')}
                         </p>
                         
                         {/* Level Progress Bar (View Mode) */}
                         <div className="mt-4 max-w-lg">
                             <div className="flex justify-between text-[10px] uppercase font-bold text-gray-500 mb-1">
-                                <span>XP Progress</span>
+                                <span>{t('profile.xp_progress')}</span>
                                 <span>{user.totalKm.toFixed(1)} / {nextLevelKm} KM</span>
                             </div>
                             <div className="w-full bg-gray-900 rounded-full h-2 border border-gray-700">
@@ -190,24 +192,24 @@ const Profile: React.FC<ProfileProps> = ({ user, zones, missions = [], badges = 
                     <div className="flex flex-col gap-3 w-full max-w-lg animate-fade-in bg-gray-900/50 p-4 rounded-xl border border-gray-700">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <div>
-                                <label className="text-[10px] uppercase font-bold text-gray-500 block mb-1">Agent Name</label>
+                                <label className="text-[10px] uppercase font-bold text-gray-500 block mb-1">{t('profile.agent_name')}</label>
                                 <input value={name} onChange={e => setName(e.target.value)} className="w-full bg-gray-900 border border-emerald-500 rounded px-3 py-2 text-white text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500" />
                             </div>
                             <div>
-                                <label className="text-[10px] uppercase font-bold text-gray-500 block mb-1">Contact Email</label>
+                                <label className="text-[10px] uppercase font-bold text-gray-500 block mb-1">{t('profile.contact_email')}</label>
                                 <input value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-gray-900 border border-gray-600 focus:border-emerald-500 rounded px-3 py-2 text-white text-sm focus:outline-none" />
                             </div>
                         </div>
                         <div>
-                             <label className="text-[10px] uppercase font-bold text-gray-500 block mb-1">Avatar URL</label>
+                             <label className="text-[10px] uppercase font-bold text-gray-500 block mb-1">{t('profile.avatar_url')}</label>
                              <input value={avatar} onChange={e => setAvatar(e.target.value)} placeholder="https://..." className="w-full bg-gray-900 border border-gray-600 focus:border-emerald-500 rounded px-3 py-2 text-white text-sm focus:outline-none" />
                         </div>
                         <div className="flex gap-2 mt-2">
                             <button onClick={handleSave} className="flex-1 bg-emerald-600 hover:bg-emerald-500 px-3 py-2 rounded text-white text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2">
-                                <CheckCircle size={14}/> Save Profile
+                                <CheckCircle size={14}/> {t('profile.save_profile')}
                             </button>
                             <button onClick={handleCancel} className="flex-1 bg-gray-700 hover:bg-gray-600 px-3 py-2 rounded text-white text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2">
-                                <X size={14}/> Cancel
+                                <X size={14}/> {t('profile.cancel')}
                             </button>
                         </div>
                     </div>
@@ -219,7 +221,7 @@ const Profile: React.FC<ProfileProps> = ({ user, zones, missions = [], badges = 
                 <div className="flex gap-3 mt-4 md:mt-12">
                     {!user.isPremium && (
                         <button onClick={onUpgradePremium} className="px-5 py-2.5 bg-yellow-600 hover:bg-yellow-500 text-white font-bold rounded-xl text-sm shadow-lg flex items-center gap-2 transition-colors">
-                            <Crown size={16} /> Upgrade Pro
+                            <Crown size={16} /> {t('profile.upgrade_pro')}
                         </button>
                     )}
                 </div>
@@ -234,15 +236,15 @@ const Profile: React.FC<ProfileProps> = ({ user, zones, missions = [], badges = 
           <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl border border-gray-700 p-5 relative overflow-hidden flex flex-col justify-between">
               <div className="absolute top-0 right-0 p-4 opacity-5"><Coins size={80}/></div>
               <h3 className="text-white font-bold mb-4 flex items-center gap-2">
-                  <Coins size={18} className="text-yellow-500"/> Liquid Assets
+                  <Coins size={18} className="text-yellow-500"/> {t('profile.liquid_assets')}
               </h3>
               <div className="space-y-3 relative z-10">
                   <div className="flex justify-between items-end bg-black/20 p-3 rounded-lg">
-                      <span className="text-sm text-gray-400">RUN Balance</span>
+                      <span className="text-sm text-gray-400">{t('profile.run_balance')}</span>
                       <span className="text-xl font-mono font-bold text-emerald-400">{user.runBalance.toFixed(1)}</span>
                   </div>
                   <div className="flex justify-between items-end bg-black/20 p-3 rounded-lg">
-                      <span className="text-sm text-gray-400">GOV Holdings</span>
+                      <span className="text-sm text-gray-400">{t('profile.gov_holdings')}</span>
                       <span className="text-xl font-mono font-bold text-cyan-400">{user.govBalance.toFixed(1)}</span>
                   </div>
               </div>
@@ -251,19 +253,19 @@ const Profile: React.FC<ProfileProps> = ({ user, zones, missions = [], badges = 
           {/* 2. PERFORMANCE METRICS (Physical) */}
           <div className="bg-gray-800 rounded-xl border border-gray-700 p-5 flex flex-col justify-between">
               <h3 className="text-white font-bold mb-4 flex items-center gap-2 border-b border-gray-700 pb-2">
-                  <BarChart3 size={18} className="text-gray-400"/> Performance Metrics
+                  <BarChart3 size={18} className="text-gray-400"/> {t('profile.perf_metrics')}
               </h3>
               <div className="space-y-4">
                   <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-400">Longest Run</span>
+                      <span className="text-sm text-gray-400">{t('profile.longest_run')}</span>
                       <span className="text-white font-mono font-bold">{maxDistance} km</span>
                   </div>
                   <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-400">Average Distance</span>
+                      <span className="text-sm text-gray-400">{t('profile.avg_dist')}</span>
                       <span className="text-white font-mono font-bold">{avgDistance} km</span>
                   </div>
                   <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-400">Activity Frequency</span>
+                      <span className="text-sm text-gray-400">{t('profile.activity_freq')}</span>
                       <span className="text-emerald-400 text-xs font-bold px-2 py-0.5 bg-emerald-900/30 rounded">HIGH</span>
                   </div>
               </div>
@@ -272,20 +274,20 @@ const Profile: React.FC<ProfileProps> = ({ user, zones, missions = [], badges = 
           {/* 3. TERRITORY STATUS (Empire) */}
           <div className="bg-gray-800 rounded-xl border border-gray-700 p-5 flex flex-col justify-between">
               <h3 className="text-white font-bold mb-4 flex items-center gap-2 border-b border-gray-700 pb-2">
-                  <Shield size={18} className="text-gray-400"/> Territory Status
+                  <Shield size={18} className="text-gray-400"/> {t('profile.territory_status')}
               </h3>
               <div className="grid grid-cols-2 gap-3 mb-4">
                   <div className="bg-gray-900 p-3 rounded-lg text-center">
                       <span className="block text-xl font-bold text-white">{myZones.filter(z => z.defenseLevel > 1).length}</span>
-                      <span className="text-[10px] text-gray-500 uppercase">Fortified</span>
+                      <span className="text-[10px] text-gray-500 uppercase">{t('profile.fortified')}</span>
                   </div>
                   <div className="bg-gray-900 p-3 rounded-lg text-center">
                       <span className="block text-xl font-bold text-white">{myZones.filter(z => z.interestRate > 3).length}</span>
-                      <span className="text-[10px] text-gray-500 uppercase">High Yield</span>
+                      <span className="text-[10px] text-gray-500 uppercase">{t('profile.high_yield')}</span>
                   </div>
               </div>
               <div className="text-xs text-gray-500 text-center">
-                  Your empire generates passive income 24/7.
+                  {t('profile.empire_desc')}
               </div>
           </div>
       </div>
@@ -299,13 +301,13 @@ const Profile: React.FC<ProfileProps> = ({ user, zones, missions = [], badges = 
                     onClick={() => setActiveTab('ACHIEVEMENTS')}
                     className={`flex-1 py-4 text-sm font-bold flex items-center justify-center gap-2 border-b-2 transition-colors ${activeTab === 'ACHIEVEMENTS' ? 'border-yellow-500 text-yellow-400 bg-gray-800' : 'border-transparent text-gray-500 hover:text-white'}`}
                   >
-                      <Award size={16} /> Achievements
+                      <Award size={16} /> {t('profile.tab.achievements')}
                   </button>
                   <button 
                     onClick={() => setActiveTab('HISTORY')}
                     className={`flex-1 py-4 text-sm font-bold flex items-center justify-center gap-2 border-b-2 transition-colors ${activeTab === 'HISTORY' ? 'border-emerald-500 text-emerald-400 bg-gray-800' : 'border-transparent text-gray-500 hover:text-white'}`}
                   >
-                      <History size={16} /> Run Log
+                      <History size={16} /> {t('profile.tab.history')}
                   </button>
               </div>
 
@@ -317,13 +319,13 @@ const Profile: React.FC<ProfileProps> = ({ user, zones, missions = [], badges = 
                       <div className="space-y-8">
                           <div>
                               <div className="flex justify-between items-center mb-4">
-                                  <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Badges Collected ({earnedBadges.length})</h4>
-                                  <span className="text-[9px] text-gray-500 italic">Tap to Equip</span>
+                                  <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t('profile.badges_collected')} ({earnedBadges.length})</h4>
+                                  <span className="text-[9px] text-gray-500 italic">{t('profile.tap_equip')}</span>
                               </div>
                               
                               {earnedBadges.length === 0 ? (
                                   <div className="text-center py-10 border border-dashed border-gray-700 rounded-xl">
-                                      <p className="text-gray-500 text-xs">Start completing missions to earn badges.</p>
+                                      <p className="text-gray-500 text-xs">{t('profile.start_earning')}</p>
                                   </div>
                               ) : (
                                   <>
@@ -357,7 +359,7 @@ const Profile: React.FC<ProfileProps> = ({ user, zones, missions = [], badges = 
 
                           <div className="pt-8 border-t border-gray-700/50">
                               <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
-                                  <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Completed Missions Log</h4>
+                                  <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t('profile.missions_log')}</h4>
                                   {/* Legend */}
                                   <div className="flex gap-2 sm:gap-3 text-[9px] font-bold uppercase tracking-wider text-gray-400">
                                       <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-gray-500"></div> Common</div>
@@ -374,11 +376,11 @@ const Profile: React.FC<ProfileProps> = ({ user, zones, missions = [], badges = 
                                               <CheckCircle size={16} className={getRarityText(m.rarity)} />
                                               <span className="text-sm font-bold text-gray-300 group-hover:text-white transition-colors">{m.title}</span>
                                           </div>
-                                          <span className="text-xs font-mono text-cyan-400">+{m.rewardGov} GOV</span>
+                                          <span className="text-xs font-mono text-emerald-400">+{m.rewardRun} RUN</span>
                                       </div>
                                   ))}
                                   {completedMissions.length === 0 && (
-                                      <p className="text-gray-500 text-xs italic">No missions completed yet.</p>
+                                      <p className="text-gray-500 text-xs italic">{t('profile.no_missions')}</p>
                                   )}
                               </div>
                               <Pagination currentPage={completedMissionPage} totalPages={totalCompletedMissionPages} onPageChange={setCompletedMissionPage} />
@@ -392,7 +394,7 @@ const Profile: React.FC<ProfileProps> = ({ user, zones, missions = [], badges = 
                           {user.runHistory.length === 0 ? (
                               <div className="text-center py-20 text-gray-500">
                                   <Clock size={48} className="mx-auto mb-4 opacity-20" />
-                                  <p>No runs recorded yet.</p>
+                                  <p>{t('profile.no_runs')}</p>
                               </div>
                           ) : (
                               <>
@@ -400,10 +402,10 @@ const Profile: React.FC<ProfileProps> = ({ user, zones, missions = [], badges = 
                                     <table className="w-full text-left">
                                         <thead className="text-[10px] uppercase font-bold text-gray-500 border-b border-gray-700">
                                             <tr>
-                                                <th className="pb-3 pl-2">Date</th>
-                                                <th className="pb-3">Location</th>
+                                                <th className="pb-3 pl-2">{t('profile.date')}</th>
+                                                <th className="pb-3">{t('profile.location')}</th>
                                                 <th className="pb-3 text-right">Dist</th>
-                                                <th className="pb-3 text-right pr-2">Rewards</th>
+                                                <th className="pb-3 text-right pr-2">{t('profile.rewards')}</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-700/50 text-sm">
@@ -437,17 +439,5 @@ const Profile: React.FC<ProfileProps> = ({ user, zones, missions = [], badges = 
     </div>
   );
 };
-
-// Helper Component for Stats
-const StatCard = ({ label, value, icon: Icon, color, subValue }: { label: string, value: string, icon: any, color: string, subValue?: string }) => (
-    <div className="bg-gray-800 p-4 rounded-xl border border-gray-700 shadow-lg">
-        <div className="flex items-start justify-between mb-2">
-            <span className="text-[10px] uppercase font-bold text-gray-500">{label}</span>
-            <div className={`p-1.5 rounded-lg bg-gray-900 ${color}`}><Icon size={14} /></div>
-        </div>
-        <div className="text-2xl font-bold text-white font-mono tracking-tight">{value}</div>
-        {subValue && <div className="text-[10px] text-gray-400 mt-1">{subValue}</div>}
-    </div>
-);
 
 export default Profile;

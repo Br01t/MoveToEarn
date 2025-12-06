@@ -1,8 +1,8 @@
 
-
 import React, { useState } from 'react';
 import { InventoryItem, User, Zone } from '../types';
-import { Shield, Zap, Package, MapPin, X, ArrowRight, Info } from 'lucide-react';
+import { Shield, Zap, Package, MapPin, X, Info } from 'lucide-react';
+import { useLanguage } from '../LanguageContext';
 
 interface InventoryProps {
   user: User;
@@ -11,6 +11,7 @@ interface InventoryProps {
 }
 
 const Inventory: React.FC<InventoryProps> = ({ user, zones, onUseItem }) => {
+  const { t } = useLanguage();
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
 
   const myZones = zones.filter(z => z.ownerId === user.id);
@@ -29,14 +30,14 @@ const Inventory: React.FC<InventoryProps> = ({ user, zones, onUseItem }) => {
   return (
     <div className="max-w-4xl mx-auto p-6 relative">
       <h2 className="text-3xl font-bold text-white mb-8 flex items-center gap-3">
-        <Package className="text-emerald-400" /> Inventory
+        <Package className="text-emerald-400" /> {t('inv.title')}
       </h2>
 
       {user.inventory.length === 0 ? (
         <div className="bg-gray-800 border border-gray-700 rounded-xl p-12 text-center text-gray-500">
            <Package size={64} className="mx-auto mb-4 opacity-20" />
-           <p className="text-xl">Your inventory is empty.</p>
-           <p className="text-sm mt-2">Visit the Marketplace to gear up.</p>
+           <p className="text-xl">{t('inv.empty_title')}</p>
+           <p className="text-sm mt-2">{t('inv.empty_desc')}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -70,7 +71,7 @@ const Inventory: React.FC<InventoryProps> = ({ user, zones, onUseItem }) => {
                 <p className="text-sm text-gray-400 mb-4 flex-grow line-clamp-2">{item.description}</p>
 
                 <div className="w-full py-2 bg-gray-700 group-hover:bg-emerald-600 group-hover:text-white text-gray-300 font-bold rounded-lg transition-colors flex items-center justify-center gap-2">
-                  <Info size={16} /> Inspect & Use
+                  <Info size={16} /> {t('inv.inspect')}
                 </div>
               </div>
             );
@@ -95,7 +96,7 @@ const Inventory: React.FC<InventoryProps> = ({ user, zones, onUseItem }) => {
                     </h3>
                     <div className="flex gap-2 mt-2">
                         <span className="text-xs font-bold px-2 py-0.5 rounded bg-gray-700 text-gray-300">{selectedItem.type}</span>
-                        <span className="text-xs font-bold px-2 py-0.5 rounded bg-emerald-900 text-emerald-400 border border-emerald-500/30">Owned: {selectedItem.quantity}</span>
+                        <span className="text-xs font-bold px-2 py-0.5 rounded bg-emerald-900 text-emerald-400 border border-emerald-500/30">{t('inv.owned')}: {selectedItem.quantity}</span>
                     </div>
                  </div>
               </div>
@@ -106,26 +107,26 @@ const Inventory: React.FC<InventoryProps> = ({ user, zones, onUseItem }) => {
             
             {/* Full Description Section */}
             <div className="p-6 bg-gray-800/50 border-b border-gray-700">
-                <h4 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-2">Item Description</h4>
+                <h4 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-2">{t('inv.item_desc')}</h4>
                 <p className="text-gray-300 text-sm leading-relaxed">
                     {selectedItem.description}
                 </p>
                 <div className="mt-4 p-3 bg-gray-900/50 rounded-lg border border-gray-700/50 flex items-center gap-2 text-sm text-gray-400">
                     <Info size={16} className="text-emerald-500" />
-                    <span>Effect Power: <strong>{selectedItem.effectValue}</strong></span>
+                    <span>{t('inv.effect_power')}: <strong>{selectedItem.effectValue}</strong></span>
                 </div>
             </div>
 
             {/* Zone Selection List */}
             <div className="flex-1 overflow-y-auto p-6">
                <h4 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4 sticky top-0 bg-gray-800 z-10 py-2">
-                 Select Zone to Apply
+                 {t('inv.select_zone')}
                </h4>
                
                {myZones.length === 0 ? (
                  <div className="text-center py-8 text-gray-500 border-2 border-dashed border-gray-700 rounded-xl">
-                    <p>You don't own any zones yet.</p>
-                    <p className="text-xs mt-1">Conquer a zone to use this item.</p>
+                    <p>{t('inv.no_zones')}</p>
+                    <p className="text-xs mt-1">{t('inv.conquer_tip')}</p>
                  </div>
                ) : (
                  <div className="grid grid-cols-1 gap-2">
@@ -141,12 +142,12 @@ const Inventory: React.FC<InventoryProps> = ({ user, zones, onUseItem }) => {
                             <span className="font-bold text-white">{zone.name}</span>
                         </div>
                         <div className="text-xs text-gray-400 mt-1 flex gap-3">
-                          <span>Yield: {zone.interestRate}%</span>
-                          <span>Defense: Lvl {zone.defenseLevel}</span>
+                          <span>{t('inv.yield')}: {zone.interestRate}%</span>
+                          <span>{t('inv.defense')}: Lvl {zone.defenseLevel}</span>
                         </div>
                       </div>
                       <div className="px-3 py-1 bg-gray-800 rounded text-xs font-bold text-emerald-400 group-hover:bg-emerald-500 group-hover:text-black transition-colors">
-                          APPLY
+                          {t('inv.apply')}
                       </div>
                     </button>
                   ))}
@@ -155,7 +156,7 @@ const Inventory: React.FC<InventoryProps> = ({ user, zones, onUseItem }) => {
             </div>
             
             <div className="p-4 bg-gray-950 border-t border-gray-800 text-center text-xs text-gray-500">
-               Action cannot be undone. Consumes 1 unit.
+               {t('inv.consume_warn')}
             </div>
           </div>
         </div>

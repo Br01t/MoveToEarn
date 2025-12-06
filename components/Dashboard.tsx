@@ -4,6 +4,7 @@ import { User, Zone, InventoryItem, ViewState, Badge, Rarity } from '../types';
 import { Play, ZoomIn, ZoomOut, Move, X, UploadCloud, MapPin, CheckCircle, Zap, Search, ShoppingBag, Clock, Shield, Globe, Image as ImageIcon, Trash2, FileText, Crown, Loader, AlertTriangle, Lock, Filter, ChevronDown, ChevronUp, HelpCircle, Activity, History, Calendar, Medal, Award, Flag, Mountain, Home, Landmark, Swords, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users } from 'lucide-react';
 import { PREMIUM_COST } from '../constants';
 import Pagination from './Pagination';
+import { useLanguage } from '../LanguageContext';
 
 interface DashboardProps {
   user: User;
@@ -22,6 +23,7 @@ const HEX_SIZE = 100; // Increased size for better visibility
 const RUNS_PER_PAGE = 5;
 
 const Dashboard: React.FC<DashboardProps> = ({ user, zones, users, badges, onSyncRun, onClaim, onBoost, onDefend, onNavigate }) => {
+  const { t } = useLanguage();
   const [selectedZone, setSelectedZone] = useState<Zone | null>(null);
   
   // Search & Filter State
@@ -367,7 +369,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, users, badges, onSyn
          </div>
          {earningRate > 0 && (
             <div className="bg-emerald-900/50 backdrop-blur-md px-3 py-1.5 rounded-full border border-emerald-500/30 shadow-xl flex items-center gap-2 pointer-events-auto shrink-0">
-                <span className="text-[10px] text-emerald-300 uppercase font-bold tracking-wider">Yield</span>
+                <span className="text-[10px] text-emerald-300 uppercase font-bold tracking-wider">{t('dash.yield')}</span>
                 <span className="font-mono text-white font-bold text-sm">~{earningRate.toFixed(1)}/m</span>
             </div>
          )}
@@ -394,7 +396,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, users, badges, onSyn
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={14} />
                         <input 
                             type="text" 
-                            placeholder="Search zone..." 
+                            placeholder={t('dash.search_placeholder')}
                             className="w-full bg-gray-900/80 text-white rounded-lg pl-8 pr-3 py-2 text-xs border border-gray-600 focus:border-emerald-500 focus:outline-none"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
@@ -414,9 +416,9 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, users, badges, onSyn
                         </select>
                     </div>
                     <div className="flex gap-1">
-                        <button onClick={() => setFilterMode('ALL')} className={`flex-1 py-1.5 text-[10px] font-bold rounded ${filterMode === 'ALL' ? 'bg-gray-600 text-white' : 'bg-gray-900 text-gray-400'}`}>ALL</button>
-                        <button onClick={() => setFilterMode('MINE')} className={`flex-1 py-1.5 text-[10px] font-bold rounded ${filterMode === 'MINE' ? 'bg-emerald-600 text-white' : 'bg-gray-900 text-gray-400'}`}>MINE</button>
-                        <button onClick={() => setFilterMode('ENEMY')} className={`flex-1 py-1.5 text-[10px] font-bold rounded ${filterMode === 'ENEMY' ? 'bg-red-600 text-white' : 'bg-gray-900 text-gray-400'}`}>ENEMY</button>
+                        <button onClick={() => setFilterMode('ALL')} className={`flex-1 py-1.5 text-[10px] font-bold rounded ${filterMode === 'ALL' ? 'bg-gray-600 text-white' : 'bg-gray-900 text-gray-400'}`}>{t('dash.filter.all')}</button>
+                        <button onClick={() => setFilterMode('MINE')} className={`flex-1 py-1.5 text-[10px] font-bold rounded ${filterMode === 'MINE' ? 'bg-emerald-600 text-white' : 'bg-gray-900 text-gray-400'}`}>{t('dash.filter.mine')}</button>
+                        <button onClick={() => setFilterMode('ENEMY')} className={`flex-1 py-1.5 text-[10px] font-bold rounded ${filterMode === 'ENEMY' ? 'bg-red-600 text-white' : 'bg-gray-900 text-gray-400'}`}>{t('dash.filter.enemy')}</button>
                     </div>
                 </div>
             )}
@@ -473,10 +475,10 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, users, badges, onSyn
              </button>
              {isLegendOpen && (
                  <div className="bg-gray-800/90 backdrop-blur p-2 rounded-lg border border-gray-700 text-[10px] text-white flex flex-col gap-1 w-28 animate-fade-in">
-                      <span className="flex items-center gap-2"><div className="w-2 h-2 bg-emerald-400 rounded-sm"></div> My Zones</span>
-                      <span className="flex items-center gap-2"><div className="w-2 h-2 bg-red-400 rounded-sm"></div> Enemy</span>
-                      <span className="flex items-center gap-2"><div className="w-2 h-2 bg-amber-400 rounded-sm"></div> Boosted</span>
-                      <span className="flex items-center gap-2"><div className="w-2 h-2 bg-cyan-400 rounded-sm"></div> Shielded</span>
+                      <span className="flex items-center gap-2"><div className="w-2 h-2 bg-emerald-400 rounded-sm"></div> {t('dash.legend.my_zones')}</span>
+                      <span className="flex items-center gap-2"><div className="w-2 h-2 bg-red-400 rounded-sm"></div> {t('dash.legend.enemy')}</span>
+                      <span className="flex items-center gap-2"><div className="w-2 h-2 bg-amber-400 rounded-sm"></div> {t('dash.legend.boosted')}</span>
+                      <span className="flex items-center gap-2"><div className="w-2 h-2 bg-cyan-400 rounded-sm"></div> {t('dash.legend.shielded')}</span>
                  </div>
              )}
           </div>
@@ -500,8 +502,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, users, badges, onSyn
                    <UploadCloud size={24} className="animate-pulse" /> 
                 </div>
                 <div className="flex flex-col items-start">
-                   <span className="text-emerald-400 font-black text-xs uppercase tracking-widest leading-none mb-0.5">Sync</span>
-                   <span className="text-white font-bold text-lg leading-none">Activity</span>
+                   <span className="text-emerald-400 font-black text-xs uppercase tracking-widest leading-none mb-0.5">{t('dash.sync_btn_sub')}</span>
+                   <span className="text-white font-bold text-lg leading-none">{t('dash.sync_btn_main')}</span>
                 </div>
             </button>
       </div>
@@ -675,10 +677,10 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, users, badges, onSyn
                         </div>
                     </div>
                     <div className="min-w-0">
-                        <div className="text-[10px] text-gray-400 uppercase font-bold">Zone Controller</div>
+                        <div className="text-[10px] text-gray-400 uppercase font-bold">{t('zone.owner_info')}</div>
                         <div className="flex items-center gap-2">
                            <div className={`font-bold text-sm truncate ${selectedZone.ownerId === user.id ? 'text-emerald-400' : 'text-white'}`}>
-                                {ownerDetails.name} {selectedZone.ownerId === user.id && '(You)'}
+                                {ownerDetails.name} {selectedZone.ownerId === user.id && t('zone.you')}
                            </div>
                            {/* Owner Badge */}
                            {ownerDetails.badge && (
@@ -693,33 +695,33 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, users, badges, onSyn
                 {/* --- Stats Grid --- */}
                 <div className="grid grid-cols-2 gap-2">
                     <div className="bg-black/40 p-2 rounded-lg border border-white/5 text-center">
-                         <div className="text-xs text-gray-400">Yield</div>
+                         <div className="text-xs text-gray-400">{t('dash.yield')}</div>
                          <div className={`font-bold ${isBoostActive(selectedZone) ? 'text-amber-400' : 'text-cyan-400'}`}>
                              {selectedZone.interestRate}%
                          </div>
                     </div>
                     <div className="bg-black/40 p-2 rounded-lg border border-white/5 text-center">
-                         <div className="text-xs text-gray-400">Status</div>
+                         <div className="text-xs text-gray-400">{t('zone.status')}</div>
                          <div className={`font-bold text-xs uppercase pt-1 ${selectedZone.ownerId === user.id ? 'text-emerald-500' : 'text-red-500'}`}>
-                             {selectedZone.ownerId === user.id ? 'Occupied' : 'Hostile'}
+                             {selectedZone.ownerId === user.id ? t('zone.occupied') : t('zone.hostile')}
                          </div>
                     </div>
                 </div>
 
                 {isBoostActive(selectedZone) && selectedZone.boostExpiresAt && (
                  <div className="flex items-center justify-between text-sm bg-amber-500/10 p-2 rounded-lg border border-amber-500/30">
-                   <span className="text-amber-400 flex items-center gap-1 text-xs"><Clock size={12}/> Boosted</span>
+                   <span className="text-amber-400 flex items-center gap-1 text-xs"><Clock size={12}/> {t('zone.boosted')}</span>
                    <span className="text-amber-100 font-mono text-xs">
-                     {Math.floor((selectedZone.boostExpiresAt - Date.now()) / 60000)}m left
+                     {Math.floor((selectedZone.boostExpiresAt - Date.now()) / 60000)}m {t('zone.left')}
                    </span>
                  </div>
                 )}
 
                 {isShieldActive(selectedZone) && selectedZone.shieldExpiresAt && (
                  <div className="flex items-center justify-between text-sm bg-cyan-500/10 p-2 rounded-lg border border-cyan-500/30">
-                   <span className="text-cyan-400 flex items-center gap-1 text-xs"><Shield size={12}/> Shielded</span>
+                   <span className="text-cyan-400 flex items-center gap-1 text-xs"><Shield size={12}/> {t('zone.shielded')}</span>
                    <span className="text-cyan-100 font-mono text-xs">
-                     {Math.floor((selectedZone.shieldExpiresAt - Date.now()) / 60000)}m left
+                     {Math.floor((selectedZone.shieldExpiresAt - Date.now()) / 60000)}m {t('zone.left')}
                    </span>
                  </div>
                 )}
@@ -727,7 +729,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, users, badges, onSyn
                 {/* --- Zone Leaderboard --- */}
                 <div className="bg-gray-800/50 rounded-lg border border-gray-700/50 p-3">
                     <h4 className="text-xs font-bold text-gray-400 uppercase mb-3 flex items-center gap-1">
-                        <Medal size={12} className="text-yellow-500"/> Top Runners Here
+                        <Medal size={12} className="text-yellow-500"/> {t('zone.top_runners')}
                     </h4>
                     <div className="space-y-2 max-h-[120px] overflow-y-auto pr-1">
                         {zoneLeaderboard.map((runner, index) => (
@@ -764,10 +766,10 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, users, badges, onSyn
                                   disabled={!boostItem}
                                   className={`flex-1 py-3 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all border text-xs md:text-sm ${boostItem ? 'bg-amber-600 hover:bg-amber-500' : 'bg-gray-800 opacity-50'}`}
                               >
-                                  <Zap size={16} /> Boost
+                                  <Zap size={16} /> {t('zone.action.boost')}
                               </button>
                           ) : (
-                              <div className="flex-1 py-3 bg-gray-800 text-amber-500 font-bold rounded-xl flex items-center justify-center gap-2 border border-amber-500/20 text-xs md:text-sm"><Zap size={16} /> Active</div>
+                              <div className="flex-1 py-3 bg-gray-800 text-amber-500 font-bold rounded-xl flex items-center justify-center gap-2 border border-amber-500/20 text-xs md:text-sm"><Zap size={16} /> {t('zone.action.active')}</div>
                           )}
 
                           {!isShieldActive(selectedZone) ? (
@@ -776,10 +778,10 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, users, badges, onSyn
                                   disabled={!defenseItem}
                                   className={`flex-1 py-3 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all border text-xs md:text-sm ${defenseItem ? 'bg-cyan-600 hover:bg-cyan-500' : 'bg-gray-800 opacity-50'}`}
                               >
-                                  <Shield size={16} /> Shield
+                                  <Shield size={16} /> {t('zone.action.shield')}
                               </button>
                           ) : (
-                              <div className="flex-1 py-3 bg-gray-800 text-cyan-400 font-bold rounded-xl flex items-center justify-center gap-2 border border-cyan-500/20 text-xs md:text-sm"><Shield size={16} /> Active</div>
+                              <div className="flex-1 py-3 bg-gray-800 text-cyan-400 font-bold rounded-xl flex items-center justify-center gap-2 border border-cyan-500/20 text-xs md:text-sm"><Shield size={16} /> {t('zone.action.active')}</div>
                           )}
                     </div>
                ) : (
@@ -790,15 +792,15 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, users, badges, onSyn
                              onClick={() => onClaim(selectedZone.id)}
                              className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-[0_0_15px_rgba(16,185,129,0.3)] animate-pulse"
                          >
-                             <Swords size={18} /> Claim Ownership (50 RUN)
+                             <Swords size={18} /> {t('zone.action.claim')} (50 RUN)
                          </button>
                      ) : (
                          <div className="bg-red-900/20 border border-red-500/30 p-3 rounded-lg text-center">
                              <div className="text-red-400 font-bold text-xs uppercase mb-1 flex items-center justify-center gap-2">
-                                <Lock size={12}/> Locked
+                                <Lock size={12}/> {t('zone.locked')}
                              </div>
                              <p className="text-gray-400 text-xs leading-tight">
-                                Run <strong>{kmToTop > 0 ? kmToTop.toFixed(1) : 0.1} km</strong> more in this zone to surpass the leader and enable conquest.
+                                {t('zone.locked_desc')} ({kmToTop > 0 ? kmToTop.toFixed(1) : 0.1} km)
                              </p>
                          </div>
                      )}
@@ -817,7 +819,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, users, badges, onSyn
              {/* Header */}
              <div className="p-4 border-b border-gray-700 flex justify-between items-center bg-gray-900">
                 <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                   <UploadCloud className="text-emerald-400" /> Sync Activity
+                   <UploadCloud className="text-emerald-400" /> {t('sync.title')}
                 </h3>
                 <div className="flex items-center gap-2">
                     <button 
@@ -837,13 +839,13 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, users, badges, onSyn
                   onClick={() => { setSyncTab('FREE'); setUploadStep('SELECT'); }}
                   className={`flex-1 py-3 font-bold text-sm transition-colors ${syncTab === 'FREE' ? 'bg-gray-800 text-emerald-400 border-b-2 border-emerald-400' : 'bg-gray-900 text-gray-500'}`}
                 >
-                    Manual Upload
+                    {t('sync.manual')}
                 </button>
                 <button 
                   onClick={() => setSyncTab('PREMIUM')}
                   className={`flex-1 py-3 font-bold text-sm transition-colors flex justify-center items-center gap-2 ${syncTab === 'PREMIUM' ? 'bg-gray-800 text-yellow-400 border-b-2 border-yellow-400' : 'bg-gray-900 text-gray-500'}`}
                 >
-                    <Crown size={14} /> Auto-Sync
+                    <Crown size={14} /> {t('sync.auto')}
                 </button>
              </div>
              
@@ -855,7 +857,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, users, badges, onSyn
                         {uploadStep === 'SELECT' && (
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Upload Run Data</label>
+                                    <label className="block text-xs font-bold text-gray-400 uppercase mb-2">{t('sync.upload_label')}</label>
                                     <input 
                                         type="file" 
                                         accept=".gpx,.tcx,.fit,.zip" 
@@ -871,12 +873,12 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, users, badges, onSyn
                                         {selectedFile ? (
                                             <div className="text-center">
                                                 <span className="text-white font-bold block text-sm">{selectedFile.name}</span>
-                                                <span className="text-xs text-emerald-400">Ready to parse</span>
+                                                <span className="text-xs text-emerald-400">{t('sync.ready')}</span>
                                             </div>
                                         ) : (
                                             <div className="text-center">
-                                                <span className="text-gray-300 block mb-1 text-sm">Click to Select File</span>
-                                                <span className="text-xs text-gray-500">Supports .GPX, .TCX, .FIT, .ZIP</span>
+                                                <span className="text-gray-300 block mb-1 text-sm">{t('sync.click_select')}</span>
+                                                <span className="text-xs text-gray-500">{t('sync.supports')}</span>
                                             </div>
                                         )}
                                     </div>
@@ -884,7 +886,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, users, badges, onSyn
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Location Name</label>
+                                        <label className="block text-xs font-bold text-gray-400 uppercase mb-1">{t('sync.loc_name')}</label>
                                         <input 
                                             type="text" 
                                             placeholder="e.g. Parco Sempione"
@@ -894,7 +896,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, users, badges, onSyn
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Distance (KM)</label>
+                                        <label className="block text-xs font-bold text-gray-400 uppercase mb-1">{t('sync.distance')}</label>
                                         <input 
                                             type="number" 
                                             step="0.1"
@@ -909,7 +911,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, users, badges, onSyn
                                     onClick={handleStartUpload}
                                     className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
                                 >
-                                    <UploadCloud size={20} /> Analyze & Upload
+                                    <UploadCloud size={20} /> {t('sync.analyze_btn')}
                                 </button>
                             </div>
                         )}
@@ -937,14 +939,14 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, users, badges, onSyn
                                     <CheckCircle size={48} className="text-emerald-400" />
                                 </div>
                                 <div className="text-center">
-                                    <h3 className="text-xl font-bold text-white mb-2">Verification Complete</h3>
-                                    <p className="text-gray-400 text-sm">Run data validated successfully.</p>
+                                    <h3 className="text-xl font-bold text-white mb-2">{t('sync.success')}</h3>
+                                    <p className="text-gray-400 text-sm">{t('sync.success_desc')}</p>
                                 </div>
                                 <button 
                                     onClick={handleFinalSubmit}
                                     className="w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl transition-colors"
                                 >
-                                    Confirm & Claim Rewards
+                                    {t('sync.confirm_btn')}
                                 </button>
                             </div>
                         )}
@@ -960,9 +962,9 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, users, badges, onSyn
                                     <div className="bg-gray-800 p-4 rounded-full mb-4">
                                         <Lock size={32} className="text-gray-500" />
                                     </div>
-                                    <h4 className="text-lg font-bold text-white mb-2">Premium Feature Locked</h4>
+                                    <h4 className="text-lg font-bold text-white mb-2">{t('sync.premium_locked')}</h4>
                                     <p className="text-gray-400 text-xs mb-6 max-w-xs mx-auto">
-                                        Automatic Strava syncing is available for Pro Agents only. Skip the manual upload and get priority validation.
+                                        {t('sync.premium_desc')}
                                     </p>
                                     <button className="w-full py-4 bg-gray-700 text-gray-400 font-bold rounded-xl cursor-not-allowed text-sm">
                                         Requires Premium Subscription

@@ -2,6 +2,7 @@
 import React from 'react';
 import { User, Zone, Badge, Rarity } from '../types';
 import { Trophy, Medal, Map, Award, Flag, Crown, Zap, Mountain, Globe, Home, Landmark, Swords, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users } from 'lucide-react';
+import { useLanguage } from '../LanguageContext';
 
 interface MockUser {
   id: string;
@@ -19,6 +20,7 @@ interface LeaderboardProps {
 }
 
 const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, badges }) => {
+  const { t } = useLanguage();
   // Compute rankings on the fly
   const rankings = Object.values(users).map((u: MockUser) => {
      // If it's the current user, use the latest live data
@@ -73,17 +75,17 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
   return (
     <div className="max-w-4xl mx-auto p-6">
       <h2 className="text-3xl font-bold text-white mb-8 flex items-center gap-3">
-        <Trophy className="text-yellow-400" /> Global Leaderboard
+        <Trophy className="text-yellow-400" /> {t('leader.title')}
       </h2>
 
       <div className="bg-gray-800 border border-gray-700 rounded-xl overflow-hidden shadow-2xl">
         <table className="w-full text-left">
           <thead className="bg-gray-900 text-gray-400 text-xs uppercase font-bold">
             <tr>
-              <th className="px-4 md:px-6 py-4">Rank</th>
-              <th className="px-4 md:px-6 py-4">Runner</th>
-              <th className="px-4 md:px-6 py-4 text-right">Distance (KM)</th>
-              <th className="px-4 md:px-6 py-4 text-right">Zones</th>
+              <th className="px-4 md:px-6 py-4">{t('leader.rank')}</th>
+              <th className="px-4 md:px-6 py-4">{t('leader.runner')}</th>
+              <th className="px-4 md:px-6 py-4 text-right">{t('leader.distance')}</th>
+              <th className="px-4 md:px-6 py-4 text-right">{t('leader.zones')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-700">
@@ -113,7 +115,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
                       
                       <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-3">
                           <span className={`font-bold text-lg ${isMe ? 'text-emerald-400' : 'text-white'}`}>
-                            {user.name} {isMe && '(You)'}
+                            {user.name} {isMe && t('leader.you')}
                           </span>
                           
                           {/* BADGE DISPLAY - Bigger and clearer */}
