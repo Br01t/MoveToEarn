@@ -1,7 +1,8 @@
 
 import React from 'react';
 import { ViewState, User } from '../types';
-import { Map, ShoppingBag, Trophy, Wallet, LogOut, Package, User as UserIcon, Settings, Target, Menu } from 'lucide-react';
+import { Map, ShoppingBag, Trophy, Wallet, LogOut, Package, User as UserIcon, Settings, Target } from 'lucide-react';
+import { useLanguage } from '../LanguageContext';
 
 interface NavbarProps {
   currentView: ViewState;
@@ -11,6 +12,8 @@ interface NavbarProps {
 }
 
 const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, user, onLogout }) => {
+  const { toggleLanguage, language, t } = useLanguage();
+
   if (!user) return null;
 
   const NavItem = ({ view, icon: Icon, label, isAdmin = false, mobileLabel }: { view: ViewState; icon: any; label: string; isAdmin?: boolean; mobileLabel?: string }) => {
@@ -44,22 +47,29 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, user, onLogout
             </div>
             
             <div className="flex items-center space-x-1 lg:space-x-2">
-              <NavItem view="DASHBOARD" icon={Map} label="Map" />
-              <NavItem view="MARKETPLACE" icon={ShoppingBag} label="Market" />
-              <NavItem view="INVENTORY" icon={Package} label="Inventory" />
-              <NavItem view="MISSIONS" icon={Target} label="Missions" />
-              <NavItem view="LEADERBOARD" icon={Trophy} label="Rank" />
-              <NavItem view="WALLET" icon={Wallet} label="Wallet" />
-              <NavItem view="PROFILE" icon={UserIcon} label="Profile" />
+              <NavItem view="DASHBOARD" icon={Map} label={t('nav.map')} />
+              <NavItem view="MARKETPLACE" icon={ShoppingBag} label={t('nav.market')} />
+              <NavItem view="INVENTORY" icon={Package} label={t('nav.inventory')} />
+              <NavItem view="MISSIONS" icon={Target} label={t('nav.missions')} />
+              <NavItem view="LEADERBOARD" icon={Trophy} label={t('nav.rank')} />
+              <NavItem view="WALLET" icon={Wallet} label={t('nav.wallet')} />
+              <NavItem view="PROFILE" icon={UserIcon} label={t('nav.profile')} />
               <div className="h-6 w-px bg-gray-700 mx-2"></div>
-              <NavItem view="ADMIN" icon={Settings} label="Admin" isAdmin={true} />
+              <NavItem view="ADMIN" icon={Settings} label={t('nav.admin')} isAdmin={true} />
             </div>
 
-            <div className="flex items-center ml-4">
+            <div className="flex items-center ml-4 gap-2">
+              <button
+                onClick={toggleLanguage}
+                className="p-2 text-xl hover:scale-110 transition-transform bg-gray-800 rounded-lg border border-gray-700"
+                title="Switch Language"
+              >
+                {language === 'en' ? '🇮🇹' : '🇬🇧'}
+              </button>
               <button
                 onClick={onLogout}
                 className="p-2 text-gray-500 hover:text-red-400 transition-colors"
-                title="Logout"
+                title={t('nav.logout')}
               >
                 <LogOut size={20} />
               </button>
@@ -74,6 +84,12 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, user, onLogout
             ZoneRun
           </span>
           <div className="flex items-center gap-3">
+             <button
+                onClick={toggleLanguage}
+                className="text-xl hover:scale-110 transition-transform"
+              >
+                {language === 'en' ? '🇮🇹' : '🇬🇧'}
+              </button>
              <button onClick={() => onNavigate('ADMIN')} className={`text-gray-400 ${currentView === 'ADMIN' ? 'text-red-400' : ''}`}><Settings size={20}/></button>
              <button onClick={onLogout} className="text-gray-400"><LogOut size={20}/></button>
           </div>
@@ -82,11 +98,11 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, user, onLogout
       {/* MOBILE BOTTOM NAV BAR */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-gray-950 border-t border-gray-800 z-50 pb-safe">
         <div className="flex justify-around items-center p-2">
-           <NavItem view="DASHBOARD" icon={Map} label="Map" mobileLabel="Map" />
-           <NavItem view="MISSIONS" icon={Target} label="Missions" mobileLabel="Goals" />
-           <NavItem view="MARKETPLACE" icon={ShoppingBag} label="Market" mobileLabel="Shop" />
-           <NavItem view="INVENTORY" icon={Package} label="Inventory" mobileLabel="Items" />
-           <NavItem view="PROFILE" icon={UserIcon} label="Profile" mobileLabel="Profile" />
+           <NavItem view="DASHBOARD" icon={Map} label={t('nav.map')} mobileLabel={t('nav.map')} />
+           <NavItem view="MISSIONS" icon={Target} label={t('nav.missions')} mobileLabel={t('nav.missions')} />
+           <NavItem view="MARKETPLACE" icon={ShoppingBag} label={t('nav.market')} mobileLabel={t('nav.market')} />
+           <NavItem view="INVENTORY" icon={Package} label={t('nav.inventory')} mobileLabel={t('nav.inventory')} />
+           <NavItem view="PROFILE" icon={UserIcon} label={t('nav.profile')} mobileLabel={t('nav.profile')} />
         </div>
       </nav>
     </>

@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Mission, Badge } from '../types';
 import { Trophy, CheckCircle, X, Award, Target, Sparkles, Layers } from 'lucide-react';
+import { useLanguage } from '../LanguageContext';
 
 interface AchievementModalProps {
   data: { type: 'MISSION' | 'BADGE'; item: Mission | Badge };
@@ -11,6 +12,7 @@ interface AchievementModalProps {
 }
 
 const AchievementModal: React.FC<AchievementModalProps> = ({ data, onClose, onClaimAll, remainingCount }) => {
+  const { t } = useLanguage();
   const { type, item } = data;
   const [isVisible, setIsVisible] = useState(false);
 
@@ -31,7 +33,8 @@ const AchievementModal: React.FC<AchievementModalProps> = ({ data, onClose, onCl
   };
 
   const isMission = type === 'MISSION';
-  const reward = isMission ? (item as Mission).rewardGov : 0;
+  // Check rewardRun for both Missions and Badges
+  const reward = (item as any).rewardRun || 0;
   
   // Theme colors based on type
   const themeColor = isMission ? 'emerald' : 'yellow';
@@ -64,7 +67,7 @@ const AchievementModal: React.FC<AchievementModalProps> = ({ data, onClose, onCl
             </div>
 
             <h2 className={`text-xs font-black tracking-[0.2em] uppercase mb-2 ${isMission ? 'text-emerald-500' : 'text-yellow-500'}`}>
-                {isMission ? 'Mission Complete' : 'Badge Unlocked'}
+                {isMission ? t('ach.mission_complete') : t('ach.badge_unlocked')}
             </h2>
 
             <h3 className="text-2xl font-bold text-white mb-2 leading-tight">
@@ -78,18 +81,18 @@ const AchievementModal: React.FC<AchievementModalProps> = ({ data, onClose, onCl
             {/* Reward Box */}
             {reward > 0 && (
                 <div className="mb-6 bg-gray-800/50 border border-gray-700 px-6 py-3 rounded-lg flex flex-col items-center">
-                    <span className="text-[10px] text-gray-500 uppercase font-bold">Reward Claimed</span>
-                    <span className="text-2xl font-mono font-bold text-cyan-400 flex items-center gap-2">
-                         +{reward} GOV
+                    <span className="text-[10px] text-gray-500 uppercase font-bold">{t('ach.reward_claimed')}</span>
+                    <span className="text-2xl font-mono font-bold text-emerald-400 flex items-center gap-2">
+                         +{reward} RUN
                     </span>
                 </div>
             )}
 
             {!reward && !isMission && (
                  <div className="mb-6 bg-gray-800/50 border border-gray-700 px-6 py-3 rounded-lg flex flex-col items-center">
-                    <span className="text-[10px] text-gray-500 uppercase font-bold">Status</span>
+                    <span className="text-[10px] text-gray-500 uppercase font-bold">{t('ach.status')}</span>
                     <span className="text-lg font-bold text-yellow-400 flex items-center gap-2">
-                        Prestige Earned
+                        {t('ach.prestige')}
                     </span>
                 </div>
             )}
@@ -99,7 +102,7 @@ const AchievementModal: React.FC<AchievementModalProps> = ({ data, onClose, onCl
                 className={`w-full py-3.5 rounded-xl font-bold text-black shadow-lg transition-transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2 ${isMission ? 'bg-emerald-500 hover:bg-emerald-400' : 'bg-yellow-500 hover:bg-yellow-400'}`}
             >
                 <CheckCircle size={18} />
-                {isMission ? 'Claim Reward' : 'Awesome!'}
+                {isMission ? t('ach.claim_btn') : t('ach.awesome_btn')}
             </button>
 
             {/* Claim All Button - Only visible if there are more items */}
@@ -109,7 +112,7 @@ const AchievementModal: React.FC<AchievementModalProps> = ({ data, onClose, onCl
                     className="mt-4 flex items-center gap-2 text-xs text-gray-400 hover:text-white transition-colors group px-4 py-2 hover:bg-gray-800 rounded-lg"
                 >
                     <Layers size={14} className="group-hover:text-emerald-400 transition-colors" />
-                    <span>Claim all ({remainingCount} pending)</span>
+                    <span>{t('ach.claim_all')} ({remainingCount} {t('ach.pending')})</span>
                 </button>
             )}
         </div>

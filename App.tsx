@@ -31,8 +31,10 @@ import {
   MOCK_BADGES,
 } from "./constants";
 import { Layers, CheckCircle } from "lucide-react";
+import { LanguageProvider, useLanguage } from "./LanguageContext";
 
-const App: React.FC = () => {
+const AppContent: React.FC = () => {
+  const { t } = useLanguage();
   // --- Game State ---
   const [user, setUser] = useState<User | null>(null);
   const [currentView, setCurrentView] = useState<ViewState>("LANDING");
@@ -48,7 +50,7 @@ const App: React.FC = () => {
   const [achievementQueue, setAchievementQueue] = useState<{ type: 'MISSION' | 'BADGE'; item: Mission | Badge }[]>([]);
   
   // --- Claim All Summary Popup State ---
-  const [claimSummary, setClaimSummary] = useState<{ count: number; totalGov: number } | null>(null);
+  const [claimSummary, setClaimSummary] = useState<{ count: number; totalRun: number } | null>(null);
 
   // --- Actions ---
 
@@ -123,19 +125,19 @@ const App: React.FC = () => {
       if (existingZone.ownerId === user.id) {
         setZones((prev) => prev.map((z) => (z.id === existingZone.id ? { ...z, recordKm: z.recordKm + km } : z)));
         setUser({ ...updatedUser, runBalance: updatedUser.runBalance + runReward, totalKm: updatedUser.totalKm + km });
-        alert(`Run Synced! Reinforced "${existingZone.name}".\n+${runReward.toFixed(2)} RUN earned.`);
+        alert(`${t('alert.run_synced')} "${existingZone.name}".\n+${runReward.toFixed(2)} RUN.`);
       } else {
         // Logica di conquista è gestita nel bottone manuale ora, qui accumuliamo solo KM
         setUser({ ...updatedUser, runBalance: updatedUser.runBalance + runReward, totalKm: updatedUser.totalKm + km });
-        alert(`Run Synced! You ran in "${existingZone.name}".\nCheck the Zone Details to see if you can claim it!`);
+        alert(`${t('alert.run_synced_generic')} "${existingZone.name}".\n${t('alert.check_details')}`);
       }
     } else {
       if (potentialBalance < MINT_COST) {
-        alert(`Explored "${name}". Earned +${runReward.toFixed(2)} RUN. Need ${MINT_COST} RUN to claim.`);
+        alert(`${t('alert.explored')} "${name}". +${runReward.toFixed(2)} RUN. ${t('alert.need_run')} ${MINT_COST} RUN.`);
         setUser({ ...updatedUser, runBalance: updatedUser.runBalance + runReward, totalKm: updatedUser.totalKm + km });
         return;
       }
-      const confirm = window.confirm(`Discovered "${name}".\nClaim Cost: ${MINT_COST} RUN\nReward: +${MINT_REWARD_GOV} GOV\nMint Zone?`);
+      const confirm = window.confirm(`${t('alert.discovered')} "${name}".\n${t('alert.claim_cost')}: ${MINT_COST} RUN\nReward: +${MINT_REWARD_GOV} GOV\n${t('alert.mint_zone')}`);
       if (confirm) {
         const coords = findOpenNeighbor(zones);
         const newZone: Zone = {
@@ -156,7 +158,7 @@ const App: React.FC = () => {
           govBalance: updatedUser.govBalance + MINT_REWARD_GOV,
           totalKm: updatedUser.totalKm + km,
         });
-        alert(`Zone Created! Received ${MINT_REWARD_GOV} GOV.`);
+        alert(`${t('alert.zone_created')} ${MINT_REWARD_GOV} GOV.`);
       } else {
         setUser({ ...updatedUser, runBalance: updatedUser.runBalance + runReward, totalKm: updatedUser.totalKm + km });
       }
@@ -169,25 +171,22 @@ const App: React.FC = () => {
     if (!targetZone) return;
 
     if (targetZone.shieldExpiresAt && targetZone.shieldExpiresAt > Date.now()) {
-      alert("Zone is SHIELDED. Cannot claim.");
+      alert(t('alert.zone_shielded'));
       return;
     }
     if (user.runBalance < 50) {
-      alert("Not enough RUN to pay claim fee.");
+      alert(t('alert.insufficient_run'));
       return;
     }
     
-    // Logic check handled in UI, but double check here could be good.
-    // Assuming UI prevents calling this if not #1.
-
-    if (window.confirm("Claim ownership for 50 RUN?")) {
+    if (window.confirm(t('alert.claim_confirm'))) {
       setZones((prev) =>
         prev.map((z) =>
           z.id === zoneId ? { ...z, ownerId: user.id, shieldExpiresAt: undefined, boostExpiresAt: undefined } : z
         )
       );
       setUser((prev) => (prev ? { ...prev, runBalance: prev.runBalance - 50, govBalance: prev.govBalance + CONQUEST_REWARD_GOV } : null));
-      alert(`Zone Claimed! +${CONQUEST_REWARD_GOV} GOV.`);
+      alert(`${t('alert.zone_claimed')} +${CONQUEST_REWARD_GOV} GOV.`);
     }
   };
 
@@ -195,20 +194,20 @@ const App: React.FC = () => {
     if (!user) return;
     const boostItem = user.inventory.find((i) => i.type === "BOOST");
     if (!boostItem) {
-      alert("Need Boost item.");
+      alert(t('alert.need_item') + " Boost.");
       return;
     }
-    if (window.confirm(`Use '${boostItem.name}'?`)) handleUseItem(boostItem, zoneId);
+    if (window.confirm(`${t('alert.use_item_confirm')} '${boostItem.name}'?`)) handleUseItem(boostItem, zoneId);
   };
 
   const handleDefendZone = (zoneId: string) => {
     if (!user) return;
     const defenseItem = user.inventory.find((i) => i.type === "DEFENSE");
     if (!defenseItem) {
-      alert("Need Defense item.");
+      alert(t('alert.need_item') + " Defense.");
       return;
     }
-    if (window.confirm(`Use '${defenseItem.name}'?`)) handleUseItem(defenseItem, zoneId);
+    if (window.confirm(`${t('alert.use_item_confirm')} '${defenseItem.name}'?`)) handleUseItem(defenseItem, zoneId);
   };
 
   const handleBuyItem = (item: Item) => {
@@ -218,7 +217,7 @@ const App: React.FC = () => {
       return;
     }
     if (user.runBalance < item.priceRun) {
-      alert("Insufficient RUN!");
+      alert(t('alert.insufficient_run'));
       return;
     }
 
@@ -226,7 +225,7 @@ const App: React.FC = () => {
 
     if (item.type === "CURRENCY") {
       setUser((prev) => (prev ? { ...prev, runBalance: prev.runBalance - item.priceRun, govBalance: prev.govBalance + item.effectValue } : null));
-      alert(`Purchased! +${item.effectValue} GOV`);
+      alert(`${t('alert.purchased')} +${item.effectValue} GOV`);
       return;
     }
 
@@ -254,7 +253,7 @@ const App: React.FC = () => {
     setZones(updatedZones);
     const newInventory = user.inventory.map((i) => (i.id === item.id ? { ...i, quantity: i.quantity - 1 } : i)).filter((i) => i.quantity > 0);
     setUser((prev) => (prev ? { ...prev, inventory: newInventory } : null));
-    alert(`Used ${item.name} on "${targetZone.name}".`);
+    alert(`${t('alert.item_used')} ${item.name} -> "${targetZone.name}".`);
   };
 
   const handleBuyFiat = (amountUSD: number) => {
@@ -272,7 +271,7 @@ const App: React.FC = () => {
     }
     if (window.confirm(`Upgrade for ${PREMIUM_COST} GOV?`)) {
       setUser((prev) => (prev ? { ...prev, govBalance: prev.govBalance - PREMIUM_COST, isPremium: true } : null));
-      alert("Upgraded to Premium!");
+      alert(t('alert.upgraded'));
     }
   };
 
@@ -306,19 +305,19 @@ const App: React.FC = () => {
     const totalReward = kmReward + zoneReward;
     if (totalReward > 0) {
       setUser((prev) => (prev ? { ...prev, govBalance: prev.govBalance + totalReward } : null));
-      alert(`Rewards Distributed! +${totalReward} GOV`);
+      alert(`${t('alert.rewards_dist')} +${totalReward} GOV`);
     } else {
-      alert("No rewards to distribute.");
+      alert(t('alert.no_rewards'));
     }
   };
 
   const handleResetSeason = () => {
-    if (window.confirm("Reset Season?")) {
+    if (window.confirm(t('alert.reset_confirm'))) {
       const resetUsers = { ...usersMock };
       Object.keys(resetUsers).forEach((key) => (resetUsers[key].totalKm = 0));
       setUsersMock(resetUsers);
       setUser((prev) => (prev ? { ...prev, totalKm: 0 } : null));
-      alert("Season Reset.");
+      alert(t('alert.season_reset'));
     }
   };
 
@@ -483,7 +482,7 @@ const App: React.FC = () => {
     
     let newCompletedMissions = [...user.completedMissionIds];
     let newEarnedBadges = [...user.earnedBadgeIds];
-    let additionalGov = 0;
+    let additionalRun = 0; // Changed to add RUN
     let hasChanges = false;
     
     // Temp queue to hold new unlocks in this cycle
@@ -495,7 +494,7 @@ const App: React.FC = () => {
       if (!newCompletedMissions.includes(m.id)) {
         if (checkAchievement(m, user, zones)) {
            newCompletedMissions.push(m.id);
-           additionalGov += m.rewardGov;
+           additionalRun += m.rewardRun; // Award RUN
            hasChanges = true;
            // Add to notification queue
            newUnlockQueue.push({ type: 'MISSION', item: m });
@@ -509,6 +508,7 @@ const App: React.FC = () => {
       if (!newEarnedBadges.includes(b.id)) {
         if (checkAchievement(b, user, zones)) {
            newEarnedBadges.push(b.id);
+           additionalRun += (b.rewardRun || 0); // Award RUN if badge has reward
            hasChanges = true;
            // Add to notification queue
            newUnlockQueue.push({ type: 'BADGE', item: b });
@@ -524,7 +524,7 @@ const App: React.FC = () => {
               ...prev,
               completedMissionIds: newCompletedMissions,
               earnedBadgeIds: newEarnedBadges,
-              govBalance: prev.govBalance + additionalGov,
+              runBalance: prev.runBalance + additionalRun, // Update RUN balance
             }
           : null
       );
@@ -544,8 +544,10 @@ const App: React.FC = () => {
 
   const handleClaimAllNotifications = () => {
       // 1. Calculate totals
-      const totalGov = achievementQueue.reduce((acc, entry) => {
-          return acc + (entry.type === 'MISSION' ? (entry.item as Mission).rewardGov : 0);
+      const totalRun = achievementQueue.reduce((acc, entry) => {
+          if (entry.type === 'MISSION') return acc + (entry.item as Mission).rewardRun;
+          if (entry.type === 'BADGE') return acc + ((entry.item as Badge).rewardRun || 0);
+          return acc;
       }, 0);
       const count = achievementQueue.length;
 
@@ -553,7 +555,7 @@ const App: React.FC = () => {
       setAchievementQueue([]);
 
       // 3. Show Summary
-      setClaimSummary({ count, totalGov });
+      setClaimSummary({ count, totalRun });
 
       // 4. Auto-hide after 3 seconds
       setTimeout(() => {
@@ -658,13 +660,13 @@ const App: React.FC = () => {
                <div className="p-3 bg-emerald-500/10 rounded-full mb-1">
                  <Layers className="text-emerald-400" size={32} />
                </div>
-               <h3 className="text-xl font-bold text-white tracking-tight">Batch Claimed!</h3>
+               <h3 className="text-xl font-bold text-white tracking-tight">{t('ach.batch_claimed')}</h3>
                <p className="text-gray-400 text-sm flex items-center gap-1">
-                   <CheckCircle size={12}/> {claimSummary.count} Achievements unlocked
+                   <CheckCircle size={12}/> {claimSummary.count} {t('ach.unlocked')}
                </p>
                
-               <div className="mt-2 text-3xl font-mono font-black text-cyan-400 drop-shadow-lg flex items-center gap-2">
-                   +{claimSummary.totalGov} GOV
+               <div className="mt-2 text-3xl font-mono font-black text-emerald-400 drop-shadow-lg flex items-center gap-2">
+                   +{claimSummary.totalRun} RUN
                </div>
            </div>
         </div>
@@ -674,6 +676,14 @@ const App: React.FC = () => {
       <Footer onNavigate={setCurrentView} currentView={currentView} />
     </div>
   );
+};
+
+const App: React.FC = () => {
+    return (
+        <LanguageProvider>
+            <AppContent />
+        </LanguageProvider>
+    );
 };
 
 export default App;

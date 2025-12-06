@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { ViewState } from '../types';
 import { ChevronUp, ChevronDown, Info } from 'lucide-react';
+import { useLanguage } from '../LanguageContext';
 
 interface FooterProps {
     onNavigate: (view: ViewState) => void;
@@ -9,6 +10,7 @@ interface FooterProps {
 }
 
 const Footer: React.FC<FooterProps> = ({ onNavigate, currentView }) => {
+  const { t } = useLanguage();
   const [isExpanded, setIsExpanded] = useState(false);
 
   // DASHBOARD MODE: Floating / Collapsible Footer
@@ -29,12 +31,12 @@ const Footer: React.FC<FooterProps> = ({ onNavigate, currentView }) => {
                   
                   {/* Content */}
                   <div className="p-6 flex flex-col md:flex-row items-center justify-center gap-6 text-xs text-gray-500">
-                     <span className="text-gray-400 font-bold font-mono uppercase tracking-wider">&copy; ZoneRun 2025</span>
+                     <span className="text-gray-400 font-bold font-mono uppercase tracking-wider">&copy; {t('footer.rights')}</span>
                      <div className="flex flex-wrap justify-center gap-6 font-medium">
-                        <button onClick={() => onNavigate('RULES')} className="hover:text-emerald-400 transition-colors">Rules</button>
-                        <button onClick={() => onNavigate('PRIVACY')} className="hover:text-emerald-400 transition-colors">Privacy</button>
-                        <button onClick={() => onNavigate('TERMS')} className="hover:text-emerald-400 transition-colors">Terms</button>
-                        <button onClick={() => onNavigate('COMMUNITY')} className="hover:text-emerald-400 transition-colors">Community</button>
+                        <button onClick={() => onNavigate('RULES')} className="hover:text-emerald-400 transition-colors">{t('footer.rules')}</button>
+                        <button onClick={() => onNavigate('PRIVACY')} className="hover:text-emerald-400 transition-colors">{t('footer.privacy')}</button>
+                        <button onClick={() => onNavigate('TERMS')} className="hover:text-emerald-400 transition-colors">{t('footer.terms')}</button>
+                        <button onClick={() => onNavigate('COMMUNITY')} className="hover:text-emerald-400 transition-colors">{t('footer.community')}</button>
                      </div>
                   </div>
               </div>
@@ -55,7 +57,7 @@ const Footer: React.FC<FooterProps> = ({ onNavigate, currentView }) => {
                      onClick={() => setIsExpanded(true)}
                      className="hidden md:flex bg-gray-900 border border-gray-700 border-b-0 rounded-t-lg px-6 py-1.5 text-xs font-bold text-gray-400 hover:text-emerald-400 items-center gap-2 shadow-lg"
                   >
-                     <Info size={14} /> Legal & Info
+                     <Info size={14} /> {t('footer.legal_info')}
                   </button>
               </div>
           </div>
@@ -69,13 +71,13 @@ const Footer: React.FC<FooterProps> = ({ onNavigate, currentView }) => {
         <div className="flex items-center gap-3">
           <span className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-500 cursor-pointer" onClick={() => onNavigate('DASHBOARD')}>ZoneRun</span> 
           <span className="text-gray-700">|</span>
-          <span>&copy; 2025 Decentralized Move-to-Earn</span>
+          <span>&copy; {t('footer.subtitle')}</span>
         </div>
         <div className="flex flex-wrap justify-center gap-8 font-medium">
-          <button onClick={() => onNavigate('RULES')} className="hover:text-emerald-400 transition-colors">Game Rules</button>
-          <button onClick={() => onNavigate('PRIVACY')} className="hover:text-emerald-400 transition-colors">Privacy Policy</button>
-          <button onClick={() => onNavigate('TERMS')} className="hover:text-emerald-400 transition-colors">Terms of Service</button>
-          <button onClick={() => onNavigate('COMMUNITY')} className="hover:text-emerald-400 transition-colors">Community</button>
+          <button onClick={() => onNavigate('RULES')} className="hover:text-emerald-400 transition-colors">{t('footer.rules')}</button>
+          <button onClick={() => onNavigate('PRIVACY')} className="hover:text-emerald-400 transition-colors">{t('footer.privacy')}</button>
+          <button onClick={() => onNavigate('TERMS')} className="hover:text-emerald-400 transition-colors">{t('footer.terms')}</button>
+          <button onClick={() => onNavigate('COMMUNITY')} className="hover:text-emerald-400 transition-colors">{t('footer.community')}</button>
         </div>
       </div>
     </footer>
