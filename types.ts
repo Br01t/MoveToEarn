@@ -77,6 +77,8 @@ export interface Zone {
   id: string;
   x: number;
   y: number;
+  lat: number; // Geographical Latitude
+  lng: number; // Geographical Longitude
   ownerId: string | null;
   name: string;
   defenseLevel: number;
@@ -116,4 +118,19 @@ export interface GameState {
   missions: Mission[];
   badges: Badge[];
   marketTaxRate: number;
+}
+
+// Data passed from Dashboard to App during Sync
+export interface RunAnalysisData {
+  fileName: string;
+  totalKm: number;
+  durationMinutes: number;
+  avgSpeed: number;
+  maxSpeed: number;
+  elevation: number;
+  startPoint: { lat: number; lng: number };
+  endPoint: { lat: number; lng: number };
+  points: { lat: number; lng: number, ele: number, time: Date }[];
+  isValid: boolean;
+  failureReason?: string;
 }

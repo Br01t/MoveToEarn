@@ -73,6 +73,32 @@ export const translations = {
     "sync.premium_locked": "Premium Feature Locked",
     "sync.premium_desc": "Automatic Strava syncing is available for Pro Agents only.",
 
+    // Zone Discovery Modal
+    "discovery.title": "New Zone Discovered!",
+    "discovery.subtitle": "You are the first to run here. Claim this land to expand your empire.",
+    "discovery.coords": "Coordinates",
+    "discovery.name_label": "Name your Zone",
+    "discovery.name_placeholder": "e.g. Central Park West",
+    "discovery.cost": "Mint Cost",
+    "discovery.reward": "Mint Reward",
+    "discovery.mint_btn": "Mint Zone",
+    "discovery.discard_btn": "Discard",
+    "discovery.naming_tip": "Tip: Use recognizable landmarks + City code (e.g. 'Hyde Park - LDN')",
+
+    // Run Summary Modal
+    "run_summary.title": "Run Complete",
+    "run_summary.subtitle": "Activity processed successfully.",
+    "run_summary.location": "Location",
+    "run_summary.zones_involved": "Zones Involved",
+    "run_summary.stats": "Stats",
+    "run_summary.dist": "Distance",
+    "run_summary.time": "Time",
+    "run_summary.pace": "Avg Pace",
+    "run_summary.reinforced": "Zone Reinforced!",
+    "run_summary.reinforced_desc": "You ran in your own territory. Defense & Yield increased.",
+    "run_summary.rewards": "Rewards Earned",
+    "run_summary.collect_btn": "Collect Rewards",
+
     // Wallet
     "wallet.title": "Wallet & Economy",
     "wallet.subtitle": "Manage assets and monitor protocol health.",
@@ -443,6 +469,32 @@ export const translations = {
     "sync.confirm_btn": "Conferma & Riscatta Premi",
     "sync.premium_locked": "Funzione Premium Bloccata",
     "sync.premium_desc": "La sincronizzazione automatica Strava è disponibile solo per Agenti Pro.",
+
+    // Zone Discovery Modal
+    "discovery.title": "Nuova Zona Scoperta!",
+    "discovery.subtitle": "Sei il primo a correre qui. Reclama questa terra per espandere il tuo impero.",
+    "discovery.coords": "Coordinate",
+    "discovery.name_label": "Dai un nome alla Zona",
+    "discovery.name_placeholder": "es. Parco Sempione Est",
+    "discovery.cost": "Costo Conio",
+    "discovery.reward": "Premio Conio",
+    "discovery.mint_btn": "Conia Zona",
+    "discovery.discard_btn": "Scarta",
+    "discovery.naming_tip": "Consiglio: Usa punti di riferimento + Città (es. 'Duomo - MI')",
+
+    // Run Summary Modal
+    "run_summary.title": "Corsa Completata",
+    "run_summary.subtitle": "Attività processata con successo.",
+    "run_summary.location": "Luogo",
+    "run_summary.zones_involved": "Zone Coinvolte",
+    "run_summary.stats": "Statistiche",
+    "run_summary.dist": "Distanza",
+    "run_summary.time": "Tempo",
+    "run_summary.pace": "Passo Medio",
+    "run_summary.reinforced": "Zona Rinforzata!",
+    "run_summary.reinforced_desc": "Hai corso nel tuo territorio. Difesa & Rendita aumentate.",
+    "run_summary.rewards": "Premi Guadagnati",
+    "run_summary.collect_btn": "Riscatta Premi",
 
     // Wallet
     "wallet.title": "Portafoglio & Economia",
