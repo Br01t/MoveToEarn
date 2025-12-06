@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { User, Zone, InventoryItem, ViewState, Badge, Rarity } from '../types';
+import { User, Zone, InventoryItem, ViewState, Badge, Rarity, RunAnalysisData } from '../types';
 import { Play, ZoomIn, ZoomOut, Move, X, UploadCloud, MapPin, CheckCircle, Zap, Search, ShoppingBag, Clock, Shield, Globe, Image as ImageIcon, Trash2, FileText, Crown, Loader, AlertTriangle, Lock, Filter, ChevronDown, ChevronUp, HelpCircle, Activity, History, Calendar, Medal, Award, Flag, Mountain, Home, Landmark, Swords, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users } from 'lucide-react';
 import { PREMIUM_COST } from '../constants';
 import Pagination from './Pagination';
@@ -11,7 +11,7 @@ interface DashboardProps {
   zones: Zone[];
   users: Record<string, any>; // Receiving full user list for leaderboard calculation
   badges: Badge[]; // Received for displaying owner badge
-  onSyncRun: (data: { km: number, name: string }) => void;
+  onSyncRun: (data: RunAnalysisData) => void;
   onClaim: (zoneId: string) => void;
   onBoost: (zoneId: string) => void;
   onDefend: (zoneId: string) => void;
@@ -21,6 +21,22 @@ interface DashboardProps {
 // Hexagon Configuration
 const HEX_SIZE = 100; // Increased size for better visibility
 const RUNS_PER_PAGE = 5;
+
+// --- GEOMETRIC HELPERS ---
+const R = 6371; // Radius of the earth in km
+const deg2rad = (deg: number) => deg * (Math.PI / 180);
+
+const getDistanceFromLatLonInKm = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+  const dLat = deg2rad(lat2 - lat1);
+  const dLon = deg2rad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const d = R * c; // Distance in km
+  return d;
+};
 
 const Dashboard: React.FC<DashboardProps> = ({ user, zones, users, badges, onSyncRun, onClaim, onBoost, onDefend, onNavigate }) => {
   const { t } = useLanguage();
@@ -42,10 +58,10 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, users, badges, onSyn
   const [uploadStep, setUploadStep] = useState<'SELECT' | 'UPLOADING' | 'PROCESSING' | 'SUCCESS'>('SELECT');
   const [antiFraudLog, setAntiFraudLog] = useState<string[]>([]);
   
-  // Form Data
-  const [runForm, setRunForm] = useState({ location: '', km: '' });
+  // GPX Parsing State
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [analysisResult, setAnalysisResult] = useState<RunAnalysisData | null>(null);
 
   // Map View State
   const [view, setView] = useState({ x: window.innerWidth / 2, y: window.innerHeight / 2, scale: 0.8 });
@@ -208,21 +224,14 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, users, badges, onSyn
     prevZonesLengthRef.current = zones.length;
   }, [zones, view.scale]);
 
-  // --- Handlers ---
+  // --- Handlers & GPX Logic ---
 
-  const openSyncModal = (zone?: Zone) => {
-     if (zone) {
-       setRunForm({ 
-         location: zone.name, 
-         km: ''
-       });
-     } else {
-       setRunForm({ location: '', km: '' });
-     }
+  const openSyncModal = () => {
      setSyncTab(user.isPremium ? 'PREMIUM' : 'FREE');
      setUploadStep('SELECT');
      setSelectedFile(null);
      setAntiFraudLog([]);
+     setAnalysisResult(null);
      setShowSyncModal(true);
   };
 
@@ -232,48 +241,252 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, users, badges, onSyn
     }
   };
 
+  const parseGPX = (text: string): { lat: number, lng: number, ele: number, time: Date }[] => {
+      console.log("📂 [GPX] Starting XML Parsing...");
+      const parser = new DOMParser();
+      const xmlDoc = parser.parseFromString(text, "text/xml");
+      
+      const parserError = xmlDoc.getElementsByTagName("parsererror");
+      if (parserError.length > 0) {
+          console.error("❌ [GPX] XML Parsing Error");
+          throw new Error("Malformed XML/GPX file.");
+      }
+
+      const trkpts = xmlDoc.getElementsByTagName("trkpt");
+      console.log(`📂 [GPX] Found ${trkpts.length} track points (<trkpt>).`);
+      
+      if (trkpts.length === 0) {
+          throw new Error("No track points (<trkpt>) found in GPX file.");
+      }
+
+      const points = [];
+
+      for (let i = 0; i < trkpts.length; i++) {
+          const p = trkpts[i];
+          const latStr = p.getAttribute("lat");
+          const lngStr = p.getAttribute("lon");
+
+          if (!latStr || !lngStr) continue;
+
+          const lat = parseFloat(latStr);
+          const lng = parseFloat(lngStr);
+          
+          const eleNode = p.getElementsByTagName("ele")[0];
+          const ele = eleNode && eleNode.textContent ? parseFloat(eleNode.textContent) : 0;
+          
+          const timeNode = p.getElementsByTagName("time")[0];
+          let time = new Date();
+          
+          if (timeNode && timeNode.textContent) {
+               const t = new Date(timeNode.textContent);
+               if (!isNaN(t.getTime())) {
+                   time = t;
+               } else {
+                   // Invalid time string, skip this point as time is crucial
+                   continue;
+               }
+          } else {
+               // No time, skip
+               continue;
+          }
+          
+          points.push({ lat, lng, ele, time });
+      }
+      
+      console.log(`✅ [GPX] Successfully extracted ${points.length} valid points with time.`);
+      if (points.length > 0) {
+          console.log("📍 [GPX] First Point:", points[0]);
+          console.log("📍 [GPX] Last Point:", points[points.length - 1]);
+      }
+
+      if (points.length < 2) {
+          throw new Error("Not enough valid track points with timestamps.");
+      }
+
+      return points;
+  };
+
+  const analyzeRun = (points: { lat: number, lng: number, ele: number, time: Date }[]): RunAnalysisData => {
+      console.log("📊 [ANALYSIS] Starting Run Analysis...");
+      let totalKm = 0;
+      let maxSpeed = 0;
+      let totalTime = 0;
+      let elevationGain = 0;
+      let validPointsCount = 0;
+      
+      if (points.length < 2) {
+          return {
+              fileName: selectedFile?.name || "file.gpx",
+              totalKm: 0, durationMinutes: 0, avgSpeed: 0, maxSpeed: 0, elevation: 0,
+              startPoint: points[0], endPoint: points[0], points: [], isValid: false, failureReason: "Not enough data points."
+          };
+      }
+
+      // SMOOTHING: We calculate speed not just from i-1 to i, but using a small window to ignore GPS jitter
+      // Filter out points that look like massive jumps (teleporting > 100km/h)
+      const SMOOTH_WINDOW = 3; 
+
+      for (let i = 1; i < points.length; i++) {
+          const curr = points[i];
+          const prev = points[Math.max(0, i - 1)];
+          const prevSmoothed = points[Math.max(0, i - SMOOTH_WINDOW)]; // Look back slightly for better speed avg
+
+          // Distance for accumulation (use immediate prev)
+          const dist = getDistanceFromLatLonInKm(prev.lat, prev.lng, curr.lat, curr.lng);
+          
+          // Speed calculation (use smoothed window)
+          const distSmooth = getDistanceFromLatLonInKm(prevSmoothed.lat, prevSmoothed.lng, curr.lat, curr.lng);
+          const timeDiffHours = (curr.time.getTime() - prevSmoothed.time.getTime()) / (1000 * 60 * 60);
+
+          let instantSpeed = 0;
+          if (timeDiffHours > 0) {
+              instantSpeed = distSmooth / timeDiffHours;
+          }
+
+          // Anti-Teleport Check: If speed > 100km/h, it's almost certainly a GPS glitch. 
+          // Ignore this point for Max Speed and Distance aggregation.
+          if (instantSpeed > 100) {
+              continue; 
+          }
+
+          if (instantSpeed > maxSpeed) {
+              maxSpeed = instantSpeed;
+          }
+
+          if (curr.ele > prev.ele) {
+              elevationGain += (curr.ele - prev.ele);
+          }
+
+          totalKm += dist;
+          validPointsCount++;
+      }
+
+      const startTime = points[0].time.getTime();
+      const endTime = points[points.length - 1].time.getTime();
+      totalTime = (endTime - startTime) / (1000 * 60); // minutes
+      
+      // Calculate Avg Speed based on VALID distance and time
+      const avgSpeed = totalTime > 0 ? (totalKm / (totalTime / 60)) : 0; // km/h
+
+      console.log("📉 [ANALYSIS] Calculated Stats:", { 
+          totalKm: totalKm.toFixed(2), 
+          totalTimeMin: totalTime.toFixed(2), 
+          avgSpeed: avgSpeed.toFixed(2), 
+          maxSpeed: maxSpeed.toFixed(2),
+          elevationGain: elevationGain.toFixed(1)
+      });
+
+      // --- ANTI-FRAUD CHECKS ---
+      let isValid = true;
+      let failureReason = "";
+
+      // Thresholds:
+      // Max Speed: 50 km/h (Increased tolerance for GPS spikes, was 35)
+      // Avg Speed: 25 km/h (Marathon world record pace is ~21 km/h. Anything above 25 sustained is a vehicle)
+      
+      if (totalKm === 0) { isValid = false; failureReason = "Distance is 0km."; }
+      else if (avgSpeed > 25) { isValid = false; failureReason = `Avg speed suspicious: ${avgSpeed.toFixed(1)} km/h (Likely Vehicle)`; }
+      else if (maxSpeed > 50) { isValid = false; failureReason = `Max speed spike: ${maxSpeed.toFixed(1)} km/h (Limit: 50km/h)`; } 
+      else if (totalTime < 1) { isValid = false; failureReason = "Duration too short (< 1 min)."; }
+
+      console.log(`🛡️ [ANTI-FRAUD] Result: ${isValid ? 'PASSED' : 'FAILED'} (${failureReason})`);
+
+      return {
+          fileName: selectedFile?.name || "run.gpx",
+          totalKm,
+          durationMinutes: totalTime,
+          avgSpeed,
+          maxSpeed,
+          elevation: elevationGain,
+          startPoint: points[0],
+          endPoint: points[points.length - 1],
+          points,
+          isValid,
+          failureReason
+      };
+  };
+
   const handleStartUpload = () => {
-    if (!selectedFile || !runForm.km || !runForm.location) {
-        alert("Please fill in all fields and attach a file.");
+    if (!selectedFile) {
+        alert("Please select a GPX file.");
         return;
     }
     setUploadStep('UPLOADING');
+    setAntiFraudLog([]);
+
+    const reader = new FileReader();
     
-    // Simulate File Upload
-    setTimeout(() => {
-        setUploadStep('PROCESSING');
-        // Simulate Logs
-        runLogSequence();
-    }, 1500);
+    reader.onerror = () => {
+        alert("Failed to read file.");
+        setUploadStep('SELECT');
+    };
+
+    reader.onload = (e) => {
+        const text = e.target?.result as string;
+        
+        // Simulating the "Analyzing" step for UX
+        setTimeout(() => {
+            setUploadStep('PROCESSING');
+            
+            const logs = [
+                "Parsing XML structure...",
+                `Reading ${selectedFile.size} bytes...`,
+                "Validating GPS timestamps...",
+                "Smoothing GPS noise...",
+                "Calculating velocity vectors..."
+            ];
+            
+            let i = 0;
+            const interval = setInterval(() => {
+                if (i < logs.length) {
+                   setAntiFraudLog(prev => [...prev, logs[i]]);
+                   i++;
+                } else {
+                   clearInterval(interval);
+                   
+                   try {
+                       // Perform Actual Analysis
+                       const points = parseGPX(text);
+                       const result = analyzeRun(points);
+                       setAnalysisResult(result);
+                       
+                       setAntiFraudLog(prev => [...prev, 
+                           `Points: ${points.length}`,
+                           `Distance: ${result.totalKm.toFixed(2)} km`,
+                           `Avg Speed: ${result.avgSpeed.toFixed(1)} km/h`,
+                           `Max Speed: ${result.maxSpeed.toFixed(1)} km/h`,
+                           result.isValid ? "STATUS: VERIFIED ✅" : `STATUS: REJECTED ❌ (${result.failureReason})`
+                       ]);
+
+                       setTimeout(() => {
+                           if (result.isValid) {
+                               setUploadStep('SUCCESS');
+                           } else {
+                               alert(`Validation Failed: ${result.failureReason}`);
+                               setUploadStep('SELECT');
+                               setAntiFraudLog([]);
+                           }
+                       }, 1000);
+                   } catch (err: any) {
+                       setAntiFraudLog(prev => [...prev, `ERROR: ${err.message}`]);
+                       alert(`Error parsing GPX: ${err.message}`);
+                       setUploadStep('SELECT');
+                   }
+                }
+            }, 600);
+
+        }, 500);
+    };
+    reader.readAsText(selectedFile);
   };
 
-  const runLogSequence = () => {
-      const logs = [
-          "Parsing .GPX file structure...",
-          "Validating GPS timestamps...",
-          "Checking velocity anomalies...",
-          "Verifying elevation gain...",
-          "Cross-referencing Zone Database...",
-          "Calculation: OK"
-      ];
-      
-      let i = 0;
-      const interval = setInterval(() => {
-          setAntiFraudLog(prev => [...prev, logs[i]]);
-          i++;
-          if (i >= logs.length) {
-              clearInterval(interval);
-              setTimeout(() => {
-                  setUploadStep('SUCCESS');
-              }, 800);
-          }
-      }, 800);
-  };
 
   const handleFinalSubmit = () => {
-     const km = parseFloat(runForm.km);
-     onSyncRun({ km, name: runForm.location });
-     setShowSyncModal(false);
+     if (analysisResult && analysisResult.isValid) {
+         console.log("📤 [DASHBOARD] Submitting Valid Run Data to App:", analysisResult);
+         onSyncRun(analysisResult);
+         setShowSyncModal(false);
+     }
   };
 
   // --- Map Interaction Handlers ---
@@ -860,7 +1073,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, users, badges, onSyn
                                     <label className="block text-xs font-bold text-gray-400 uppercase mb-2">{t('sync.upload_label')}</label>
                                     <input 
                                         type="file" 
-                                        accept=".gpx,.tcx,.fit,.zip" 
+                                        accept=".gpx,.xml" 
                                         hidden 
                                         ref={fileInputRef} 
                                         onChange={handleFileSelect} 
@@ -884,29 +1097,6 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, users, badges, onSyn
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-xs font-bold text-gray-400 uppercase mb-1">{t('sync.loc_name')}</label>
-                                        <input 
-                                            type="text" 
-                                            placeholder="e.g. Parco Sempione"
-                                            className="w-full bg-gray-900 border border-gray-600 rounded-lg p-3 text-white focus:border-emerald-500 focus:outline-none text-sm"
-                                            value={runForm.location}
-                                            onChange={e => setRunForm({...runForm, location: e.target.value})}
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-bold text-gray-400 uppercase mb-1">{t('sync.distance')}</label>
-                                        <input 
-                                            type="number" 
-                                            step="0.1"
-                                            placeholder="5.0"
-                                            className="w-full bg-gray-900 border border-gray-600 rounded-lg p-3 text-white focus:border-emerald-500 focus:outline-none text-sm"
-                                            value={runForm.km}
-                                            onChange={e => setRunForm({...runForm, km: e.target.value})}
-                                        />
-                                    </div>
-                                </div>
                                 <button 
                                     onClick={handleStartUpload}
                                     className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
@@ -933,14 +1123,24 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, users, badges, onSyn
                             </div>
                         )}
 
-                        {uploadStep === 'SUCCESS' && (
+                        {uploadStep === 'SUCCESS' && analysisResult && (
                             <div className="flex flex-col items-center justify-center py-8 space-y-6 animate-slide-up">
                                 <div className="bg-emerald-500/20 p-6 rounded-full border-2 border-emerald-500">
                                     <CheckCircle size={48} className="text-emerald-400" />
                                 </div>
                                 <div className="text-center">
                                     <h3 className="text-xl font-bold text-white mb-2">{t('sync.success')}</h3>
-                                    <p className="text-gray-400 text-sm">{t('sync.success_desc')}</p>
+                                    <div className="grid grid-cols-2 gap-4 text-sm text-gray-300 mb-2">
+                                        <div className="bg-gray-800 p-2 rounded border border-gray-700">
+                                            <span className="block text-[10px] text-gray-500 uppercase">Dist</span>
+                                            <span className="font-mono text-white">{analysisResult.totalKm.toFixed(2)} km</span>
+                                        </div>
+                                        <div className="bg-gray-800 p-2 rounded border border-gray-700">
+                                            <span className="block text-[10px] text-gray-500 uppercase">Avg Speed</span>
+                                            <span className="font-mono text-white">{analysisResult.avgSpeed.toFixed(1)} km/h</span>
+                                        </div>
+                                    </div>
+                                    <p className="text-gray-400 text-xs">{t('sync.success_desc')}</p>
                                 </div>
                                 <button 
                                     onClick={handleFinalSubmit}
@@ -983,27 +1183,6 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, users, badges, onSyn
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-
-                                <div className="space-y-3">
-                                   <p className="text-sm text-gray-400 font-bold uppercase">Recent Activity found:</p>
-                                   <div 
-                                      className="bg-gray-800 border border-gray-600 rounded-lg p-4 flex justify-between items-center cursor-pointer hover:border-emerald-500 transition-colors"
-                                      onClick={() => {
-                                          setRunForm({ location: 'Parco Sempione', km: '5.2' });
-                                          setSyncTab('FREE');
-                                          setUploadStep('SUCCESS');
-                                      }}
-                                   >
-                                       <div>
-                                           <div className="text-white font-bold text-sm">Morning Run</div>
-                                           <div className="text-xs text-gray-400">Today, 07:30 AM</div>
-                                       </div>
-                                       <div className="text-right">
-                                           <div className="text-emerald-400 font-mono font-bold text-sm">5.2 km</div>
-                                           <div className="text-xs text-gray-500">Parco Sempione</div>
-                                       </div>
-                                   </div>
                                 </div>
                             </div>
                         )}
