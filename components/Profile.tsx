@@ -294,25 +294,26 @@ const Profile: React.FC<ProfileProps> = ({ user, zones, missions = [], badges = 
 
       {/* --- CONTENT ROW: FULL WIDTH TABS (HISTORY & ACHIEVEMENTS) --- */}
       <div className="w-full">
-          <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden min-h-[500px] flex flex-col">
+          {/* Changed overflow-hidden to relative, and applied rounding to children to allow tooltips */}
+          <div className="bg-gray-800 rounded-xl border border-gray-700 min-h-[500px] flex flex-col relative z-0">
               {/* Tabs Header */}
-              <div className="flex border-b border-gray-700 bg-gray-900/50">
+              <div className="flex border-b border-gray-700 bg-gray-900/50 rounded-t-xl">
                   <button 
                     onClick={() => setActiveTab('ACHIEVEMENTS')}
-                    className={`flex-1 py-4 text-sm font-bold flex items-center justify-center gap-2 border-b-2 transition-colors ${activeTab === 'ACHIEVEMENTS' ? 'border-yellow-500 text-yellow-400 bg-gray-800' : 'border-transparent text-gray-500 hover:text-white'}`}
+                    className={`flex-1 py-4 text-sm font-bold flex items-center justify-center gap-2 border-b-2 transition-colors ${activeTab === 'ACHIEVEMENTS' ? 'border-yellow-500 text-yellow-400 bg-gray-800 rounded-tl-xl' : 'border-transparent text-gray-500 hover:text-white rounded-tl-xl'}`}
                   >
                       <Award size={16} /> {t('profile.tab.achievements')}
                   </button>
                   <button 
                     onClick={() => setActiveTab('HISTORY')}
-                    className={`flex-1 py-4 text-sm font-bold flex items-center justify-center gap-2 border-b-2 transition-colors ${activeTab === 'HISTORY' ? 'border-emerald-500 text-emerald-400 bg-gray-800' : 'border-transparent text-gray-500 hover:text-white'}`}
+                    className={`flex-1 py-4 text-sm font-bold flex items-center justify-center gap-2 border-b-2 transition-colors ${activeTab === 'HISTORY' ? 'border-emerald-500 text-emerald-400 bg-gray-800 rounded-tr-xl' : 'border-transparent text-gray-500 hover:text-white rounded-tr-xl'}`}
                   >
                       <History size={16} /> {t('profile.tab.history')}
                   </button>
               </div>
 
               {/* Tab Content */}
-              <div className="p-6 flex-1 bg-gray-800">
+              <div className="p-6 flex-1 bg-gray-800 rounded-b-xl">
 
                   {/* --- ACHIEVEMENTS TAB --- */}
                   {activeTab === 'ACHIEVEMENTS' && (
@@ -337,7 +338,6 @@ const Profile: React.FC<ProfileProps> = ({ user, zones, missions = [], badges = 
                                                 key={badge.id} 
                                                 onClick={() => handleEquipBadge(badge.id)}
                                                 className={`flex flex-col items-center gap-1 group relative p-1 transition-all rounded-xl ${isEquipped ? 'bg-gray-900/50 ring-1 ring-emerald-500/50' : 'hover:bg-gray-700/30'}`} 
-                                                title={`${badge.name}\n${badge.description}\n${isEquipped ? '(Equipped)' : '(Click to Equip)'}`}
                                               >
                                                   <div className={`p-3 rounded-full border bg-opacity-10 backdrop-blur-sm transition-transform group-hover:scale-110 ${getRarityGlow(badge.rarity)}`}>
                                                       {renderBadgeIcon(badge.icon, "w-6 h-6 md:w-8 md:h-8")}
@@ -348,6 +348,15 @@ const Profile: React.FC<ProfileProps> = ({ user, zones, missions = [], badges = 
                                                   {isEquipped && (
                                                       <div className="absolute top-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-gray-800 shadow shadow-emerald-500/50"></div>
                                                   )}
+
+                                                  {/* BADGE TOOLTIP */}
+                                                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-40 bg-gray-950/95 backdrop-blur-xl border border-gray-700 p-3 rounded-xl shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 invisible group-hover:visible text-left">
+                                                      <div className={`text-[9px] font-bold uppercase mb-1 ${getRarityText(badge.rarity)}`}>{badge.rarity}</div>
+                                                      <div className="text-xs font-bold text-white mb-1 leading-tight">{badge.name}</div>
+                                                      <div className="text-[9px] text-gray-400 leading-tight">{badge.description}</div>
+                                                      {/* Tooltip Arrow */}
+                                                      <div className="absolute left-1/2 -bottom-1 -translate-x-1/2 w-2 h-2 bg-gray-950 border-r border-b border-gray-700 transform rotate-45"></div>
+                                                  </div>
                                               </button>
                                             )
                                         })}
@@ -371,12 +380,21 @@ const Profile: React.FC<ProfileProps> = ({ user, zones, missions = [], badges = 
                               
                               <div className="space-y-2">
                                   {currentCompletedMissions.map(m => (
-                                      <div key={m.id} className="bg-gray-900 p-3 rounded-lg border border-gray-700 flex justify-between items-center group hover:border-gray-600 transition-colors">
+                                      <div key={m.id} className="relative group bg-gray-900 p-3 rounded-lg border border-gray-700 flex justify-between items-center hover:border-gray-600 transition-colors">
                                           <div className="flex items-center gap-3">
                                               <CheckCircle size={16} className={getRarityText(m.rarity)} />
                                               <span className="text-sm font-bold text-gray-300 group-hover:text-white transition-colors">{m.title}</span>
                                           </div>
                                           <span className="text-xs font-mono text-emerald-400">+{m.rewardRun} RUN</span>
+
+                                          {/* MISSION TOOLTIP */}
+                                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 bg-gray-950/95 backdrop-blur-xl border border-gray-700 p-3 rounded-xl shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 invisible group-hover:visible text-left">
+                                              <div className={`text-[9px] font-bold uppercase mb-1 ${getRarityText(m.rarity)}`}>{m.rarity}</div>
+                                              <div className="text-xs font-bold text-white mb-1 leading-tight">{m.title}</div>
+                                              <div className="text-[9px] text-gray-400 leading-tight">{m.description}</div>
+                                              {/* Tooltip Arrow */}
+                                              <div className="absolute left-1/2 -bottom-1 -translate-x-1/2 w-2 h-2 bg-gray-950 border-r border-b border-gray-700 transform rotate-45"></div>
+                                          </div>
                                       </div>
                                   ))}
                                   {completedMissions.length === 0 && (
