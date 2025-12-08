@@ -1,6 +1,6 @@
 
 import React, { useState, useRef } from 'react';
-import { UploadCloud, HelpCircle, X, Shield, FileText, CheckCircle, Lock, Crown, AlertTriangle } from 'lucide-react';
+import { UploadCloud, HelpCircle, X, Shield, FileText, CheckCircle, Lock, Crown, AlertTriangle, RefreshCw } from 'lucide-react';
 import { useLanguage } from '../../LanguageContext';
 import { parseGPX, analyzeRun } from '../../utils/gpx';
 import { RunAnalysisData, User } from '../../types';
@@ -15,7 +15,8 @@ interface SyncModalProps {
 const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, user }) => {
   const { t } = useLanguage();
   const [syncTab, setSyncTab] = useState<'FREE' | 'PREMIUM'>('FREE');
-  const [uploadStep, setUploadStep] = useState<'SELECT' | 'UPLOADING' | 'PROCESSING' | 'SUCCESS'>('SELECT');
+  const [uploadStep, setUploadStep] = useState<'SELECT' | 'UPLOADING' | 'PROCESSING' | 'SUCCESS' | 'ERROR'>('SELECT');
+  const [errorType, setErrorType] = useState<'DUPLICATE' | 'INVALID' | null>(null);
   const [logs, setLogs] = useState<string[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [validResults, setValidResults] = useState<RunAnalysisData[]>([]);
@@ -33,11 +34,13 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
         return;
     }
     setUploadStep('UPLOADING');
+    setErrorType(null);
     setLogs([]);
     setValidResults([]);
 
     const newResults: RunAnalysisData[] = [];
     const newLogs: string[] = [];
+    let duplicateCount = 0;
 
     const addLog = (msg: string) => {
         newLogs.push(msg);
@@ -66,6 +69,7 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
                         // Duplicate Check
                         const isDuplicate = user.runHistory.some(run => Math.abs(run.timestamp - result.startTime) < 60000);
                         if (isDuplicate) {
+                            duplicateCount++;
                             addLog(`⚠️ SKIPPED: ${file.name} (Track ${idx+1}) - Duplicate run detected.`);
                         } else {
                             newResults.push(result);
@@ -81,13 +85,19 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
             }
         }
 
-        setValidResults(newResults);
-        
         if (newResults.length > 0) {
+            setValidResults(newResults);
             setUploadStep('SUCCESS');
         } else {
-            addLog("⚠️ No valid runs found in the selected files.");
-            // Keep in processing state to show logs
+            // STOP EVERYTHING: Determine why it failed
+            if (duplicateCount > 0) {
+                setErrorType('DUPLICATE');
+                addLog("⚠️ Validation Halted: Duplicate runs detected.");
+            } else {
+                setErrorType('INVALID');
+                addLog("⚠️ Validation Halted: No valid data found.");
+            }
+            setUploadStep('ERROR');
         }
 
     }, 1000);
@@ -98,6 +108,13 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
          onSyncRun(validResults);
          onClose();
      }
+  };
+
+  const handleRetry = () => {
+      setUploadStep('SELECT');
+      setSelectedFiles([]);
+      setLogs([]);
+      setErrorType(null);
   };
 
   return (
@@ -125,12 +142,14 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
          <div className="flex border-b border-gray-700">
             <button 
               onClick={() => { setSyncTab('FREE'); setUploadStep('SELECT'); }}
+              disabled={uploadStep === 'PROCESSING' || uploadStep === 'SUCCESS'}
               className={`flex-1 py-3 font-bold text-sm transition-colors ${syncTab === 'FREE' ? 'bg-gray-800 text-emerald-400 border-b-2 border-emerald-400' : 'bg-gray-900 text-gray-500'}`}
             >
                 {t('sync.manual')}
             </button>
             <button 
               onClick={() => setSyncTab('PREMIUM')}
+              disabled={uploadStep === 'PROCESSING' || uploadStep === 'SUCCESS'}
               className={`flex-1 py-3 font-bold text-sm transition-colors flex justify-center items-center gap-2 ${syncTab === 'PREMIUM' ? 'bg-gray-800 text-yellow-400 border-b-2 border-yellow-400' : 'bg-gray-900 text-gray-500'}`}
             >
                 <Crown size={14} /> {t('sync.auto')}
@@ -231,6 +250,33 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
                                 className="w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl transition-colors"
                             >
                                 {t('sync.confirm_btn')}
+                            </button>
+                        </div>
+                    )}
+
+                    {uploadStep === 'ERROR' && (
+                        <div className="flex flex-col items-center justify-center py-8 space-y-6 animate-slide-up">
+                            <div className="bg-red-500/20 p-6 rounded-full border-2 border-red-500 animate-pulse">
+                                <AlertTriangle size={48} className="text-red-500" />
+                            </div>
+                            <div className="text-center">
+                                <h3 className="text-xl font-bold text-white mb-2">{t('sync.error.title')}</h3>
+                                <p className="text-gray-300 text-sm max-w-xs mx-auto mb-4">
+                                    {errorType === 'DUPLICATE' ? t('sync.error.duplicate_desc') : t('sync.error.no_data_desc')}
+                                </p>
+                                
+                                {/* Log window for debugging */}
+                                <div className="w-full bg-black/50 rounded-lg p-3 font-mono text-[10px] text-red-300 h-32 overflow-y-auto border border-red-900/50 text-left mb-4">
+                                    {logs.map((log, i) => (
+                                        <div key={i} className="mb-1">{log}</div>
+                                    ))}
+                                </div>
+                            </div>
+                            <button 
+                                onClick={handleRetry}
+                                className="w-full py-4 bg-gray-700 hover:bg-gray-600 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
+                            >
+                                <RefreshCw size={20} /> {t('sync.retry_btn')}
                             </button>
                         </div>
                     )}

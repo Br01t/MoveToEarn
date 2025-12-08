@@ -73,6 +73,10 @@ export const translations = {
     "sync.premium_locked": "Premium Feature Locked",
     "sync.premium_desc": "Automatic Strava syncing is available for Pro Agents only.",
     "sync.error_duplicate": "Duplicate run detected. This activity has already been uploaded.",
+    "sync.error.title": "Validation Failed",
+    "sync.error.duplicate_desc": "All uploaded tracks were identified as duplicates. You cannot upload the same activity twice.",
+    "sync.error.no_data_desc": "No valid GPS data found in the files. Please check the file format or speed limits.",
+    "sync.retry_btn": "Try Again",
 
     // Zone Discovery Modal
     "discovery.title": "New Zone Discovered!",
@@ -473,6 +477,10 @@ export const translations = {
     "sync.premium_locked": "Funzione Premium Bloccata",
     "sync.premium_desc": "La sincronizzazione automatica Strava è disponibile solo per Agenti Pro.",
     "sync.error_duplicate": "Corsa duplicata rilevata. Questa attività è già stata caricata.",
+    "sync.error.title": "Validazione Fallita",
+    "sync.error.duplicate_desc": "Tutte le tracce caricate sono risultate duplicate. Non puoi caricare la stessa attività due volte.",
+    "sync.error.no_data_desc": "Nessun dato GPS valido trovato nei file. Controlla il formato o i limiti di velocità.",
+    "sync.retry_btn": "Riprova",
 
     // Zone Discovery Modal
     "discovery.title": "Nuova Zona Scoperta!",
