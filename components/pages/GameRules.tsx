@@ -153,19 +153,19 @@ const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate }) => {
                          <div className="space-y-3">
                              <div className="bg-gray-900 p-3 rounded-lg border border-gray-600 flex justify-between items-center">
                                  <span className="text-xs text-gray-300 font-bold uppercase">{t('rules.tier.common')}</span>
-                                 <span className="text-xs font-mono text-emerald-400">+10-20 GOV</span>
+                                 <span className="text-xs font-mono text-emerald-400">+100-200 RUN</span>
                              </div>
                              <div className="bg-cyan-900/20 p-3 rounded-lg border border-cyan-500/30 flex justify-between items-center">
                                  <span className="text-xs text-cyan-300 font-bold uppercase">{t('rules.tier.rare')}</span>
-                                 <span className="text-xs font-mono text-cyan-400">+30-50 GOV</span>
+                                 <span className="text-xs font-mono text-cyan-400">+300-500 RUN</span>
                              </div>
                              <div className="bg-purple-900/20 p-3 rounded-lg border border-purple-500/30 flex justify-between items-center">
                                  <span className="text-xs text-purple-300 font-bold uppercase">{t('rules.tier.epic')}</span>
-                                 <span className="text-xs font-mono text-purple-400">+60-100 GOV</span>
+                                 <span className="text-xs font-mono text-purple-400">+600-1000 RUN</span>
                              </div>
                              <div className="bg-yellow-900/20 p-3 rounded-lg border border-yellow-500/30 flex justify-between items-center">
                                  <span className="text-xs text-yellow-300 font-bold uppercase">{t('rules.tier.legendary')}</span>
-                                 <span className="text-xs font-mono text-yellow-400">+150-500 GOV</span>
+                                 <span className="text-xs font-mono text-yellow-400">+1500-5000 RUN</span>
                              </div>
                          </div>
                      </div>

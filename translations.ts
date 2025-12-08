@@ -268,21 +268,21 @@ export const translations = {
     "rules.tokenomics.gov.sink": "Premium Subscriptions, Exclusive Cosmetic Badges",
 
     "rules.ach.title": "Achievements & Progression",
-    "rules.ach.intro": "Beyond the simple \"Move-to-Earn\" mechanic of earning RUN for kilometers, the ZoneRun protocol rewards strategic playstyles through the Missions System. Completing missions is the primary method for \"mining\" new GOV tokens into your wallet.",
+    "rules.ach.intro": "Beyond the simple \"Move-to-Earn\" mechanic of earning RUN for kilometers, the ZoneRun protocol rewards strategic playstyles through the Missions System. Completing missions is the primary method for \"mining\" new RUN tokens into your wallet.",
     
     "rules.missions.title": "Mission Contracts",
-    "rules.missions.desc": "The system automatically tracks your stats across various categories (Speed, Distance, Exploration, Time of Day). When criteria are met, the mission is marked as complete and GOV is instantly credited.",
+    "rules.missions.desc": "The system automatically tracks your stats across various categories (Speed, Distance, Exploration, Time of Day). When criteria are met, the mission is marked as complete and RUN is instantly credited.",
     "rules.tier.common": "Common Tier",
     "rules.tier.rare": "Rare Tier",
     "rules.tier.epic": "Epic Tier",
     "rules.tier.legendary": "Legendary Tier",
 
     "rules.badges.title": "Prestige Badges",
-    "rules.badges.desc": "Badges are non-transferable cosmetic proofs of achievement. While they do not grant GOV directly, collecting badges is required to unlock \"Meta-Missions\" (e.g., \"The Collector\", \"Legendary Runner\") which pay out the highest GOV rewards in the game.",
+    "rules.badges.desc": "Badges are non-transferable cosmetic proofs of achievement. While they do not grant GOV directly, collecting badges is required to unlock \"Meta-Missions\" (e.g., \"The Collector\", \"Legendary Runner\") which pay out the highest RUN rewards in the game.",
     "rules.badges.visual": "Visual Prestige:",
     "rules.badges.visual_desc": "Equip your rarest badge to display it on the Global Leaderboard and Zone Ownership cards.",
     "rules.badges.meta": "Meta Progression:",
-    "rules.badges.meta_desc": "Collecting 10 Epic/Legendary badges unlocks the \"Legendary Runner\" mission worth 250 GOV.",
+    "rules.badges.meta_desc": "Collecting 10 Epic/Legendary badges unlocks the \"Legendary Runner\" mission worth 2500 RUN.",
 
     "rules.burn.title": "Weekly Burn & Rewards",
     "rules.burn.proto_title": "The Burn Protocol",
@@ -672,21 +672,21 @@ export const translations = {
     "rules.tokenomics.gov.sink": "Abbonamenti Premium, Badge Cosmetici Esclusivi",
 
     "rules.ach.title": "Traguardi & Progressione",
-    "rules.ach.intro": "Oltre alla semplice meccanica \"Move-to-Earn\" di guadagnare RUN per i chilometri, il protocollo ZoneRun premia stili di gioco strategici attraverso il Sistema di Missioni. Completare le missioni è il metodo principale per \"minare\" nuovi token GOV nel tuo portafoglio.",
+    "rules.ach.intro": "Oltre alla semplice meccanica \"Move-to-Earn\" di guadagnare RUN per i chilometri, il protocollo ZoneRun premia stili di gioco strategici attraverso il Sistema di Missioni. Completare le missioni è il metodo principale per \"minare\" nuovi token RUN nel tuo portafoglio.",
     
     "rules.missions.title": "Missioni a Contratto",
-    "rules.missions.desc": "Il sistema traccia automaticamente le tue statistiche in varie categorie (Velocità, Distanza, Esplorazione, Orario). Quando i criteri sono soddisfatti, la missione viene segnata come completa e i GOV accreditati istantaneamente.",
+    "rules.missions.desc": "Il sistema traccia automaticamente le tue statistiche in varie categorie (Velocità, Distanza, Esplorazione, Orario). Quando i criteri sono soddisfatti, la missione viene segnata come completa e i RUN accreditati istantaneamente.",
     "rules.tier.common": "Livello Comune",
     "rules.tier.rare": "Livello Raro",
     "rules.tier.epic": "Livello Epico",
     "rules.tier.legendary": "Livello Leggendario",
 
     "rules.badges.title": "Badge di Prestigio",
-    "rules.badges.desc": "I badge sono prove cosmetiche di successo non trasferibili. Sebbene non garantiscano GOV direttamente, collezionare badge è necessario per sbloccare le \"Meta-Missioni\" (es. \"Il Collezionista\", \"Runner Leggendario\") che pagano le ricompense GOV più alte del gioco.",
+    "rules.badges.desc": "I badge sono prove cosmetiche di successo non trasferibili. Sebbene non garantiscano GOV direttamente, collezionare badge è necessario per sbloccare le \"Meta-Missioni\" (es. \"Il Collezionista\", \"Runner Leggendario\") che pagano le ricompense RUN più alte del gioco.",
     "rules.badges.visual": "Prestigio Visivo:",
     "rules.badges.visual_desc": "Equipaggia il tuo badge più raro per mostrarlo nella Classifica Globale e nelle schede di Proprietà Zona.",
     "rules.badges.meta": "Meta Progressione:",
-    "rules.badges.meta_desc": "Collezionare 10 badge Epici/Leggendari sblocca la missione \"Runner Leggendario\" del valore di 250 GOV.",
+    "rules.badges.meta_desc": "Collezionare 10 badge Epici/Leggendari sblocca la missione \"Runner Leggendario\" del valore di 2500 RUN.",
 
     "rules.burn.title": "Burn Settimanale & Ricompense",
     "rules.burn.proto_title": "Protocollo di Burn",
