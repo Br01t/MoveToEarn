@@ -124,6 +124,7 @@ export interface GameState {
 export interface RunAnalysisData {
   fileName: string;
   totalKm: number;
+  startTime: number; // Exact GPS start timestamp
   durationMinutes: number;
   avgSpeed: number;
   maxSpeed: number;
