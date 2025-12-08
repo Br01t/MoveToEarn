@@ -224,6 +224,8 @@ export const translations = {
     "miss.filter.rare": "Rare",
     "miss.filter.epic": "Epic",
     "miss.filter.legendary": "Legendary",
+    "miss.search_missions": "Search missions...",
+    "miss.search_badges": "Search badges...",
 
     // Footer
     "footer.rights": "ZoneRun 2025",
@@ -621,6 +623,8 @@ export const translations = {
     "miss.filter.rare": "Rari",
     "miss.filter.epic": "Epici",
     "miss.filter.legendary": "Leggendari",
+    "miss.search_missions": "Cerca missioni...",
+    "miss.search_badges": "Cerca badge...",
 
     // Footer
     "footer.rights": "ZoneRun 2025",
