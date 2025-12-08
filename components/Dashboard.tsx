@@ -1,42 +1,28 @@
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { User, Zone, InventoryItem, ViewState, Badge, Rarity, RunAnalysisData } from '../types';
-import { Play, ZoomIn, ZoomOut, Move, X, UploadCloud, MapPin, CheckCircle, Zap, Search, ShoppingBag, Clock, Shield, Globe, Image as ImageIcon, Trash2, FileText, Crown, Loader, AlertTriangle, Lock, Filter, ChevronDown, ChevronUp, HelpCircle, Activity, History, Calendar, Medal, Award, Flag, Mountain, Home, Landmark, Swords, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users } from 'lucide-react';
-import { PREMIUM_COST } from '../constants';
+import { User, Zone, InventoryItem, ViewState, Badge, RunAnalysisData } from '../types';
+import { ZoomIn, ZoomOut, UploadCloud, Search, Filter, Activity, History, X, Globe, Calendar } from 'lucide-react';
 import Pagination from './Pagination';
 import { useLanguage } from '../LanguageContext';
+import { getHexPixelPosition } from '../utils/geo';
+import HexMap from './dashboard/HexMap';
+import ZoneDetails from './dashboard/ZoneDetails';
+import SyncModal from './dashboard/SyncModal';
 
 interface DashboardProps {
   user: User;
   zones: Zone[];
-  users: Record<string, any>; // Receiving full user list for leaderboard calculation
-  badges: Badge[]; // Received for displaying owner badge
-  onSyncRun: (data: RunAnalysisData) => void;
+  users: Record<string, any>; 
+  badges: Badge[];
+  onSyncRun: (data: RunAnalysisData[]) => void;
   onClaim: (zoneId: string) => void;
   onBoost: (zoneId: string) => void;
   onDefend: (zoneId: string) => void;
   onNavigate: (view: ViewState) => void;
 }
 
-// Hexagon Configuration
-const HEX_SIZE = 100; // Increased size for better visibility
+const HEX_SIZE = 100;
 const RUNS_PER_PAGE = 5;
-
-// --- GEOMETRIC HELPERS ---
-const R = 6371; // Radius of the earth in km
-const deg2rad = (deg: number) => deg * (Math.PI / 180);
-
-const getDistanceFromLatLonInKm = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-  const dLat = deg2rad(lat2 - lat1);
-  const dLon = deg2rad(lon2 - lon1);
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  const d = R * c; // Distance in km
-  return d;
-};
 
 const Dashboard: React.FC<DashboardProps> = ({ user, zones, users, badges, onSyncRun, onClaim, onBoost, onDefend, onNavigate }) => {
   const { t } = useLanguage();
@@ -46,22 +32,14 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, users, badges, onSyn
   const [searchTerm, setSearchTerm] = useState('');
   const [filterMode, setFilterMode] = useState<'ALL' | 'MINE' | 'ENEMY'>('ALL');
   const [filterCountry, setFilterCountry] = useState<string>('ALL');
-  const [isFilterOpen, setIsFilterOpen] = useState(false); // Mobile collapse state
-  const [isLegendOpen, setIsLegendOpen] = useState(false); // Legend collapse state
-  const [isLastRunOpen, setIsLastRunOpen] = useState(false); // Last Run collapse state
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isLegendOpen, setIsLegendOpen] = useState(false);
+  const [isLastRunOpen, setIsLastRunOpen] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [historyPage, setHistoryPage] = useState(1);
 
   // Sync Modal State
   const [showSyncModal, setShowSyncModal] = useState(false);
-  const [syncTab, setSyncTab] = useState<'FREE' | 'PREMIUM'>('FREE');
-  const [uploadStep, setUploadStep] = useState<'SELECT' | 'UPLOADING' | 'PROCESSING' | 'SUCCESS'>('SELECT');
-  const [antiFraudLog, setAntiFraudLog] = useState<string[]>([]);
-  
-  // GPX Parsing State
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [analysisResult, setAnalysisResult] = useState<RunAnalysisData | null>(null);
 
   // Map View State
   const [view, setView] = useState({ x: window.innerWidth / 2, y: window.innerHeight / 2, scale: 0.8 });
@@ -69,428 +47,69 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, users, badges, onSyn
   const [lastMousePos, setLastMousePos] = useState({ x: 0, y: 0 });
   const svgRef = useRef<SVGSVGElement>(null);
 
-  // Track previous zones length to detect additions
   const prevZonesLengthRef = useRef(zones.length);
 
-  // Calculate earning rate for display
+  // Derived Values
   const earningRate = zones
     .filter(z => z.ownerId === user.id)
-    .reduce((acc, z) => acc + (0.5 * z.interestRate), 0) * 6; // Per minute estimate (since loop is 10s)
+    .reduce((acc, z) => acc + (0.5 * z.interestRate), 0) * 6;
 
-  // Find inventory items
   const boostItem: InventoryItem | undefined = user.inventory.find(i => i.type === 'BOOST');
   const defenseItem: InventoryItem | undefined = user.inventory.find(i => i.type === 'DEFENSE');
 
-  // Extract available countries from zones
   const countries = useMemo(() => {
     const countrySet = new Set<string>();
     zones.forEach(z => {
-      // Regex updated to match " - CC" format
       const match = z.name.match(/\-\s([A-Z]{2})$/);
-      if (match && match[1]) {
-        countrySet.add(match[1]);
-      } else {
-        countrySet.add('Other');
-      }
+      if (match && match[1]) countrySet.add(match[1]);
+      else countrySet.add('Other');
     });
     return Array.from(countrySet).sort();
   }, [zones]);
 
   const lastRun = user.runHistory[0];
 
-  // Pagination for History Modal
   const totalHistoryPages = Math.ceil(user.runHistory.length / RUNS_PER_PAGE);
   const currentHistoryRuns = user.runHistory.slice(
       (historyPage - 1) * RUNS_PER_PAGE,
       historyPage * RUNS_PER_PAGE
   );
 
-  // --- Map Math Helpers ---
-  const getHexPosition = (q: number, r: number) => {
-    const x = HEX_SIZE * Math.sqrt(3) * (q + r / 2);
-    const y = HEX_SIZE * 3/2 * r;
-    return { x, y };
-  };
-
-  // Helper to check boost status
-  const isBoostActive = (zone: Zone) => {
-    return zone.boostExpiresAt && zone.boostExpiresAt > Date.now();
-  };
-
-  // Helper to check shield status
-  const isShieldActive = (zone: Zone) => {
-    return zone.shieldExpiresAt && zone.shieldExpiresAt > Date.now();
-  };
-
   // --- Zone Logic Helpers ---
-
-  // Helper: Get Rarity Color for Badge
-  const getRarityColor = (rarity: Rarity) => {
-      switch(rarity) {
-          case 'LEGENDARY': return 'text-yellow-400 border-yellow-500/50 bg-yellow-900/20';
-          case 'EPIC': return 'text-purple-400 border-purple-500/50 bg-purple-900/20';
-          case 'RARE': return 'text-cyan-400 border-cyan-500/50 bg-cyan-900/20';
-          default: return 'text-gray-300 border-gray-600 bg-gray-800';
-      }
-  };
-
-  // Helper: Render Badge Icon
-  const renderBadgeIcon = (iconName: string, className: string) => {
-      switch(iconName) {
-          case 'Flag': return <Flag className={className} />;
-          case 'Crown': return <Crown className={className} />;
-          case 'Award': return <Award className={className} />;
-          case 'Zap': return <Zap className={className} />;
-          case 'Mountain': return <Mountain className={className} />;
-          case 'Globe': return <Globe className={className} />;
-          case 'Home': return <Home className={className} />;
-          case 'Landmark': return <Landmark className={className} />;
-          case 'Swords': return <Swords className={className} />;
-          case 'Footprints': return <Footprints className={className} />;
-          case 'Rocket': return <Rocket className={className} />;
-          case 'Tent': return <Tent className={className} />;
-          case 'Timer': return <Timer className={className} />;
-          case 'Building2': return <Building2 className={className} />;
-          case 'Moon': return <Moon className={className} />;
-          case 'Sun': return <Sun className={className} />;
-          case 'ShieldCheck': return <ShieldCheck className={className} />;
-          case 'Gem': return <Gem className={className} />;
-          case 'Users': return <Users className={className} />;
-          default: return <Award className={className} />;
-      }
-  };
-
   const getOwnerDetails = (ownerId: string | null) => {
       if (!ownerId) return { name: 'Unclaimed', avatar: null, badge: null };
-      
-      let userData;
-      if (ownerId === user.id) {
-          userData = user;
-      } else {
-          userData = users[ownerId];
-      }
-
+      let userData = ownerId === user.id ? user : users[ownerId];
       if (!userData) return { name: 'Unknown', avatar: null, badge: null };
-
       const badge = userData.favoriteBadgeId ? badges.find(b => b.id === userData.favoriteBadgeId) : null;
-      
-      return { 
-          name: userData.name, 
-          avatar: userData.avatar,
-          badge: badge
-      };
+      return { name: userData.name, avatar: userData.avatar, badge: badge };
   };
 
   const getZoneLeaderboard = (zoneName: string) => {
-      // 1. Get current user's actual stats for this zone
       const myRuns = user.runHistory.filter(r => r.location === zoneName);
       const myTotalKm = myRuns.reduce((acc, r) => acc + r.km, 0);
-
-      // 2. Generate simulated stats for other users (mock data)
-      // In a real app, this would query the backend.
       const leaderboard = Object.values(users).map((u: any) => {
-          if (u.id === user.id) {
-              return { id: u.id, name: u.name, avatar: u.avatar, km: myTotalKm };
-          } else {
-              // Deterministic random KM based on user ID and zone name to keep it consistent but varied
-              const seed = (u.id.charCodeAt(u.id.length - 1) + zoneName.length) % 100;
-              const fakeKm = (u.totalKm * (seed / 100)) / 5; // A fraction of their total km
-              return { id: u.id, name: u.name, avatar: u.avatar, km: fakeKm };
-          }
+          if (u.id === user.id) return { id: u.id, name: u.name, avatar: u.avatar, km: myTotalKm };
+          const seed = (u.id.charCodeAt(u.id.length - 1) + zoneName.length) % 100;
+          const fakeKm = (u.totalKm * (seed / 100)) / 5;
+          return { id: u.id, name: u.name, avatar: u.avatar, km: fakeKm };
       });
-
-      // 3. Sort descending
       return leaderboard.sort((a, b) => b.km - a.km).slice(0, 10);
   };
 
   // --- Effects ---
-
-  // Auto-center camera when a new zone is added
   useEffect(() => {
     if (zones.length > prevZonesLengthRef.current) {
-        // A new zone was added!
         const newZone = zones[zones.length - 1];
-        
-        // Find its pixel position
-        const pos = getHexPosition(newZone.x, newZone.y);
-        
-        // Center the view on this new zone
+        const pos = getHexPixelPosition(newZone.x, newZone.y, HEX_SIZE);
         const newX = window.innerWidth / 2 - pos.x * view.scale;
         const newY = window.innerHeight / 2 - pos.y * view.scale;
-
         setView(v => ({ ...v, x: newX, y: newY }));
-        setSelectedZone(newZone); // Auto select it
+        setSelectedZone(newZone);
     }
     prevZonesLengthRef.current = zones.length;
   }, [zones, view.scale]);
 
-  // --- Handlers & GPX Logic ---
-
-  const openSyncModal = () => {
-     setSyncTab(user.isPremium ? 'PREMIUM' : 'FREE');
-     setUploadStep('SELECT');
-     setSelectedFile(null);
-     setAntiFraudLog([]);
-     setAnalysisResult(null);
-     setShowSyncModal(true);
-  };
-
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-        setSelectedFile(e.target.files[0]);
-    }
-  };
-
-  const parseGPX = (text: string): { lat: number, lng: number, ele: number, time: Date }[] => {
-      console.log("📂 [GPX] Starting XML Parsing...");
-      const parser = new DOMParser();
-      const xmlDoc = parser.parseFromString(text, "text/xml");
-      
-      const parserError = xmlDoc.getElementsByTagName("parsererror");
-      if (parserError.length > 0) {
-          console.error("❌ [GPX] XML Parsing Error");
-          throw new Error("Malformed XML/GPX file.");
-      }
-
-      const trkpts = xmlDoc.getElementsByTagName("trkpt");
-      console.log(`📂 [GPX] Found ${trkpts.length} track points (<trkpt>).`);
-      
-      if (trkpts.length === 0) {
-          throw new Error("No track points (<trkpt>) found in GPX file.");
-      }
-
-      const points = [];
-
-      for (let i = 0; i < trkpts.length; i++) {
-          const p = trkpts[i];
-          const latStr = p.getAttribute("lat");
-          const lngStr = p.getAttribute("lon");
-
-          if (!latStr || !lngStr) continue;
-
-          const lat = parseFloat(latStr);
-          const lng = parseFloat(lngStr);
-          
-          const eleNode = p.getElementsByTagName("ele")[0];
-          const ele = eleNode && eleNode.textContent ? parseFloat(eleNode.textContent) : 0;
-          
-          const timeNode = p.getElementsByTagName("time")[0];
-          let time = new Date();
-          
-          if (timeNode && timeNode.textContent) {
-               const t = new Date(timeNode.textContent);
-               if (!isNaN(t.getTime())) {
-                   time = t;
-               } else {
-                   // Invalid time string, skip this point as time is crucial
-                   continue;
-               }
-          } else {
-               // No time, skip
-               continue;
-          }
-          
-          points.push({ lat, lng, ele, time });
-      }
-      
-      console.log(`✅ [GPX] Successfully extracted ${points.length} valid points with time.`);
-      if (points.length > 0) {
-          console.log("📍 [GPX] First Point:", points[0]);
-          console.log("📍 [GPX] Last Point:", points[points.length - 1]);
-      }
-
-      if (points.length < 2) {
-          throw new Error("Not enough valid track points with timestamps.");
-      }
-
-      return points;
-  };
-
-  const analyzeRun = (points: { lat: number, lng: number, ele: number, time: Date }[]): RunAnalysisData => {
-      console.log("📊 [ANALYSIS] Starting Run Analysis...");
-      let totalKm = 0;
-      let maxSpeed = 0;
-      let totalTime = 0;
-      let elevationGain = 0;
-      let validPointsCount = 0;
-      
-      if (points.length < 2) {
-          return {
-              fileName: selectedFile?.name || "file.gpx",
-              totalKm: 0, durationMinutes: 0, avgSpeed: 0, maxSpeed: 0, elevation: 0,
-              startPoint: points[0], endPoint: points[0], points: [], isValid: false, failureReason: "Not enough data points."
-          };
-      }
-
-      // SMOOTHING: We calculate speed not just from i-1 to i, but using a small window to ignore GPS jitter
-      // Filter out points that look like massive jumps (teleporting > 100km/h)
-      const SMOOTH_WINDOW = 3; 
-
-      for (let i = 1; i < points.length; i++) {
-          const curr = points[i];
-          const prev = points[Math.max(0, i - 1)];
-          const prevSmoothed = points[Math.max(0, i - SMOOTH_WINDOW)]; // Look back slightly for better speed avg
-
-          // Distance for accumulation (use immediate prev)
-          const dist = getDistanceFromLatLonInKm(prev.lat, prev.lng, curr.lat, curr.lng);
-          
-          // Speed calculation (use smoothed window)
-          const distSmooth = getDistanceFromLatLonInKm(prevSmoothed.lat, prevSmoothed.lng, curr.lat, curr.lng);
-          const timeDiffHours = (curr.time.getTime() - prevSmoothed.time.getTime()) / (1000 * 60 * 60);
-
-          let instantSpeed = 0;
-          if (timeDiffHours > 0) {
-              instantSpeed = distSmooth / timeDiffHours;
-          }
-
-          // Anti-Teleport Check: If speed > 100km/h, it's almost certainly a GPS glitch. 
-          // Ignore this point for Max Speed and Distance aggregation.
-          if (instantSpeed > 100) {
-              continue; 
-          }
-
-          if (instantSpeed > maxSpeed) {
-              maxSpeed = instantSpeed;
-          }
-
-          if (curr.ele > prev.ele) {
-              elevationGain += (curr.ele - prev.ele);
-          }
-
-          totalKm += dist;
-          validPointsCount++;
-      }
-
-      const startTime = points[0].time.getTime();
-      const endTime = points[points.length - 1].time.getTime();
-      totalTime = (endTime - startTime) / (1000 * 60); // minutes
-      
-      // Calculate Avg Speed based on VALID distance and time
-      const avgSpeed = totalTime > 0 ? (totalKm / (totalTime / 60)) : 0; // km/h
-
-      console.log("📉 [ANALYSIS] Calculated Stats:", { 
-          totalKm: totalKm.toFixed(2), 
-          totalTimeMin: totalTime.toFixed(2), 
-          avgSpeed: avgSpeed.toFixed(2), 
-          maxSpeed: maxSpeed.toFixed(2),
-          elevationGain: elevationGain.toFixed(1)
-      });
-
-      // --- ANTI-FRAUD CHECKS ---
-      let isValid = true;
-      let failureReason = "";
-
-      // Thresholds:
-      // Max Speed: 50 km/h (Increased tolerance for GPS spikes, was 35)
-      // Avg Speed: 25 km/h (Marathon world record pace is ~21 km/h. Anything above 25 sustained is a vehicle)
-      
-      if (totalKm === 0) { isValid = false; failureReason = "Distance is 0km."; }
-      else if (avgSpeed > 25) { isValid = false; failureReason = `Avg speed suspicious: ${avgSpeed.toFixed(1)} km/h (Likely Vehicle)`; }
-      else if (maxSpeed > 50) { isValid = false; failureReason = `Max speed spike: ${maxSpeed.toFixed(1)} km/h (Limit: 50km/h)`; } 
-      else if (totalTime < 1) { isValid = false; failureReason = "Duration too short (< 1 min)."; }
-
-      console.log(`🛡️ [ANTI-FRAUD] Result: ${isValid ? 'PASSED' : 'FAILED'} (${failureReason})`);
-
-      return {
-          fileName: selectedFile?.name || "run.gpx",
-          totalKm,
-          durationMinutes: totalTime,
-          avgSpeed,
-          maxSpeed,
-          elevation: elevationGain,
-          startPoint: points[0],
-          endPoint: points[points.length - 1],
-          points,
-          isValid,
-          failureReason
-      };
-  };
-
-  const handleStartUpload = () => {
-    if (!selectedFile) {
-        alert("Please select a GPX file.");
-        return;
-    }
-    setUploadStep('UPLOADING');
-    setAntiFraudLog([]);
-
-    const reader = new FileReader();
-    
-    reader.onerror = () => {
-        alert("Failed to read file.");
-        setUploadStep('SELECT');
-    };
-
-    reader.onload = (e) => {
-        const text = e.target?.result as string;
-        
-        // Simulating the "Analyzing" step for UX
-        setTimeout(() => {
-            setUploadStep('PROCESSING');
-            
-            const logs = [
-                "Parsing XML structure...",
-                `Reading ${selectedFile.size} bytes...`,
-                "Validating GPS timestamps...",
-                "Smoothing GPS noise...",
-                "Calculating velocity vectors..."
-            ];
-            
-            let i = 0;
-            const interval = setInterval(() => {
-                if (i < logs.length) {
-                   setAntiFraudLog(prev => [...prev, logs[i]]);
-                   i++;
-                } else {
-                   clearInterval(interval);
-                   
-                   try {
-                       // Perform Actual Analysis
-                       const points = parseGPX(text);
-                       const result = analyzeRun(points);
-                       setAnalysisResult(result);
-                       
-                       setAntiFraudLog(prev => [...prev, 
-                           `Points: ${points.length}`,
-                           `Distance: ${result.totalKm.toFixed(2)} km`,
-                           `Avg Speed: ${result.avgSpeed.toFixed(1)} km/h`,
-                           `Max Speed: ${result.maxSpeed.toFixed(1)} km/h`,
-                           result.isValid ? "STATUS: VERIFIED ✅" : `STATUS: REJECTED ❌ (${result.failureReason})`
-                       ]);
-
-                       setTimeout(() => {
-                           if (result.isValid) {
-                               setUploadStep('SUCCESS');
-                           } else {
-                               alert(`Validation Failed: ${result.failureReason}`);
-                               setUploadStep('SELECT');
-                               setAntiFraudLog([]);
-                           }
-                       }, 1000);
-                   } catch (err: any) {
-                       setAntiFraudLog(prev => [...prev, `ERROR: ${err.message}`]);
-                       alert(`Error parsing GPX: ${err.message}`);
-                       setUploadStep('SELECT');
-                   }
-                }
-            }, 600);
-
-        }, 500);
-    };
-    reader.readAsText(selectedFile);
-  };
-
-
-  const handleFinalSubmit = () => {
-     if (analysisResult && analysisResult.isValid) {
-         console.log("📤 [DASHBOARD] Submitting Valid Run Data to App:", analysisResult);
-         onSyncRun(analysisResult);
-         setShowSyncModal(false);
-     }
-  };
-
-  // --- Map Interaction Handlers ---
-
+  // --- Map Interactions ---
   const handleWheel = (e: React.WheelEvent) => {
     e.preventDefault();
     const scaleFactor = 0.1;
@@ -514,7 +133,6 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, users, badges, onSyn
 
   const handleMouseUp = () => setIsDragging(false);
 
-  // Mobile Touch Handling for Map Dragging
   const handleTouchStart = (e: React.TouchEvent) => {
       if (e.touches.length === 1) {
           setIsDragging(true);
@@ -530,47 +148,17 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, users, badges, onSyn
       setLastMousePos({ x: e.touches[0].clientX, y: e.touches[0].clientY });
   };
 
-  const handleTouchEnd = () => setIsDragging(false);
-
-
   const zoomIn = () => setView(v => ({ ...v, scale: Math.min(v.scale + 0.2, 2.5) }));
   const zoomOut = () => setView(v => ({ ...v, scale: Math.max(v.scale - 0.2, 0.3) }));
 
-  // --- Hexagon Render Helpers ---
-
-  const getHexPoints = () => {
-    const angles = [30, 90, 150, 210, 270, 330];
-    return angles.map(angle => {
-      const rad = (Math.PI / 180) * angle;
-      return `${HEX_SIZE * Math.cos(rad)},${HEX_SIZE * Math.sin(rad)}`;
-    }).join(' ');
-  };
-
-  const getFillId = (zone: Zone) => {
-      if (isBoostActive(zone)) return "url(#grad-boosted-zone)";
-      if (isShieldActive(zone)) return "url(#grad-shielded-zone)"; 
-      if (zone.ownerId === user.id) return "url(#grad-my-zone)";
-      return "url(#grad-enemy-zone)";
-  };
-
-  const getStrokeColor = (zone: Zone) => {
-    if (isBoostActive(zone)) return '#f59e0b'; // Amber/Gold
-    if (isShieldActive(zone)) return '#06b6d4'; // Cyan/Blue
-    if (zone.ownerId === user.id) return '#34d399'; // Emerald
-    return '#f87171'; // Red
-  };
-
-  // --- Prep Render Data for selected zone ---
+  // --- Prep Render Data ---
   const ownerDetails = selectedZone ? getOwnerDetails(selectedZone.ownerId) : null;
   const zoneLeaderboard = selectedZone ? getZoneLeaderboard(selectedZone.name) : [];
-  const topRunner = zoneLeaderboard.length > 0 ? zoneLeaderboard[0] : null;
-  const isTopRunner = topRunner ? topRunner.id === user.id : false;
-  const kmToTop = topRunner && !isTopRunner ? (topRunner.km - (zoneLeaderboard.find(u => u.id === user.id)?.km || 0)) : 0;
 
   return (
     <div className="relative w-full h-[calc(100vh-64px)] md:h-[calc(100vh-64px)] overflow-hidden bg-gray-900 shadow-inner">
       
-      {/* HUD - Stats (Compact on Mobile) */}
+      {/* HUD - Stats */}
       <div className="absolute top-2 left-2 right-2 z-20 flex overflow-x-auto no-scrollbar gap-2 pointer-events-none pr-12">
          <div className="bg-gray-800/90 backdrop-blur-md px-3 py-1.5 rounded-full border border-gray-700 shadow-xl flex items-center gap-2 pointer-events-auto shrink-0">
              <span className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">RUN</span>
@@ -590,14 +178,9 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, users, badges, onSyn
 
       {/* LEFT TOOLBAR: SEARCH & LAST RUN */}
       <div className="absolute top-14 left-2 z-20 flex flex-col gap-2 items-start pointer-events-none">
-          
-          {/* 1. SEARCH TOGGLE */}
           <div className={`flex flex-col items-start transition-all duration-300 pointer-events-auto ${isFilterOpen ? 'w-64 z-50' : 'w-10 z-40'}`}>
             <button 
-                onClick={() => {
-                    setIsFilterOpen(!isFilterOpen);
-                    if (isLastRunOpen) setIsLastRunOpen(false); // Close other menu
-                }} 
+                onClick={() => { setIsFilterOpen(!isFilterOpen); if (isLastRunOpen) setIsLastRunOpen(false); }} 
                 className="w-10 h-10 bg-gray-800/90 backdrop-blur-md rounded-full border border-gray-700 shadow-lg flex items-center justify-center text-white hover:text-emerald-400 relative shrink-0"
             >
                 {isFilterOpen ? <X size={20}/> : <Search size={20}/>}
@@ -637,14 +220,10 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, users, badges, onSyn
             )}
           </div>
 
-          {/* 2. LAST RUN TOGGLE */}
           {lastRun && (
              <div className="relative pointer-events-auto z-30">
                  <button 
-                    onClick={() => {
-                        setIsLastRunOpen(!isLastRunOpen);
-                        if (isFilterOpen) setIsFilterOpen(false); // Close other menu
-                    }}
+                    onClick={() => { setIsLastRunOpen(!isLastRunOpen); if (isFilterOpen) setIsFilterOpen(false); }}
                     className={`w-10 h-10 bg-gray-800/90 backdrop-blur-md rounded-full border border-gray-700 shadow-lg flex items-center justify-center transition-colors ${isLastRunOpen ? 'text-white border-emerald-500' : 'text-emerald-400 hover:text-white'}`}
                  >
                      <Activity size={20} />
@@ -664,11 +243,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, users, badges, onSyn
                             </div>
                         </div>
                         <button 
-                            onClick={() => {
-                                setIsLastRunOpen(false);
-                                setHistoryPage(1);
-                                setShowHistoryModal(true);
-                            }}
+                            onClick={() => { setIsLastRunOpen(false); setHistoryPage(1); setShowHistoryModal(true); }}
                             className="w-full py-1.5 bg-gray-700/50 hover:bg-emerald-500/20 hover:text-emerald-400 text-xs text-gray-400 rounded transition-colors flex items-center justify-center gap-1"
                         >
                             <History size={12} /> View History
@@ -681,7 +256,6 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, users, badges, onSyn
 
       {/* Map Controls & Legend */}
       <div className="absolute top-14 right-2 z-20 flex flex-col items-end gap-2">
-          {/* Legend Toggle */}
           <div className="relative flex flex-col items-end">
              <button onClick={() => setIsLegendOpen(!isLegendOpen)} className="p-2 bg-gray-800/90 text-gray-400 rounded-lg border border-gray-700 shadow-lg mb-2">
                  <Filter size={20} />
@@ -695,20 +269,17 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, users, badges, onSyn
                  </div>
              )}
           </div>
-
-          {/* Zoom Buttons */}
           <button onClick={zoomIn} className="p-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg border border-gray-600 shadow-lg"><ZoomIn size={20}/></button>
           <button onClick={zoomOut} className="p-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg border border-gray-600 shadow-lg"><ZoomOut size={20}/></button>
       </div>
 
-      {/* Sync Run Button (Main Floating Action) */}
+      {/* Sync Run Button */}
       <div className="absolute bottom-24 md:bottom-10 left-1/2 transform -translate-x-1/2 z-30 flex items-center justify-center">
-            {/* Radar Ping Animation */}
             <div className="absolute inset-0 bg-emerald-500 rounded-full animate-ping opacity-20 duration-1000"></div>
             <div className="absolute inset-0 bg-emerald-400 rounded-full blur-xl opacity-40"></div>
             
             <button 
-              onClick={() => openSyncModal()}
+              onClick={() => setShowSyncModal(true)}
               className="relative group flex items-center gap-3 px-8 py-4 bg-gray-900/90 backdrop-blur-xl border-2 border-emerald-400 rounded-full shadow-[0_0_30px_rgba(16,185,129,0.4)] hover:shadow-[0_0_50px_rgba(16,185,129,0.7)] hover:border-emerald-300 hover:scale-105 transition-all duration-300"
             >
                 <div className="bg-emerald-500 text-black p-2 rounded-full">
@@ -721,479 +292,53 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, users, badges, onSyn
             </button>
       </div>
 
-      {/* SVG Map Canvas */}
-      <div 
-          className="absolute inset-0 cursor-move bg-[radial-gradient(#1f2937_1px,transparent_1px)] [background-size:20px_20px] touch-none"
+      {/* HEX MAP COMPONENT */}
+      <HexMap
+          ref={svgRef}
+          zones={zones}
+          user={user}
+          view={view}
+          selectedZoneId={selectedZone?.id || null}
+          onZoneClick={setSelectedZone}
+          filterMode={filterMode}
+          filterCountry={filterCountry}
+          searchTerm={searchTerm}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
+          onTouchEnd={() => setIsDragging(false)}
           onWheel={handleWheel}
-      >
-        <svg 
-          ref={svgRef}
-          width="100%" 
-          height="100%"
-          className="touch-none select-none"
-        >
-          <defs>
-            <linearGradient id="grad-my-zone" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style={{ stopColor: '#064e3b', stopOpacity: 0.9 }} />
-              <stop offset="60%" style={{ stopColor: '#10b981', stopOpacity: 0.85 }} />
-              <stop offset="100%" style={{ stopColor: '#6ee7b7', stopOpacity: 0.9 }} />
-            </linearGradient>
-            
-            <linearGradient id="grad-enemy-zone" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style={{ stopColor: '#450a0a', stopOpacity: 0.9 }} />
-              <stop offset="60%" style={{ stopColor: '#dc2626', stopOpacity: 0.85 }} />
-              <stop offset="100%" style={{ stopColor: '#fca5a5', stopOpacity: 0.9 }} />
-            </linearGradient>
+      />
 
-            <linearGradient id="grad-boosted-zone" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style={{ stopColor: '#78350f', stopOpacity: 0.9 }} />
-              <stop offset="60%" style={{ stopColor: '#d97706', stopOpacity: 0.9 }} />
-              <stop offset="100%" style={{ stopColor: '#fbbf24', stopOpacity: 0.95 }} />
-            </linearGradient>
-
-            <linearGradient id="grad-shielded-zone" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style={{ stopColor: '#164e63', stopOpacity: 0.9 }} />
-              <stop offset="60%" style={{ stopColor: '#0891b2', stopOpacity: 0.9 }} />
-              <stop offset="100%" style={{ stopColor: '#67e8f9', stopOpacity: 0.95 }} />
-            </linearGradient>
-          </defs>
-
-          <g transform={`translate(${view.x},${view.y}) scale(${view.scale})`}>
-              {zones.map((zone) => {
-                const pos = getHexPosition(zone.x, zone.y);
-                const isSelected = selectedZone?.id === zone.id;
-                const boosted = isBoostActive(zone);
-                const shielded = isShieldActive(zone);
-                const strokeColor = getStrokeColor(zone);
-                const fillUrl = getFillId(zone);
-
-                // --- Filtering Logic ---
-                let isMatch = true;
-                if (filterMode === 'MINE' && zone.ownerId !== user.id) isMatch = false;
-                if (filterMode === 'ENEMY' && zone.ownerId === user.id) isMatch = false;
-                
-                if (filterCountry !== 'ALL') {
-                    if (filterCountry === 'Other') {
-                        if (zone.name.match(/\-\s[A-Z]{2}$/)) isMatch = false;
-                    } else {
-                        if (!zone.name.endsWith(` - ${filterCountry}`)) isMatch = false;
-                    }
-                }
-
-                if (searchTerm && !zone.name.toLowerCase().includes(searchTerm.toLowerCase())) {
-                    isMatch = false;
-                }
-
-                return (
-                  <g 
-                    key={zone.id} 
-                    transform={`translate(${pos.x},${pos.y})`}
-                    onClick={(e) => { e.stopPropagation(); setSelectedZone(zone); }}
-                    className={`transition-all duration-300 group ${isMatch ? 'cursor-pointer' : 'pointer-events-none'}`}
-                    style={{ opacity: isMatch ? (isSelected ? 1 : 0.9) : 0.05, filter: isMatch ? 'none' : 'grayscale(100%)' }}
-                  >
-                    {isSelected && isMatch && (
-                      <polygon points={getHexPoints()} fill={strokeColor} opacity="0.2" filter="blur(20px)" transform="scale(1.2)"/>
-                    )}
-
-                    {boosted && isMatch && (
-                       <polygon points={getHexPoints()} fill="none" stroke="#fbbf24" strokeWidth="3" opacity="0.6" transform="scale(1.1)" className="animate-pulse"/>
-                    )}
-                    {shielded && isMatch && !boosted && (
-                       <polygon points={getHexPoints()} fill="none" stroke="#06b6d4" strokeWidth="3" opacity="0.6" transform="scale(1.1)" className="animate-pulse"/>
-                    )}
-                    
-                    <polygon
-                      points={getHexPoints()}
-                      fill={fillUrl}
-                      stroke={strokeColor}
-                      strokeWidth={isSelected ? 4 : 2}
-                      strokeLinejoin="round"
-                      className="transition-all duration-300 group-hover:brightness-125 group-hover:stroke-[3px] group-hover:drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]"
-                      style={{ filter: isSelected ? 'drop-shadow(0 0 8px rgba(255,255,255,0.4))' : 'none' }}
-                    />
-                    
-                    <polygon points={getHexPoints()} fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="1" transform="scale(0.85)" className="transition-all duration-300 opacity-50 group-hover:opacity-100 group-hover:stroke-white/40"/>
-                    
-                    <foreignObject x={-HEX_SIZE} y={-HEX_SIZE} width={HEX_SIZE * 2} height={HEX_SIZE * 2} pointerEvents="none">
-                        <div className="w-full h-full flex flex-col items-center justify-center text-center p-2 leading-none pointer-events-none relative gap-2">
-                          <div className="flex items-center justify-center w-full">
-                             <span className="text-xs sm:text-sm font-black text-white tracking-wider drop-shadow-lg leading-tight whitespace-normal break-words max-w-[150px] transition-transform duration-300 group-hover:scale-105" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>
-                               {zone.name}
-                             </span>
-                          </div>
-
-                          <div className="flex flex-col items-center justify-center w-full">
-                             <div className="flex justify-center w-full mb-2">
-                                <span className={`text-lg font-bold text-white drop-shadow-md px-2 py-0.5 rounded-full border border-white/20 transition-colors duration-300 ${zone.ownerId === user.id ? (boosted ? 'bg-amber-600/90 border-amber-400' : (shielded ? 'bg-cyan-800/90 border-cyan-500' : 'bg-emerald-900/80')) : 'bg-red-900/80'}`}>
-                                  {zone.interestRate}%
-                                </span>
-                              </div>
-                              {(shielded || boosted) && (
-                                  <div className="flex items-center justify-center gap-2 h-8">
-                                    {shielded && (
-                                        <div className="bg-cyan-950 p-1.5 rounded-full border border-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.8)] animate-pulse z-10">
-                                            <Shield size={24} className="text-cyan-100 fill-cyan-400/50" />
-                                        </div>
-                                    )}
-                                    {boosted && (
-                                        <div className="bg-amber-950 p-1.5 rounded-full border border-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.8)] animate-pulse z-10">
-                                            <Zap size={24} className="text-amber-100 fill-amber-400/50" />
-                                        </div>
-                                    )}
-                                  </div>
-                              )}
-                          </div>
-                        </div>
-                    </foreignObject>
-                  </g>
-                );
-              })}
-          </g>
-        </svg>
-      </div>
-
-      {/* ZONE DETAILS PANEL - Bottom Sheet Style on Mobile */}
+      {/* ZONE DETAILS PANEL */}
       {selectedZone && ownerDetails && (
-        <div 
-          className="fixed bottom-[56px] md:bottom-24 md:right-6 md:left-auto left-0 right-0 md:w-80 bg-gray-900/95 md:rounded-2xl rounded-t-2xl border-t md:border border-emerald-500/30 shadow-[0_-5px_20px_rgba(0,0,0,0.5)] overflow-hidden animate-slide-up z-40 max-h-[70vh] flex flex-col"
-        >
-          <div className="relative p-5 flex flex-col h-full overflow-hidden">
-            <button 
-              onClick={() => setSelectedZone(null)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-white z-10"
-            >
-              <X size={20} />
-            </button>
-
-            {/* Header */}
-            <h3 className="font-bold text-lg md:text-xl text-white mb-4 pr-6 tracking-tight break-words">{selectedZone.name}</h3>
-            
-            <div className="overflow-y-auto flex-1 space-y-4 pr-1 scrollbar-hide">
-                {/* --- Owner Info --- */}
-                <div className="bg-black/40 p-3 rounded-lg border border-white/5 flex items-center gap-3">
-                    <div className="relative shrink-0">
-                        <img 
-                            src={ownerDetails.avatar || `https://ui-avatars.com/api/?name=${ownerDetails.name}&background=10b981&color=fff`} 
-                            className="w-10 h-10 rounded-full border border-gray-600 object-cover" 
-                            alt="Owner"
-                        />
-                        <div className="absolute -top-1 -right-1 bg-yellow-500 text-black p-0.5 rounded-full">
-                            <Crown size={8} />
-                        </div>
-                    </div>
-                    <div className="min-w-0">
-                        <div className="text-[10px] text-gray-400 uppercase font-bold">{t('zone.owner_info')}</div>
-                        <div className="flex items-center gap-2">
-                           <div className={`font-bold text-sm truncate ${selectedZone.ownerId === user.id ? 'text-emerald-400' : 'text-white'}`}>
-                                {ownerDetails.name} {selectedZone.ownerId === user.id && t('zone.you')}
-                           </div>
-                           {/* Owner Badge */}
-                           {ownerDetails.badge && (
-                               <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md border text-[9px] ${getRarityColor(ownerDetails.badge.rarity)}`} title={ownerDetails.badge.name}>
-                                   {renderBadgeIcon(ownerDetails.badge.icon, "w-3 h-3")}
-                               </div>
-                           )}
-                        </div>
-                    </div>
-                </div>
-
-                {/* --- Stats Grid --- */}
-                <div className="grid grid-cols-2 gap-2">
-                    <div className="bg-black/40 p-2 rounded-lg border border-white/5 text-center">
-                         <div className="text-xs text-gray-400">{t('dash.yield')}</div>
-                         <div className={`font-bold ${isBoostActive(selectedZone) ? 'text-amber-400' : 'text-cyan-400'}`}>
-                             {selectedZone.interestRate}%
-                         </div>
-                    </div>
-                    <div className="bg-black/40 p-2 rounded-lg border border-white/5 text-center">
-                         <div className="text-xs text-gray-400">{t('zone.status')}</div>
-                         <div className={`font-bold text-xs uppercase pt-1 ${selectedZone.ownerId === user.id ? 'text-emerald-500' : 'text-red-500'}`}>
-                             {selectedZone.ownerId === user.id ? t('zone.occupied') : t('zone.hostile')}
-                         </div>
-                    </div>
-                </div>
-
-                {isBoostActive(selectedZone) && selectedZone.boostExpiresAt && (
-                 <div className="flex items-center justify-between text-sm bg-amber-500/10 p-2 rounded-lg border border-amber-500/30">
-                   <span className="text-amber-400 flex items-center gap-1 text-xs"><Clock size={12}/> {t('zone.boosted')}</span>
-                   <span className="text-amber-100 font-mono text-xs">
-                     {Math.floor((selectedZone.boostExpiresAt - Date.now()) / 60000)}m {t('zone.left')}
-                   </span>
-                 </div>
-                )}
-
-                {isShieldActive(selectedZone) && selectedZone.shieldExpiresAt && (
-                 <div className="flex items-center justify-between text-sm bg-cyan-500/10 p-2 rounded-lg border border-cyan-500/30">
-                   <span className="text-cyan-400 flex items-center gap-1 text-xs"><Shield size={12}/> {t('zone.shielded')}</span>
-                   <span className="text-cyan-100 font-mono text-xs">
-                     {Math.floor((selectedZone.shieldExpiresAt - Date.now()) / 60000)}m {t('zone.left')}
-                   </span>
-                 </div>
-                )}
-
-                {/* --- Zone Leaderboard --- */}
-                <div className="bg-gray-800/50 rounded-lg border border-gray-700/50 p-3">
-                    <h4 className="text-xs font-bold text-gray-400 uppercase mb-3 flex items-center gap-1">
-                        <Medal size={12} className="text-yellow-500"/> {t('zone.top_runners')}
-                    </h4>
-                    <div className="space-y-2 max-h-[120px] overflow-y-auto pr-1">
-                        {zoneLeaderboard.map((runner, index) => (
-                            <div key={runner.id} className={`flex items-center justify-between text-xs p-1 rounded transition-colors ${runner.id === user.id ? 'bg-emerald-900/20' : 'hover:bg-white/5'}`}>
-                                <div className="flex items-center gap-2">
-                                    <span className={`w-4 text-center font-bold ${index === 0 ? 'text-yellow-400' : (index === 1 ? 'text-gray-300' : (index === 2 ? 'text-amber-600' : 'text-gray-600'))}`}>
-                                        {index + 1}
-                                    </span>
-                                    <img src={runner.avatar} className="w-5 h-5 rounded-full bg-gray-700 object-cover" alt={runner.name}/>
-                                    <span className={`${runner.id === user.id ? 'text-emerald-400 font-bold' : 'text-gray-300'}`}>
-                                        {runner.name}
-                                    </span>
-                                </div>
-                                <div className="font-mono text-gray-400">
-                                    {runner.km.toFixed(1)} km
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </div>
-
-            {/* Actions Footer */}
-            <div className="pt-4 mt-2 border-t border-gray-800 shrink-0">
-               {/* 
-                 Owner Logic: Boost / Shield 
-                 Contest Logic: Only if King of the Hill (#1 in local leaderboard)
-               */}
-               {selectedZone.ownerId === user.id ? (
-                    <div className="flex gap-2">
-                          {!isBoostActive(selectedZone) ? (
-                              <button 
-                                  onClick={() => onBoost(selectedZone.id)}
-                                  disabled={!boostItem}
-                                  className={`flex-1 py-3 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all border text-xs md:text-sm ${boostItem ? 'bg-amber-600 hover:bg-amber-500' : 'bg-gray-800 opacity-50'}`}
-                              >
-                                  <Zap size={16} /> {t('zone.action.boost')}
-                              </button>
-                          ) : (
-                              <div className="flex-1 py-3 bg-gray-800 text-amber-500 font-bold rounded-xl flex items-center justify-center gap-2 border border-amber-500/20 text-xs md:text-sm"><Zap size={16} /> {t('zone.action.active')}</div>
-                          )}
-
-                          {!isShieldActive(selectedZone) ? (
-                              <button 
-                                  onClick={() => onDefend(selectedZone.id)}
-                                  disabled={!defenseItem}
-                                  className={`flex-1 py-3 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all border text-xs md:text-sm ${defenseItem ? 'bg-cyan-600 hover:bg-cyan-500' : 'bg-gray-800 opacity-50'}`}
-                              >
-                                  <Shield size={16} /> {t('zone.action.shield')}
-                              </button>
-                          ) : (
-                              <div className="flex-1 py-3 bg-gray-800 text-cyan-400 font-bold rounded-xl flex items-center justify-center gap-2 border border-cyan-500/20 text-xs md:text-sm"><Shield size={16} /> {t('zone.action.active')}</div>
-                          )}
-                    </div>
-               ) : (
-                  // Not Owner
-                  <>
-                     {isTopRunner ? (
-                         <button 
-                             onClick={() => onClaim(selectedZone.id)}
-                             className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-[0_0_15px_rgba(16,185,129,0.3)] animate-pulse"
-                         >
-                             <Swords size={18} /> {t('zone.action.claim')} (50 RUN)
-                         </button>
-                     ) : (
-                         <div className="bg-red-900/20 border border-red-500/30 p-3 rounded-lg text-center">
-                             <div className="text-red-400 font-bold text-xs uppercase mb-1 flex items-center justify-center gap-2">
-                                <Lock size={12}/> {t('zone.locked')}
-                             </div>
-                             <p className="text-gray-400 text-xs leading-tight">
-                                {t('zone.locked_desc')} ({kmToTop > 0 ? kmToTop.toFixed(1) : 0.1} km)
-                             </p>
-                         </div>
-                     )}
-                  </>
-               )}
-            </div>
-          </div>
-        </div>
+          <ZoneDetails 
+              zone={selectedZone}
+              user={user}
+              onClose={() => setSelectedZone(null)}
+              ownerDetails={ownerDetails}
+              zoneLeaderboard={zoneLeaderboard}
+              onClaim={onClaim}
+              onBoost={onBoost}
+              onDefend={onDefend}
+              hasBoostItem={!!boostItem}
+              hasDefenseItem={!!defenseItem}
+          />
       )}
 
-      {/* Sync Activity Modal */}
+      {/* SYNC MODAL */}
       {showSyncModal && (
-        <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="bg-gray-800 rounded-t-2xl md:rounded-2xl border border-gray-700 w-full max-w-md shadow-2xl overflow-hidden animate-slide-up flex flex-col max-h-[85vh]">
-             
-             {/* Header */}
-             <div className="p-4 border-b border-gray-700 flex justify-between items-center bg-gray-900">
-                <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                   <UploadCloud className="text-emerald-400" /> {t('sync.title')}
-                </h3>
-                <div className="flex items-center gap-2">
-                    <button 
-                        onClick={() => onNavigate('HOW_TO_PLAY')}
-                        className="text-gray-400 hover:text-emerald-400 text-xs flex items-center gap-1 mr-2"
-                        title="Guide"
-                    >
-                        <HelpCircle size={16} /> Help
-                    </button>
-                    <button onClick={() => setShowSyncModal(false)} className="text-gray-400 hover:text-white"><X size={24}/></button>
-                </div>
-             </div>
-             
-             {/* Tabs */}
-             <div className="flex border-b border-gray-700">
-                <button 
-                  onClick={() => { setSyncTab('FREE'); setUploadStep('SELECT'); }}
-                  className={`flex-1 py-3 font-bold text-sm transition-colors ${syncTab === 'FREE' ? 'bg-gray-800 text-emerald-400 border-b-2 border-emerald-400' : 'bg-gray-900 text-gray-500'}`}
-                >
-                    {t('sync.manual')}
-                </button>
-                <button 
-                  onClick={() => setSyncTab('PREMIUM')}
-                  className={`flex-1 py-3 font-bold text-sm transition-colors flex justify-center items-center gap-2 ${syncTab === 'PREMIUM' ? 'bg-gray-800 text-yellow-400 border-b-2 border-yellow-400' : 'bg-gray-900 text-gray-500'}`}
-                >
-                    <Crown size={14} /> {t('sync.auto')}
-                </button>
-             </div>
-             
-             {/* Content */}
-             <div className="p-6 overflow-y-auto">
-                {/* --- FREE TAB: Manual File Upload --- */}
-                {syncTab === 'FREE' && (
-                    <>
-                        {uploadStep === 'SELECT' && (
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-400 uppercase mb-2">{t('sync.upload_label')}</label>
-                                    <input 
-                                        type="file" 
-                                        accept=".gpx,.xml" 
-                                        hidden 
-                                        ref={fileInputRef} 
-                                        onChange={handleFileSelect} 
-                                    />
-                                    <div 
-                                        onClick={() => fileInputRef.current?.click()}
-                                        className={`w-full border-2 border-dashed rounded-lg p-6 md:p-8 flex flex-col items-center justify-center cursor-pointer transition-colors group ${selectedFile ? 'border-emerald-500 bg-emerald-900/10' : 'border-gray-600 hover:border-emerald-400 hover:bg-gray-800'}`}
-                                    >
-                                        <FileText className={`mb-3 ${selectedFile ? 'text-emerald-400' : 'text-gray-500 group-hover:text-emerald-300'}`} size={32} />
-                                        {selectedFile ? (
-                                            <div className="text-center">
-                                                <span className="text-white font-bold block text-sm">{selectedFile.name}</span>
-                                                <span className="text-xs text-emerald-400">{t('sync.ready')}</span>
-                                            </div>
-                                        ) : (
-                                            <div className="text-center">
-                                                <span className="text-gray-300 block mb-1 text-sm">{t('sync.click_select')}</span>
-                                                <span className="text-xs text-gray-500">{t('sync.supports')}</span>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-
-                                <button 
-                                    onClick={handleStartUpload}
-                                    className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
-                                >
-                                    <UploadCloud size={20} /> {t('sync.analyze_btn')}
-                                </button>
-                            </div>
-                        )}
-
-                        {(uploadStep === 'UPLOADING' || uploadStep === 'PROCESSING') && (
-                            <div className="flex flex-col items-center justify-center py-8 space-y-6">
-                                <div className="relative">
-                                    <div className="w-16 h-16 border-4 border-gray-700 border-t-emerald-500 rounded-full animate-spin"></div>
-                                    <div className="absolute inset-0 flex items-center justify-center">
-                                        <Shield className="text-emerald-400" size={20} />
-                                    </div>
-                                </div>
-                                
-                                <div className="w-full bg-black/50 rounded-lg p-4 font-mono text-xs text-emerald-400 h-32 overflow-hidden border border-gray-700 flex flex-col justify-end">
-                                    {antiFraudLog.map((log, i) => (
-                                        <div key={i} className="animate-fade-in"> {log}</div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        {uploadStep === 'SUCCESS' && analysisResult && (
-                            <div className="flex flex-col items-center justify-center py-8 space-y-6 animate-slide-up">
-                                <div className="bg-emerald-500/20 p-6 rounded-full border-2 border-emerald-500">
-                                    <CheckCircle size={48} className="text-emerald-400" />
-                                </div>
-                                <div className="text-center">
-                                    <h3 className="text-xl font-bold text-white mb-2">{t('sync.success')}</h3>
-                                    <div className="grid grid-cols-2 gap-4 text-sm text-gray-300 mb-2">
-                                        <div className="bg-gray-800 p-2 rounded border border-gray-700">
-                                            <span className="block text-[10px] text-gray-500 uppercase">Dist</span>
-                                            <span className="font-mono text-white">{analysisResult.totalKm.toFixed(2)} km</span>
-                                        </div>
-                                        <div className="bg-gray-800 p-2 rounded border border-gray-700">
-                                            <span className="block text-[10px] text-gray-500 uppercase">Avg Speed</span>
-                                            <span className="font-mono text-white">{analysisResult.avgSpeed.toFixed(1)} km/h</span>
-                                        </div>
-                                    </div>
-                                    <p className="text-gray-400 text-xs">{t('sync.success_desc')}</p>
-                                </div>
-                                <button 
-                                    onClick={handleFinalSubmit}
-                                    className="w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl transition-colors"
-                                >
-                                    {t('sync.confirm_btn')}
-                                </button>
-                            </div>
-                        )}
-                    </>
-                )}
-
-                {/* --- PREMIUM TAB: Auto-Sync --- */}
-                {syncTab === 'PREMIUM' && (
-                    <div className="space-y-6 py-4">
-                        {!user.isPremium ? (
-                            <div className="text-center space-y-6">
-                                <div className="bg-gray-900/50 p-6 rounded-xl border border-gray-700 flex flex-col items-center">
-                                    <div className="bg-gray-800 p-4 rounded-full mb-4">
-                                        <Lock size={32} className="text-gray-500" />
-                                    </div>
-                                    <h4 className="text-lg font-bold text-white mb-2">{t('sync.premium_locked')}</h4>
-                                    <p className="text-gray-400 text-xs mb-6 max-w-xs mx-auto">
-                                        {t('sync.premium_desc')}
-                                    </p>
-                                    <button className="w-full py-4 bg-gray-700 text-gray-400 font-bold rounded-xl cursor-not-allowed text-sm">
-                                        Requires Premium Subscription
-                                    </button>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="space-y-6">
-                                <div className="bg-gray-900/50 p-4 rounded-xl border border-emerald-500/30 flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <div className="bg-[#FC4C02] p-2 rounded text-white font-bold text-xs">STRAVA</div>
-                                        <div>
-                                            <div className="text-white font-bold text-sm">Connected</div>
-                                            <div className="text-xs text-emerald-400 flex items-center gap-1">
-                                                <CheckCircle size={10} /> Sync Active
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                )}
-             </div>
-          </div>
-        </div>
+          <SyncModal 
+              onClose={() => setShowSyncModal(false)}
+              onNavigate={onNavigate}
+              onSyncRun={onSyncRun}
+              user={user}
+          />
       )}
 
-      {/* History Modal */}
+      {/* HISTORY MODAL */}
       {showHistoryModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in">
               <div className="bg-gray-800 rounded-2xl border border-gray-700 w-full max-w-lg shadow-2xl flex flex-col max-h-[80vh]">
@@ -1227,7 +372,6 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, users, badges, onSyn
                          ))
                      )}
                   </div>
-                  {/* Pagination Footer */}
                   <div className="p-4 border-t border-gray-700 bg-gray-900 rounded-b-2xl">
                     <Pagination currentPage={historyPage} totalPages={totalHistoryPages} onPageChange={setHistoryPage} />
                   </div>

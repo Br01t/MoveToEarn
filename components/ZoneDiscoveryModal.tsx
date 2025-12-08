@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { MapPin, Crown, CheckCircle, X, Edit2, Info } from 'lucide-react';
+import { MapPin, Crown, CheckCircle, X, Edit2, Info, AlertTriangle } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 
 interface ZoneDiscoveryModalProps {
@@ -19,12 +19,25 @@ interface ZoneDiscoveryModalProps {
 const ZoneDiscoveryModal: React.FC<ZoneDiscoveryModalProps> = ({ isOpen, data, onConfirm, onDiscard }) => {
   const { t } = useLanguage();
   const [customName, setCustomName] = useState('');
+  const [warning, setWarning] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
   const handleSubmit = () => {
-    onConfirm(customName.trim() || data.defaultName);
+    const nameToSubmit = customName.trim() || data.defaultName;
+
+    // Validation: Check for "Name, City - CC" format
+    // Regex looks for: characters, comma, characters, " - ", two uppercase letters
+    const isValidFormat = /.+,.+\s-\s[A-Z]{2}$/.test(nameToSubmit);
+
+    if (!isValidFormat && !warning) {
+        setWarning("Format recommended: 'Name, City - CC' (e.g. 'Central Park, NY - US') for proper map grouping. Click Mint again to ignore.");
+        return;
+    }
+
+    onConfirm(nameToSubmit);
     setCustomName('');
+    setWarning(null);
   };
 
   return (
@@ -64,14 +77,25 @@ const ZoneDiscoveryModal: React.FC<ZoneDiscoveryModalProps> = ({ isOpen, data, o
                  type="text" 
                  placeholder={data.defaultName || t('discovery.name_placeholder')}
                  value={customName}
-                 onChange={(e) => setCustomName(e.target.value)}
-                 className="w-full bg-gray-800 border border-gray-600 focus:border-emerald-500 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none transition-colors"
+                 onChange={(e) => {
+                     setCustomName(e.target.value);
+                     setWarning(null); // Clear warning on edit
+                 }}
+                 className={`w-full bg-gray-800 border focus:border-emerald-500 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none transition-colors ${warning ? 'border-yellow-500' : 'border-gray-600'}`}
                  autoFocus
               />
               <div className="mt-2 flex items-start gap-2 text-[10px] text-gray-500">
                  <Info size={12} className="shrink-0 mt-0.5" />
                  {t('discovery.naming_tip')}
               </div>
+              
+              {/* Warning Message */}
+              {warning && (
+                  <div className="mt-3 p-2 bg-yellow-900/30 border border-yellow-500/50 rounded-lg flex items-start gap-2 animate-fade-in">
+                      <AlertTriangle size={14} className="text-yellow-500 shrink-0 mt-0.5" />
+                      <p className="text-[10px] text-yellow-200 leading-tight">{warning}</p>
+                  </div>
+              )}
            </div>
 
            {/* Cost/Reward Stats */}
@@ -99,7 +123,7 @@ const ZoneDiscoveryModal: React.FC<ZoneDiscoveryModalProps> = ({ isOpen, data, o
              onClick={handleSubmit}
              className="flex-[2] py-3 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl transition-colors text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-900/20"
            >
-             <Crown size={16} /> {t('discovery.mint_btn')}
+             <Crown size={16} /> {warning ? 'Confirm Anyway' : t('discovery.mint_btn')}
            </button>
         </div>
 

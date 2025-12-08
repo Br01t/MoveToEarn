@@ -34,63 +34,8 @@ import {
 } from "./constants";
 import { Layers, CheckCircle } from "lucide-react";
 import { LanguageProvider, useLanguage } from "./LanguageContext";
-
-// --- GEOSPATIAL MATH HELPERS ---
-
-const R = 6371; // Radius of the earth in km
-const deg2rad = (deg: number) => deg * (Math.PI / 180);
-const rad2deg = (rad: number) => rad * (180 / Math.PI);
-
-// Calculate distance between two lat/lng points
-const getDistanceFromLatLonInKm = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-  const dLat = deg2rad(lat2 - lat1);
-  const dLon = deg2rad(lon2 - lon1);
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  const d = R * c; 
-  return d;
-};
-
-// Calculate Bearing (Direction) from Point A to Point B (0-360 degrees)
-const getBearing = (startLat: number, startLng: number, destLat: number, destLng: number) => {
-  const startLatRad = deg2rad(startLat);
-  const startLngRad = deg2rad(startLng);
-  const destLatRad = deg2rad(destLat);
-  const destLngRad = deg2rad(destLng);
-
-  const y = Math.sin(destLngRad - startLngRad) * Math.cos(destLatRad);
-  const x = Math.cos(startLatRad) * Math.sin(destLatRad) -
-            Math.sin(startLatRad) * Math.cos(destLatRad) * Math.cos(destLngRad - startLngRad);
-  const brng = Math.atan2(y, x);
-  return (rad2deg(brng) + 360) % 360;
-};
-
-// --- HEX GRID MATH ---
-
-// Axial Hex Directions (Pointy Topped)
-// 0: East, 1: SouthEast, 2: SouthWest, 3: West, 4: NorthWest, 5: NorthEast
-const HEX_DIRECTIONS = [
-    { q: 1, r: 0 },   // 0: East
-    { q: 0, r: 1 },   // 1: SouthEast
-    { q: -1, r: 1 },  // 2: SouthWest
-    { q: -1, r: 0 },  // 3: West
-    { q: 0, r: -1 },  // 4: NorthWest
-    { q: 1, r: -1 }   // 5: NorthEast
-];
-
-// Map 0-360 bearing to 0-5 Hex Direction Index
-const bearingToHexDirection = (bearing: number) => {
-    if (bearing >= 0 && bearing < 60) return 5; // NE
-    if (bearing >= 60 && bearing < 120) return 0; // E
-    if (bearing >= 120 && bearing < 180) return 1; // SE
-    if (bearing >= 180 && bearing < 240) return 2; // SW
-    if (bearing >= 240 && bearing < 300) return 3; // W
-    return 4; // NW
-};
-
+import { getDistanceFromLatLonInKm, calculateHexPosition } from "./utils/geo";
+import { processRunRewards, checkAchievement } from "./utils/rewards";
 
 const AppContent: React.FC = () => {
   const { t } = useLanguage();
@@ -111,7 +56,7 @@ const AppContent: React.FC = () => {
   // --- Claim All Summary Popup State ---
   const [claimSummary, setClaimSummary] = useState<{ count: number; totalRun: number } | null>(null);
 
-  // --- Zone Discovery Queue (Replacing Alerts) ---
+  // --- Zone Discovery Queue ---
   const [zoneCreationQueue, setZoneCreationQueue] = useState<{
     lat: number;
     lng: number;
@@ -131,8 +76,19 @@ const AppContent: React.FC = () => {
   // Temp state to hold run analysis while processing zone modals
   const [pendingRunData, setPendingRunData] = useState<RunAnalysisData | null>(null);
   
-  // Ref to track zones created during this session (to maintain adjacency reference AND ensure split logic works)
+  // Ref to track zones created during this session
   const sessionCreatedZonesRef = useRef<Zone[]>([]);
+
+  // BATCH PROCESSING
+  const [pendingRunsQueue, setPendingRunsQueue] = useState<RunAnalysisData[]>([]);
+  // Use a ref for batch stats to avoid heavy state updates during loop
+  const batchStatsRef = useRef<{
+      totalKm: number;
+      duration: number;
+      runEarned: number;
+      involvedZoneNames: string[];
+      reinforcedCount: number;
+  }>({ totalKm: 0, duration: 0, runEarned: 0, involvedZoneNames: [], reinforcedCount: 0 });
 
   // --- Actions ---
 
@@ -152,108 +108,50 @@ const AppContent: React.FC = () => {
     setUser((prev) => (prev ? { ...prev, ...updates } : null));
   };
 
-  // HELPER: Find a valid Hex position based on a reference zone and target coordinates
-  const calculateHexPosition = (referenceZone: Zone | null, targetLat: number, targetLng: number, countryCode: string, currentZones: Zone[]) => {
-      let anchorZone = referenceZone;
-
-      // 1. If no specific reference zone provided, find the best anchor in the same country
-      if (!anchorZone) {
-          // Filter zones by country to form a cluster
-          const clusterZones = currentZones.filter(z => z.name.endsWith(` - ${countryCode}`));
-          
-          if (clusterZones.length === 0) {
-              // CASE: New Country Cluster
-              // If the map is completely empty, start at 0,0
-              if (currentZones.length === 0) return { x: 0, y: 0 };
-
-              // If other zones exist, start a new cluster far away to avoid overlap
-              // We place it to the right of the existing map bounds
-              const maxX = Math.max(...currentZones.map(z => z.x));
-              // Add a buffer (e.g., 5 hexes) to separate clusters visualy
-              return { x: maxX + 5, y: 0 }; 
-          }
-
-          // CASE: Existing Country Cluster
-          // Find the geographically nearest zone in this cluster to attach to
-          let minDist = Infinity;
-          clusterZones.forEach(z => {
-              const d = getDistanceFromLatLonInKm(targetLat, targetLng, z.lat, z.lng);
-              if (d < minDist) {
-                  minDist = d;
-                  anchorZone = z;
-              }
-          });
-      }
-
-      // Fallback (Should typically be handled by New Cluster logic, but for safety)
-      if (!anchorZone) return { x: 0, y: 0 };
-
-      // 2. Calculate Direction
-      // Determine bearing from the anchor zone to the new target location
-      const bearing = getBearing(anchorZone.lat, anchorZone.lng, targetLat, targetLng);
-      const idealDirIndex = bearingToHexDirection(bearing);
-      const idealDir = HEX_DIRECTIONS[idealDirIndex];
-
-      // 3. Determine Coordinates
-      // Try to place it directly adjacent in the calculated direction
-      let proposedX = anchorZone.x + idealDir.q;
-      let proposedY = anchorZone.y + idealDir.r;
-
-      // 4. Collision Resolution (Spiral Search)
-      // If the ideal spot is taken, find the nearest empty spot spiraling out from the proposed location
-      const isOccupied = (x: number, y: number) => currentZones.some(z => z.x === x && z.y === y);
-
-      if (!isOccupied(proposedX, proposedY)) {
-          return { x: proposedX, y: proposedY };
-      }
-
-      // BFS Spiral to find nearest empty spot
-      const queue = [{ x: proposedX, y: proposedY }];
-      const visited = new Set([`${proposedX},${proposedY}`]);
-      let safeGuard = 0;
-      
-      while (queue.length > 0 && safeGuard < 500) {
-          const current = queue.shift()!;
-          safeGuard++;
-
-          for (const dir of HEX_DIRECTIONS) {
-              const nx = current.x + dir.q;
-              const ny = current.y + dir.r;
-              const key = `${nx},${ny}`;
-
-              if (!visited.has(key)) {
-                  visited.add(key);
-                  if (!isOccupied(nx, ny)) {
-                      return { x: nx, y: ny };
-                  }
-                  queue.push({ x: nx, y: ny });
-              }
-          }
-      }
-      
-      // Ultimate fallback if map is incredibly dense
-      return { x: proposedX + 10, y: proposedY + 10 };
+  const handleSyncRun = (dataList: RunAnalysisData[]) => {
+    if (!user) return;
+    
+    // Reset batch stats for new sync
+    batchStatsRef.current = { totalKm: 0, duration: 0, runEarned: 0, involvedZoneNames: [], reinforcedCount: 0 };
+    sessionCreatedZonesRef.current = [];
+    
+    // Start Queue
+    setPendingRunsQueue(dataList);
   };
 
-  const handleSyncRun = (data: RunAnalysisData) => {
-    if (!user) return;
-    const { totalKm, startPoint, endPoint } = data;
+  // Processor Effect for Run Queue
+  useEffect(() => {
+      if (pendingRunsQueue.length > 0 && zoneCreationQueue.length === 0 && !pendingRunData) {
+          const nextRun = pendingRunsQueue[0];
+          checkAndProcessRun(nextRun);
+      } else if (pendingRunsQueue.length === 0 && batchStatsRef.current.totalKm > 0 && !runSummary && zoneCreationQueue.length === 0 && !pendingRunData) {
+          // Batch Complete - Show Summary
+          const stats = batchStatsRef.current;
+          setRunSummary({
+              totalKm: stats.totalKm,
+              duration: stats.duration,
+              runEarned: stats.runEarned,
+              involvedZoneNames: Array.from(new Set(stats.involvedZoneNames)), // Unique names
+              isReinforced: stats.reinforcedCount > 0
+          });
+          // Reset ref after showing summary to prevent loop
+          batchStatsRef.current = { totalKm: 0, duration: 0, runEarned: 0, involvedZoneNames: [], reinforcedCount: 0 };
+      }
+  }, [pendingRunsQueue, zoneCreationQueue.length, pendingRunData, runSummary]); // Add runSummary to deps to prevent re-trigger
+
+  const checkAndProcessRun = (data: RunAnalysisData) => {
+    const { startPoint, endPoint } = data;
     
-    console.log("🚀 [SYNC] Received Validated Run Data:", data);
+    // Check existing zones (including those just created in session)
+    const allZones = [...zones, ...sessionCreatedZonesRef.current];
 
-    // Check existing zones
-    let startZone = zones.find(z => getDistanceFromLatLonInKm(startPoint.lat, startPoint.lng, z.lat, z.lng) < 1.0);
-    let endZone = zones.find(z => getDistanceFromLatLonInKm(endPoint.lat, endPoint.lng, z.lat, z.lng) < 1.0);
-
-    if (startZone) console.log(`📍 [SYNC] Start Point matches existing zone: ${startZone.name}`);
-    if (endZone) console.log(`📍 [SYNC] End Point matches existing zone: ${endZone.name}`);
+    let startZone = allZones.find(z => getDistanceFromLatLonInKm(startPoint.lat, startPoint.lng, z.lat, z.lng) < 1.0);
+    let endZone = allZones.find(z => getDistanceFromLatLonInKm(endPoint.lat, endPoint.lng, z.lat, z.lng) < 1.0);
 
     // Prepare Queue for Potential New Zones
     const zonesToCreate: { lat: number; lng: number; defaultName: string; type: 'START' | 'END' }[] = [];
 
-    // Check Start Point for Minting
     if (!startZone) {
-        console.log("🆕 [SYNC] Start Point eligible for New Zone.");
         zonesToCreate.push({
             lat: startPoint.lat,
             lng: startPoint.lng,
@@ -262,10 +160,8 @@ const AppContent: React.FC = () => {
         });
     }
 
-    // Check End Point for Minting (if distinct)
     const distStartEnd = getDistanceFromLatLonInKm(startPoint.lat, startPoint.lng, endPoint.lat, endPoint.lng);
     if (!endZone && distStartEnd > 1.0) {
-        console.log(`🆕 [SYNC] End Point eligible for New Zone (Dist from Start: ${distStartEnd.toFixed(2)}km).`);
         zonesToCreate.push({
              lat: endPoint.lat,
              lng: endPoint.lng,
@@ -274,17 +170,57 @@ const AppContent: React.FC = () => {
         });
     }
 
-    setPendingRunData(data);
-    sessionCreatedZonesRef.current = []; // Reset session tracking
-    
     if (zonesToCreate.length > 0) {
-        // Start the modal flow
-        console.log("🛠️ [SYNC] Starting Zone Creation Queue:", zonesToCreate.length);
+        // Halt queue processing, ask user input
+        setPendingRunData(data);
         setZoneCreationQueue(zonesToCreate);
     } else {
-        // No new zones, process run immediately
-        finalizeRunProcessing(data, user, zones);
+        // No new zones needed, finalize immediately
+        finalizeRunProcessing(data, user!, zones);
     }
+  };
+
+  const finalizeRunProcessing = (data: RunAnalysisData, currentUser: User, currentZones: Zone[]) => {
+      const allZonesMap = new Map<string, Zone>();
+      currentZones.forEach(z => allZonesMap.set(z.id, z));
+      sessionCreatedZonesRef.current.forEach(z => allZonesMap.set(z.id, z));
+      const fullZoneList = Array.from(allZonesMap.values());
+
+      const result = processRunRewards(data, currentUser, fullZoneList);
+
+      const newRun: RunEntry = {
+          id: `run_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          location: result.locationName,
+          km: data.totalKm,
+          timestamp: data.startTime, 
+          runEarned: result.totalRunEarned,
+          duration: data.durationMinutes,
+          elevation: data.elevation,
+          maxSpeed: data.maxSpeed,
+          avgSpeed: data.avgSpeed
+      };
+
+      const finalUser = {
+          ...currentUser,
+          runHistory: [newRun, ...currentUser.runHistory],
+          runBalance: currentUser.runBalance + result.totalRunEarned,
+          totalKm: currentUser.totalKm + data.totalKm
+      };
+
+      // Update App State
+      setZones(result.zoneUpdates);
+      setUser(finalUser);
+      
+      // Update Batch Stats
+      batchStatsRef.current.totalKm += data.totalKm;
+      batchStatsRef.current.duration += data.durationMinutes;
+      batchStatsRef.current.runEarned += result.totalRunEarned;
+      batchStatsRef.current.involvedZoneNames.push(...result.involvedZoneNames);
+      if (result.isReinforced) batchStatsRef.current.reinforcedCount++;
+
+      // Clear pending state to proceed to next
+      setPendingRunData(null);
+      setPendingRunsQueue(prev => prev.slice(1));
   };
 
   // Called when user Confirms Minting in Modal
@@ -292,9 +228,6 @@ const AppContent: React.FC = () => {
       if (!user || !pendingRunData) return;
       
       const pendingZone = zoneCreationQueue[0];
-      
-      // Logic: If name already has a country code (e.g. "My Zone - IT"), preserve it.
-      // Otherwise, append " - XX" (or we could default to XX)
       const hasCountryCode = / - [A-Z]{2}$/.test(customName);
       const finalName = hasCountryCode ? customName : `${customName} - XX`;
 
@@ -304,7 +237,7 @@ const AppContent: React.FC = () => {
           return; 
       }
 
-      // Logic to determine Reference Zone for adjacency
+      // Determine Reference Zone for adjacency
       let referenceZone: Zone | null = null;
       if (pendingZone.type === 'END' && sessionCreatedZonesRef.current.length > 0) {
           referenceZone = sessionCreatedZonesRef.current[0];
@@ -316,7 +249,7 @@ const AppContent: React.FC = () => {
           referenceZone, 
           pendingZone.lat, 
           pendingZone.lng, 
-          "XX", // Placeholder country code logic
+          "XX", 
           currentAllZones
       );
 
@@ -340,141 +273,30 @@ const AppContent: React.FC = () => {
           govBalance: user.govBalance + MINT_REWARD_GOV 
       };
       
-      // Update local tracking (Ref ensures immediate availability for next step in queue)
       sessionCreatedZonesRef.current.push(newZone);
-      console.log(`✨ [ZONE MINT] Created new zone: ${newZone.name} (Type: ${pendingZone.type})`);
       
       setUser(updatedUser);
-      setZones(prev => [...prev, newZone]); // Add to map immediately
+      setZones(prev => [...prev, newZone]); 
 
-      // Proceed to next or finish
-      handleNextInQueue(updatedUser, [...zones, newZone]);
+      // Proceed to next zone in this run's creation queue
+      handleNextZoneInQueue(updatedUser, [...zones, newZone]);
   };
 
   // Called when user Discards in Modal
   const handleZoneDiscard = () => {
       if (!user) return;
-      handleNextInQueue(user, zones);
+      handleNextZoneInQueue(user, zones);
   };
 
-  const handleNextInQueue = (currentUser: User, currentZones: Zone[]) => {
+  const handleNextZoneInQueue = (currentUser: User, currentZones: Zone[]) => {
       const nextQueue = zoneCreationQueue.slice(1);
       setZoneCreationQueue(nextQueue);
 
+      // If no more zones for this run, finalize it
       if (nextQueue.length === 0 && pendingRunData) {
-          // All done, finalize run history
           finalizeRunProcessing(pendingRunData, currentUser, currentZones);
       }
   };
-
-  const finalizeRunProcessing = (data: RunAnalysisData, currentUser: User, currentZones: Zone[]) => {
-      console.log("🏁 [FINALIZE] Starting final run processing...");
-      const { totalKm, startPoint, endPoint } = data;
-
-      // MERGE: Ensure we have a complete list of zones including those just created in session refs
-      // This protects against stale state closures.
-      const allZonesMap = new Map<string, Zone>();
-      currentZones.forEach(z => allZonesMap.set(z.id, z));
-      sessionCreatedZonesRef.current.forEach(z => allZonesMap.set(z.id, z));
-      
-      // Use the merged map as the source of truth for updates
-      const fullZoneList = Array.from(allZonesMap.values());
-      console.log(`🗺️ [FINALIZE] Merged Zone List Size: ${fullZoneList.length} (Session Created: ${sessionCreatedZonesRef.current.length})`);
-
-      // 1. Identify Zones (using geospatial distance)
-      const startZone = fullZoneList.find(z => getDistanceFromLatLonInKm(startPoint.lat, startPoint.lng, z.lat, z.lng) < 1.0);
-      const endZone = fullZoneList.find(z => getDistanceFromLatLonInKm(endPoint.lat, endPoint.lng, z.lat, z.lng) < 1.0);
-
-      console.log("🔍 [FINALIZE] Found Start Zone:", startZone?.name || "None");
-      console.log("🔍 [FINALIZE] Found End Zone:", endZone?.name || "None");
-
-      // 2. Determine involved zones for splitting
-      const involvedZones: Zone[] = [];
-      if (startZone) involvedZones.push(startZone);
-      if (endZone && (!startZone || endZone.id !== startZone.id)) involvedZones.push(endZone);
-
-      const zoneCount = involvedZones.length;
-      const kmPerZone = zoneCount > 0 ? totalKm / zoneCount : 0;
-      
-      console.log("🔗 [FINALIZE] Involved Zones:", involvedZones.map(z => z.name));
-      console.log("➗ [FINALIZE] Split Logic:", { totalKm, zoneCount, kmPerZone });
-
-      let totalRunEarned = 0;
-      let isReinforced = false;
-      const involvedZoneNames: string[] = [];
-
-      // Create update list from fullZoneList to ensure we don't miss new zones
-      const zoneUpdates = fullZoneList.map(z => ({...z}));
-
-      if (zoneCount === 0) {
-          // Wilderness Run (No zones)
-          totalRunEarned = totalKm * 10;
-          involvedZoneNames.push("Wilderness Run");
-          console.log("🌲 [FINALIZE] Wilderness Run (No Zones involved).");
-      } else {
-          // Split logic: Divide KM and Rewards among involved zones
-          involvedZones.forEach(invZone => {
-              involvedZoneNames.push(invZone.name);
-              
-              // Calculate Reward for this segment (10 RUN per km)
-              const segmentReward = kmPerZone * 10;
-              totalRunEarned += segmentReward;
-
-              console.log(`💰 [REWARD] Distributing to ${invZone.name}: ${kmPerZone.toFixed(2)}km -> ${segmentReward.toFixed(2)} RUN`);
-
-              // Find in update list and update recordKm
-              const idx = zoneUpdates.findIndex(z => z.id === invZone.id);
-              if (idx !== -1) {
-                  const targetZone = zoneUpdates[idx];
-                  // Update Record if Owner
-                  if (targetZone.ownerId === currentUser.id) {
-                      zoneUpdates[idx] = {
-                          ...targetZone,
-                          recordKm: targetZone.recordKm + kmPerZone
-                      };
-                      isReinforced = true;
-                      console.log(`💪 [REINFORCE] Updated zone record for owner.`);
-                  }
-              }
-          });
-      }
-
-      // History Entry Name
-      const locationName = involvedZoneNames.length > 0 ? involvedZoneNames[0] : "Wilderness";
-
-      const newRun: RunEntry = {
-          id: `run_${Date.now()}`,
-          location: locationName,
-          km: totalKm,
-          timestamp: Date.now(),
-          runEarned: totalRunEarned,
-          duration: data.durationMinutes,
-          elevation: data.elevation,
-          maxSpeed: data.maxSpeed,
-          avgSpeed: data.avgSpeed
-      };
-
-      const finalUser = {
-          ...currentUser,
-          runHistory: [newRun, ...currentUser.runHistory],
-          runBalance: currentUser.runBalance + totalRunEarned,
-          totalKm: currentUser.totalKm + totalKm
-      };
-
-      setZones(zoneUpdates);
-      setUser(finalUser);
-      setPendingRunData(null);
-      sessionCreatedZonesRef.current = []; // Clear ref
-
-      setRunSummary({
-          totalKm,
-          duration: data.durationMinutes,
-          runEarned: totalRunEarned,
-          involvedZoneNames: involvedZoneNames,
-          isReinforced: isReinforced
-      });
-  };
-
 
   const handleClaimZone = (zoneId: string) => {
     if (!user) return;
@@ -645,186 +467,39 @@ const AppContent: React.FC = () => {
     return () => clearInterval(interval);
   }, [user?.id, zones]);
 
-  // --- AUTOMATED ACHIEVEMENT LOGIC ---
-
-  // Helper: Calculate Max Consecutive Days Streak
-  const calculateStreak = (history: RunEntry[]): number => {
-      if (history.length === 0) return 0;
-      
-      // Get unique days from timestamps (ignoring time)
-      const days = Array.from(new Set(history.map(run => {
-         const d = new Date(run.timestamp);
-         d.setHours(0,0,0,0);
-         return d.getTime();
-      }))).sort((a,b) => b - a); // Descending (newest first)
-
-      if (days.length === 0) return 0;
-
-      let streak = 1;
-      const today = new Date();
-      today.setHours(0,0,0,0);
-      const todayTime = today.getTime();
-      const diffSinceLastRun = (todayTime - days[0]) / (1000 * 60 * 60 * 24);
-
-      if (diffSinceLastRun > 1) return 0; // Streak broken
-
-      for (let i = 0; i < days.length - 1; i++) {
-          const current = days[i];
-          const prev = days[i+1];
-          const diffDays = (current - prev) / (1000 * 60 * 60 * 24);
-          if (diffDays === 1) {
-              streak++;
-          } else {
-              break;
-          }
-      }
-      return streak;
-  };
-
-  // Main Logic Checker
-  const checkAchievement = (item: Mission | Badge, currentUser: User, currentZones: Zone[]): boolean => {
-      // 1. LEGACY CHECK
-      if (item.conditionType === 'TOTAL_KM' && item.conditionValue) {
-          return currentUser.totalKm >= item.conditionValue;
-      }
-      if (item.conditionType === 'OWN_ZONES' && item.conditionValue) {
-          const owned = currentZones.filter(z => z.ownerId === currentUser.id).length;
-          return owned >= item.conditionValue;
-      }
-
-      // 2. NEW LOGIC SYSTEM (Based on logicId 1-100)
-      if (!item.logicId) return false;
-      const history = currentUser.runHistory;
-      const ownedZones = currentZones.filter(z => z.ownerId === currentUser.id);
-      
-      switch (item.logicId) {
-          // --- DISTANCE ---
-          case 1: return currentUser.totalKm >= 10;
-          case 2: return currentUser.totalKm >= 50;
-          case 3: return currentUser.totalKm >= 100;
-          case 4: return history.some(r => r.km >= 10.55);
-          case 5: return history.some(r => r.km >= 21);
-          case 6: return history.some(r => r.km >= 42.195);
-          case 7: return history.some(r => r.km >= 50);
-          case 8: return currentUser.totalKm >= 160;
-          case 9: return currentUser.totalKm >= 500;
-          case 10: return currentUser.totalKm >= 1000;
-          
-          // --- SPEED ---
-          case 11: return history.some(r => (r.maxSpeed || 0) >= 20);
-          case 12: return history.some(r => (r.maxSpeed || 0) >= 25);
-          case 13: return history.some(r => (r.avgSpeed || 0) >= 12 && r.km >= 2);
-          case 14: return history.some(r => (r.avgSpeed || 0) >= 15 && r.km >= 1);
-          case 15: return history.some(r => (r.avgSpeed || 0) >= 10 && r.km >= 10);
-          case 16: return history.some(r => {
-             return (r.avgSpeed || 0) >= 12 && r.km >= 5;
-          });
-
-          // --- TECHNICAL / ELEVATION ---
-          case 18: return history.some(r => (r.elevation || 0) >= 150);
-          case 19: return history.some(r => (r.elevation || 0) >= 500);
-          case 20: return history.some(r => (r.elevation || 0) >= 1000);
-          
-          // --- TIME OF DAY ---
-          case 21: return history.some(r => { const h = new Date(r.timestamp).getHours(); return h >= 5 && h < 7; });
-          case 22: return history.some(r => { 
-             const d = new Date(r.timestamp);
-             return d.getHours() === 4 && d.getMinutes() >= 30 || d.getHours() === 5 && d.getMinutes() <= 30; 
-          });
-          case 23: return history.some(r => { const h = new Date(r.timestamp).getHours(); return h >= 12 && h < 14; });
-          case 24: return history.some(r => { const h = new Date(r.timestamp).getHours(); return h >= 18 && h < 20; });
-          case 25: return history.some(r => { const h = new Date(r.timestamp).getHours(); return h >= 22 || h < 2; });
-          case 26: return history.some(r => { const h = new Date(r.timestamp).getHours(); return h === 0; });
-          case 28: return history.some(r => { const h = new Date(r.timestamp).getHours(); return h < 6; });
-          case 30: return new Set(history.map(r => new Date(r.timestamp).getHours())).size >= 24;
-
-          // --- STREAK ---
-          case 31: return calculateStreak(history) >= 3;
-          case 32: return calculateStreak(history) >= 7;
-          case 33: return calculateStreak(history) >= 14;
-          case 34: return calculateStreak(history) >= 30;
-          case 37: return new Set(history.map(r => new Date(r.timestamp).toDateString())).size >= 200;
-          case 38: 
-             // 20 runs in a month (check current month)
-             const currentMonthRuns = history.filter(r => {
-                 const d = new Date(r.timestamp);
-                 const now = new Date();
-                 return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-             });
-             return currentMonthRuns.length >= 20;
-          case 39: return new Set(history.map(r => new Date(r.timestamp).toDateString())).size >= 50;
-          case 40: return calculateStreak(history) >= 60;
-
-          // --- ZONE / EXPLORATION ---
-          case 41: return new Set(history.map(r => r.location)).size >= 10;
-          case 42: return new Set(history.map(r => r.location)).size >= 25;
-          case 43: return new Set(history.map(r => r.location)).size >= 50;
-          case 44: return new Set(history.map(r => r.location)).size >= 100;
-          case 47: return ownedZones.length >= 1;
-          case 48: return ownedZones.length >= 5;
-          case 49: return ownedZones.length >= 10;
-          case 50: return ownedZones.length >= 25;
-          case 51: return history.some(r => r.govEarned && r.govEarned >= 10); // Approximation of "Conquest" if govEarned is high
-          case 52: return history.filter(r => r.govEarned && r.govEarned >= 10).length >= 10;
-          case 53: return history.filter(r => r.govEarned && r.govEarned >= 10).length >= 25;
-          
-          // --- ENDURANCE ---
-          case 69: return history.some(r => (r.duration || 0) >= 90);
-          case 70: return history.some(r => (r.duration || 0) >= 120);
-
-          // --- META / COLLECTION ---
-          case 95: return currentUser.completedMissionIds.length >= 20;
-          case 96: return currentUser.earnedBadgeIds.length >= 20;
-          case 97: return currentUser.earnedBadgeIds.length >= 50;
-          case 100: 
-             const highTierBadges = badges.filter(b => currentUser.earnedBadgeIds.includes(b.id) && (b.rarity === 'EPIC' || b.rarity === 'LEGENDARY'));
-             return highTierBadges.length >= 10;
-
-          default: return false;
-      }
-  };
-
   // Main Effect to Monitor and Award Achievements
   useEffect(() => {
     if (!user) return;
     
     let newCompletedMissions = [...user.completedMissionIds];
     let newEarnedBadges = [...user.earnedBadgeIds];
-    let additionalRun = 0; // Changed to add RUN
+    let additionalRun = 0; 
     let hasChanges = false;
     
-    // Temp queue to hold new unlocks in this cycle
     const newUnlockQueue: { type: 'MISSION' | 'BADGE'; item: Mission | Badge }[] = [];
 
-    // 1. Check Missions
     missions.forEach((m) => {
-      // If not already completed
       if (!newCompletedMissions.includes(m.id)) {
         if (checkAchievement(m, user, zones)) {
            newCompletedMissions.push(m.id);
-           additionalRun += m.rewardRun; // Award RUN
+           additionalRun += m.rewardRun; 
            hasChanges = true;
-           // Add to notification queue
            newUnlockQueue.push({ type: 'MISSION', item: m });
         }
       }
     });
 
-    // 2. Check Badges
     badges.forEach((b) => {
-      // If not already earned
       if (!newEarnedBadges.includes(b.id)) {
         if (checkAchievement(b, user, zones)) {
            newEarnedBadges.push(b.id);
-           additionalRun += (b.rewardRun || 0); // Award RUN if badge has reward
+           additionalRun += (b.rewardRun || 0); 
            hasChanges = true;
-           // Add to notification queue
            newUnlockQueue.push({ type: 'BADGE', item: b });
         }
       }
     });
 
-    // 3. Update User State if needed
     if (hasChanges) {
       setUser((prev) =>
         prev
@@ -832,12 +507,11 @@ const AppContent: React.FC = () => {
               ...prev,
               completedMissionIds: newCompletedMissions,
               earnedBadgeIds: newEarnedBadges,
-              runBalance: prev.runBalance + additionalRun, // Update RUN balance
+              runBalance: prev.runBalance + additionalRun,
             }
           : null
       );
       
-      // Update global notification queue state
       if (newUnlockQueue.length > 0) {
           setAchievementQueue(prev => [...prev, ...newUnlockQueue]);
       }
@@ -845,13 +519,11 @@ const AppContent: React.FC = () => {
 
   }, [user?.totalKm, user?.runHistory, zones, missions, badges, user?.completedMissionIds.length, user?.earnedBadgeIds.length]);
 
-  // Handle closing a modal notification
   const handleCloseNotification = () => {
     setAchievementQueue(prev => prev.slice(1));
   };
 
   const handleClaimAllNotifications = () => {
-      // 1. Calculate totals
       const totalRun = achievementQueue.reduce((acc, entry) => {
           if (entry.type === 'MISSION') return acc + (entry.item as Mission).rewardRun;
           if (entry.type === 'BADGE') return acc + ((entry.item as Badge).rewardRun || 0);
@@ -859,33 +531,25 @@ const AppContent: React.FC = () => {
       }, 0);
       const count = achievementQueue.length;
 
-      // 2. Clear Queue
       setAchievementQueue([]);
-
-      // 3. Show Summary
       setClaimSummary({ count, totalRun });
 
-      // 4. Auto-hide after 3 seconds
       setTimeout(() => {
           setClaimSummary(null);
       }, 3000);
   };
 
-  // Main Render Logic
   const isLanding = currentView === "LANDING";
-  const showNavbar = !isLanding && user; // Only show navbar if logged in and not on landing page
+  const showNavbar = !isLanding && user; 
 
   return (
     <div className="min-h-screen bg-gray-900 text-white font-sans flex flex-col">
-      {/* Navbar is strictly for logged-in users inside the app */}
       {showNavbar && <Navbar currentView={currentView} onNavigate={setCurrentView} user={user} onLogout={handleLogout} />}
 
-      {/* Main Content Area */}
       <main className={`flex-1 bg-gray-900 relative flex flex-col ${showNavbar ? "pb-16 md:pb-0" : ""}`}>
         <div className="flex-1 relative">
           {isLanding && <LandingPage onLogin={handleLogin} onNavigate={setCurrentView} />}
 
-          {/* Authenticated Routes */}
           {!isLanding && (
             <>
               {currentView === "DASHBOARD" && user && (
@@ -941,7 +605,6 @@ const AppContent: React.FC = () => {
             </>
           )}
 
-          {/* Public Pages */}
           {currentView === "RULES" && <GameRules onBack={() => setCurrentView(user ? "DASHBOARD" : "LANDING")} onNavigate={setCurrentView} />}
           {currentView === "HOW_TO_PLAY" && <HowToPlay onBack={() => setCurrentView(user ? "DASHBOARD" : "LANDING")} />}
           {currentView === "PRIVACY" && <Privacy />}
@@ -950,7 +613,6 @@ const AppContent: React.FC = () => {
         </div>
       </main>
 
-      {/* Zone Discovery Queue */}
       {zoneCreationQueue.length > 0 && (
           <ZoneDiscoveryModal
               isOpen={true}
@@ -966,7 +628,6 @@ const AppContent: React.FC = () => {
           />
       )}
 
-      {/* Achievement Modal Overlay */}
       {achievementQueue.length > 0 && (
           <AchievementModal 
               key={achievementQueue[0].item.id}
@@ -977,7 +638,6 @@ const AppContent: React.FC = () => {
           />
       )}
 
-      {/* Run Summary Modal */}
       {runSummary && (
           <RunSummaryModal 
               data={runSummary} 
@@ -985,7 +645,6 @@ const AppContent: React.FC = () => {
           />
       )}
 
-      {/* Batch Claim Summary Toast/Popup */}
       {claimSummary && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center pointer-events-none">
            <div className="bg-gray-900/95 backdrop-blur-xl border border-emerald-500/50 p-6 rounded-2xl shadow-[0_0_50px_rgba(16,185,129,0.3)] animate-slide-up flex flex-col items-center gap-2 pointer-events-auto transform scale-110">
@@ -1004,7 +663,6 @@ const AppContent: React.FC = () => {
         </div>
       )}
 
-      {/* Footer is Global */}
       <Footer onNavigate={setCurrentView} currentView={currentView} />
     </div>
   );
