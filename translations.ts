@@ -175,6 +175,10 @@ export const translations = {
     "leader.metric_run": "RUN",
     "leader.metric_gov": "GOV",
     "leader.metric_unique": "Spots",
+    "leader.profile.level": "Level",
+    "leader.profile.owned_zones": "Territories",
+    "leader.profile.fav_badge": "Signature Badge",
+    "leader.profile.total_km": "Career Distance",
 
     // Admin Leaderboard
     "admin.leader.title": "Leaderboard Manager",
@@ -190,6 +194,20 @@ export const translations = {
     "admin.leader.perm": "Permanent",
     "admin.leader.temp": "Temporary",
     "admin.leader.delete_confirm": "Delete this leaderboard?",
+    "admin.leader.edit": "Edit",
+    "admin.leader.reset": "Reset",
+    "admin.leader.reset_confirm": "Reset this leaderboard? Scores will restart from zero, but user data is safe.",
+    "admin.leader.save": "Save Changes",
+    "admin.leader.cancel": "Cancel",
+
+    // Admin Levels
+    "admin.levels.title": "Level System",
+    "admin.levels.add_btn": "Add Level",
+    "admin.levels.edit": "Edit Level",
+    "admin.levels.level_num": "Level Number",
+    "admin.levels.min_km": "Min Distance (KM)",
+    "admin.levels.level_title": "Title (Optional)",
+    "admin.levels.delete_confirm": "Delete this level?",
 
     // Profile
     "profile.premium_agent": "Premium Agent",
@@ -223,6 +241,9 @@ export const translations = {
     "profile.date": "Date",
     "profile.location": "Location",
     "profile.rewards": "Rewards",
+    "profile.active_rankings": "Active Competitions",
+    "profile.rank_num": "Rank",
+    "profile.score": "Score",
 
     // Missions
     "miss.title": "Operations",
@@ -652,21 +673,39 @@ export const translations = {
     "leader.metric_run": "RUN",
     "leader.metric_gov": "GOV",
     "leader.metric_unique": "Spots",
+    "leader.profile.level": "Livello",
+    "leader.profile.owned_zones": "Territori",
+    "leader.profile.fav_badge": "Badge Distintivo",
+    "leader.profile.total_km": "Distanza Carriera",
 
     // Admin Leaderboard
-    "admin.leader.title": "Leaderboard Manager",
-    "admin.leader.add_btn": "Create Leaderboard",
-    "admin.leader.name": "Title",
-    "admin.leader.desc": "Description",
-    "admin.leader.type": "Type",
-    "admin.leader.metric": "Metric",
-    "admin.leader.start": "Start Date",
-    "admin.leader.end": "End Date",
-    "admin.leader.pool": "Reward Pool",
-    "admin.leader.currency": "Currency",
-    "admin.leader.perm": "Permanent",
-    "admin.leader.temp": "Temporary",
-    "admin.leader.delete_confirm": "Delete this leaderboard?",
+    "admin.leader.title": "Gestione Classifiche",
+    "admin.leader.add_btn": "Crea Classifica",
+    "admin.leader.name": "Titolo",
+    "admin.leader.desc": "Descrizione",
+    "admin.leader.type": "Tipo",
+    "admin.leader.metric": "Metrica",
+    "admin.leader.start": "Data Inizio",
+    "admin.leader.end": "Data Fine",
+    "admin.leader.pool": "Montepremi",
+    "admin.leader.currency": "Valuta",
+    "admin.leader.perm": "Permanente",
+    "admin.leader.temp": "Temporanea",
+    "admin.leader.delete_confirm": "Eliminare questa classifica?",
+    "admin.leader.edit": "Modifica",
+    "admin.leader.reset": "Resetta",
+    "admin.leader.reset_confirm": "Resettare la classifica? I punteggi ripartiranno da zero, ma i dati utente sono salvi.",
+    "admin.leader.save": "Salva Modifiche",
+    "admin.leader.cancel": "Annulla",
+
+    // Admin Levels
+    "admin.levels.title": "Sistema Livelli",
+    "admin.levels.add_btn": "Aggiungi Livello",
+    "admin.levels.edit": "Modifica Livello",
+    "admin.levels.level_num": "Numero Livello",
+    "admin.levels.min_km": "Distanza Min (KM)",
+    "admin.levels.level_title": "Titolo (Opzionale)",
+    "admin.levels.delete_confirm": "Eliminare questo livello?",
 
     // Profile
     "profile.premium_agent": "Agente Premium",
@@ -700,6 +739,9 @@ export const translations = {
     "profile.date": "Data",
     "profile.location": "Luogo",
     "profile.rewards": "Premi",
+    "profile.active_rankings": "Competizioni Attive",
+    "profile.rank_num": "Rango",
+    "profile.score": "Punteggio",
 
     // Missions
     "miss.title": "Operazioni",

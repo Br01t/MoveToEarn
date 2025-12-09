@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
-import { User, Zone, Mission, Badge, Rarity } from '../types';
-import { Save, User as UserIcon, Mail, Activity, Coins, Shield, Crown, Award, History, Clock, CheckCircle, TrendingUp, BarChart3, MapPin, Camera, X, Flag, Zap, Mountain, Globe, Home, Landmark, Swords, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users } from 'lucide-react';
+import { User, Zone, Mission, Badge, Rarity, LevelConfig, LeaderboardConfig } from '../types';
+import { Save, User as UserIcon, Mail, Activity, Coins, Shield, Crown, Award, History, Clock, CheckCircle, TrendingUp, BarChart3, MapPin, Camera, X, Flag, Zap, Mountain, Globe, Home, Landmark, Swords, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users, Trophy } from 'lucide-react';
 import { PREMIUM_COST } from '../constants';
 import Pagination from './Pagination';
 import { useLanguage } from '../LanguageContext';
@@ -11,6 +11,9 @@ interface ProfileProps {
   zones: Zone[];
   missions?: Mission[];
   badges?: Badge[];
+  levels?: LevelConfig[]; // Make levels optional to prevent break if not passed immediately, but generally required
+  leaderboards?: LeaderboardConfig[];
+  allUsers?: Record<string, any>;
   onUpdateUser: (updates: Partial<User>) => void;
   onUpgradePremium: () => void;
 }
@@ -19,7 +22,17 @@ const BADGES_PER_PAGE = 24; // Increased density
 const RUNS_PER_PAGE = 8;
 const COMPLETED_MISSIONS_PER_PAGE = 5;
 
-const Profile: React.FC<ProfileProps> = ({ user, zones, missions = [], badges = [], onUpdateUser, onUpgradePremium }) => {
+const Profile: React.FC<ProfileProps> = ({ 
+    user, 
+    zones, 
+    missions = [], 
+    badges = [], 
+    levels = [], 
+    leaderboards = [], 
+    allUsers = {},
+    onUpdateUser, 
+    onUpgradePremium 
+}) => {
   const { t } = useLanguage();
   const [name, setName] = useState(user.name);
   const [email, setEmail] = useState(user.email || '');
@@ -47,10 +60,83 @@ const Profile: React.FC<ProfileProps> = ({ user, zones, missions = [], badges = 
   const dailyYield = myZones.reduce((acc, z) => acc + (z.interestRate * 0.5 * 6 * 24), 0); // Approx calculation based on 10s loop
   const totalNetWorth = user.runBalance + (user.govBalance * 10); // Fake valuation 1 GOV = 10 RUN
 
-  // Level Calculation (Simple Formula: 1 Level per 50km)
-  const currentLevel = Math.floor(user.totalKm / 50) + 1;
-  const nextLevelKm = currentLevel * 50;
-  const progressToNextLevel = ((user.totalKm - ((currentLevel - 1) * 50)) / 50) * 100;
+  // Dynamic Level Calculation
+  let currentLevel = 1;
+  let nextLevelKm = 50; // Default fallback
+  let progressToNextLevel = 0;
+
+  if (levels && levels.length > 0) {
+      // Find the highest level where user.totalKm >= minKm
+      const currentLevelConfig = levels.slice().reverse().find(l => user.totalKm >= l.minKm) || levels[0];
+      currentLevel = currentLevelConfig.level;
+      
+      const nextLevelConfig = levels.find(l => l.level === currentLevel + 1);
+      
+      if (nextLevelConfig) {
+          nextLevelKm = nextLevelConfig.minKm;
+          // Calculate progress percentage within the current level bracket
+          const currentLevelMin = currentLevelConfig.minKm;
+          const range = nextLevelConfig.minKm - currentLevelMin;
+          const progress = user.totalKm - currentLevelMin;
+          progressToNextLevel = Math.min(100, Math.max(0, (progress / range) * 100));
+      } else {
+          // Max level reached
+          nextLevelKm = user.totalKm;
+          progressToNextLevel = 100;
+      }
+  } else {
+      // Fallback hardcoded logic if levels not loaded
+      currentLevel = Math.floor(user.totalKm / 50) + 1;
+      nextLevelKm = currentLevel * 50;
+      progressToNextLevel = ((user.totalKm - ((currentLevel - 1) * 50)) / 50) * 100;
+  }
+
+  // --- LEADERBOARD RANKING CALCULATION (Simplified version of Leaderboard.tsx logic) ---
+  const getLeaderboardRank = (board: LeaderboardConfig) => {
+      const getScore = (u: any, isCurrentUser: boolean) => {
+          // Re-implement simplified score logic
+          const timeFilter = board.lastResetTimestamp || board.startTime || 0;
+          const endTimeFilter = board.endTime || Infinity;
+          
+          if (isCurrentUser) {
+              const uReal = u as User;
+              const validRuns = uReal.runHistory.filter(r => r.timestamp >= timeFilter && r.timestamp <= endTimeFilter);
+              switch(board.metric) {
+                  case 'TOTAL_KM': return validRuns.reduce((acc, r) => acc + r.km, 0);
+                  case 'OWNED_ZONES': return zones.filter(z => z.ownerId === uReal.id).length;
+                  case 'RUN_BALANCE': return uReal.runBalance;
+                  case 'GOV_BALANCE': return uReal.govBalance;
+                  case 'UNIQUE_ZONES': return new Set(validRuns.map(r => r.location)).size;
+                  default: return 0;
+              }
+          } else {
+              // Mock User Simulation Logic (Simplified)
+              const seed = u.name.length;
+              const activityRatio = (board.type === 'TEMPORARY' || !!board.lastResetTimestamp) ? 0.2 : 1.0;
+              switch(board.metric) {
+                  case 'TOTAL_KM': return u.totalKm * activityRatio;
+                  case 'OWNED_ZONES': return zones.filter(z => z.ownerId === u.id).length;
+                  case 'RUN_BALANCE': return u.runBalance ?? ((u.totalKm * 10) + (seed * 50));
+                  case 'GOV_BALANCE': return u.govBalance ?? ((u.totalKm / 10) + (seed * 2));
+                  case 'UNIQUE_ZONES': return Math.floor((u.totalKm * activityRatio) / 5) + 1;
+                  default: return 0;
+              }
+          }
+      };
+
+      const userScore = getScore(user, true);
+      
+      // Calculate ranks
+      const allScores = [
+          { id: user.id, score: userScore },
+          ...Object.values(allUsers).map((u: any) => ({ id: u.id, score: getScore(u, false) }))
+      ];
+      
+      allScores.sort((a, b) => b.score - a.score);
+      const rank = allScores.findIndex(s => s.id === user.id) + 1;
+      
+      return { rank, score: userScore };
+  };
 
   // Pagination Data
   const currentBadges = earnedBadges.slice((badgePage - 1) * BADGES_PER_PAGE, badgePage * BADGES_PER_PAGE);
@@ -291,6 +377,45 @@ const Profile: React.FC<ProfileProps> = ({ user, zones, missions = [], badges = 
               </div>
           </div>
       </div>
+
+      {/* --- LEADERBOARD RANKS (Updated Layout) --- */}
+      {leaderboards.length > 0 && (
+          <div className="bg-gray-800 rounded-xl border border-gray-700 p-5">
+              <h3 className="text-white font-bold mb-4 flex items-center gap-2">
+                  <Trophy size={18} className="text-yellow-400"/> {t('profile.active_rankings')}
+              </h3>
+              {/* Changed container to w-full and cards to flex-1 min-w-0 to allow shrinking */}
+              <div className="flex gap-4 w-full overflow-hidden">
+                  {leaderboards.map(lb => {
+                      const { rank, score } = getLeaderboardRank(lb);
+                      const isTop3 = rank <= 3;
+                      
+                      return (
+                          <div key={lb.id} className={`flex-1 min-w-0 p-4 rounded-xl border transition-colors flex flex-col justify-between ${isTop3 ? 'bg-gradient-to-br from-gray-900 to-yellow-900/20 border-yellow-500/30' : 'bg-gray-900 border-gray-700'}`}>
+                              <div className="flex justify-between items-start mb-2 gap-2">
+                                  <div className="min-w-0">
+                                      <h4 className="font-bold text-white text-sm truncate" title={lb.title}>{lb.title}</h4>
+                                      <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${lb.type === 'PERMANENT' ? 'bg-gray-800 text-gray-500' : 'bg-purple-900/50 text-purple-400'}`}>
+                                          {lb.type === 'PERMANENT' ? 'Seasonal' : 'Event'}
+                                      </span>
+                                  </div>
+                                  <div className={`flex flex-col items-center justify-center w-10 h-10 rounded-lg shrink-0 ${isTop3 ? 'bg-yellow-500 text-black' : 'bg-gray-800 text-gray-400'}`}>
+                                      <span className="text-xs font-bold">#</span>
+                                      <span className="text-lg font-black leading-none">{rank}</span>
+                                  </div>
+                              </div>
+                              <div className="mt-2 pt-2 border-t border-gray-800 flex justify-between items-center">
+                                  <span className="text-xs text-gray-500 uppercase font-bold truncate pr-2">{t('profile.score')}</span>
+                                  <span className={`font-mono font-bold truncate ${isTop3 ? 'text-yellow-400' : 'text-emerald-400'}`}>
+                                      {score.toLocaleString(undefined, { minimumFractionDigits: lb.metric === 'TOTAL_KM' || lb.metric.includes('BALANCE') ? 1 : 0 })}
+                                  </span>
+                              </div>
+                          </div>
+                      );
+                  })}
+              </div>
+          </div>
+      )}
 
       {/* --- CONTENT ROW: FULL WIDTH TABS (HISTORY & ACHIEVEMENTS) --- */}
       <div className="w-full">

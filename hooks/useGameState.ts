@@ -1,6 +1,7 @@
+
 import { useState, useEffect } from 'react';
-import { User, Zone, Item, Mission, Badge, InventoryItem, BugReport, LeaderboardConfig } from '../types';
-import { MOCK_ZONES, INITIAL_USER, MOCK_USERS, MOCK_ITEMS, MOCK_MISSIONS, MOCK_BADGES, PREMIUM_COST, CONQUEST_REWARD_GOV, DEFAULT_LEADERBOARDS } from '../constants';
+import { User, Zone, Item, Mission, Badge, InventoryItem, BugReport, LeaderboardConfig, LevelConfig } from '../types';
+import { MOCK_ZONES, INITIAL_USER, MOCK_USERS, MOCK_ITEMS, MOCK_MISSIONS, MOCK_BADGES, PREMIUM_COST, CONQUEST_REWARD_GOV, DEFAULT_LEADERBOARDS, DEFAULT_LEVELS } from '../constants';
 
 export const useGameState = () => {
   // --- DATABASE STATE ---
@@ -12,6 +13,7 @@ export const useGameState = () => {
   const [badges, setBadges] = useState<Badge[]>(MOCK_BADGES);
   const [bugReports, setBugReports] = useState<BugReport[]>([]);
   const [leaderboards, setLeaderboards] = useState<LeaderboardConfig[]>(DEFAULT_LEADERBOARDS);
+  const [levels, setLevels] = useState<LevelConfig[]>(DEFAULT_LEVELS);
   
   // --- CONFIG STATE ---
   const [govToRunRate, setGovToRunRate] = useState<number>(100);
@@ -136,18 +138,28 @@ export const useGameState = () => {
       setLeaderboards(prev => prev.filter(l => l.id !== id));
   };
 
-  // Resets a leaderboard by setting the start/reset timestamp to NOW.
-  // This does NOT delete user data, but forces the leaderboard to calculate stats from this point forward.
   const resetLeaderboard = (id: string) => {
       setLeaderboards(prev => prev.map(lb => {
           if (lb.id !== id) return lb;
           return {
               ...lb,
               lastResetTimestamp: Date.now(),
-              // If it's a temporary board, we might also want to reset the startTime to now
               startTime: lb.type === 'TEMPORARY' ? Date.now() : lb.startTime
           };
       }));
+  };
+
+  // Level Actions
+  const addLevel = (level: LevelConfig) => {
+      setLevels(prev => [...prev, level].sort((a,b) => a.level - b.level));
+  };
+
+  const updateLevel = (level: LevelConfig) => {
+      setLevels(prev => prev.map(l => l.id === level.id ? level : l).sort((a,b) => a.level - b.level));
+  };
+
+  const deleteLevel = (id: string) => {
+      setLevels(prev => prev.filter(l => l.id !== id));
   };
 
   // --- BACKGROUND TASKS (Cron Jobs) ---
@@ -176,6 +188,7 @@ export const useGameState = () => {
     govToRunRate,
     bugReports,
     leaderboards,
+    levels,
     // Setters
     setUser,
     setZones,
@@ -185,6 +198,7 @@ export const useGameState = () => {
     setUsersMock,
     setGovToRunRate,
     setBugReports,
+    setLevels,
     // Actions
     login,
     logout,
@@ -199,6 +213,9 @@ export const useGameState = () => {
     addLeaderboard,
     updateLeaderboard,
     deleteLeaderboard,
-    resetLeaderboard
+    resetLeaderboard,
+    addLevel,
+    updateLevel,
+    deleteLevel
   };
 };

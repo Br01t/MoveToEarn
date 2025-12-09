@@ -137,15 +137,24 @@ export interface LeaderboardConfig {
   lastResetTimestamp?: number;
 }
 
+export interface LevelConfig {
+  id: string;
+  level: number;
+  minKm: number;
+  title?: string;
+}
+
 export interface GameState {
   currentUser: User | null;
   zones: Zone[];
-  users: Record<string, Omit<User, 'inventory' | 'runBalance' | 'govBalance'>>;
+  // UPDATED: Allow runBalance and govBalance for other users
+  users: Record<string, Omit<User, 'inventory'>>;
   items: Item[];
   missions: Mission[];
   badges: Badge[];
   marketTaxRate: number;
   bugReports: BugReport[];
+  levels: LevelConfig[];
 }
 
 // Data passed from Dashboard to App during Sync
