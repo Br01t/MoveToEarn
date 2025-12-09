@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
-import { Item, Mission, Badge, Rarity, Zone, BugReport, LeaderboardConfig, LeaderboardMetric } from '../types';
-import { Settings, Plus, Trash2, Flame, Gift, RefreshCw, Save, X, AlertTriangle, CheckCircle, Package, Target, Award, Map, Edit2, Search, ArrowRightLeft, Bug, Trophy, Calendar } from 'lucide-react';
+import { Item, Mission, Badge, Rarity, Zone, BugReport, LeaderboardConfig, LeaderboardMetric, LevelConfig } from '../types';
+import { Settings, Plus, Trash2, Flame, Gift, RefreshCw, Save, X, AlertTriangle, CheckCircle, Package, Target, Award, Map, Edit2, Search, ArrowRightLeft, Bug, Trophy, Calendar, BarChart3 } from 'lucide-react';
 import Pagination from './Pagination';
 import { useLanguage } from '../LanguageContext';
 
@@ -12,7 +12,8 @@ interface AdminProps {
   zones: Zone[];
   govToRunRate: number;
   bugReports?: BugReport[];
-  leaderboards?: LeaderboardConfig[]; 
+  leaderboards?: LeaderboardConfig[];
+  levels?: LevelConfig[];
   onAddItem: (item: Item) => void;
   onUpdateItem: (item: Item) => void;
   onRemoveItem: (id: string) => void;
@@ -32,6 +33,9 @@ interface AdminProps {
   onUpdateLeaderboard?: (config: LeaderboardConfig) => void;
   onDeleteLeaderboard?: (id: string) => void;
   onResetLeaderboard?: (id: string) => void;
+  onAddLevel?: (level: LevelConfig) => void;
+  onUpdateLevel?: (level: LevelConfig) => void;
+  onDeleteLevel?: (id: string) => void;
 }
 
 const ITEMS_PER_PAGE = 5;
@@ -40,16 +44,17 @@ const BADGES_PER_PAGE = 5;
 const ZONES_PER_PAGE = 10;
 
 const Admin: React.FC<AdminProps> = ({ 
-  marketItems, missions, badges, zones, govToRunRate, bugReports = [], leaderboards = [],
+  marketItems, missions, badges, zones, govToRunRate, bugReports = [], leaderboards = [], levels = [],
   onAddItem, onUpdateItem, onRemoveItem,
   onAddMission, onUpdateMission, onRemoveMission,
   onAddBadge, onUpdateBadge, onRemoveBadge,
   onUpdateZoneName, onDeleteZone,
   onTriggerBurn, onDistributeRewards, onResetSeason,
-  onUpdateExchangeRate, onAddLeaderboard, onUpdateLeaderboard, onDeleteLeaderboard, onResetLeaderboard
+  onUpdateExchangeRate, onAddLeaderboard, onUpdateLeaderboard, onDeleteLeaderboard, onResetLeaderboard,
+  onAddLevel, onUpdateLevel, onDeleteLevel
 }) => {
   const { t } = useLanguage();
-  const [activeTab, setActiveTab] = useState<'ITEMS' | 'ECONOMY' | 'MISSIONS' | 'ZONES' | 'LEADERBOARD' | 'REPORTS'>('ITEMS');
+  const [activeTab, setActiveTab] = useState<'ITEMS' | 'ECONOMY' | 'MISSIONS' | 'ZONES' | 'LEADERBOARD' | 'REPORTS' | 'LEVELS'>('ITEMS');
   
   // ... (Previous states)
   const [showBurnModal, setShowBurnModal] = useState(false);
@@ -63,11 +68,17 @@ const Admin: React.FC<AdminProps> = ({
   const [badgePage, setBadgePage] = useState(1);
   const [zonePage, setZonePage] = useState(1);
   
-  // Leaderboard Form State - NOW INCLUDES ENDTIME
+  // Leaderboard Form State
   const [lbForm, setLbForm] = useState<{ title: string; desc: string; metric: LeaderboardMetric; type: 'PERMANENT' | 'TEMPORARY'; pool: string; currency: 'GOV' | 'RUN'; endTime?: string }>({
       title: '', desc: '', metric: 'TOTAL_KM', type: 'PERMANENT', pool: '', currency: 'GOV'
   });
   const [editingLbId, setEditingLbId] = useState<string | null>(null);
+
+  // Level Form State
+  const [lvlForm, setLvlForm] = useState<{ level: string; minKm: string; title: string }>({
+      level: '', minKm: '', title: ''
+  });
+  const [editingLvlId, setEditingLvlId] = useState<string | null>(null);
 
   // --- ITEM FORM ---
   const [itemFormData, setItemFormData] = useState<{
@@ -272,7 +283,6 @@ const Admin: React.FC<AdminProps> = ({
       let endDate = '';
       if (lb.endTime) {
            const d = new Date(lb.endTime);
-           // Simple adjust for local time display in datetime-local input
            const offset = d.getTimezoneOffset() * 60000;
            endDate = new Date(d.getTime() - offset).toISOString().slice(0, 16);
       }
@@ -326,7 +336,6 @@ const Admin: React.FC<AdminProps> = ({
       };
       
       if (editingLbId) {
-          // If editing, preserve non-editable fields like ID and StartTime
           const existing = leaderboards?.find(l => l.id === editingLbId);
           if (existing) {
               config.startTime = existing.startTime;
@@ -348,6 +357,46 @@ const Admin: React.FC<AdminProps> = ({
       }
   };
 
+  // --- LEVEL HANDLERS ---
+  const startEditLevel = (lvl: LevelConfig) => {
+      setEditingLvlId(lvl.id);
+      setLvlForm({
+          level: lvl.level.toString(),
+          minKm: lvl.minKm.toString(),
+          title: lvl.title || ''
+      });
+  };
+
+  const cancelEditLevel = () => {
+      setEditingLvlId(null);
+      setLvlForm({ level: '', minKm: '', title: '' });
+  };
+
+  const handleSubmitLevel = (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!onAddLevel || !onUpdateLevel) return;
+
+      const newLevel: LevelConfig = {
+          id: editingLvlId || `lvl_${Date.now()}`,
+          level: parseInt(lvlForm.level),
+          minKm: parseInt(lvlForm.minKm),
+          title: lvlForm.title
+      };
+
+      if (editingLvlId) {
+          onUpdateLevel(newLevel);
+      } else {
+          onAddLevel(newLevel);
+      }
+      cancelEditLevel();
+  };
+
+  const handleDeleteLevelClick = (id: string) => {
+      if (confirm(t('admin.levels.delete_confirm'))) {
+          onDeleteLevel && onDeleteLevel(id);
+      }
+  };
+
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-8 relative">
       <div className="flex items-center gap-3 mb-6">
@@ -356,13 +405,83 @@ const Admin: React.FC<AdminProps> = ({
       </div>
 
       <div className="flex border-b border-gray-700 mb-8 overflow-x-auto">
-        {['ITEMS', 'MISSIONS', 'ZONES', 'ECONOMY', 'LEADERBOARD', 'REPORTS'].map(tab => (
+        {['ITEMS', 'MISSIONS', 'ZONES', 'ECONOMY', 'LEADERBOARD', 'LEVELS', 'REPORTS'].map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab as any)} 
             className={`px-6 py-4 font-bold text-sm border-b-2 transition-colors whitespace-nowrap ${activeTab === tab ? 'border-emerald-500 text-emerald-400' : 'border-transparent text-gray-500 hover:text-white'}`}>
-                {tab === 'ITEMS' ? 'Market Items' : tab === 'MISSIONS' ? 'Missions & Badges' : tab === 'ZONES' ? 'Map Zones' : tab === 'ECONOMY' ? 'Economy Ops' : tab === 'REPORTS' ? 'Reports' : 'Leaderboards'}
+                {tab === 'ITEMS' ? 'Market Items' : tab === 'MISSIONS' ? 'Missions & Badges' : tab === 'ZONES' ? 'Map Zones' : tab === 'ECONOMY' ? 'Economy Ops' : tab === 'REPORTS' ? 'Reports' : tab === 'LEVELS' ? 'Levels' : 'Leaderboards'}
             </button>
         ))}
       </div>
+
+      {/* LEVELS MANAGEMENT */}
+      {activeTab === 'LEVELS' && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Level Form */}
+              <div className="bg-gray-800 p-6 rounded-xl border border-gray-700 h-fit">
+                  <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                      {editingLvlId ? <Edit2 size={20} className="text-blue-400" /> : <Plus size={20} className="text-emerald-400" />}
+                      {editingLvlId ? t('admin.levels.edit') : t('admin.levels.add_btn')}
+                  </h3>
+                  <form onSubmit={handleSubmitLevel} className="space-y-4">
+                      <div>
+                          <label className="text-xs text-gray-400 uppercase font-bold">{t('admin.levels.level_num')}</label>
+                          <input type="number" required value={lvlForm.level} onChange={e => setLvlForm({...lvlForm, level: e.target.value})} className="w-full bg-gray-900 border border-gray-600 rounded p-2 text-white" />
+                      </div>
+                      <div>
+                          <label className="text-xs text-gray-400 uppercase font-bold">{t('admin.levels.min_km')}</label>
+                          <input type="number" required value={lvlForm.minKm} onChange={e => setLvlForm({...lvlForm, minKm: e.target.value})} className="w-full bg-gray-900 border border-gray-600 rounded p-2 text-white" />
+                      </div>
+                      <div>
+                          <label className="text-xs text-gray-400 uppercase font-bold">{t('admin.levels.level_title')}</label>
+                          <input type="text" value={lvlForm.title} onChange={e => setLvlForm({...lvlForm, title: e.target.value})} className="w-full bg-gray-900 border border-gray-600 rounded p-2 text-white" />
+                      </div>
+                      
+                      <div className="flex gap-2">
+                          {editingLvlId && (
+                              <button type="button" onClick={cancelEditLevel} className="flex-1 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg text-white font-bold transition-colors">
+                                  {t('admin.leader.cancel')}
+                              </button>
+                          )}
+                          <button className={`flex-1 py-3 rounded-lg text-white font-bold transition-colors ${editingLvlId ? 'bg-blue-600 hover:bg-blue-500' : 'bg-emerald-600 hover:bg-emerald-500'}`}>
+                              {editingLvlId ? t('admin.leader.save') : t('admin.levels.add_btn')}
+                          </button>
+                      </div>
+                  </form>
+              </div>
+
+              {/* Levels List */}
+              <div className="space-y-4 max-h-[600px] overflow-y-auto">
+                  <h3 className="text-xl font-bold text-white flex items-center gap-2 sticky top-0 bg-gray-900 py-2 z-10">
+                      <BarChart3 size={20} className="text-yellow-400" /> Defined Levels ({levels.length})
+                  </h3>
+                  {levels.map(lvl => (
+                      <div key={lvl.id} className="bg-gray-800 p-4 rounded-xl border border-gray-700 flex justify-between items-center group hover:border-gray-500 transition-colors">
+                          <div>
+                              <div className="flex items-center gap-2">
+                                  <span className="font-mono font-bold text-emerald-400 text-lg">LVL {lvl.level}</span>
+                                  <span className="text-sm font-bold text-white">{lvl.title}</span>
+                              </div>
+                              <p className="text-xs text-gray-400 mt-1">Min Distance: <span className="font-mono text-white">{lvl.minKm} km</span></p>
+                          </div>
+                          <div className="flex gap-2">
+                              <button 
+                                  onClick={() => startEditLevel(lvl)}
+                                  className="p-2 text-blue-400 hover:bg-blue-500/10 rounded transition-colors"
+                              >
+                                  <Edit2 size={18} />
+                              </button>
+                              <button 
+                                  onClick={() => handleDeleteLevelClick(lvl.id)} 
+                                  className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-500/10 rounded transition-colors"
+                              >
+                                  <Trash2 size={18} />
+                              </button>
+                          </div>
+                      </div>
+                  ))}
+              </div>
+          </div>
+      )}
 
       {/* LEADERBOARD MANAGEMENT */}
       {activeTab === 'LEADERBOARD' && (
@@ -511,48 +630,7 @@ const Admin: React.FC<AdminProps> = ({
           </div>
       )}
 
-      {/* REPORTS TAB */}
-      {activeTab === 'REPORTS' && (
-          <div className="space-y-6">
-              <h3 className="text-xl font-bold text-white flex gap-2">
-                  <Bug className="text-red-400" /> {t('admin.report.title')}
-              </h3>
-              
-              {bugReports.length === 0 ? (
-                  <div className="bg-gray-800 p-8 rounded-xl border border-gray-700 text-center text-gray-500">
-                      <p>{t('admin.report.no_reports')}</p>
-                  </div>
-              ) : (
-                  <div className="space-y-4">
-                      {bugReports.map(report => (
-                          <div key={report.id} className="bg-gray-800 p-6 rounded-xl border border-gray-700 flex flex-col md:flex-row gap-6">
-                              <div className="flex-1">
-                                  <div className="flex justify-between items-start mb-2">
-                                      <div>
-                                          <span className="font-bold text-emerald-400 text-sm">{report.userName}</span>
-                                          <span className="text-xs text-gray-500 ml-2">({report.userId})</span>
-                                      </div>
-                                      <span className="text-xs text-gray-400">{new Date(report.timestamp).toLocaleString()}</span>
-                                  </div>
-                                  <p className="text-gray-300 text-sm bg-gray-900 p-4 rounded-lg border border-gray-600">
-                                      {report.description}
-                                  </p>
-                              </div>
-                              {report.screenshot && (
-                                  <div className="w-full md:w-48 shrink-0">
-                                      <span className="text-xs text-gray-500 block mb-1">{t('admin.report.screenshot')}</span>
-                                      <a href={report.screenshot} target="_blank" rel="noopener noreferrer">
-                                          <img src={report.screenshot} alt="Screenshot" className="w-full h-32 object-cover rounded-lg border border-gray-600 hover:opacity-80 transition-opacity" />
-                                      </a>
-                                  </div>
-                              )}
-                          </div>
-                      ))}
-                  </div>
-              )}
-          </div>
-      )}
-
+      {/* ... (Other Tabs) ... */}
       {/* ITEM MANAGER */}
       {activeTab === 'ITEMS' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

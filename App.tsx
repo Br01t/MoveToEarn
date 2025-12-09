@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import Navbar from "./components/Navbar";
 import LandingPage from "./components/LandingPage";
@@ -142,6 +143,7 @@ const AppContent: React.FC = () => {
                       zones={zones} 
                       badges={gameState.badges}
                       leaderboards={gameState.leaderboards}
+                      levels={gameState.levels}
                   />
               )}
               
@@ -151,6 +153,9 @@ const AppContent: React.FC = () => {
                   zones={zones}
                   missions={gameState.missions}
                   badges={gameState.badges}
+                  levels={gameState.levels}
+                  leaderboards={gameState.leaderboards}
+                  allUsers={gameState.usersMock}
                   onUpdateUser={gameState.updateUser}
                   onUpgradePremium={gameState.upgradePremium}
                 />
@@ -166,6 +171,7 @@ const AppContent: React.FC = () => {
                   govToRunRate={gameState.govToRunRate}
                   bugReports={gameState.bugReports}
                   leaderboards={gameState.leaderboards}
+                  levels={gameState.levels}
                   onAddItem={(i) => gameState.setMarketItems(p => [...p, i])}
                   onUpdateItem={(i) => gameState.setMarketItems(p => p.map(x => x.id === i.id ? i : x))}
                   onRemoveItem={(id) => gameState.setMarketItems(p => p.filter(x => x.id !== id))}
@@ -185,6 +191,9 @@ const AppContent: React.FC = () => {
                   onUpdateLeaderboard={gameState.updateLeaderboard}
                   onDeleteLeaderboard={gameState.deleteLeaderboard}
                   onResetLeaderboard={gameState.resetLeaderboard}
+                  onAddLevel={gameState.addLevel}
+                  onUpdateLevel={gameState.updateLevel}
+                  onDeleteLevel={gameState.deleteLevel}
                 />
               )}
               {currentView === "REPORT_BUG" && <ReportBug onReport={gameState.reportBug} />}

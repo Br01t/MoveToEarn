@@ -1,5 +1,5 @@
 
-import { Item, User, Zone, Mission, Badge, AchievementCategory, Difficulty, Rarity, LeaderboardConfig } from './types';
+import { Item, User, Zone, Mission, Badge, AchievementCategory, Difficulty, Rarity, LeaderboardConfig, LevelConfig } from './types';
 
 export const MINT_COST = 50; 
 export const MINT_REWARD_GOV = 5; 
@@ -12,6 +12,15 @@ export const DEFAULT_LEADERBOARDS: LeaderboardConfig[] = [
     { id: 'rich_list_run', title: 'RUN Whales', description: 'Highest liquid RUN holdings.', metric: 'RUN_BALANCE', type: 'PERMANENT' },
     { id: 'rich_list_gov', title: 'Governance Power', description: 'Highest staked GOV holdings.', metric: 'GOV_BALANCE', type: 'PERMANENT' }
 ];
+
+// Generate 50 Levels
+// Level 1 starts at 0. Level 2 at 50km. Level 50 at 2450km.
+export const DEFAULT_LEVELS: LevelConfig[] = Array.from({ length: 50 }, (_, i) => ({
+    id: `lvl_${i + 1}`,
+    level: i + 1,
+    minKm: i * 50,
+    title: `Level ${i + 1}`
+}));
 
 export const MOCK_ITEMS: Item[] = [
   { id: 'shield_lvl1', name: 'Zone Shield v1', description: 'Protect a zone from being conquered for 24h.', priceRun: 250, quantity: 50, type: 'DEFENSE', effectValue: 1, icon: 'Shield' },
@@ -199,10 +208,10 @@ export const MOCK_ZONES: Zone[] = [
   { id: 'z_tk_4', x: 1, y: 3, lat: 35.6628, lng: 139.7315, ownerId: 'user_1', name: 'Roppongi, Tokyo - JP', defenseLevel: 1, recordKm: 95, interestRate: 2.2 },
 ];
 
-export const MOCK_USERS: Record<string, { id: string; name: string; totalKm: number; avatar: string; favoriteBadgeId?: string }> = {
-  'user_1': { id: 'user_1', name: 'RunnerOne', totalKm: 450, avatar: 'https://picsum.photos/seed/u1/200', favoriteBadgeId: 'b_1' },
-  'user_2': { id: 'user_2', name: 'CryptoJogger', totalKm: 320, avatar: 'https://picsum.photos/seed/u2/200', favoriteBadgeId: 'b_21' },
-  'user_3': { id: 'user_3', name: 'SpeedDemon', totalKm: 890, avatar: 'https://picsum.photos/seed/u3/200', favoriteBadgeId: 'b_11' },
+export const MOCK_USERS: Record<string, { id: string; name: string; totalKm: number; avatar: string; favoriteBadgeId?: string; runBalance: number; govBalance: number; }> = {
+  'user_1': { id: 'user_1', name: 'RunnerOne', totalKm: 450, avatar: 'https://picsum.photos/seed/u1/200', favoriteBadgeId: 'b_1', runBalance: 2500.5, govBalance: 50 },
+  'user_2': { id: 'user_2', name: 'CryptoJogger', totalKm: 320, avatar: 'https://picsum.photos/seed/u2/200', favoriteBadgeId: 'b_21', runBalance: 1250.0, govBalance: 25 },
+  'user_3': { id: 'user_3', name: 'SpeedDemon', totalKm: 890, avatar: 'https://picsum.photos/seed/u3/200', favoriteBadgeId: 'b_11', runBalance: 5400.0, govBalance: 120 },
 };
 
 const DEFAULT_USER_STATE = {
