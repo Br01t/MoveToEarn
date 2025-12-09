@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
-import { Item, Mission, Badge, Rarity, Zone } from '../types';
-import { Settings, Plus, Trash2, Flame, Gift, RefreshCw, Save, X, AlertTriangle, CheckCircle, Package, Target, Award, Map, Edit2, Search, ArrowRightLeft } from 'lucide-react';
+import { Item, Mission, Badge, Rarity, Zone, BugReport } from '../types';
+import { Settings, Plus, Trash2, Flame, Gift, RefreshCw, Save, X, AlertTriangle, CheckCircle, Package, Target, Award, Map, Edit2, Search, ArrowRightLeft, Bug } from 'lucide-react';
 import Pagination from './Pagination';
 import { useLanguage } from '../LanguageContext';
 
@@ -10,7 +10,8 @@ interface AdminProps {
   missions: Mission[];
   badges: Badge[];
   zones: Zone[];
-  govToRunRate: number; // New prop
+  govToRunRate: number;
+  bugReports?: BugReport[]; // Optional to support older props
   onAddItem: (item: Item) => void;
   onUpdateItem: (item: Item) => void;
   onRemoveItem: (id: string) => void;
@@ -25,7 +26,7 @@ interface AdminProps {
   onTriggerBurn: () => void;
   onDistributeRewards: () => void;
   onResetSeason: () => void;
-  onUpdateExchangeRate: (rate: number) => void; // New prop
+  onUpdateExchangeRate: (rate: number) => void;
 }
 
 const ITEMS_PER_PAGE = 5;
@@ -34,7 +35,7 @@ const BADGES_PER_PAGE = 5;
 const ZONES_PER_PAGE = 10;
 
 const Admin: React.FC<AdminProps> = ({ 
-  marketItems, missions, badges, zones, govToRunRate,
+  marketItems, missions, badges, zones, govToRunRate, bugReports = [],
   onAddItem, onUpdateItem, onRemoveItem,
   onAddMission, onUpdateMission, onRemoveMission,
   onAddBadge, onUpdateBadge, onRemoveBadge,
@@ -43,7 +44,7 @@ const Admin: React.FC<AdminProps> = ({
   onUpdateExchangeRate
 }) => {
   const { t } = useLanguage();
-  const [activeTab, setActiveTab] = useState<'ITEMS' | 'ECONOMY' | 'MISSIONS' | 'ZONES' | 'LEADERBOARD'>('ITEMS');
+  const [activeTab, setActiveTab] = useState<'ITEMS' | 'ECONOMY' | 'MISSIONS' | 'ZONES' | 'LEADERBOARD' | 'REPORTS'>('ITEMS');
   
   const [showBurnModal, setShowBurnModal] = useState(false);
   const [showRewardModal, setShowRewardModal] = useState(false);
@@ -259,13 +260,55 @@ const Admin: React.FC<AdminProps> = ({
       </div>
 
       <div className="flex border-b border-gray-700 mb-8 overflow-x-auto">
-        {['ITEMS', 'MISSIONS', 'ZONES', 'ECONOMY', 'LEADERBOARD'].map(tab => (
+        {['ITEMS', 'MISSIONS', 'ZONES', 'ECONOMY', 'LEADERBOARD', 'REPORTS'].map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab as any)} 
             className={`px-6 py-4 font-bold text-sm border-b-2 transition-colors whitespace-nowrap ${activeTab === tab ? 'border-emerald-500 text-emerald-400' : 'border-transparent text-gray-500 hover:text-white'}`}>
-                {tab === 'ITEMS' ? 'Market Items' : tab === 'MISSIONS' ? 'Missions & Badges' : tab === 'ZONES' ? 'Map Zones' : tab === 'ECONOMY' ? 'Economy Ops' : 'Season'}
+                {tab === 'ITEMS' ? 'Market Items' : tab === 'MISSIONS' ? 'Missions & Badges' : tab === 'ZONES' ? 'Map Zones' : tab === 'ECONOMY' ? 'Economy Ops' : tab === 'REPORTS' ? 'Reports' : 'Season'}
             </button>
         ))}
       </div>
+
+      {/* REPORTS TAB */}
+      {activeTab === 'REPORTS' && (
+          <div className="space-y-6">
+              <h3 className="text-xl font-bold text-white flex gap-2">
+                  <Bug className="text-red-400" /> {t('admin.report.title')}
+              </h3>
+              
+              {bugReports.length === 0 ? (
+                  <div className="bg-gray-800 p-8 rounded-xl border border-gray-700 text-center text-gray-500">
+                      <p>{t('admin.report.no_reports')}</p>
+                  </div>
+              ) : (
+                  <div className="space-y-4">
+                      {bugReports.map(report => (
+                          <div key={report.id} className="bg-gray-800 p-6 rounded-xl border border-gray-700 flex flex-col md:flex-row gap-6">
+                              <div className="flex-1">
+                                  <div className="flex justify-between items-start mb-2">
+                                      <div>
+                                          <span className="font-bold text-emerald-400 text-sm">{report.userName}</span>
+                                          <span className="text-xs text-gray-500 ml-2">({report.userId})</span>
+                                      </div>
+                                      <span className="text-xs text-gray-400">{new Date(report.timestamp).toLocaleString()}</span>
+                                  </div>
+                                  <p className="text-gray-300 text-sm bg-gray-900 p-4 rounded-lg border border-gray-600">
+                                      {report.description}
+                                  </p>
+                              </div>
+                              {report.screenshot && (
+                                  <div className="w-full md:w-48 shrink-0">
+                                      <span className="text-xs text-gray-500 block mb-1">{t('admin.report.screenshot')}</span>
+                                      <a href={report.screenshot} target="_blank" rel="noopener noreferrer">
+                                          <img src={report.screenshot} alt="Screenshot" className="w-full h-32 object-cover rounded-lg border border-gray-600 hover:opacity-80 transition-opacity" />
+                                      </a>
+                                  </div>
+                              )}
+                          </div>
+                      ))}
+                  </div>
+              )}
+          </div>
+      )}
 
       {/* ITEM MANAGER */}
       {activeTab === 'ITEMS' && (
@@ -505,7 +548,7 @@ const Admin: React.FC<AdminProps> = ({
              <CheckCircle className="text-blue-400 shrink-0 mt-0.5" size={18} />
              <div>
                <p className="text-sm text-blue-200 font-bold">Naming Convention Reminder</p>
-               <p className="text-xs text-blue-300/70">Ensure zone names follow the format: <strong>Name, City - CC</strong> (e.g., "Parco Sempione, Milan - IT") for filters to work correctly.</p>
+               <p className="text-xs text-blue-300/70">Ensure zone names follow the format: <strong>Name, City - CC</strong> (e.g. "Parco Sempione, Milan - IT") for filters to work correctly.</p>
              </div>
            </div>
         </div>

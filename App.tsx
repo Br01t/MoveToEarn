@@ -16,6 +16,7 @@ import HowToPlay from "./components/pages/HowToPlay";
 import Privacy from "./components/pages/Privacy";
 import Terms from "./components/pages/Terms";
 import Community from "./components/pages/Community";
+import ReportBug from "./components/pages/ReportBug";
 import AchievementModal from "./components/AchievementModal";
 import ZoneDiscoveryModal from "./components/ZoneDiscoveryModal";
 import RunSummaryModal from "./components/RunSummaryModal";
@@ -155,6 +156,7 @@ const AppContent: React.FC = () => {
                   badges={gameState.badges}
                   zones={zones}
                   govToRunRate={gameState.govToRunRate}
+                  bugReports={gameState.bugReports}
                   onAddItem={(i) => gameState.setMarketItems(p => [...p, i])}
                   onUpdateItem={(i) => gameState.setMarketItems(p => p.map(x => x.id === i.id ? i : x))}
                   onRemoveItem={(id) => gameState.setMarketItems(p => p.filter(x => x.id !== id))}
@@ -172,6 +174,7 @@ const AppContent: React.FC = () => {
                   onUpdateExchangeRate={gameState.setGovToRunRate}
                 />
               )}
+              {currentView === "REPORT_BUG" && <ReportBug onReport={gameState.reportBug} />}
             </>
           )}
 
@@ -235,7 +238,7 @@ const AppContent: React.FC = () => {
         </div>
       )}
 
-      <Footer onNavigate={setCurrentView} currentView={currentView} />
+      <Footer onNavigate={setCurrentView} currentView={currentView} isAuthenticated={!!user} />
     </div>
   );
 };

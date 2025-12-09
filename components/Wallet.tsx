@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { User } from '../types';
-import { Flame, Link as LinkIcon, Wallet as WalletIcon, CheckCircle, CreditCard, Euro, TrendingUp, Lock, Activity, ArrowRight, Crown, History, ArrowUpRight, ArrowDownLeft, X, ArrowDown, ArrowRightLeft } from 'lucide-react';
+import { Flame, Link as LinkIcon, Wallet as WalletIcon, CheckCircle, CreditCard, Euro, TrendingUp, Lock, Activity, ArrowRight, Crown, History, ArrowUpRight, ArrowDownLeft, X, ArrowDown, ArrowRightLeft, Info } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import Pagination from './Pagination';
 import { useLanguage } from '../LanguageContext';
@@ -177,11 +177,24 @@ const Wallet: React.FC<WalletProps> = ({ user, govToRunRate, onBuyFiat, onSwapGo
         <div className="flex flex-col gap-6 h-full">
             
             {/* SWAP CARD (GOV -> RUN) */}
-            <div className="bg-gray-800 rounded-2xl border border-gray-700 p-6 relative overflow-hidden shrink-0">
+            <div className="bg-gray-800 rounded-2xl border border-gray-700 p-6 relative overflow-visible shrink-0">
                 <div className="relative z-10">
-                    <h2 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
-                        <ArrowRightLeft className="text-yellow-400" /> {t('wallet.swap.title')}
-                    </h2>
+                    <div className="flex items-center justify-between mb-2">
+                        <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                            <ArrowRightLeft className="text-yellow-400" /> {t('wallet.swap.title')}
+                        </h2>
+                        
+                        {/* Info Tooltip Icon */}
+                        <div className="relative group">
+                            <Info size={16} className="text-gray-500 hover:text-emerald-400 cursor-help transition-colors" />
+                            <div className="absolute bottom-full right-0 mb-2 w-48 p-3 bg-gray-900 border border-gray-600 rounded-xl shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 text-[10px] text-gray-300 leading-relaxed">
+                                {t('wallet.swap.info_tooltip')}
+                                {/* Tooltip Arrow */}
+                                <div className="absolute right-1 -bottom-1 w-2 h-2 bg-gray-900 border-r border-b border-gray-600 transform rotate-45"></div>
+                            </div>
+                        </div>
+                    </div>
+
                     <p className="text-gray-400 text-xs mb-4">
                         {t('wallet.swap.desc')} <br/>
                         <span className="text-emerald-400">{t('wallet.swap.rate_label')}: 1 GOV = {govToRunRate} RUN</span>

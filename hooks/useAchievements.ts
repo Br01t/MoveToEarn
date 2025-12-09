@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { User, Zone, Mission, Badge } from '../types';
 import { checkAchievement } from '../utils/rewards';

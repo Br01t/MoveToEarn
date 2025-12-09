@@ -17,6 +17,7 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
   const [syncTab, setSyncTab] = useState<'FREE' | 'PREMIUM'>('FREE');
   const [uploadStep, setUploadStep] = useState<'SELECT' | 'UPLOADING' | 'PROCESSING' | 'SUCCESS' | 'ERROR'>('SELECT');
   const [errorType, setErrorType] = useState<'DUPLICATE' | 'INVALID' | null>(null);
+  const [failureDetail, setFailureDetail] = useState<string | null>(null); // New state for specific error message
   const [logs, setLogs] = useState<string[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [validResults, setValidResults] = useState<RunAnalysisData[]>([]);
@@ -30,17 +31,19 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
 
   const handleStartUpload = async () => {
     if (selectedFiles.length === 0) {
-        alert("Please select at least one GPX file.");
+        alert(t('sync.alert.no_file'));
         return;
     }
     setUploadStep('UPLOADING');
     setErrorType(null);
+    setFailureDetail(null);
     setLogs([]);
     setValidResults([]);
 
     const newResults: RunAnalysisData[] = [];
     const newLogs: string[] = [];
     let duplicateCount = 0;
+    let lastFailureReason = "";
 
     const addLog = (msg: string) => {
         newLogs.push(msg);
@@ -70,17 +73,20 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
                         const isDuplicate = user.runHistory.some(run => Math.abs(run.timestamp - result.startTime) < 60000);
                         if (isDuplicate) {
                             duplicateCount++;
+                            lastFailureReason = "Duplicate run detected.";
                             addLog(`⚠️ SKIPPED: ${file.name} (Track ${idx+1}) - Duplicate run detected.`);
                         } else {
                             newResults.push(result);
                             addLog(`✅ PASSED: ${file.name} (Track ${idx+1}) - ${result.totalKm.toFixed(2)}km`);
                         }
                     } else {
+                        lastFailureReason = result.failureReason || "Unknown validation error";
                         addLog(`❌ FAILED: ${file.name} (Track ${idx+1}) - ${result.failureReason}`);
                     }
                 });
 
             } catch (err: any) {
+                lastFailureReason = err.message || "File parse error";
                 addLog(`❌ ERROR processing ${file.name}: ${err.message}`);
             }
         }
@@ -90,11 +96,13 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
             setUploadStep('SUCCESS');
         } else {
             // STOP EVERYTHING: Determine why it failed
-            if (duplicateCount > 0) {
+            if (duplicateCount > 0 && duplicateCount === selectedFiles.length) {
                 setErrorType('DUPLICATE');
+                setFailureDetail("Duplicate Run Detected");
                 addLog("⚠️ Validation Halted: Duplicate runs detected.");
             } else {
                 setErrorType('INVALID');
+                setFailureDetail(lastFailureReason); // Capture specific reason (Speed, Distance, etc.)
                 addLog("⚠️ Validation Halted: No valid data found.");
             }
             setUploadStep('ERROR');
@@ -115,6 +123,23 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
       setSelectedFiles([]);
       setLogs([]);
       setErrorType(null);
+      setFailureDetail(null);
+  };
+
+  // Helper to format friendly error message
+  const getFriendlyErrorMessage = (errorKey: 'DUPLICATE' | 'INVALID' | null, detail: string | null) => {
+      if (errorKey === 'DUPLICATE') return t('sync.error.duplicate_desc');
+      
+      // Map specific Anti-Cheat failure reasons to user friendly translated text
+      if (detail) {
+          if (detail.toLowerCase().includes("speed")) return t('sync.error.speed');
+          if (detail.includes("Duration")) return t('sync.error.duration');
+          if (detail.includes("Distance") || detail.includes("0km")) return t('sync.error.distance');
+          if (detail.includes("time data")) return t('sync.error.timestamp');
+          if (detail.includes("points") || detail.includes("track")) return t('sync.error.points');
+      }
+      
+      return t('sync.error.no_data_desc');
   };
 
   return (
@@ -261,9 +286,17 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
                             </div>
                             <div className="text-center">
                                 <h3 className="text-xl font-bold text-white mb-2">{t('sync.error.title')}</h3>
-                                <p className="text-gray-300 text-sm max-w-xs mx-auto mb-4">
-                                    {errorType === 'DUPLICATE' ? t('sync.error.duplicate_desc') : t('sync.error.no_data_desc')}
-                                </p>
+                                
+                                {/* Friendly Error Message */}
+                                <div className="bg-red-900/30 border border-red-500/30 p-3 rounded-lg mb-4 text-center">
+                                    <p className="text-red-200 font-bold text-sm">
+                                        {getFriendlyErrorMessage(errorType, failureDetail)}
+                                    </p>
+                                    {/* Debug detail only shown small */}
+                                    {failureDetail && !errorType && (
+                                        <p className="text-[10px] text-red-400/50 mt-1 font-mono">{failureDetail}</p>
+                                    )}
+                                </div>
                                 
                                 {/* Log window for debugging */}
                                 <div className="w-full bg-black/50 rounded-lg p-3 font-mono text-[10px] text-red-300 h-32 overflow-y-auto border border-red-900/50 text-left mb-4">

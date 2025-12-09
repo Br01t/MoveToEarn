@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Zone, User, Badge, Rarity } from '../../types';
 import { X, Crown, Clock, Shield, Medal, Lock, Zap, Swords, Flag, Award, Mountain, Globe, Home, Landmark, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users } from 'lucide-react';
 import { useLanguage } from '../../LanguageContext';
@@ -22,9 +22,25 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
     onClaim, onBoost, onDefend, hasBoostItem, hasDefenseItem 
 }) => {
   const { t } = useLanguage();
+  const [now, setNow] = useState(Date.now());
 
-  const isBoostActive = zone.boostExpiresAt && zone.boostExpiresAt > Date.now();
-  const isShieldActive = zone.shieldExpiresAt && zone.shieldExpiresAt > Date.now();
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const formatTimeRemaining = (expiry: number) => {
+    const diff = expiry - now;
+    if (diff <= 0) return "00:00:00";
+    const h = Math.floor(diff / (1000 * 60 * 60));
+    const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const s = Math.floor((diff % (1000 * 60)) / 1000);
+    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
+
+  const isBoostActive = zone.boostExpiresAt && zone.boostExpiresAt > now;
+  const isShieldActive = zone.shieldExpiresAt && zone.shieldExpiresAt > now;
+  
   const topRunner = zoneLeaderboard.length > 0 ? zoneLeaderboard[0] : null;
   const isTopRunner = topRunner ? topRunner.id === user.id : false;
   const kmToTop = topRunner && !isTopRunner ? (topRunner.km - (zoneLeaderboard.find(u => u.id === user.id)?.km || 0)) : 0;
@@ -121,8 +137,8 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
             {isBoostActive && zone.boostExpiresAt && (
              <div className="flex items-center justify-between text-sm bg-amber-500/10 p-2 rounded-lg border border-amber-500/30">
                <span className="text-amber-400 flex items-center gap-1 text-xs"><Clock size={12}/> {t('zone.boosted')}</span>
-               <span className="text-amber-100 font-mono text-xs">
-                 {Math.floor((zone.boostExpiresAt - Date.now()) / 60000)}m {t('zone.left')}
+               <span className="text-amber-100 font-mono text-xs font-bold">
+                 {formatTimeRemaining(zone.boostExpiresAt)}
                </span>
              </div>
             )}
@@ -130,8 +146,8 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
             {isShieldActive && zone.shieldExpiresAt && (
              <div className="flex items-center justify-between text-sm bg-cyan-500/10 p-2 rounded-lg border border-cyan-500/30">
                <span className="text-cyan-400 flex items-center gap-1 text-xs"><Shield size={12}/> {t('zone.shielded')}</span>
-               <span className="text-cyan-100 font-mono text-xs">
-                 {Math.floor((zone.shieldExpiresAt - Date.now()) / 60000)}m {t('zone.left')}
+               <span className="text-cyan-100 font-mono text-xs font-bold">
+                 {formatTimeRemaining(zone.shieldExpiresAt)}
                </span>
              </div>
             )}
