@@ -1,5 +1,4 @@
-
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { User, Zone, RunAnalysisData, RunEntry } from '../types';
 import { getDistanceFromLatLonInKm, calculateHexPosition } from '../utils/geo';
 import { processRunRewards } from '../utils/rewards';
