@@ -64,6 +64,10 @@ const Wallet: React.FC<WalletProps> = ({ user, govToRunRate, onBuyFiat, onSwapGo
   const [swapGovAmount, setSwapGovAmount] = useState<string>('');
   const [isWalletConnected, setIsWalletConnected] = useState(false);
   
+  // Custom Confirmation Modal State
+  const [showSwapConfirm, setShowSwapConfirm] = useState(false);
+  const [swapSuccess, setSwapSuccess] = useState(false);
+  
   // History Modal State
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [historyPage, setHistoryPage] = useState(1);
@@ -75,19 +79,40 @@ const Wallet: React.FC<WalletProps> = ({ user, govToRunRate, onBuyFiat, onSwapGo
       setFiatAmount('');
   };
 
-  const handleSwap = () => {
+  const handleSwapClick = () => {
       const val = parseFloat(swapGovAmount);
       if (isNaN(val) || val <= 0) return;
-      onSwapGovToRun(val);
+      
+      // Validation Check
+      if (user.govBalance < val) {
+          alert(t('alert.insufficient_gov'));
+          return;
+      }
+
+      setShowSwapConfirm(true);
+      setSwapSuccess(false);
+  };
+
+  const confirmSwap = () => {
+      const val = parseFloat(swapGovAmount);
+      onSwapGovToRun(val); // Execute logic
+      setSwapSuccess(true);
       setSwapGovAmount('');
+  };
+
+  const closeSwapModal = () => {
+      setShowSwapConfirm(false);
+      setSwapSuccess(false);
   };
 
   // Pagination Logic
   const totalHistoryPages = Math.ceil(mockTransactions.length / TRANSACTIONS_PER_PAGE);
   const currentHistory = mockTransactions.slice(
       (historyPage - 1) * TRANSACTIONS_PER_PAGE,
-      historyPage * TRANSACTIONS_PER_PAGE
+      (historyPage) * TRANSACTIONS_PER_PAGE
   );
+
+  const calculatedRun = swapGovAmount ? (parseFloat(swapGovAmount) * govToRunRate) : 0;
 
   return (
     <div className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
@@ -194,7 +219,7 @@ const Wallet: React.FC<WalletProps> = ({ user, govToRunRate, onBuyFiat, onSwapGo
                         </div>
 
                         <button 
-                            onClick={handleSwap}
+                            onClick={handleSwapClick}
                             disabled={!swapGovAmount}
                             className="w-full py-3 mt-2 bg-yellow-600 hover:bg-yellow-500 disabled:bg-gray-700 disabled:text-gray-500 text-white font-bold rounded-xl transition-all shadow-lg"
                         >
@@ -461,6 +486,71 @@ const Wallet: React.FC<WalletProps> = ({ user, govToRunRate, onBuyFiat, onSwapGo
               </div>
            </div>
         </div>
+      )}
+
+      {/* CUSTOM SWAP CONFIRMATION MODAL */}
+      {showSwapConfirm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in">
+              <div className="bg-gray-800 rounded-2xl border-2 border-emerald-500/50 w-full max-w-sm shadow-2xl overflow-hidden flex flex-col relative animate-slide-up">
+                  
+                  {/* Confetti if success */}
+                  {swapSuccess && (
+                      <div className="absolute inset-0 pointer-events-none z-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-emerald-500/10 to-transparent animate-pulse"></div>
+                  )}
+
+                  <div className="p-6 border-b border-gray-700 flex justify-between items-center bg-gray-900 relative z-10">
+                      <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                          {swapSuccess ? <CheckCircle className="text-emerald-400" /> : <ArrowRightLeft className="text-yellow-400" />}
+                          {swapSuccess ? t('wallet.swap.success_title') : t('wallet.swap.confirm_title')}
+                      </h3>
+                      {!swapSuccess && (
+                          <button onClick={closeSwapModal} className="text-gray-400 hover:text-white"><X size={20}/></button>
+                      )}
+                  </div>
+
+                  <div className="p-6 space-y-6 relative z-10">
+                      {!swapSuccess ? (
+                          <>
+                              <p className="text-sm text-gray-300 text-center">
+                                  {t('wallet.swap.confirm_msg')}
+                              </p>
+                              
+                              <div className="flex items-center justify-between gap-2">
+                                  <div className="bg-gray-900 p-3 rounded-xl border border-cyan-500/30 text-center flex-1">
+                                      <span className="block text-2xl font-bold text-cyan-400 font-mono">{parseFloat(swapGovAmount).toFixed(2)}</span>
+                                      <span className="text-[10px] text-gray-500 font-bold">GOV</span>
+                                  </div>
+                                  <ArrowRight size={20} className="text-gray-500" />
+                                  <div className="bg-gray-900 p-3 rounded-xl border border-emerald-500/30 text-center flex-1">
+                                      <span className="block text-2xl font-bold text-emerald-400 font-mono">{calculatedRun.toFixed(2)}</span>
+                                      <span className="text-[10px] text-gray-500 font-bold">RUN</span>
+                                  </div>
+                              </div>
+
+                              <div className="text-center text-xs text-gray-500">
+                                  {t('wallet.swap.rate_used')}: <span className="text-white">1 GOV = {govToRunRate} RUN</span>
+                              </div>
+
+                              <div className="flex gap-3">
+                                  <button onClick={closeSwapModal} className="flex-1 py-3 bg-gray-700 hover:bg-gray-600 rounded-xl font-bold text-white transition-colors">{t('market.cancel')}</button>
+                                  <button onClick={confirmSwap} className="flex-1 py-3 bg-emerald-500 hover:bg-emerald-400 rounded-xl font-bold text-black transition-colors shadow-lg shadow-emerald-500/20">{t('market.confirm')}</button>
+                              </div>
+                          </>
+                      ) : (
+                          <>
+                              <div className="flex flex-col items-center justify-center py-4">
+                                  <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center border-2 border-emerald-500 mb-4 animate-bounce-slow">
+                                      <CheckCircle size={32} className="text-emerald-400" />
+                                  </div>
+                                  <p className="text-white font-bold text-lg mb-1">{t('wallet.swap.success_msg')}</p>
+                                  <p className="text-gray-400 text-xs">Transaction ID: 0x{Date.now().toString(16)}</p>
+                              </div>
+                              <button onClick={closeSwapModal} className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 rounded-xl font-bold text-white transition-colors">{t('wallet.swap.close_btn')}</button>
+                          </>
+                      )}
+                  </div>
+              </div>
+          </div>
       )}
 
     </div>

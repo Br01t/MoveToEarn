@@ -251,6 +251,12 @@ export const translations = {
     "wallet.swap.gov_input": "Convert GOV",
     "wallet.swap.run_output": "Receive RUN",
     "wallet.swap.btn": "Swap GOV to RUN",
+    "wallet.swap.confirm_title": "Confirm Liquidity Swap",
+    "wallet.swap.confirm_msg": "You are converting Governance Power into Utility Tokens.",
+    "wallet.swap.rate_used": "Current Rate",
+    "wallet.swap.success_title": "Swap Successful",
+    "wallet.swap.success_msg": "RUN tokens have been added to your balance.",
+    "wallet.swap.close_btn": "Done",
     
     // Admin Economy
     "admin.eco.swap_config": "Swap Configuration",
@@ -589,7 +595,7 @@ export const translations = {
     "miss.filter.all": "TUTTE",
     "miss.filter.common": "COMUNI",
     "miss.filter.rare": "RARE",
-    "miss.filter.epic": "EPICHE",
+    "miss.filter.epic": "EPIC",
     "miss.filter.legendary": "LEGGENDARIE",
     "miss.no_found": "Nessuna missione trovata.",
     "miss.clear_filter": "Pulisci filtri",
@@ -650,6 +656,12 @@ export const translations = {
     "wallet.swap.gov_input": "Converti GOV",
     "wallet.swap.run_output": "Ricevi RUN",
     "wallet.swap.btn": "Scambia GOV in RUN",
+    "wallet.swap.confirm_title": "Conferma Swap",
+    "wallet.swap.confirm_msg": "Stai convertendo Potere di Governance in Token Utility.",
+    "wallet.swap.rate_used": "Tasso Attuale",
+    "wallet.swap.success_title": "Scambio Riuscito",
+    "wallet.swap.success_msg": "I token RUN sono stati aggiunti al tuo saldo.",
+    "wallet.swap.close_btn": "Fatto",
 
     // Admin Economy
     "admin.eco.swap_config": "Configurazione Swap",
