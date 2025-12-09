@@ -11,7 +11,8 @@ export interface Mission {
   id: string;
   title: string;
   description: string;
-  rewardRun: number; // Changed from rewardGov
+  rewardRun: number; 
+  rewardGov?: number; // Added optional GOV reward
   rarity: Rarity;
   
   // Legacy System (Preserved but optional)
@@ -30,7 +31,8 @@ export interface Badge {
   description: string;
   icon: string; // Lucide icon name
   rarity: Rarity;
-  rewardRun?: number; // Added rewardRun
+  rewardRun?: number;
+  rewardGov?: number; // Added optional GOV reward
 
   // Legacy System (Preserved but optional)
   conditionType?: 'TOTAL_KM' | 'OWN_ZONES';

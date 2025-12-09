@@ -161,11 +161,11 @@ const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate }) => {
                              </div>
                              <div className="bg-purple-900/20 p-3 rounded-lg border border-purple-500/30 flex justify-between items-center">
                                  <span className="text-xs text-purple-300 font-bold uppercase">{t('rules.tier.epic')}</span>
-                                 <span className="text-xs font-mono text-purple-400">+600-1000 RUN</span>
+                                 <span className="text-xs font-mono text-purple-400">+600 RUN + GOV Bonus</span>
                              </div>
                              <div className="bg-yellow-900/20 p-3 rounded-lg border border-yellow-500/30 flex justify-between items-center">
                                  <span className="text-xs text-yellow-300 font-bold uppercase">{t('rules.tier.legendary')}</span>
-                                 <span className="text-xs font-mono text-yellow-400">+1500-5000 RUN</span>
+                                 <span className="text-xs font-mono text-yellow-400">+1500 RUN + High GOV</span>
                              </div>
                          </div>
                      </div>

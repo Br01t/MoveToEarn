@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Mission, Badge, User, Zone, Rarity, RunEntry } from '../types';
 import { Target, Award, CheckCircle, Lock, Flag, Crown, Star, Hexagon, Filter, Zap, Mountain, Globe, Home, Landmark, Swords, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users, Search } from 'lucide-react';
 import Pagination from './Pagination';
@@ -16,7 +16,7 @@ const MISSIONS_PER_PAGE = 8;
 const BADGES_PER_PAGE = 12;
 
 const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [missionPage, setMissionPage] = useState(1);
   const [badgePage, setBadgePage] = useState(1);
   const [missionFilter, setMissionFilter] = useState<'ALL' | Rarity>('ALL');
@@ -27,16 +27,57 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
 
   const ownedZonesCount = zones.filter(z => z.ownerId === user.id).length;
 
-  // Filter Logic - Missions
-  const filteredMissions = missions.filter(m => {
+  // --- LOCALIZATION LOGIC ---
+  // We process the raw missions/badges to inject translated titles/descriptions 
+  // BEFORE filtering, so the search works on the current language.
+  
+  const localizedMissions = useMemo(() => {
+      return missions.map(m => {
+          // Construct Translation Keys based on logicId (e.g., "mission.1.title")
+          // Fallback to ID if logicId is missing
+          const id = m.logicId || m.id; 
+          const titleKey = `mission.${id}.title`;
+          const descKey = `mission.${id}.desc`;
+          
+          const tTitle = t(titleKey);
+          const tDesc = t(descKey);
+
+          // If translation returns the key itself, it means no translation exists -> use default
+          return {
+              ...m,
+              title: tTitle !== titleKey ? tTitle : m.title,
+              description: tDesc !== descKey ? tDesc : m.description
+          };
+      });
+  }, [missions, language, t]);
+
+  const localizedBadges = useMemo(() => {
+      return badges.map(b => {
+          const id = b.logicId || b.id;
+          const titleKey = `badge.${id}.name`;
+          const descKey = `badge.${id}.desc`;
+          
+          const tName = t(titleKey);
+          const tDesc = t(descKey);
+
+          return {
+              ...b,
+              name: tName !== titleKey ? tName : b.name,
+              description: tDesc !== descKey ? tDesc : b.description
+          };
+      });
+  }, [badges, language, t]);
+
+  // Filter Logic - Missions (Using Localized Data)
+  const filteredMissions = localizedMissions.filter(m => {
       const matchesRarity = missionFilter === 'ALL' || m.rarity === missionFilter;
       const matchesSearch = m.title.toLowerCase().includes(missionSearch.toLowerCase()) || 
                             m.description.toLowerCase().includes(missionSearch.toLowerCase());
       return matchesRarity && matchesSearch;
   });
 
-  // Filter Logic - Badges
-  const filteredBadges = badges.filter(b => {
+  // Filter Logic - Badges (Using Localized Data)
+  const filteredBadges = localizedBadges.filter(b => {
       return b.name.toLowerCase().includes(badgeSearch.toLowerCase()) || 
              b.description.toLowerCase().includes(badgeSearch.toLowerCase());
   });
@@ -381,9 +422,14 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
                             </div>
 
                             {/* Footer: Reward */}
-                            <div className={`flex justify-between items-center pt-2 border-t ${isCompleted ? 'border-gray-700/30 opacity-70' : 'border-gray-700/50'}`}>
+                            <div className={`flex flex-wrap justify-between items-center pt-2 border-t gap-1 ${isCompleted ? 'border-gray-700/30 opacity-70' : 'border-gray-700/50'}`}>
                                 <span className="text-[10px] text-gray-500 font-bold uppercase">{t('miss.reward')}</span>
-                                <span className={`${isCompleted ? style.text : 'text-emerald-400'} text-xs font-bold font-mono`}>+{mission.rewardRun} RUN</span>
+                                <div className="flex items-center gap-2">
+                                    <span className={`${isCompleted ? style.text : 'text-emerald-400'} text-xs font-bold font-mono`}>+{mission.rewardRun} RUN</span>
+                                    {mission.rewardGov && mission.rewardGov > 0 && (
+                                        <span className={`${isCompleted ? style.text : 'text-cyan-400'} text-xs font-bold font-mono border border-cyan-500/30 px-1 rounded`}>+{mission.rewardGov} GOV</span>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     );
@@ -429,7 +475,8 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
                 {currentBadges.map(badge => {
                     const isUnlocked = user.earnedBadgeIds.includes(badge.id);
                     const style = getRarityStyles(badge.rarity);
-                    const reward = badge.rewardRun || 0;
+                    const rewardRun = badge.rewardRun || 0;
+                    const rewardGov = badge.rewardGov || 0;
                     
                     return (
                         <div key={badge.id} className={`aspect-square rounded-xl flex flex-col items-center justify-between p-3 text-center border transition-all relative overflow-hidden group ${isUnlocked ? `${style.bg} ${style.border}` : 'bg-gray-900 border-gray-800 opacity-60 grayscale'}`}>
@@ -457,7 +504,8 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
                                 {isUnlocked ? (
                                     <div className="flex flex-col items-center">
                                         <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded ${style.badge}`}>{badge.rarity}</span>
-                                        {reward > 0 && <span className="text-[8px] text-emerald-400 font-mono mt-0.5">+{reward} RUN</span>}
+                                        {rewardRun > 0 && <span className="text-[8px] text-emerald-400 font-mono mt-0.5">+{rewardRun} RUN</span>}
+                                        {rewardGov > 0 && <span className="text-[8px] text-cyan-400 font-mono">+{rewardGov} GOV</span>}
                                     </div>
                                 ) : (
                                     <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-gray-800 text-gray-600">{t('miss.locked')}</span>

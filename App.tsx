@@ -231,8 +231,17 @@ const AppContent: React.FC = () => {
                    <CheckCircle size={12}/> {achievementSystem.claimSummary.count} {t('ach.unlocked')}
                </p>
                
-               <div className="mt-2 text-3xl font-mono font-black text-emerald-400 drop-shadow-lg flex items-center gap-2">
-                   +{achievementSystem.claimSummary.totalRun} RUN
+               <div className="flex flex-col items-center">
+                   {achievementSystem.claimSummary.totalRun > 0 && (
+                       <div className="mt-2 text-3xl font-mono font-black text-emerald-400 drop-shadow-lg flex items-center gap-2">
+                           +{achievementSystem.claimSummary.totalRun} RUN
+                       </div>
+                   )}
+                   {achievementSystem.claimSummary.totalGov > 0 && (
+                       <div className="mt-1 text-xl font-mono font-black text-cyan-400 drop-shadow-lg flex items-center gap-2">
+                           +{achievementSystem.claimSummary.totalGov} GOV
+                       </div>
+                   )}
                </div>
            </div>
         </div>

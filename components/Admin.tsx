@@ -11,7 +11,7 @@ interface AdminProps {
   badges: Badge[];
   zones: Zone[];
   govToRunRate: number;
-  bugReports?: BugReport[]; // Optional to support older props
+  bugReports?: BugReport[]; 
   onAddItem: (item: Item) => void;
   onUpdateItem: (item: Item) => void;
   onRemoveItem: (id: string) => void;
@@ -122,7 +122,7 @@ const Admin: React.FC<AdminProps> = ({
 
   // --- MISSION FORM ---
   const [missionFormData, setMissionFormData] = useState({
-      title: '', description: '', rewardRun: '100', conditionType: 'TOTAL_KM', conditionValue: '50', rarity: 'COMMON'
+      title: '', description: '', rewardRun: '100', rewardGov: '0', conditionType: 'TOTAL_KM', conditionValue: '50', rarity: 'COMMON'
   });
   const [editingMissionId, setEditingMissionId] = useState<string | null>(null);
 
@@ -132,6 +132,7 @@ const Admin: React.FC<AdminProps> = ({
           title: m.title,
           description: m.description,
           rewardRun: m.rewardRun.toString(),
+          rewardGov: (m.rewardGov || 0).toString(),
           conditionType: m.conditionType || 'TOTAL_KM',
           conditionValue: (m.conditionValue || 0).toString(),
           rarity: m.rarity
@@ -140,7 +141,7 @@ const Admin: React.FC<AdminProps> = ({
 
   const cancelEditMission = () => {
       setEditingMissionId(null);
-      setMissionFormData({ title: '', description: '', rewardRun: '100', conditionType: 'TOTAL_KM', conditionValue: '50', rarity: 'COMMON' });
+      setMissionFormData({ title: '', description: '', rewardRun: '100', rewardGov: '0', conditionType: 'TOTAL_KM', conditionValue: '50', rarity: 'COMMON' });
   };
 
   const handleSubmitMission = (e: React.FormEvent) => {
@@ -150,6 +151,7 @@ const Admin: React.FC<AdminProps> = ({
           title: missionFormData.title, 
           description: missionFormData.description,
           rewardRun: parseInt(missionFormData.rewardRun),
+          rewardGov: parseInt(missionFormData.rewardGov),
           conditionType: missionFormData.conditionType as 'TOTAL_KM' | 'OWN_ZONES',
           conditionValue: parseInt(missionFormData.conditionValue),
           rarity: missionFormData.rarity as Rarity
@@ -172,7 +174,7 @@ const Admin: React.FC<AdminProps> = ({
 
   // --- BADGE FORM ---
   const [badgeFormData, setBadgeFormData] = useState({
-      name: '', description: '', icon: 'Award', conditionType: 'TOTAL_KM', conditionValue: '100', rarity: 'COMMON', rewardRun: '50'
+      name: '', description: '', icon: 'Award', conditionType: 'TOTAL_KM', conditionValue: '100', rarity: 'COMMON', rewardRun: '50', rewardGov: '0'
   });
   const [editingBadgeId, setEditingBadgeId] = useState<string | null>(null);
 
@@ -185,13 +187,14 @@ const Admin: React.FC<AdminProps> = ({
           conditionType: b.conditionType || 'TOTAL_KM',
           conditionValue: (b.conditionValue || 0).toString(),
           rarity: b.rarity,
-          rewardRun: (b.rewardRun || 0).toString()
+          rewardRun: (b.rewardRun || 0).toString(),
+          rewardGov: (b.rewardGov || 0).toString()
       });
   };
 
   const cancelEditBadge = () => {
       setEditingBadgeId(null);
-      setBadgeFormData({ name: '', description: '', icon: 'Award', conditionType: 'TOTAL_KM', conditionValue: '100', rarity: 'COMMON', rewardRun: '50' });
+      setBadgeFormData({ name: '', description: '', icon: 'Award', conditionType: 'TOTAL_KM', conditionValue: '100', rarity: 'COMMON', rewardRun: '50', rewardGov: '0' });
   };
 
   const handleSubmitBadge = (e: React.FormEvent) => {
@@ -204,7 +207,8 @@ const Admin: React.FC<AdminProps> = ({
           conditionType: badgeFormData.conditionType as 'TOTAL_KM' | 'OWN_ZONES',
           conditionValue: parseInt(badgeFormData.conditionValue),
           rarity: badgeFormData.rarity as Rarity,
-          rewardRun: parseInt(badgeFormData.rewardRun)
+          rewardRun: parseInt(badgeFormData.rewardRun),
+          rewardGov: parseInt(badgeFormData.rewardGov)
       };
 
       if (editingBadgeId) {
@@ -387,7 +391,12 @@ const Admin: React.FC<AdminProps> = ({
                         </div>
                         <div className="grid grid-cols-2 gap-2">
                             <input type="number" placeholder="Value" value={missionFormData.conditionValue} onChange={e => setMissionFormData({...missionFormData, conditionValue: e.target.value})} className="bg-gray-900 border border-gray-600 rounded p-2 text-white" />
-                            <input type="number" placeholder="Reward RUN" value={missionFormData.rewardRun} onChange={e => setMissionFormData({...missionFormData, rewardRun: e.target.value})} className="bg-gray-900 border border-gray-600 rounded p-2 text-white" />
+                            <div>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <input type="number" placeholder="RUN" value={missionFormData.rewardRun} onChange={e => setMissionFormData({...missionFormData, rewardRun: e.target.value})} className="bg-gray-900 border border-emerald-500 rounded p-2 text-white" />
+                                    <input type="number" placeholder="GOV" value={missionFormData.rewardGov} onChange={e => setMissionFormData({...missionFormData, rewardGov: e.target.value})} className="bg-gray-900 border border-cyan-500 rounded p-2 text-white" />
+                                </div>
+                            </div>
                         </div>
                         <div className="flex gap-2">
                              {editingMissionId && <button type="button" onClick={cancelEditMission} className="flex-1 py-2 bg-gray-700 text-white rounded font-bold">Cancel</button>}
@@ -445,7 +454,10 @@ const Admin: React.FC<AdminProps> = ({
                             <input type="number" placeholder="Value" value={badgeFormData.conditionValue} onChange={e => setBadgeFormData({...badgeFormData, conditionValue: e.target.value})} className="bg-gray-900 border border-gray-600 rounded p-2 text-white" />
                         </div>
                         <div className="grid grid-cols-2 gap-2">
-                            <input type="number" placeholder="Reward RUN" value={badgeFormData.rewardRun} onChange={e => setBadgeFormData({...badgeFormData, rewardRun: e.target.value})} className="bg-gray-900 border border-gray-600 rounded p-2 text-white col-span-2" />
+                            <div className="grid grid-cols-2 gap-2 col-span-2">
+                                <input type="number" placeholder="RUN" value={badgeFormData.rewardRun} onChange={e => setBadgeFormData({...badgeFormData, rewardRun: e.target.value})} className="bg-gray-900 border border-emerald-500 rounded p-2 text-white" />
+                                <input type="number" placeholder="GOV" value={badgeFormData.rewardGov} onChange={e => setBadgeFormData({...badgeFormData, rewardGov: e.target.value})} className="bg-gray-900 border border-cyan-500 rounded p-2 text-white" />
+                            </div>
                         </div>
                         <div className="flex gap-2">
                             {editingBadgeId && <button type="button" onClick={cancelEditBadge} className="flex-1 py-2 bg-gray-700 text-white rounded font-bold">Cancel</button>}
