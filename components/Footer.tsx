@@ -7,9 +7,10 @@ import { useLanguage } from '../LanguageContext';
 interface FooterProps {
     onNavigate: (view: ViewState) => void;
     currentView: ViewState;
+    isAuthenticated: boolean;
 }
 
-const Footer: React.FC<FooterProps> = ({ onNavigate, currentView }) => {
+const Footer: React.FC<FooterProps> = ({ onNavigate, currentView, isAuthenticated }) => {
   const { t } = useLanguage();
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -37,6 +38,7 @@ const Footer: React.FC<FooterProps> = ({ onNavigate, currentView }) => {
                         <button onClick={() => onNavigate('PRIVACY')} className="hover:text-emerald-400 transition-colors">{t('footer.privacy')}</button>
                         <button onClick={() => onNavigate('TERMS')} className="hover:text-emerald-400 transition-colors">{t('footer.terms')}</button>
                         <button onClick={() => onNavigate('COMMUNITY')} className="hover:text-emerald-400 transition-colors">{t('footer.community')}</button>
+                        <button onClick={() => onNavigate('REPORT_BUG')} className="hover:text-red-400 transition-colors">{t('footer.report_bug')}</button>
                      </div>
                   </div>
               </div>
@@ -78,6 +80,9 @@ const Footer: React.FC<FooterProps> = ({ onNavigate, currentView }) => {
           <button onClick={() => onNavigate('PRIVACY')} className="hover:text-emerald-400 transition-colors">{t('footer.privacy')}</button>
           <button onClick={() => onNavigate('TERMS')} className="hover:text-emerald-400 transition-colors">{t('footer.terms')}</button>
           <button onClick={() => onNavigate('COMMUNITY')} className="hover:text-emerald-400 transition-colors">{t('footer.community')}</button>
+          {isAuthenticated && (
+            <button onClick={() => onNavigate('REPORT_BUG')} className="hover:text-red-400 transition-colors">{t('footer.report_bug')}</button>
+          )}
         </div>
       </div>
     </footer>

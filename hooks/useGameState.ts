@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { User, Zone, Item, Mission, Badge, InventoryItem } from '../types';
+import { User, Zone, Item, Mission, Badge, InventoryItem, BugReport } from '../types';
 import { MOCK_ZONES, INITIAL_USER, MOCK_USERS, MOCK_ITEMS, MOCK_MISSIONS, MOCK_BADGES, PREMIUM_COST, CONQUEST_REWARD_GOV } from '../constants';
 
 export const useGameState = () => {
@@ -11,6 +11,7 @@ export const useGameState = () => {
   const [marketItems, setMarketItems] = useState<Item[]>(MOCK_ITEMS);
   const [missions, setMissions] = useState<Mission[]>(MOCK_MISSIONS);
   const [badges, setBadges] = useState<Badge[]>(MOCK_BADGES);
+  const [bugReports, setBugReports] = useState<BugReport[]>([]);
   
   // --- CONFIG STATE ---
   const [govToRunRate, setGovToRunRate] = useState<number>(100);
@@ -107,6 +108,21 @@ export const useGameState = () => {
       setUser((prev) => (prev ? { ...prev, govBalance: prev.govBalance - PREMIUM_COST, isPremium: true } : null));
   };
 
+  // Bug Reporting
+  const reportBug = (description: string, screenshot?: string) => {
+      if (!user) return;
+      const newReport: BugReport = {
+          id: `bug_${Date.now()}`,
+          userId: user.id,
+          userName: user.name,
+          description,
+          screenshot,
+          timestamp: Date.now(),
+          status: 'OPEN'
+      };
+      setBugReports(prev => [newReport, ...prev]);
+  };
+
   // --- BACKGROUND TASKS (Cron Jobs) ---
   
   // Auto Interest Yield
@@ -131,6 +147,7 @@ export const useGameState = () => {
     missions,
     badges,
     govToRunRate,
+    bugReports,
     // Setters (for Admin or internal use)
     setUser,
     setZones,
@@ -139,6 +156,7 @@ export const useGameState = () => {
     setBadges,
     setUsersMock,
     setGovToRunRate,
+    setBugReports,
     // Actions
     login,
     logout,
@@ -148,6 +166,7 @@ export const useGameState = () => {
     swapGovToRun,
     buyFiatGov,
     claimZone,
-    upgradePremium
+    upgradePremium,
+    reportBug
   };
 };

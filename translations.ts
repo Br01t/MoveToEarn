@@ -75,8 +75,16 @@ export const translations = {
     "sync.error_duplicate": "Duplicate run detected. This activity has already been uploaded.",
     "sync.error.title": "Validation Failed",
     "sync.error.duplicate_desc": "All uploaded tracks were identified as duplicates. You cannot upload the same activity twice.",
-    "sync.error.no_data_desc": "No valid GPS data found in the files. Please check the file format or speed limits.",
+    "sync.error.no_data_desc": "No valid GPS data found in the files. Please check the file format.",
     "sync.retry_btn": "Try Again",
+    "sync.alert.no_file": "Please select at least one GPX file.",
+    
+    // Specific Failure Details
+    "sync.error.speed": "Speed Limit Exceeded. Are you using a vehicle?",
+    "sync.error.duration": "Activity too short. Runs must be > 1 minute.",
+    "sync.error.distance": "Distance is 0km. No movement detected.",
+    "sync.error.timestamp": "Missing timestamp data in GPX file.",
+    "sync.error.points": "Not enough data points in track.",
 
     // Zone Discovery Modal
     "discovery.title": "New Zone Discovered!",
@@ -102,6 +110,7 @@ export const translations = {
     "run_summary.reinforced": "Zone Reinforced!",
     "run_summary.reinforced_desc": "You ran in your own territory. Defense & Yield increased.",
     "run_summary.rewards": "Rewards Earned",
+    "run_summary.collect_btn": "Collect Rewards",
 
     // Marketplace
     "market.title": "Black Market",
@@ -247,6 +256,7 @@ export const translations = {
     // Swap Specific
     "wallet.swap.title": "Liquidity Swap",
     "wallet.swap.desc": "Convert Governance to Utility tokens.",
+    "wallet.swap.info_tooltip": "Swap GOV for RUN to immediately get liquid tokens for minting zones, buying items, or attacking. Useful if you are low on RUN but rich in GOV.",
     "wallet.swap.rate_label": "Exchange Rate",
     "wallet.swap.gov_input": "Convert GOV",
     "wallet.swap.run_output": "Receive RUN",
@@ -262,6 +272,24 @@ export const translations = {
     "admin.eco.swap_config": "Swap Configuration",
     "admin.eco.rate_label": "RUN per 1 GOV",
     "admin.eco.rate_help": "Controls the output of the Wallet Swap feature.",
+    "admin.report.title": "Bug Reports",
+    "admin.report.user": "Reporter",
+    "admin.report.desc": "Description",
+    "admin.report.date": "Date",
+    "admin.report.screenshot": "Screenshot",
+    "admin.report.status": "Status",
+    "admin.report.no_reports": "No bug reports submitted yet.",
+
+    // Report Bug Page
+    "report.title": "Report Bug",
+    "report.subtitle": "Found a glitch in the matrix? Let us know.",
+    "report.desc_label": "Description",
+    "report.desc_placeholder": "Describe what happened...",
+    "report.screenshot_label": "Screenshot (Optional)",
+    "report.submit_btn": "Submit Report",
+    "report.success_title": "Report Sent",
+    "report.success_desc": "Thank you for helping us improve ZoneRun.",
+    "report.error_desc": "Please provide a description.",
 
     // Alerts
     "alert.insufficient_run": "Insufficient RUN balance!",
@@ -287,6 +315,7 @@ export const translations = {
     "footer.privacy": "Privacy Policy",
     "footer.terms": "Terms of Service",
     "footer.community": "Community",
+    "footer.report_bug": "Report Bug",
     "footer.legal_info": "Legal & Info",
     "footer.subtitle": "Run. Conquer. Govern.",
 
@@ -482,6 +511,14 @@ export const translations = {
     "sync.error.duplicate_desc": "Tutte le tracce caricate sono state identificate come duplicati. Non puoi caricare la stessa attività due volte.",
     "sync.error.no_data_desc": "Nessun dato GPS valido trovato nei file. Controlla il formato del file o i limiti di velocità.",
     "sync.retry_btn": "Riprova",
+    "sync.alert.no_file": "Per favore seleziona almeno un file GPX.",
+
+    // Specific Failure Details
+    "sync.error.speed": "Limite di velocità superato. Stai usando un veicolo?",
+    "sync.error.duration": "Attività troppo breve. La corsa deve durare > 1 minuto.",
+    "sync.error.distance": "Distanza 0km. Nessun movimento rilevato.",
+    "sync.error.timestamp": "Dati temporali mancanti nel file GPX.",
+    "sync.error.points": "Punti GPS insufficienti nella traccia.",
 
     // Zone Discovery Modal
     "discovery.title": "Nuova Zona Scoperta!",
@@ -507,6 +544,7 @@ export const translations = {
     "run_summary.reinforced": "Zona Rinforzata!",
     "run_summary.reinforced_desc": "Hai corso nel tuo territorio. Difesa e Rendita aumentate.",
     "run_summary.rewards": "Premi Guadagnati",
+    "run_summary.collect_btn": "Riscatta Premi",
 
     // Marketplace
     "market.title": "Mercato Nero",
@@ -652,6 +690,7 @@ export const translations = {
     // Swap Specific
     "wallet.swap.title": "Liquidity Swap",
     "wallet.swap.desc": "Converti token Governance in Utility.",
+    "wallet.swap.info_tooltip": "Scambia GOV in RUN per ottenere subito token liquidi per coniare zone, comprare oggetti o attaccare. Utile se sei a corto di RUN ma ricco di GOV.",
     "wallet.swap.rate_label": "Tasso di Cambio",
     "wallet.swap.gov_input": "Converti GOV",
     "wallet.swap.run_output": "Ricevi RUN",
@@ -667,6 +706,24 @@ export const translations = {
     "admin.eco.swap_config": "Configurazione Swap",
     "admin.eco.rate_label": "RUN per 1 GOV",
     "admin.eco.rate_help": "Controlla l'output della funzione Swap nel Wallet.",
+    "admin.report.title": "Segnalazioni Bug",
+    "admin.report.user": "Utente",
+    "admin.report.desc": "Descrizione",
+    "admin.report.date": "Data",
+    "admin.report.screenshot": "Screenshot",
+    "admin.report.status": "Stato",
+    "admin.report.no_reports": "Nessuna segnalazione ricevuta.",
+
+    // Report Bug Page
+    "report.title": "Segnala Bug",
+    "report.subtitle": "Trovato un errore nel sistema? Facci sapere.",
+    "report.desc_label": "Descrizione",
+    "report.desc_placeholder": "Descrivi cosa è successo...",
+    "report.screenshot_label": "Screenshot (Opzionale)",
+    "report.submit_btn": "Invia Segnalazione",
+    "report.success_title": "Segnalazione Inviata",
+    "report.success_desc": "Grazie per aiutarci a migliorare ZoneRun.",
+    "report.error_desc": "Per favore fornisci una descrizione.",
 
     // Alerts
     "alert.insufficient_run": "Saldo RUN insufficiente!",
@@ -692,6 +749,7 @@ export const translations = {
     "footer.privacy": "Privacy Policy",
     "footer.terms": "Termini di Servizio",
     "footer.community": "Community",
+    "footer.report_bug": "Segnala Bug",
     "footer.legal_info": "Info Legali",
     "footer.subtitle": "Run. Conquer. Govern.",
 

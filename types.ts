@@ -1,5 +1,5 @@
 
-export type ViewState = 'LANDING' | 'DASHBOARD' | 'MARKETPLACE' | 'INVENTORY' | 'LEADERBOARD' | 'WALLET' | 'PROFILE' | 'MISSIONS' | 'RULES' | 'HOW_TO_PLAY' | 'PRIVACY' | 'TERMS' | 'COMMUNITY' | 'ADMIN';
+export type ViewState = 'LANDING' | 'DASHBOARD' | 'MARKETPLACE' | 'INVENTORY' | 'LEADERBOARD' | 'WALLET' | 'PROFILE' | 'MISSIONS' | 'RULES' | 'HOW_TO_PLAY' | 'PRIVACY' | 'TERMS' | 'COMMUNITY' | 'ADMIN' | 'REPORT_BUG';
 
 export type Rarity = 'COMMON' | 'RARE' | 'EPIC' | 'LEGENDARY';
 
@@ -110,6 +110,16 @@ export interface LeaderboardEntry {
   zonesOwned: number;
 }
 
+export interface BugReport {
+  id: string;
+  userId: string;
+  userName: string;
+  description: string;
+  screenshot?: string; // Base64 string
+  timestamp: number;
+  status: 'OPEN' | 'RESOLVED';
+}
+
 export interface GameState {
   currentUser: User | null;
   zones: Zone[];
@@ -118,6 +128,7 @@ export interface GameState {
   missions: Mission[];
   badges: Badge[];
   marketTaxRate: number;
+  bugReports: BugReport[];
 }
 
 // Data passed from Dashboard to App during Sync
