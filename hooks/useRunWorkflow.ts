@@ -176,7 +176,7 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones }: RunWorkflowPr
       const hexPos = calculateHexPosition(referenceZone, pendingZone.lat, pendingZone.lng, "XX", currentAllZones);
 
       const newZone: Zone = {
-          id: `z_${Date.now()}_${pendingZone.type}`,
+          id: `z_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           x: hexPos.x,
           y: hexPos.y,
           lat: pendingZone.lat,
@@ -184,7 +184,10 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones }: RunWorkflowPr
           ownerId: user.id,
           name: finalName,
           defenseLevel: 1,
-          recordKm: pendingRunData.totalKm, 
+          // CRITICAL FIX: Initialize recordKm to 0. 
+          // The finalizeRun -> processRunRewards logic will add the split mileage to this zone shortly.
+          // If we set totalKm here, it would double count or incorrectly assign the full run to one zone.
+          recordKm: 0, 
           interestRate: 2.0
       };
 
