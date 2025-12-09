@@ -122,6 +122,21 @@ export interface BugReport {
   status: 'OPEN' | 'RESOLVED';
 }
 
+export type LeaderboardMetric = 'TOTAL_KM' | 'OWNED_ZONES' | 'RUN_BALANCE' | 'GOV_BALANCE' | 'UNIQUE_ZONES';
+
+export interface LeaderboardConfig {
+  id: string;
+  title: string;
+  description: string;
+  metric: LeaderboardMetric;
+  type: 'PERMANENT' | 'TEMPORARY';
+  startTime?: number;
+  endTime?: number;
+  rewardPool?: number;
+  rewardCurrency?: 'RUN' | 'GOV';
+  lastResetTimestamp?: number;
+}
+
 export interface GameState {
   currentUser: User | null;
   zones: Zone[];

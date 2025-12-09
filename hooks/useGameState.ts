@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from 'react';
-import { User, Zone, Item, Mission, Badge, InventoryItem, BugReport } from '../types';
-import { MOCK_ZONES, INITIAL_USER, MOCK_USERS, MOCK_ITEMS, MOCK_MISSIONS, MOCK_BADGES, PREMIUM_COST, CONQUEST_REWARD_GOV } from '../constants';
+import { User, Zone, Item, Mission, Badge, InventoryItem, BugReport, LeaderboardConfig } from '../types';
+import { MOCK_ZONES, INITIAL_USER, MOCK_USERS, MOCK_ITEMS, MOCK_MISSIONS, MOCK_BADGES, PREMIUM_COST, CONQUEST_REWARD_GOV, DEFAULT_LEADERBOARDS } from '../constants';
 
 export const useGameState = () => {
   // --- DATABASE STATE ---
@@ -12,6 +11,7 @@ export const useGameState = () => {
   const [missions, setMissions] = useState<Mission[]>(MOCK_MISSIONS);
   const [badges, setBadges] = useState<Badge[]>(MOCK_BADGES);
   const [bugReports, setBugReports] = useState<BugReport[]>([]);
+  const [leaderboards, setLeaderboards] = useState<LeaderboardConfig[]>(DEFAULT_LEADERBOARDS);
   
   // --- CONFIG STATE ---
   const [govToRunRate, setGovToRunRate] = useState<number>(100);
@@ -123,6 +123,33 @@ export const useGameState = () => {
       setBugReports(prev => [newReport, ...prev]);
   };
 
+  // Leaderboard Actions
+  const addLeaderboard = (config: LeaderboardConfig) => {
+      setLeaderboards(prev => [...prev, config]);
+  };
+
+  const updateLeaderboard = (updatedConfig: LeaderboardConfig) => {
+      setLeaderboards(prev => prev.map(lb => lb.id === updatedConfig.id ? updatedConfig : lb));
+  };
+
+  const deleteLeaderboard = (id: string) => {
+      setLeaderboards(prev => prev.filter(l => l.id !== id));
+  };
+
+  // Resets a leaderboard by setting the start/reset timestamp to NOW.
+  // This does NOT delete user data, but forces the leaderboard to calculate stats from this point forward.
+  const resetLeaderboard = (id: string) => {
+      setLeaderboards(prev => prev.map(lb => {
+          if (lb.id !== id) return lb;
+          return {
+              ...lb,
+              lastResetTimestamp: Date.now(),
+              // If it's a temporary board, we might also want to reset the startTime to now
+              startTime: lb.type === 'TEMPORARY' ? Date.now() : lb.startTime
+          };
+      }));
+  };
+
   // --- BACKGROUND TASKS (Cron Jobs) ---
   
   // Auto Interest Yield
@@ -148,7 +175,8 @@ export const useGameState = () => {
     badges,
     govToRunRate,
     bugReports,
-    // Setters (for Admin or internal use)
+    leaderboards,
+    // Setters
     setUser,
     setZones,
     setMarketItems,
@@ -167,6 +195,10 @@ export const useGameState = () => {
     buyFiatGov,
     claimZone,
     upgradePremium,
-    reportBug
+    reportBug,
+    addLeaderboard,
+    updateLeaderboard,
+    deleteLeaderboard,
+    resetLeaderboard
   };
 };

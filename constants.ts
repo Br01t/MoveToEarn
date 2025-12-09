@@ -1,10 +1,17 @@
 
-import { Item, User, Zone, Mission, Badge, AchievementCategory, Difficulty, Rarity } from './types';
+import { Item, User, Zone, Mission, Badge, AchievementCategory, Difficulty, Rarity, LeaderboardConfig } from './types';
 
 export const MINT_COST = 50; 
 export const MINT_REWARD_GOV = 5; 
 export const CONQUEST_REWARD_GOV = 10; 
 export const PREMIUM_COST = 50; 
+
+export const DEFAULT_LEADERBOARDS: LeaderboardConfig[] = [
+    { id: 'global_km', title: 'Global Distance', description: 'All-time total kilometers run.', metric: 'TOTAL_KM', type: 'PERMANENT' },
+    { id: 'zone_owners', title: 'Land Barons', description: 'Most zones currently owned.', metric: 'OWNED_ZONES', type: 'PERMANENT' },
+    { id: 'rich_list_run', title: 'RUN Whales', description: 'Highest liquid RUN holdings.', metric: 'RUN_BALANCE', type: 'PERMANENT' },
+    { id: 'rich_list_gov', title: 'Governance Power', description: 'Highest staked GOV holdings.', metric: 'GOV_BALANCE', type: 'PERMANENT' }
+];
 
 export const MOCK_ITEMS: Item[] = [
   { id: 'shield_lvl1', name: 'Zone Shield v1', description: 'Protect a zone from being conquered for 24h.', priceRun: 250, quantity: 50, type: 'DEFENSE', effectValue: 1, icon: 'Shield' },
