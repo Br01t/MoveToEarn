@@ -1,7 +1,6 @@
-
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { User, Zone, Mission, Badge, Rarity, LevelConfig, LeaderboardConfig } from '../types';
-import { Save, User as UserIcon, Mail, Activity, Coins, Shield, Crown, Award, History, Clock, CheckCircle, TrendingUp, BarChart3, MapPin, Camera, X, Flag, Zap, Mountain, Globe, Home, Landmark, Swords, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users, Trophy } from 'lucide-react';
+import { Save, User as UserIcon, Mail, Activity, Coins, Shield, Crown, Award, History, Clock, CheckCircle, TrendingUp, BarChart3, MapPin, Camera, X, Flag, Zap, Mountain, Globe, Home, Landmark, Swords, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users, Trophy, Medal, Filter, ChevronUp, ChevronDown } from 'lucide-react';
 import { PREMIUM_COST } from '../constants';
 import Pagination from './Pagination';
 import { useLanguage } from '../LanguageContext';
@@ -11,16 +10,17 @@ interface ProfileProps {
   zones: Zone[];
   missions?: Mission[];
   badges?: Badge[];
-  levels?: LevelConfig[]; // Make levels optional to prevent break if not passed immediately, but generally required
+  levels?: LevelConfig[]; 
   leaderboards?: LeaderboardConfig[];
   allUsers?: Record<string, any>;
   onUpdateUser: (updates: Partial<User>) => void;
   onUpgradePremium: () => void;
 }
 
-const BADGES_PER_PAGE = 24; // Increased density
+const BADGES_PER_PAGE = 24;
 const RUNS_PER_PAGE = 8;
 const COMPLETED_MISSIONS_PER_PAGE = 5;
+const ZONES_PER_PAGE = 5;
 
 const Profile: React.FC<ProfileProps> = ({ 
     user, 
@@ -40,15 +40,30 @@ const Profile: React.FC<ProfileProps> = ({
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState<'ACHIEVEMENTS' | 'HISTORY'>('ACHIEVEMENTS');
   
+  // Pagination & Filtering States
   const [badgePage, setBadgePage] = useState(1);
+  const [badgeFilter, setBadgeFilter] = useState<'ALL' | Rarity>('ALL');
+
   const [runPage, setRunPage] = useState(1);
+  
   const [completedMissionPage, setCompletedMissionPage] = useState(1);
+  const [missionLogFilter, setMissionLogFilter] = useState<'ALL' | Rarity>('ALL');
+
+  const [zonePage, setZonePage] = useState(1);
+  // Sort State for Zone Stats
+  const [sortConfig, setSortConfig] = useState<{ key: 'rank' | 'count' | 'km'; direction: 'asc' | 'desc' }>({ key: 'km', direction: 'desc' });
 
   // --- DERIVED STATS ---
   const myZones = zones.filter(z => z.ownerId === user.id);
-  const earnedBadges = badges.filter(b => user.earnedBadgeIds.includes(b.id));
-  const completedMissions = missions.filter(m => user.completedMissionIds.includes(m.id));
   
+  // Base Lists
+  const allEarnedBadges = badges.filter(b => user.earnedBadgeIds.includes(b.id));
+  const allCompletedMissions = missions.filter(m => user.completedMissionIds.includes(m.id));
+  
+  // Filtered Lists
+  const filteredBadges = allEarnedBadges.filter(b => badgeFilter === 'ALL' || b.rarity === badgeFilter);
+  const filteredMissions = allCompletedMissions.filter(m => missionLogFilter === 'ALL' || m.rarity === missionLogFilter);
+
   const favoriteBadge = badges.find(b => b.id === user.favoriteBadgeId);
 
   // Running Stats
@@ -57,16 +72,66 @@ const Profile: React.FC<ProfileProps> = ({
   const maxDistance = totalRuns > 0 ? Math.max(...user.runHistory.map(r => r.km)).toFixed(2) : '0.00';
   
   // Economy Stats
-  const dailyYield = myZones.reduce((acc, z) => acc + (z.interestRate * 0.5 * 6 * 24), 0); // Approx calculation based on 10s loop
-  const totalNetWorth = user.runBalance + (user.govBalance * 10); // Fake valuation 1 GOV = 10 RUN
+  const dailyYield = myZones.reduce((acc, z) => acc + (z.interestRate * 0.5 * 6 * 24), 0); 
+  const totalNetWorth = user.runBalance + (user.govBalance * 10); 
+
+  // --- ZONE RANK CALCULATION HELPER ---
+  // Defined early so useMemo can access it
+  const getZoneRank = (zoneName: string, myKm: number) => {
+      const leaderboard = Object.values(allUsers).map((u: any) => {
+          if (u.id === user.id) return { id: u.id, km: myKm };
+          const seed = (u.id.charCodeAt(u.id.length - 1) + zoneName.length) % 100;
+          const fakeKm = (u.totalKm * (seed / 100)) / 5;
+          return { id: u.id, km: fakeKm };
+      });
+      
+      leaderboard.sort((a, b) => b.km - a.km);
+      return leaderboard.findIndex(u => u.id === user.id) + 1;
+  };
+
+  // --- ZONE AGGREGATION & SORTING LOGIC ---
+  const sortedZoneStats = useMemo(() => {
+      // 1. Aggregate
+      const stats: Record<string, { name: string; count: number; km: number }> = {};
+      user.runHistory.forEach(run => {
+          if (!stats[run.location]) {
+              stats[run.location] = { name: run.location, count: 0, km: 0 };
+          }
+          stats[run.location].count += 1;
+          stats[run.location].km += run.km;
+      });
+
+      // 2. Add Rank to objects
+      const dataWithRank = Object.values(stats).map(stat => ({
+          ...stat,
+          rank: getZoneRank(stat.name, stat.km)
+      }));
+
+      // 3. Sort
+      return dataWithRank.sort((a, b) => {
+          const modifier = sortConfig.direction === 'asc' ? 1 : -1;
+          if (a[sortConfig.key] < b[sortConfig.key]) return -1 * modifier;
+          if (a[sortConfig.key] > b[sortConfig.key]) return 1 * modifier;
+          return 0;
+      });
+  }, [user.runHistory, sortConfig, allUsers]);
+
+  const currentZoneStats = sortedZoneStats.slice((zonePage - 1) * ZONES_PER_PAGE, zonePage * ZONES_PER_PAGE);
+  const totalZonePages = Math.ceil(sortedZoneStats.length / ZONES_PER_PAGE);
+
+  const handleSort = (key: 'rank' | 'count' | 'km') => {
+      setSortConfig(current => ({
+          key,
+          direction: current.key === key && current.direction === 'desc' ? 'asc' : 'desc'
+      }));
+  };
 
   // Dynamic Level Calculation
   let currentLevel = 1;
-  let nextLevelKm = 50; // Default fallback
+  let nextLevelKm = 50; 
   let progressToNextLevel = 0;
 
   if (levels && levels.length > 0) {
-      // Find the highest level where user.totalKm >= minKm
       const currentLevelConfig = levels.slice().reverse().find(l => user.totalKm >= l.minKm) || levels[0];
       currentLevel = currentLevelConfig.level;
       
@@ -74,27 +139,23 @@ const Profile: React.FC<ProfileProps> = ({
       
       if (nextLevelConfig) {
           nextLevelKm = nextLevelConfig.minKm;
-          // Calculate progress percentage within the current level bracket
           const currentLevelMin = currentLevelConfig.minKm;
           const range = nextLevelConfig.minKm - currentLevelMin;
           const progress = user.totalKm - currentLevelMin;
           progressToNextLevel = Math.min(100, Math.max(0, (progress / range) * 100));
       } else {
-          // Max level reached
           nextLevelKm = user.totalKm;
           progressToNextLevel = 100;
       }
   } else {
-      // Fallback hardcoded logic if levels not loaded
       currentLevel = Math.floor(user.totalKm / 50) + 1;
       nextLevelKm = currentLevel * 50;
       progressToNextLevel = ((user.totalKm - ((currentLevel - 1) * 50)) / 50) * 100;
   }
 
-  // --- LEADERBOARD RANKING CALCULATION (Simplified version of Leaderboard.tsx logic) ---
+  // --- LEADERBOARD RANKING CALCULATION ---
   const getLeaderboardRank = (board: LeaderboardConfig) => {
       const getScore = (u: any, isCurrentUser: boolean) => {
-          // Re-implement simplified score logic
           const timeFilter = board.lastResetTimestamp || board.startTime || 0;
           const endTimeFilter = board.endTime || Infinity;
           
@@ -110,7 +171,6 @@ const Profile: React.FC<ProfileProps> = ({
                   default: return 0;
               }
           } else {
-              // Mock User Simulation Logic (Simplified)
               const seed = u.name.length;
               const activityRatio = (board.type === 'TEMPORARY' || !!board.lastResetTimestamp) ? 0.2 : 1.0;
               switch(board.metric) {
@@ -126,7 +186,6 @@ const Profile: React.FC<ProfileProps> = ({
 
       const userScore = getScore(user, true);
       
-      // Calculate ranks
       const allScores = [
           { id: user.id, score: userScore },
           ...Object.values(allUsers).map((u: any) => ({ id: u.id, score: getScore(u, false) }))
@@ -139,14 +198,14 @@ const Profile: React.FC<ProfileProps> = ({
   };
 
   // Pagination Data
-  const currentBadges = earnedBadges.slice((badgePage - 1) * BADGES_PER_PAGE, badgePage * BADGES_PER_PAGE);
-  const totalBadgePages = Math.ceil(earnedBadges.length / BADGES_PER_PAGE);
+  const currentBadges = filteredBadges.slice((badgePage - 1) * BADGES_PER_PAGE, badgePage * BADGES_PER_PAGE);
+  const totalBadgePages = Math.ceil(filteredBadges.length / BADGES_PER_PAGE);
   
   const currentRuns = user.runHistory.slice((runPage - 1) * RUNS_PER_PAGE, runPage * RUNS_PER_PAGE);
   const totalRunPages = Math.ceil(user.runHistory.length / RUNS_PER_PAGE);
 
-  const currentCompletedMissions = completedMissions.slice((completedMissionPage - 1) * COMPLETED_MISSIONS_PER_PAGE, completedMissionPage * COMPLETED_MISSIONS_PER_PAGE);
-  const totalCompletedMissionPages = Math.ceil(completedMissions.length / COMPLETED_MISSIONS_PER_PAGE);
+  const currentCompletedMissions = filteredMissions.slice((completedMissionPage - 1) * COMPLETED_MISSIONS_PER_PAGE, completedMissionPage * COMPLETED_MISSIONS_PER_PAGE);
+  const totalCompletedMissionPages = Math.ceil(filteredMissions.length / COMPLETED_MISSIONS_PER_PAGE);
 
   const handleSave = () => {
     onUpdateUser({ name, email, avatar });
@@ -216,12 +275,55 @@ const Profile: React.FC<ProfileProps> = ({
       }
   };
 
+  // Reusable Filter Button Component with Permanent Colors
+  const FilterButton = ({ label, isActive, onClick, variant }: { label: string, isActive: boolean, onClick: () => void, variant: 'ALL' | Rarity }) => {
+      let activeClasses = '';
+      let inactiveClasses = '';
+
+      switch(variant) {
+          case 'ALL':
+              activeClasses = 'bg-white text-black border-white';
+              inactiveClasses = 'bg-gray-900 text-gray-300 border-gray-600 hover:text-white hover:border-white';
+              break;
+          case 'COMMON':
+              activeClasses = 'bg-gray-500 text-white border-gray-500';
+              inactiveClasses = 'bg-gray-900 text-gray-500 border-gray-500/50 hover:bg-gray-800 hover:text-gray-300';
+              break;
+          case 'RARE':
+              activeClasses = 'bg-cyan-500 text-black border-cyan-500';
+              inactiveClasses = 'bg-gray-900 text-cyan-500 border-cyan-500/50 hover:bg-cyan-900/20';
+              break;
+          case 'EPIC':
+              activeClasses = 'bg-purple-500 text-white border-purple-500';
+              inactiveClasses = 'bg-gray-900 text-purple-500 border-purple-500/50 hover:bg-purple-900/20';
+              break;
+          case 'LEGENDARY':
+              activeClasses = 'bg-yellow-500 text-black border-yellow-500';
+              inactiveClasses = 'bg-gray-900 text-yellow-500 border-yellow-500/50 hover:bg-yellow-900/20';
+              break;
+      }
+
+      return (
+        <button 
+            onClick={onClick}
+            className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-colors whitespace-nowrap border ${isActive ? activeClasses : inactiveClasses}`}
+        >
+            {label}
+        </button>
+      );
+  };
+
+  const renderSortArrow = (key: 'rank' | 'count' | 'km') => {
+      if (sortConfig.key !== key) return null;
+      return sortConfig.direction === 'asc' ? <ChevronUp size={12} /> : <ChevronDown size={12} />;
+  };
+
   return (
     <div className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
       
       {/* --- HEADER SECTION: IDENTITY & LEVEL --- */}
       <div className="bg-gray-800 rounded-2xl border border-gray-700 overflow-hidden shadow-xl">
-          {/* Banner */}
+          {/* ... (Header banner, Avatar, Edit Form logic preserved exactly as is) ... */}
           <div className="h-32 bg-gradient-to-r from-gray-900 via-emerald-950 to-gray-900 relative">
               <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-30"></div>
               {user.isPremium && (
@@ -232,7 +334,6 @@ const Profile: React.FC<ProfileProps> = ({
           </div>
           
           <div className="px-6 md:px-8 pb-6 flex flex-col md:flex-row items-end md:items-start gap-6 -mt-12 relative z-10">
-             {/* Avatar */}
              <div className="relative group">
                  <img src={isEditing ? avatar : user.avatar} alt="Avatar" className={`w-32 h-32 rounded-2xl border-4 bg-gray-800 shadow-2xl object-cover ${user.isPremium ? 'border-yellow-500' : 'border-gray-700'}`} />
                  <div className="absolute -bottom-3 -right-3 bg-gray-900 text-white text-xs font-bold px-3 py-1 rounded-lg border border-gray-600 shadow-lg z-20">
@@ -245,7 +346,6 @@ const Profile: React.FC<ProfileProps> = ({
                  )}
              </div>
 
-             {/* Identity Details */}
              <div className="flex-1 w-full md:w-auto pt-2">
                  {!isEditing ? (
                     <div>
@@ -262,8 +362,6 @@ const Profile: React.FC<ProfileProps> = ({
                         <p className="text-gray-400 flex items-center gap-2 text-sm mt-1">
                             <Mail size={14} className="text-emerald-500" /> {user.email || t('profile.no_email')}
                         </p>
-                        
-                        {/* Level Progress Bar (View Mode) */}
                         <div className="mt-4 max-w-lg">
                             <div className="flex justify-between text-[10px] uppercase font-bold text-gray-500 mb-1">
                                 <span>{t('profile.xp_progress')}</span>
@@ -302,7 +400,6 @@ const Profile: React.FC<ProfileProps> = ({
                  )}
              </div>
 
-             {/* Quick Actions (Only visible in View Mode) */}
              {!isEditing && (
                 <div className="flex gap-3 mt-4 md:mt-12">
                     {!user.isPremium && (
@@ -317,8 +414,6 @@ const Profile: React.FC<ProfileProps> = ({
 
       {/* --- STATS ROW (3 COLUMNS) --- */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          
-          {/* 1. LIQUID ASSETS (Wallet) */}
           <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl border border-gray-700 p-5 relative overflow-hidden flex flex-col justify-between">
               <div className="absolute top-0 right-0 p-4 opacity-5"><Coins size={80}/></div>
               <h3 className="text-white font-bold mb-4 flex items-center gap-2">
@@ -336,7 +431,6 @@ const Profile: React.FC<ProfileProps> = ({
               </div>
           </div>
 
-          {/* 2. PERFORMANCE METRICS (Physical) */}
           <div className="bg-gray-800 rounded-xl border border-gray-700 p-5 flex flex-col justify-between">
               <h3 className="text-white font-bold mb-4 flex items-center gap-2 border-b border-gray-700 pb-2">
                   <BarChart3 size={18} className="text-gray-400"/> {t('profile.perf_metrics')}
@@ -357,7 +451,6 @@ const Profile: React.FC<ProfileProps> = ({
               </div>
           </div>
 
-          {/* 3. TERRITORY STATUS (Empire) */}
           <div className="bg-gray-800 rounded-xl border border-gray-700 p-5 flex flex-col justify-between">
               <h3 className="text-white font-bold mb-4 flex items-center gap-2 border-b border-gray-700 pb-2">
                   <Shield size={18} className="text-gray-400"/> {t('profile.territory_status')}
@@ -378,36 +471,35 @@ const Profile: React.FC<ProfileProps> = ({
           </div>
       </div>
 
-      {/* --- LEADERBOARD RANKS (Updated Layout) --- */}
+      {/* --- LEADERBOARD RANKS (Active Competitions) --- */}
       {leaderboards.length > 0 && (
           <div className="bg-gray-800 rounded-xl border border-gray-700 p-5">
               <h3 className="text-white font-bold mb-4 flex items-center gap-2">
                   <Trophy size={18} className="text-yellow-400"/> {t('profile.active_rankings')}
               </h3>
-              {/* Changed container to w-full and cards to flex-1 min-w-0 to allow shrinking */}
-              <div className="flex gap-4 w-full overflow-hidden">
+              <div className="flex gap-2 w-full overflow-hidden">
                   {leaderboards.map(lb => {
                       const { rank, score } = getLeaderboardRank(lb);
                       const isTop3 = rank <= 3;
                       
                       return (
-                          <div key={lb.id} className={`flex-1 min-w-0 p-4 rounded-xl border transition-colors flex flex-col justify-between ${isTop3 ? 'bg-gradient-to-br from-gray-900 to-yellow-900/20 border-yellow-500/30' : 'bg-gray-900 border-gray-700'}`}>
+                          <div key={lb.id} className={`flex-1 min-w-0 p-3 rounded-xl border transition-colors flex flex-col justify-between ${isTop3 ? 'bg-gradient-to-br from-gray-900 to-yellow-900/20 border-yellow-500/30' : 'bg-gray-900 border-gray-700'}`}>
                               <div className="flex justify-between items-start mb-2 gap-2">
                                   <div className="min-w-0">
-                                      <h4 className="font-bold text-white text-sm truncate" title={lb.title}>{lb.title}</h4>
-                                      <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${lb.type === 'PERMANENT' ? 'bg-gray-800 text-gray-500' : 'bg-purple-900/50 text-purple-400'}`}>
-                                          {lb.type === 'PERMANENT' ? 'Seasonal' : 'Event'}
+                                      <h4 className="font-bold text-white text-xs truncate" title={lb.title}>{lb.title}</h4>
+                                      <span className={`text-[9px] uppercase font-bold px-1 py-0.5 rounded ${lb.type === 'PERMANENT' ? 'bg-gray-800 text-gray-500' : 'bg-purple-900/50 text-purple-400'}`}>
+                                          {lb.type === 'PERMANENT' ? 'Seas.' : 'Evt.'}
                                       </span>
                                   </div>
-                                  <div className={`flex flex-col items-center justify-center w-10 h-10 rounded-lg shrink-0 ${isTop3 ? 'bg-yellow-500 text-black' : 'bg-gray-800 text-gray-400'}`}>
-                                      <span className="text-xs font-bold">#</span>
-                                      <span className="text-lg font-black leading-none">{rank}</span>
+                                  <div className={`flex flex-col items-center justify-center w-8 h-8 rounded-lg shrink-0 ${isTop3 ? 'bg-yellow-500 text-black' : 'bg-gray-800 text-gray-400'}`}>
+                                      <span className="text-[9px] font-bold">#</span>
+                                      <span className="text-sm font-black leading-none">{rank}</span>
                                   </div>
                               </div>
-                              <div className="mt-2 pt-2 border-t border-gray-800 flex justify-between items-center">
-                                  <span className="text-xs text-gray-500 uppercase font-bold truncate pr-2">{t('profile.score')}</span>
-                                  <span className={`font-mono font-bold truncate ${isTop3 ? 'text-yellow-400' : 'text-emerald-400'}`}>
-                                      {score.toLocaleString(undefined, { minimumFractionDigits: lb.metric === 'TOTAL_KM' || lb.metric.includes('BALANCE') ? 1 : 0 })}
+                              <div className="mt-1 pt-2 border-t border-gray-800 flex justify-between items-center">
+                                  <span className="text-[9px] text-gray-500 uppercase font-bold truncate pr-1 hidden sm:block">{t('profile.score')}</span>
+                                  <span className={`font-mono text-xs font-bold truncate ${isTop3 ? 'text-yellow-400' : 'text-emerald-400'}`}>
+                                      {score.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 1 })}
                                   </span>
                               </div>
                           </div>
@@ -417,9 +509,61 @@ const Profile: React.FC<ProfileProps> = ({
           </div>
       )}
 
+      {/* --- NEW: ZONE STATS & RANKING SECTION (Tactical List Style with Sort) --- */}
+      <div className="bg-gray-800 rounded-xl border border-gray-700 p-5">
+          <h3 className="text-white font-bold mb-4 flex items-center gap-2">
+              <MapPin size={18} className="text-emerald-400"/> {t('profile.zone_stats')}
+          </h3>
+          
+          {sortedZoneStats.length === 0 ? (
+              <div className="text-center py-8 text-gray-500 border border-dashed border-gray-700 rounded-lg">
+                  <p>{t('profile.no_runs')}</p>
+              </div>
+          ) : (
+              <div>
+                  <div className="rounded-lg overflow-hidden border border-gray-700 bg-gray-900 mb-4">
+                      {/* Table Header */}
+                      <div className="grid grid-cols-12 gap-2 p-3 bg-gray-950 text-[10px] font-bold text-gray-500 uppercase tracking-wider border-b border-gray-700">
+                          <button onClick={() => handleSort('rank')} className="col-span-1 text-center hover:text-white flex items-center justify-center gap-1">
+                              # {renderSortArrow('rank')}
+                          </button>
+                          <div className="col-span-7">{t('profile.location')}</div>
+                          <button onClick={() => handleSort('count')} className="col-span-2 text-right hover:text-white flex items-center justify-end gap-1">
+                              {renderSortArrow('count')} {t('profile.zone_runs')}
+                          </button>
+                          <button onClick={() => handleSort('km')} className="col-span-2 text-right hover:text-white flex items-center justify-end gap-1">
+                              {renderSortArrow('km')} {t('profile.zone_total')}
+                          </button>
+                      </div>
+                      
+                      {/* Table Rows */}
+                      <div className="divide-y divide-gray-800">
+                          {currentZoneStats.map((stat, idx) => {
+                              // We use the pre-calculated rank from sortedZoneStats
+                              const rank = stat.rank; 
+                              let rankColor = "text-gray-500";
+                              if (rank === 1) rankColor = "text-yellow-400";
+                              else if (rank === 2) rankColor = "text-gray-300";
+                              else if (rank === 3) rankColor = "text-amber-600";
+
+                              return (
+                                  <div key={idx} className="grid grid-cols-12 gap-2 p-3 items-center hover:bg-gray-800/50 transition-colors">
+                                      <div className={`col-span-1 text-center font-black ${rankColor} text-sm`}>{rank}</div>
+                                      <div className="col-span-7 font-bold text-white text-xs truncate" title={stat.name}>{stat.name}</div>
+                                      <div className="col-span-2 text-right font-mono text-gray-300 text-xs">{stat.count}</div>
+                                      <div className="col-span-2 text-right font-mono text-emerald-400 font-bold text-xs">{stat.km.toFixed(1)}</div>
+                                  </div>
+                              );
+                          })}
+                      </div>
+                  </div>
+                  <Pagination currentPage={zonePage} totalPages={totalZonePages} onPageChange={setZonePage} />
+              </div>
+          )}
+      </div>
+
       {/* --- CONTENT ROW: FULL WIDTH TABS (HISTORY & ACHIEVEMENTS) --- */}
       <div className="w-full">
-          {/* Changed overflow-hidden to relative, and applied rounding to children to allow tooltips */}
           <div className="bg-gray-800 rounded-xl border border-gray-700 min-h-[500px] flex flex-col relative z-0">
               {/* Tabs Header */}
               <div className="flex border-b border-gray-700 bg-gray-900/50 rounded-t-xl">
@@ -443,15 +587,29 @@ const Profile: React.FC<ProfileProps> = ({
                   {/* --- ACHIEVEMENTS TAB --- */}
                   {activeTab === 'ACHIEVEMENTS' && (
                       <div className="space-y-8">
+                          {/* BADGES SECTION */}
                           <div>
-                              <div className="flex justify-between items-center mb-4">
-                                  <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t('profile.badges_collected')} ({earnedBadges.length})</h4>
-                                  <span className="text-[9px] text-gray-500 italic">{t('profile.tap_equip')}</span>
+                              <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
+                                  <div className="flex items-center gap-2">
+                                      <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t('profile.badges_collected')} ({allEarnedBadges.length})</h4>
+                                      <span className="text-[9px] text-gray-500 italic hidden md:inline">{t('profile.tap_equip')}</span>
+                                  </div>
+                                  
+                                  {/* Badges Filter */}
+                                  <div className="flex gap-2 overflow-x-auto pb-1 max-w-full no-scrollbar">
+                                      <FilterButton label={t('miss.filter.all')} isActive={badgeFilter === 'ALL'} onClick={() => { setBadgeFilter('ALL'); setBadgePage(1); }} variant="ALL" />
+                                      <FilterButton label={t('miss.filter.common')} isActive={badgeFilter === 'COMMON'} onClick={() => { setBadgeFilter('COMMON'); setBadgePage(1); }} variant="COMMON" />
+                                      <FilterButton label={t('miss.filter.rare')} isActive={badgeFilter === 'RARE'} onClick={() => { setBadgeFilter('RARE'); setBadgePage(1); }} variant="RARE" />
+                                      <FilterButton label={t('miss.filter.epic')} isActive={badgeFilter === 'EPIC'} onClick={() => { setBadgeFilter('EPIC'); setBadgePage(1); }} variant="EPIC" />
+                                      <FilterButton label={t('miss.filter.legendary')} isActive={badgeFilter === 'LEGENDARY'} onClick={() => { setBadgeFilter('LEGENDARY'); setBadgePage(1); }} variant="LEGENDARY" />
+                                  </div>
                               </div>
                               
-                              {earnedBadges.length === 0 ? (
+                              {filteredBadges.length === 0 ? (
                                   <div className="text-center py-10 border border-dashed border-gray-700 rounded-xl">
-                                      <p className="text-gray-500 text-xs">{t('profile.start_earning')}</p>
+                                      <p className="text-gray-500 text-xs">
+                                          {badgeFilter === 'ALL' ? t('profile.start_earning') : t('miss.no_found')}
+                                      </p>
                                   </div>
                               ) : (
                                   <>
@@ -479,7 +637,6 @@ const Profile: React.FC<ProfileProps> = ({
                                                       <div className={`text-[9px] font-bold uppercase mb-1 ${getRarityText(badge.rarity)}`}>{badge.rarity}</div>
                                                       <div className="text-xs font-bold text-white mb-1 leading-tight">{badge.name}</div>
                                                       <div className="text-[9px] text-gray-400 leading-tight">{badge.description}</div>
-                                                      {/* Tooltip Arrow */}
                                                       <div className="absolute left-1/2 -bottom-1 -translate-x-1/2 w-2 h-2 bg-gray-950 border-r border-b border-gray-700 transform rotate-45"></div>
                                                   </div>
                                               </button>
@@ -491,15 +648,18 @@ const Profile: React.FC<ProfileProps> = ({
                               )}
                           </div>
 
+                          {/* MISSIONS LOG SECTION */}
                           <div className="pt-8 border-t border-gray-700/50">
-                              <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
+                              <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
                                   <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t('profile.missions_log')}</h4>
-                                  {/* Legend */}
-                                  <div className="flex gap-2 sm:gap-3 text-[9px] font-bold uppercase tracking-wider text-gray-400">
-                                      <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-gray-500"></div> Common</div>
-                                      <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-cyan-500 shadow-[0_0_4px_rgba(6,182,212,0.8)]"></div> Rare</div>
-                                      <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-purple-500 shadow-[0_0_4px_rgba(168,85,247,0.8)]"></div> Epic</div>
-                                      <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-yellow-500 shadow-[0_0_4px_rgba(234,179,8,0.8)]"></div> Leg.</div>
+                                  
+                                  {/* Missions Filter */}
+                                  <div className="flex gap-2 overflow-x-auto pb-1 max-w-full no-scrollbar">
+                                      <FilterButton label={t('miss.filter.all')} isActive={missionLogFilter === 'ALL'} onClick={() => { setMissionLogFilter('ALL'); setCompletedMissionPage(1); }} variant="ALL" />
+                                      <FilterButton label={t('miss.filter.common')} isActive={missionLogFilter === 'COMMON'} onClick={() => { setMissionLogFilter('COMMON'); setCompletedMissionPage(1); }} variant="COMMON" />
+                                      <FilterButton label={t('miss.filter.rare')} isActive={missionLogFilter === 'RARE'} onClick={() => { setMissionLogFilter('RARE'); setCompletedMissionPage(1); }} variant="RARE" />
+                                      <FilterButton label={t('miss.filter.epic')} isActive={missionLogFilter === 'EPIC'} onClick={() => { setMissionLogFilter('EPIC'); setCompletedMissionPage(1); }} variant="EPIC" />
+                                      <FilterButton label={t('miss.filter.legendary')} isActive={missionLogFilter === 'LEGENDARY'} onClick={() => { setMissionLogFilter('LEGENDARY'); setCompletedMissionPage(1); }} variant="LEGENDARY" />
                                   </div>
                               </div>
                               
@@ -520,13 +680,12 @@ const Profile: React.FC<ProfileProps> = ({
                                               <div className={`text-[9px] font-bold uppercase mb-1 ${getRarityText(m.rarity)}`}>{m.rarity}</div>
                                               <div className="text-xs font-bold text-white mb-1 leading-tight">{m.title}</div>
                                               <div className="text-[9px] text-gray-400 leading-tight">{m.description}</div>
-                                              {/* Tooltip Arrow */}
                                               <div className="absolute left-1/2 -bottom-1 -translate-x-1/2 w-2 h-2 bg-gray-950 border-r border-b border-gray-700 transform rotate-45"></div>
                                           </div>
                                       </div>
                                   ))}
-                                  {completedMissions.length === 0 && (
-                                      <p className="text-gray-500 text-xs italic">{t('profile.no_missions')}</p>
+                                  {filteredMissions.length === 0 && (
+                                      <p className="text-gray-500 text-xs italic text-center py-4">{missionLogFilter === 'ALL' ? t('profile.no_missions') : t('miss.no_found')}</p>
                                   )}
                               </div>
                               <Pagination currentPage={completedMissionPage} totalPages={totalCompletedMissionPages} onPageChange={setCompletedMissionPage} />
