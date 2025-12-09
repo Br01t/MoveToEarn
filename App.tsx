@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import Navbar from "./components/Navbar";
 import LandingPage from "./components/LandingPage";
@@ -135,7 +134,17 @@ const AppContent: React.FC = () => {
                   />
               )}
               {currentView === "INVENTORY" && <Inventory user={user} zones={zones} onUseItem={gameState.useItem} />}
-              {currentView === "LEADERBOARD" && <Leaderboard users={gameState.usersMock} currentUser={user} zones={zones} badges={gameState.badges} />}
+              
+              {currentView === "LEADERBOARD" && (
+                  <Leaderboard 
+                      users={gameState.usersMock} 
+                      currentUser={user} 
+                      zones={zones} 
+                      badges={gameState.badges}
+                      leaderboards={gameState.leaderboards}
+                  />
+              )}
+              
               {currentView === "PROFILE" && (
                 <Profile
                   user={user}
@@ -147,6 +156,7 @@ const AppContent: React.FC = () => {
                 />
               )}
               {currentView === "MISSIONS" && <Missions user={user} zones={zones} missions={gameState.missions} badges={gameState.badges} />}
+              
               {currentView === "ADMIN" && (
                 <Admin
                   marketItems={gameState.marketItems}
@@ -155,6 +165,7 @@ const AppContent: React.FC = () => {
                   zones={zones}
                   govToRunRate={gameState.govToRunRate}
                   bugReports={gameState.bugReports}
+                  leaderboards={gameState.leaderboards}
                   onAddItem={(i) => gameState.setMarketItems(p => [...p, i])}
                   onUpdateItem={(i) => gameState.setMarketItems(p => p.map(x => x.id === i.id ? i : x))}
                   onRemoveItem={(id) => gameState.setMarketItems(p => p.filter(x => x.id !== id))}
@@ -170,6 +181,10 @@ const AppContent: React.FC = () => {
                   onDistributeRewards={() => alert("Rewards Distributed")}
                   onResetSeason={() => { if(confirm("Reset?")) gameState.setUsersMock({}); }}
                   onUpdateExchangeRate={gameState.setGovToRunRate}
+                  onAddLeaderboard={gameState.addLeaderboard}
+                  onUpdateLeaderboard={gameState.updateLeaderboard}
+                  onDeleteLeaderboard={gameState.deleteLeaderboard}
+                  onResetLeaderboard={gameState.resetLeaderboard}
                 />
               )}
               {currentView === "REPORT_BUG" && <ReportBug onReport={gameState.reportBug} />}
