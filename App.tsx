@@ -74,20 +74,18 @@ const AppContent: React.FC = () => {
       if (!user) return;
       const item = user.inventory.find(i => i.type === "BOOST");
       if (!item) { alert(t('alert.need_item') + " Boost."); return; }
-      if (window.confirm(`${t('alert.use_item_confirm')} '${item.name}'?`)) {
-          gameState.useItem(item, zoneId);
-          alert(`${t('alert.item_used')} ${item.name}`);
-      }
+      
+      gameState.useItem(item, zoneId);
+      alert(`${t('alert.item_used')} ${item.name}`);
   };
 
   const handleDefendZone = (zoneId: string) => {
       if (!user) return;
       const item = user.inventory.find(i => i.type === "DEFENSE");
       if (!item) { alert(t('alert.need_item') + " Defense."); return; }
-      if (window.confirm(`${t('alert.use_item_confirm')} '${item.name}'?`)) {
-          gameState.useItem(item, zoneId);
-          alert(`${t('alert.item_used')} ${item.name}`);
-      }
+      
+      gameState.useItem(item, zoneId);
+      alert(`${t('alert.item_used')} ${item.name}`);
   };
 
   const handleLogout = () => {

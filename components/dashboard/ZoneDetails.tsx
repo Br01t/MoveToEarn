@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Zone, User, Badge, Rarity } from '../../types';
-import { X, Crown, Clock, Shield, Medal, Lock, Zap, Swords, Flag, Award, Mountain, Globe, Home, Landmark, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users } from 'lucide-react';
+import { X, Crown, Clock, Shield, Medal, Lock, Zap, Swords, Flag, Award, Mountain, Globe, Home, Landmark, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users, AlertTriangle, CheckCircle } from 'lucide-react';
 import { useLanguage } from '../../LanguageContext';
 
 interface ZoneDetailsProps {
@@ -23,6 +23,7 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
 }) => {
   const { t } = useLanguage();
   const [now, setNow] = useState(Date.now());
+  const [confirmAction, setConfirmAction] = useState<'BOOST' | 'SHIELD' | null>(null);
 
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 1000);
@@ -79,9 +80,45 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
       }
   };
 
+  const handleConfirmAction = () => {
+      if (confirmAction === 'BOOST') onBoost(zone.id);
+      if (confirmAction === 'SHIELD') onDefend(zone.id);
+      setConfirmAction(null);
+  };
+
   return (
     <div className="fixed bottom-[56px] md:bottom-24 md:right-6 md:left-auto left-0 right-0 md:w-80 bg-gray-900/95 md:rounded-2xl rounded-t-2xl border-t md:border border-emerald-500/30 shadow-[0_-5px_20px_rgba(0,0,0,0.5)] overflow-hidden animate-slide-up z-40 max-h-[70vh] flex flex-col">
       <div className="relative p-5 flex flex-col h-full overflow-hidden">
+        
+        {/* CONFIRMATION MODAL OVERLAY */}
+        {confirmAction && (
+            <div className="absolute inset-0 z-50 bg-gray-900/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center animate-fade-in">
+                <div className={`p-4 rounded-full mb-4 ${confirmAction === 'BOOST' ? 'bg-amber-900/40 text-amber-400' : 'bg-cyan-900/40 text-cyan-400'}`}>
+                    {confirmAction === 'BOOST' ? <Zap size={32} /> : <Shield size={32} />}
+                </div>
+                <h4 className="text-white font-bold text-lg mb-2">
+                    {confirmAction === 'BOOST' ? t('zone.modal.boost_title') : t('zone.modal.shield_title')}
+                </h4>
+                <p className="text-gray-400 text-xs mb-6 leading-relaxed">
+                    {confirmAction === 'BOOST' ? t('zone.modal.boost_desc') : t('zone.modal.shield_desc')}
+                </p>
+                <div className="flex gap-3 w-full">
+                    <button 
+                        onClick={() => setConfirmAction(null)}
+                        className="flex-1 py-3 bg-gray-800 hover:bg-gray-700 text-gray-400 font-bold rounded-xl text-sm transition-colors"
+                    >
+                        {t('zone.modal.cancel')}
+                    </button>
+                    <button 
+                        onClick={handleConfirmAction}
+                        className={`flex-1 py-3 font-bold text-black rounded-xl text-sm transition-colors flex items-center justify-center gap-2 ${confirmAction === 'BOOST' ? 'bg-amber-500 hover:bg-amber-400' : 'bg-cyan-500 hover:bg-cyan-400'}`}
+                    >
+                        <CheckCircle size={16} /> {t('zone.modal.confirm')}
+                    </button>
+                </div>
+            </div>
+        )}
+
         <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-white z-10">
           <X size={20} />
         </button>
@@ -183,7 +220,7 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
                 <div className="flex gap-2">
                       {!isBoostActive ? (
                           <button 
-                              onClick={() => onBoost(zone.id)}
+                              onClick={() => setConfirmAction('BOOST')}
                               disabled={!hasBoostItem}
                               className={`flex-1 py-3 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all border text-xs md:text-sm ${hasBoostItem ? 'bg-amber-600 hover:bg-amber-500' : 'bg-gray-800 opacity-50'}`}
                           >
@@ -195,7 +232,7 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
 
                       {!isShieldActive ? (
                           <button 
-                              onClick={() => onDefend(zone.id)}
+                              onClick={() => setConfirmAction('SHIELD')}
                               disabled={!hasDefenseItem}
                               className={`flex-1 py-3 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all border text-xs md:text-sm ${hasDefenseItem ? 'bg-cyan-600 hover:bg-cyan-500' : 'bg-gray-800 opacity-50'}`}
                           >
