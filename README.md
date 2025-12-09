@@ -98,28 +98,12 @@ Built with a modern, performance-focused frontend stack.
 
 ---
 
-## 🚀 Getting Started
-
-1.  **Clone the repository**
-2.  **Install dependencies:**
-    ```bash
-    npm install
-    ```
-3.  **Run the development server:**
-    ```bash
-    npm start
-    ```
-4.  **Open Browser:**
-    Navigate to `http://localhost:3000`
-
----
-
 ## 🔮 Future Roadmap
 
-*   **Smart Contracts:** Move RUN/GOV to a real L2 Blockchain (Polygon/Arbitrum).
-*   **NFT Zones:** Mint Zones as tradable ERC-721 tokens.
+*   **Smart Contracts:** Move GOV to a real L2 Blockchain (Polygon/Arbitrum).
+*   **NFT Zones:** Mint Zones as tradable ERC-721 tokens. (Eventually)
 *   **Social Guilds:** "Running Clubs" that own territory collectively.
-*   **Mobile App:** React Native port for real-time GPS tracking without file upload.
+*   **Mobile App:** React Native port for real-time GPS tracking without file upload. (Eventually)
 
 ---
 
