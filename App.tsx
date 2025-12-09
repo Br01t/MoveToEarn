@@ -402,23 +402,16 @@ const AppContent: React.FC = () => {
   // --- TOKEN SWAP (GOV -> RUN) ---
   const handleSwapGovToRun = (govAmount: number) => {
       if (!user) return;
-      if (user.govBalance < govAmount) {
-          alert(t('alert.insufficient_gov'));
-          return;
-      }
       if (govAmount <= 0) return;
 
+      // Note: validation is done in Wallet component now, this just executes.
       const runReceived = govAmount * govToRunRate;
       
-      const confirmMsg = `${t('alert.confirm_swap')} ${govAmount} GOV -> ${runReceived} RUN?`;
-      if (window.confirm(confirmMsg)) {
-          setUser((prev) => (prev ? {
-              ...prev,
-              govBalance: prev.govBalance - govAmount,
-              runBalance: prev.runBalance + runReceived
-          } : null));
-          alert(t('alert.swap_success'));
-      }
+      setUser((prev) => (prev ? {
+          ...prev,
+          govBalance: prev.govBalance - govAmount,
+          runBalance: prev.runBalance + runReceived
+      } : null));
   };
 
   const handleUpgradePremium = () => {
