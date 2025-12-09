@@ -46,6 +46,9 @@ const AppContent: React.FC = () => {
   const [usersMock, setUsersMock] = useState(MOCK_USERS);
   const [marketItems, setMarketItems] = useState<Item[]>(MOCK_ITEMS);
 
+  // Economy Config
+  const [govToRunRate, setGovToRunRate] = useState<number>(100); // 1 GOV = 100 RUN
+
   // Missions & Badges State
   const [missions, setMissions] = useState<Mission[]>(MOCK_MISSIONS);
   const [badges, setBadges] = useState<Badge[]>(MOCK_BADGES);
@@ -396,6 +399,28 @@ const AppContent: React.FC = () => {
     alert(`Payment Successful! +${govAmount} GOV.`);
   };
 
+  // --- TOKEN SWAP (GOV -> RUN) ---
+  const handleSwapGovToRun = (govAmount: number) => {
+      if (!user) return;
+      if (user.govBalance < govAmount) {
+          alert(t('alert.insufficient_gov'));
+          return;
+      }
+      if (govAmount <= 0) return;
+
+      const runReceived = govAmount * govToRunRate;
+      
+      const confirmMsg = `${t('alert.confirm_swap')} ${govAmount} GOV -> ${runReceived} RUN?`;
+      if (window.confirm(confirmMsg)) {
+          setUser((prev) => (prev ? {
+              ...prev,
+              govBalance: prev.govBalance - govAmount,
+              runBalance: prev.runBalance + runReceived
+          } : null));
+          alert(t('alert.swap_success'));
+      }
+  };
+
   const handleUpgradePremium = () => {
     if (!user) return;
     if (user.govBalance < PREMIUM_COST) {
@@ -566,7 +591,14 @@ const AppContent: React.FC = () => {
                 />
               )}
               {currentView === "MARKETPLACE" && user && <Marketplace user={user} items={marketItems} onBuy={handleBuyItem} />}
-              {currentView === "WALLET" && user && <Wallet user={user} onBuyFiat={handleBuyFiat} />}
+              {currentView === "WALLET" && user && (
+                  <Wallet 
+                      user={user} 
+                      onBuyFiat={handleBuyFiat} 
+                      govToRunRate={govToRunRate}
+                      onSwapGovToRun={handleSwapGovToRun}
+                  />
+              )}
               {currentView === "INVENTORY" && user && <Inventory user={user} zones={zones} onUseItem={handleUseItem} />}
               {currentView === "LEADERBOARD" && user && <Leaderboard users={usersMock} currentUser={user} zones={zones} badges={badges} />}
               {currentView === "PROFILE" && user && (
@@ -586,6 +618,7 @@ const AppContent: React.FC = () => {
                   missions={missions}
                   badges={badges}
                   zones={zones}
+                  govToRunRate={govToRunRate}
                   onAddItem={handleAddItem}
                   onUpdateItem={handleUpdateItem}
                   onRemoveItem={handleRemoveItem}
@@ -600,6 +633,7 @@ const AppContent: React.FC = () => {
                   onTriggerBurn={handleTriggerBurn}
                   onDistributeRewards={handleDistributeRewards}
                   onResetSeason={handleResetSeason}
+                  onUpdateExchangeRate={setGovToRunRate}
                 />
               )}
             </>
