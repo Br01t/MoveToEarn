@@ -385,7 +385,10 @@ const Profile: React.FC<ProfileProps> = ({ user, zones, missions = [], badges = 
                                               <CheckCircle size={16} className={getRarityText(m.rarity)} />
                                               <span className="text-sm font-bold text-gray-300 group-hover:text-white transition-colors">{m.title}</span>
                                           </div>
-                                          <span className="text-xs font-mono text-emerald-400">+{m.rewardRun} RUN</span>
+                                          <div className="text-right">
+                                              <span className="text-xs font-mono text-emerald-400 block">+{m.rewardRun} RUN</span>
+                                              {m.rewardGov && m.rewardGov > 0 && <span className="text-[10px] font-mono text-cyan-400 block">+{m.rewardGov} GOV</span>}
+                                          </div>
 
                                           {/* MISSION TOOLTIP */}
                                           <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 bg-gray-950/95 backdrop-blur-xl border border-gray-700 p-3 rounded-xl shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 invisible group-hover:visible text-left">

@@ -209,6 +209,16 @@ export const translations = {
     "miss.search_badges": "Search badges...",
     "miss.locked": "LOCKED",
 
+    // Mission & Badge Translations (Samples for Localization)
+    "mission.1.title": "First 10K",
+    "mission.1.desc": "Reach 10 km total.",
+    "mission.2.title": "First 50K",
+    "mission.2.desc": "Reach 50 km total.",
+    "mission.3.title": "Centurion",
+    "mission.3.desc": "Reach 100 km total.",
+    "badge.1.name": "First 10K",
+    "badge.1.desc": "Reach 10 km total.",
+    
     // Achievement Modal
     "ach.mission_complete": "Mission Complete",
     "ach.badge_unlocked": "Badge Unlocked",
@@ -642,6 +652,16 @@ export const translations = {
     "miss.gallery": "Galleria Badge",
     "miss.search_badges": "Cerca badge...",
     "miss.locked": "BLOCCATO",
+
+    // Mission & Badge Translations (Samples for Localization)
+    "mission.1.title": "Primi 10K",
+    "mission.1.desc": "Raggiungi 10 km totali.",
+    "mission.2.title": "Primi 50K",
+    "mission.2.desc": "Raggiungi 50 km totali.",
+    "mission.3.title": "Centurione",
+    "mission.3.desc": "Raggiungi 100 km totali.",
+    "badge.1.name": "Primi 10K",
+    "badge.1.desc": "Raggiungi 10 km totali.",
 
     // Achievement Modal
     "ach.mission_complete": "Missione Completata",

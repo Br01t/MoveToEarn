@@ -34,7 +34,8 @@ const AchievementModal: React.FC<AchievementModalProps> = ({ data, onClose, onCl
 
   const isMission = type === 'MISSION';
   // Check rewardRun for both Missions and Badges
-  const reward = (item as any).rewardRun || 0;
+  const rewardRun = (item as any).rewardRun || 0;
+  const rewardGov = (item as any).rewardGov || 0;
   
   // Theme colors based on type
   const themeColor = isMission ? 'emerald' : 'yellow';
@@ -79,16 +80,23 @@ const AchievementModal: React.FC<AchievementModalProps> = ({ data, onClose, onCl
             </p>
 
             {/* Reward Box */}
-            {reward > 0 && (
-                <div className="mb-6 bg-gray-800/50 border border-gray-700 px-6 py-3 rounded-lg flex flex-col items-center">
+            {(rewardRun > 0 || rewardGov > 0) && (
+                <div className="mb-6 bg-gray-800/50 border border-gray-700 px-6 py-3 rounded-lg flex flex-col items-center gap-1">
                     <span className="text-[10px] text-gray-500 uppercase font-bold">{t('ach.reward_claimed')}</span>
-                    <span className="text-2xl font-mono font-bold text-emerald-400 flex items-center gap-2">
-                         +{reward} RUN
-                    </span>
+                    {rewardRun > 0 && (
+                        <span className="text-2xl font-mono font-bold text-emerald-400 flex items-center gap-2">
+                             +{rewardRun} RUN
+                        </span>
+                    )}
+                    {rewardGov > 0 && (
+                        <span className="text-xl font-mono font-bold text-cyan-400 flex items-center gap-2">
+                             +{rewardGov} GOV
+                        </span>
+                    )}
                 </div>
             )}
 
-            {!reward && !isMission && (
+            {!(rewardRun > 0 || rewardGov > 0) && !isMission && (
                  <div className="mb-6 bg-gray-800/50 border border-gray-700 px-6 py-3 rounded-lg flex flex-col items-center">
                     <span className="text-[10px] text-gray-500 uppercase font-bold">{t('ach.status')}</span>
                     <span className="text-lg font-bold text-yellow-400 flex items-center gap-2">
