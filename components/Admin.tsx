@@ -1,14 +1,16 @@
 
 import React, { useState } from 'react';
 import { Item, Mission, Badge, Rarity, Zone } from '../types';
-import { Settings, Plus, Trash2, Flame, Gift, RefreshCw, Save, X, AlertTriangle, CheckCircle, Package, Target, Award, Map, Edit2, Search } from 'lucide-react';
+import { Settings, Plus, Trash2, Flame, Gift, RefreshCw, Save, X, AlertTriangle, CheckCircle, Package, Target, Award, Map, Edit2, Search, ArrowRightLeft } from 'lucide-react';
 import Pagination from './Pagination';
+import { useLanguage } from '../LanguageContext';
 
 interface AdminProps {
   marketItems: Item[];
   missions: Mission[];
   badges: Badge[];
   zones: Zone[];
+  govToRunRate: number; // New prop
   onAddItem: (item: Item) => void;
   onUpdateItem: (item: Item) => void;
   onRemoveItem: (id: string) => void;
@@ -23,6 +25,7 @@ interface AdminProps {
   onTriggerBurn: () => void;
   onDistributeRewards: () => void;
   onResetSeason: () => void;
+  onUpdateExchangeRate: (rate: number) => void; // New prop
 }
 
 const ITEMS_PER_PAGE = 5;
@@ -31,13 +34,15 @@ const BADGES_PER_PAGE = 5;
 const ZONES_PER_PAGE = 10;
 
 const Admin: React.FC<AdminProps> = ({ 
-  marketItems, missions, badges, zones,
+  marketItems, missions, badges, zones, govToRunRate,
   onAddItem, onUpdateItem, onRemoveItem,
   onAddMission, onUpdateMission, onRemoveMission,
   onAddBadge, onUpdateBadge, onRemoveBadge,
   onUpdateZoneName, onDeleteZone,
-  onTriggerBurn, onDistributeRewards, onResetSeason 
+  onTriggerBurn, onDistributeRewards, onResetSeason,
+  onUpdateExchangeRate
 }) => {
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<'ITEMS' | 'ECONOMY' | 'MISSIONS' | 'ZONES' | 'LEADERBOARD'>('ITEMS');
   
   const [showBurnModal, setShowBurnModal] = useState(false);
@@ -125,7 +130,7 @@ const Admin: React.FC<AdminProps> = ({
       setMissionFormData({
           title: m.title,
           description: m.description,
-          rewardRun: m.rewardRun.toString(), // Changed rewardGov to rewardRun
+          rewardRun: m.rewardRun.toString(),
           conditionType: m.conditionType || 'TOTAL_KM',
           conditionValue: (m.conditionValue || 0).toString(),
           rarity: m.rarity
@@ -143,7 +148,7 @@ const Admin: React.FC<AdminProps> = ({
           id: editingMissionId || `m_${Date.now()}`,
           title: missionFormData.title, 
           description: missionFormData.description,
-          rewardRun: parseInt(missionFormData.rewardRun), // Changed rewardGov to rewardRun
+          rewardRun: parseInt(missionFormData.rewardRun),
           conditionType: missionFormData.conditionType as 'TOTAL_KM' | 'OWN_ZONES',
           conditionValue: parseInt(missionFormData.conditionValue),
           rarity: missionFormData.rarity as Rarity
@@ -508,17 +513,39 @@ const Admin: React.FC<AdminProps> = ({
 
       {/* ECONOMY OPS */}
       {activeTab === 'ECONOMY' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-           <div className="bg-gray-800 p-8 rounded-xl border border-gray-700 flex flex-col items-center text-center">
-              <Flame size={48} className="text-red-500 mb-4" />
-              <h3 className="text-2xl font-bold text-white mb-2">Trigger Burn</h3>
-              <button onClick={() => setShowBurnModal(true)} className="px-8 py-3 bg-red-600 rounded-xl font-bold shadow-lg">Execute Burn Protocol</button>
-           </div>
-           <div className="bg-gray-800 p-8 rounded-xl border border-gray-700 flex flex-col items-center text-center">
-              <Gift size={48} className="text-cyan-400 mb-4" />
-              <h3 className="text-2xl font-bold text-white mb-2">Distribute Rewards</h3>
-              <button onClick={() => setShowRewardModal(true)} className="px-8 py-3 bg-cyan-600 rounded-xl font-bold shadow-lg">Distribute Airdrop</button>
-           </div>
+        <div className="space-y-8">
+            {/* Rate Config */}
+            <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
+                <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                    <ArrowRightLeft className="text-emerald-400" /> {t('admin.eco.swap_config')}
+                </h3>
+                <div className="flex items-end gap-4 max-w-sm">
+                    <div className="flex-1">
+                        <label className="text-xs text-gray-400 block mb-1">{t('admin.eco.rate_label')}</label>
+                        <input 
+                            type="number" 
+                            value={govToRunRate} 
+                            onChange={(e) => onUpdateExchangeRate(parseInt(e.target.value) || 0)} 
+                            className="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-white focus:border-emerald-500" 
+                        />
+                    </div>
+                    <div className="bg-gray-900 p-2 rounded text-emerald-400 font-bold text-sm">RUN</div>
+                </div>
+                <p className="text-xs text-gray-500 mt-2">{t('admin.eco.rate_help')}</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="bg-gray-800 p-8 rounded-xl border border-gray-700 flex flex-col items-center text-center">
+                    <Flame size={48} className="text-red-500 mb-4" />
+                    <h3 className="text-2xl font-bold text-white mb-2">Trigger Burn</h3>
+                    <button onClick={() => setShowBurnModal(true)} className="px-8 py-3 bg-red-600 rounded-xl font-bold shadow-lg hover:bg-red-500 transition-colors">Execute Burn Protocol</button>
+                </div>
+                <div className="bg-gray-800 p-8 rounded-xl border border-gray-700 flex flex-col items-center text-center">
+                    <Gift size={48} className="text-cyan-400 mb-4" />
+                    <h3 className="text-2xl font-bold text-white mb-2">Distribute Rewards</h3>
+                    <button onClick={() => setShowRewardModal(true)} className="px-8 py-3 bg-cyan-600 rounded-xl font-bold shadow-lg hover:bg-cyan-500 transition-colors">Distribute Airdrop</button>
+                </div>
+            </div>
         </div>
       )}
 
@@ -526,7 +553,7 @@ const Admin: React.FC<AdminProps> = ({
       {activeTab === 'LEADERBOARD' && (
         <div className="bg-gray-800 p-8 rounded-xl border border-gray-700 flex justify-between items-center">
            <div><h3 className="text-2xl font-bold text-white"><RefreshCw className="inline mr-2 text-yellow-400"/> Season Reset</h3><p className="text-gray-400">Wipe all user stats.</p></div>
-           <button onClick={onResetSeason} className="px-6 py-3 border border-red-500 text-red-500 hover:bg-red-500 hover:text-white rounded-xl font-bold">Reset Stats</button>
+           <button onClick={onResetSeason} className="px-6 py-3 border border-red-500 text-red-500 hover:bg-red-500 hover:text-white rounded-xl font-bold transition-colors">Reset Stats</button>
         </div>
       )}
 

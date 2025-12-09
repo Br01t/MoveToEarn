@@ -1,14 +1,16 @@
 
 import React, { useState } from 'react';
 import { User } from '../types';
-import { Flame, Link as LinkIcon, Wallet as WalletIcon, CheckCircle, CreditCard, Euro, TrendingUp, Lock, Activity, ArrowRight, Crown, History, ArrowUpRight, ArrowDownLeft, X } from 'lucide-react';
+import { Flame, Link as LinkIcon, Wallet as WalletIcon, CheckCircle, CreditCard, Euro, TrendingUp, Lock, Activity, ArrowRight, Crown, History, ArrowUpRight, ArrowDownLeft, X, ArrowDown, ArrowRightLeft } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import Pagination from './Pagination';
 import { useLanguage } from '../LanguageContext';
 
 interface WalletProps {
   user: User;
+  govToRunRate: number;
   onBuyFiat: (amount: number) => void;
+  onSwapGovToRun: (amount: number) => void;
 }
 
 const TRANSACTIONS_PER_PAGE = 7;
@@ -56,9 +58,10 @@ const mockTransactions = [
     { id: 17, type: 'IN', token: 'RUN', amount: '+11.20', label: 'Daily Yield', date: '3w ago', status: 'Confirmed' },
 ];
 
-const Wallet: React.FC<WalletProps> = ({ user, onBuyFiat }) => {
+const Wallet: React.FC<WalletProps> = ({ user, govToRunRate, onBuyFiat, onSwapGovToRun }) => {
   const { t } = useLanguage();
   const [fiatAmount, setFiatAmount] = useState<string>('');
+  const [swapGovAmount, setSwapGovAmount] = useState<string>('');
   const [isWalletConnected, setIsWalletConnected] = useState(false);
   
   // History Modal State
@@ -70,6 +73,13 @@ const Wallet: React.FC<WalletProps> = ({ user, onBuyFiat }) => {
       if (isNaN(val) || val <= 0) return;
       onBuyFiat(val);
       setFiatAmount('');
+  };
+
+  const handleSwap = () => {
+      const val = parseFloat(swapGovAmount);
+      if (isNaN(val) || val <= 0) return;
+      onSwapGovToRun(val);
+      setSwapGovAmount('');
   };
 
   // Pagination Logic
@@ -138,10 +148,63 @@ const Wallet: React.FC<WalletProps> = ({ user, onBuyFiat }) => {
       {/* MAIN CONTENT GRID */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* --- LEFT COL: FIAT ON-RAMP & HISTORY --- */}
+        {/* --- LEFT COL: ACTIONS & HISTORY --- */}
         <div className="flex flex-col gap-6 h-full">
             
-            {/* BUY CARD */}
+            {/* SWAP CARD (GOV -> RUN) */}
+            <div className="bg-gray-800 rounded-2xl border border-gray-700 p-6 relative overflow-hidden shrink-0">
+                <div className="relative z-10">
+                    <h2 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
+                        <ArrowRightLeft className="text-yellow-400" /> {t('wallet.swap.title')}
+                    </h2>
+                    <p className="text-gray-400 text-xs mb-4">
+                        {t('wallet.swap.desc')} <br/>
+                        <span className="text-emerald-400">{t('wallet.swap.rate_label')}: 1 GOV = {govToRunRate} RUN</span>
+                    </p>
+
+                    <div className="space-y-2">
+                        <div className="relative">
+                            <label className="text-[10px] uppercase font-bold text-gray-500 absolute top-2 left-3">{t('wallet.swap.gov_input')}</label>
+                            <div className="flex items-center bg-gray-900 border border-gray-600 rounded-xl px-3 pt-6 pb-2 focus-within:border-cyan-500 transition-colors">
+                                <Crown size={16} className="text-cyan-400 mr-2" />
+                                <input 
+                                    type="number" 
+                                    value={swapGovAmount}
+                                    onChange={(e) => setSwapGovAmount(e.target.value)}
+                                    placeholder="0"
+                                    className="bg-transparent text-white font-bold w-full focus:outline-none"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex justify-center -my-2 relative z-10">
+                            <div className="bg-gray-700 p-1 rounded-full border border-gray-600">
+                                <ArrowDown size={14} className="text-gray-400" />
+                            </div>
+                        </div>
+                        
+                        <div className="relative opacity-80">
+                            <label className="text-[10px] uppercase font-bold text-gray-500 absolute top-2 left-3">{t('wallet.swap.run_output')}</label>
+                            <div className="flex items-center bg-gray-900/50 border border-gray-700 rounded-xl px-3 pt-6 pb-2">
+                                <Activity size={16} className="text-emerald-400 mr-2" />
+                                <span className="text-white font-bold w-full">
+                                    {swapGovAmount ? (parseFloat(swapGovAmount) * govToRunRate).toFixed(2) : '0'}
+                                </span>
+                            </div>
+                        </div>
+
+                        <button 
+                            onClick={handleSwap}
+                            disabled={!swapGovAmount}
+                            className="w-full py-3 mt-2 bg-yellow-600 hover:bg-yellow-500 disabled:bg-gray-700 disabled:text-gray-500 text-white font-bold rounded-xl transition-all shadow-lg"
+                        >
+                            {t('wallet.swap.btn')}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* BUY FIAT CARD */}
             <div className="bg-gray-800 rounded-2xl border border-gray-700 p-6 relative overflow-hidden shrink-0">
                 <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
                     <CreditCard size={120} className="text-white" />
@@ -172,21 +235,6 @@ const Wallet: React.FC<WalletProps> = ({ user, onBuyFiat }) => {
                             </div>
                         </div>
 
-                        <div className="flex justify-center text-gray-500">
-                            <ArrowRight size={16} className="rotate-90 md:rotate-0" />
-                        </div>
-                        
-                        <div className="space-y-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">{t('wallet.you_receive')}</label>
-                            <div className="flex items-center bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3">
-                                <Crown size={20} className="text-cyan-400 mr-2" fill="currentColor" fillOpacity={0.2} />
-                                <span className="text-white font-bold w-full">
-                                    {fiatAmount ? (parseFloat(fiatAmount) * 10).toFixed(2) : '0.00'}
-                                </span>
-                                <span className="text-xs font-bold text-cyan-400">GOV</span>
-                            </div>
-                        </div>
-
                         <button 
                             onClick={handleFiatPurchase}
                             className="w-full py-4 mt-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-black font-bold rounded-xl transition-all shadow-lg shadow-emerald-900/20"
@@ -199,7 +247,7 @@ const Wallet: React.FC<WalletProps> = ({ user, onBuyFiat }) => {
             </div>
 
             {/* RECENT TRANSACTIONS PREVIEW */}
-            <div className="bg-gray-800 rounded-2xl border border-gray-700 p-6 flex-1 flex flex-col">
+            <div className="bg-gray-800 rounded-2xl border border-gray-700 p-6 flex-1 flex flex-col min-h-[300px]">
                 <div className="flex justify-between items-center mb-4">
                    <h3 className="font-bold text-white flex items-center gap-2 text-sm">
                        <History size={16} className="text-gray-400"/> {t('wallet.recent_activity')}
