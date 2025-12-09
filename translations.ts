@@ -55,6 +55,12 @@ export const translations = {
     "zone.action.claim": "Claim Ownership",
     "zone.locked": "Locked",
     "zone.locked_desc": "Run more in this zone to surpass the leader and enable conquest.",
+    "zone.modal.boost_title": "Activate Boost?",
+    "zone.modal.boost_desc": "This will consume 1 Nanofiber Shoes to increase yield by +1.0% for 24h.",
+    "zone.modal.shield_title": "Deploy Shield?",
+    "zone.modal.shield_desc": "This will consume 1 Zone Shield to prevent any conquest attempts for 24h.",
+    "zone.modal.confirm": "Confirm",
+    "zone.modal.cancel": "Cancel",
 
     // Sync Modal
     "sync.title": "Sync Activity",
@@ -499,6 +505,12 @@ export const translations = {
     "zone.action.claim": "Reclama Proprietà",
     "zone.locked": "Bloccato",
     "zone.locked_desc": "Corri di più in questa zona per superare il leader e abilitare la conquista.",
+    "zone.modal.boost_title": "Attivare Boost?",
+    "zone.modal.boost_desc": "Questo consumerà 1 Scarpa in Nanofibra per aumentare la rendita del +1.0% per 24h.",
+    "zone.modal.shield_title": "Attivare Scudo?",
+    "zone.modal.shield_desc": "Questo consumerà 1 Scudo Zona per prevenire qualsiasi tentativo di conquista per 24h.",
+    "zone.modal.confirm": "Conferma",
+    "zone.modal.cancel": "Annulla",
 
     // Sync Modal
     "sync.title": "Sincronizza Attività",
