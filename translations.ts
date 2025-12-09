@@ -244,6 +244,10 @@ export const translations = {
     "profile.active_rankings": "Active Competitions",
     "profile.rank_num": "Rank",
     "profile.score": "Score",
+    "profile.zone_stats": "Zone Performance",
+    "profile.zone_rank": "Local Rank",
+    "profile.zone_runs": "Runs",
+    "profile.zone_total": "Total",
 
     // Missions
     "miss.title": "Operations",
@@ -554,7 +558,7 @@ export const translations = {
     "zone.locked": "Bloccato",
     "zone.locked_desc": "Corri di più in questa zona per superare il leader e abilitare la conquista.",
     "zone.modal.boost_title": "Attivare Boost?",
-    "zone.modal.boost_desc": "Questo consumerà 1 Scarpa in Nanofibra per aumentare la rendita del +1.0% per 24h.",
+    "zone.modal.boost_desc": "Questo consumerà 1 Scarpa in Nanofiber per aumentare la rendita del +1.0% per 24h.",
     "zone.modal.shield_title": "Attivare Scudo?",
     "zone.modal.shield_desc": "Questo consumerà 1 Scudo Zona per prevenire qualsiasi tentativo di conquista per 24h.",
     "zone.modal.confirm": "Conferma",
@@ -742,6 +746,10 @@ export const translations = {
     "profile.active_rankings": "Competizioni Attive",
     "profile.rank_num": "Rango",
     "profile.score": "Punteggio",
+    "profile.zone_stats": "Performance Zona",
+    "profile.zone_rank": "Rango Locale",
+    "profile.zone_runs": "Corse",
+    "profile.zone_total": "Totale",
 
     // Missions
     "miss.title": "Operazioni",
