@@ -522,19 +522,31 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
                     const rewardGov = badge.rewardGov || 0;
                     
                     return (
-                        <div key={badge.id} className={`aspect-square rounded-xl flex flex-col items-center justify-between p-3 text-center border transition-all relative overflow-hidden group ${badge.isUnlocked ? `${style.bg} ${style.border}` : 'bg-gray-900 border-gray-800 opacity-60 grayscale'}`}>
+                        <div 
+                            key={badge.id} 
+                            // CLASSE CONTENITORE: sempre visibile (non opacità/grayscale), con stili basati sullo sblocco
+                            className={`aspect-square rounded-xl flex flex-col items-center justify-between p-3 text-center border transition-all relative overflow-hidden group 
+                                ${badge.isUnlocked ? `${style.bg} ${style.border}` : 'bg-gray-900 border-gray-700'}`} 
+                        >
                             
+                            {/* EFFETTO VISIVO PER EPIC/LEGENDARY SBLOCCATI */}
                             {badge.isUnlocked && (badge.rarity === 'LEGENDARY' || badge.rarity === 'EPIC') && (
                                 <div className={`absolute top-0 left-0 w-full h-full opacity-20 bg-gradient-to-br ${badge.rarity === 'LEGENDARY' ? 'from-yellow-500 to-transparent' : 'from-purple-500 to-transparent'}`}></div>
                             )}
 
                             <div className="flex-1 flex flex-col items-center justify-center w-full relative z-10">
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center mb-1 ${badge.isUnlocked ? `${style.badge} ring-2 ring-opacity-50` : 'bg-gray-800 text-gray-600'}`}>
-                                    {badge.isUnlocked ? renderIcon(badge.icon, "w-4 h-4") : <Lock size={14} />}
+                                {/* CONTENITORE ICONA */}
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center mb-1 
+                                    ${badge.isUnlocked ? `${style.badge} ring-2 ring-opacity-50` : `${style.badge} bg-gray-800 text-gray-400 ring-2 ring-gray-600/50`}`} 
+                                >
+                                    {/* ICONA: Mostra SEMPRE l'icona corretta, non il lucchetto */}
+                                    {renderIcon(badge.icon, "w-4 h-4")} 
                                 </div>
                                 
-                                <h4 className={`font-bold text-xs truncate w-full px-1 ${badge.isUnlocked ? style.text : 'text-gray-500'}`}>{badge.name}</h4>
+                                {/* NOME BADGE */}
+                                <h4 className={`font-bold text-xs truncate w-full px-1 ${badge.isUnlocked ? style.text : 'text-gray-400'}`}>{badge.name}</h4>
                                 
+                                {/* PROGRESSO: Mostra lo stato di avanzamento se BLOCACCATO */}
                                 {!badge.isUnlocked && (
                                     <div className="w-full px-2 mt-2 text-center">
                                         <span className="text-[9px] text-gray-500 font-mono bg-gray-900/50 px-2 py-0.5 rounded border border-gray-800">
@@ -544,15 +556,18 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
                                 )}
                             </div>
                             
+                            {/* PIE' DI PAGINA: Mostra rarità e ricompensa/stato bloccato */}
                             <div className="relative z-10 mt-1">
                                 {badge.isUnlocked ? (
                                     <div className="flex flex-col items-center">
+                                        {/* Rarità e Ricompense quando SBLOCCATO */}
                                         <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded ${style.badge}`}>{badge.rarity}</span>
                                         {rewardRun > 0 && <span className="text-[8px] text-emerald-400 font-mono mt-0.5">+{rewardRun} RUN</span>}
                                         {rewardGov > 0 && <span className="text-[8px] text-cyan-400 font-mono">+{rewardGov} GOV</span>}
                                     </div>
                                 ) : (
-                                    <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-gray-800 text-gray-600">{t('miss.locked')}</span>
+                                    // Mostra solo la rarità quando bloccato per evitare 'LOCKED'
+                                    <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded ${style.badge}`}>{badge.rarity}</span>
                                 )}
                             </div>
                         </div>
