@@ -65,9 +65,10 @@ const Profile: React.FC<ProfileProps> = ({
   let currentLevel = 1;
   let nextLevelKm = 50; 
   let progressToNextLevel = 0;
+  let currentLevelConfig: LevelConfig | undefined;
 
   if (levels && levels.length > 0) {
-      const currentLevelConfig = levels.slice().reverse().find(l => user.totalKm >= l.minKm) || levels[0];
+      currentLevelConfig = levels.slice().reverse().find(l => user.totalKm >= l.minKm) || levels[0];
       currentLevel = currentLevelConfig.level;
       const nextLevelConfig = levels.find(l => l.level === currentLevel + 1);
       
@@ -193,7 +194,9 @@ const Profile: React.FC<ProfileProps> = ({
           user={user} 
           favoriteBadge={favoriteBadge} 
           nextLevelKm={nextLevelKm} 
-          currentLevel={currentLevel} 
+          currentLevel={currentLevel}
+          levelTitle={currentLevelConfig?.title}
+          levelIcon={currentLevelConfig?.icon}
           progressToNextLevel={progressToNextLevel}
           onUpdateUser={onUpdateUser}
           onUpgradePremium={onUpgradePremium}

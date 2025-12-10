@@ -1,7 +1,6 @@
-
 import React, { useState } from 'react';
 import { User, Zone, Badge, Rarity, LeaderboardConfig, LeaderboardMetric, LevelConfig } from '../types';
-import { Trophy, Medal, Map, Award, Flag, Crown, Zap, Mountain, Globe, Home, Landmark, Swords, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users, Clock, Coins, Activity, X } from 'lucide-react';
+import { Trophy, Medal, Map, Award, Flag, Crown, Zap, Mountain, Globe, Home, Landmark, Swords, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users, Clock, Coins, Activity, X, Egg, Baby, MapPin, Smile, Wind, Compass, Navigation, TrendingUp, Move, Target, Watch, Droplets, Shield, Star, BatteryCharging, Flame, Truck, CloudLightning, Hexagon, FastForward, Plane, Layers, Briefcase, GraduationCap, Brain, Crosshair, Anchor, Heart, Lock, Disc, Feather, FlagTriangleRight, Globe2, Camera, Sparkles, Radio, BookOpen, Waves, Snowflake, CloudRain, ThermometerSnowflake, SunDim, MoonStar, Atom, Sword, Axe, Ghost, Ship, PlusSquare, Skull, ChevronsUp, Orbit, CloudFog, Circle, Infinity, Sparkle, ArrowUpCircle, Eye, Type, Delete, PenTool } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 
 interface MockUser {
@@ -49,6 +48,96 @@ const renderBadgeIcon = (iconName: string, className: string) => {
     }
 };
 
+const renderLevelIcon = (iconName: string, className: string) => {
+    switch(iconName) {
+        case 'Egg': return <Egg className={className} />;
+        case 'Footprints': return <Footprints className={className} />;
+        case 'Baby': return <Baby className={className} />;
+        case 'Activity': return <Activity className={className} />;
+        case 'MapPin': return <MapPin className={className} />;
+        case 'Sun': return <Sun className={className} />;
+        case 'Smile': return <Smile className={className} />;
+        case 'Wind': return <Wind className={className} />;
+        case 'Compass': return <Compass className={className} />;
+        case 'Navigation': return <Navigation className={className} />;
+        case 'TrendingUp': return <TrendingUp className={className} />;
+        case 'Move': return <Move className={className} />;
+        case 'Building': return <Building2 className={className} />;
+        case 'Trees': return <Mountain className={className} />;
+        case 'Target': return <Target className={className} />;
+        case 'Watch': return <Watch className={className} />;
+        case 'Droplets': return <Droplets className={className} />;
+        case 'Shield': return <Shield className={className} />;
+        case 'Mountain': return <Mountain className={className} />;
+        case 'Star': return <Star className={className} />;
+        case 'Flag': return <Flag className={className} />;
+        case 'BatteryCharging': return <BatteryCharging className={className} />;
+        case 'Flame': return <Flame className={className} />;
+        case 'Truck': return <Truck className={className} />;
+        case 'Award': return <Award className={className} />;
+        case 'ShieldCheck': return <ShieldCheck className={className} />;
+        case 'Zap': return <Zap className={className} />;
+        case 'Moon': return <Moon className={className} />;
+        case 'Sunrise': return <Sun className={className} />;
+        case 'Medal': return <Medal className={className} />;
+        case 'Repeat': return <Timer className={className} />;
+        case 'CloudLightning': return <CloudLightning className={className} />;
+        case 'Hexagon': return <Hexagon className={className} />;
+        case 'FastForward': return <FastForward className={className} />;
+        case 'Trophy': return <Trophy className={className} />;
+        case 'Globe': return <Globe className={className} />;
+        case 'Plane': return <Plane className={className} />;
+        case 'Map': return <Map className={className} />;
+        case 'Layers': return <Layers className={className} />;
+        case 'Briefcase': return <Briefcase className={className} />;
+        case 'GraduationCap': return <GraduationCap className={className} />;
+        case 'Users': return <Users className={className} />;
+        case 'Brain': return <Brain className={className} />;
+        case 'Crosshair': return <Crosshair className={className} />;
+        case 'Anchor': return <Anchor className={className} />;
+        case 'Heart': return <Heart className={className} />;
+        case 'Lock': return <Lock className={className} />;
+        case 'Disc': return <Disc className={className} />;
+        case 'Gem': return <Gem className={className} />;
+        case 'Crown': return <Crown className={className} />;
+        case 'Feather': return <Feather className={className} />;
+        case 'FlagTriangleRight': return <FlagTriangleRight className={className} />;
+        case 'Globe2': return <Globe2 className={className} />;
+        case 'Camera': return <Camera className={className} />;
+        case 'Sparkles': return <Sparkles className={className} />;
+        case 'Radio': return <Radio className={className} />;
+        case 'BookOpen': return <BookOpen className={className} />;
+        case 'Waves': return <Waves className={className} />;
+        case 'Snowflake': return <Snowflake className={className} />;
+        case 'CloudRain': return <CloudRain className={className} />;
+        case 'ThermometerSnowflake': return <ThermometerSnowflake className={className} />;
+        case 'SunDim': return <SunDim className={className} />;
+        case 'MoonStar': return <MoonStar className={className} />;
+        case 'Atom': return <Atom className={className} />;
+        case 'Sword': return <Sword className={className} />;
+        case 'Axe': return <Axe className={className} />;
+        case 'Ghost': return <Ghost className={className} />;
+        case 'Ship': return <Ship className={className} />;
+        case 'PlusSquare': return <PlusSquare className={className} />;
+        case 'Skull': return <Skull className={className} />;
+        case 'ChevronsUp': return <ChevronsUp className={className} />;
+        case 'Rocket': return <Rocket className={className} />;
+        case 'User': return <Users className={className} />;
+        case 'Orbit': return <Globe className={className} />;
+        case 'CloudFog': return <CloudFog className={className} />;
+        case 'Circle': return <Circle className={className} />;
+        case 'Infinity': return <Infinity className={className} />;
+        case 'Sparkle': return <Sparkle className={className} />;
+        case 'ArrowUpCircle': return <ArrowUpCircle className={className} />;
+        case 'Clock': return <Clock className={className} />;
+        case 'Eye': return <Eye className={className} />;
+        case 'Type': return <Type className={className} />;
+        case 'Delete': return <Delete className={className} />;
+        case 'PenTool': return <PenTool className={className} />;
+        default: return <Award className={className} />;
+    }
+};
+
 // Sub-component for Player Profile Modal
 const PlayerProfileModal = ({ 
     userId, 
@@ -88,9 +177,10 @@ const PlayerProfileModal = ({
     let currentLevel = 1;
     let nextLevelKm = 50; 
     let progressToNextLevel = 0;
+    let currentLevelConfig: LevelConfig | undefined;
 
     if (levels && levels.length > 0) {
-        const currentLevelConfig = levels.slice().reverse().find(l => user.totalKm >= l.minKm) || levels[0];
+        currentLevelConfig = levels.slice().reverse().find(l => user.totalKm >= l.minKm) || levels[0];
         currentLevel = currentLevelConfig.level;
         
         const nextLevelConfig = levels.find(l => l.level === currentLevel + 1);
@@ -134,7 +224,8 @@ const PlayerProfileModal = ({
                     {/* Avatar */}
                     <div className="relative inline-block mb-3">
                         <img src={user.avatar} alt={user.name} className="w-24 h-24 rounded-2xl border-4 border-gray-900 bg-gray-800 object-cover shadow-xl" />
-                        <div className="absolute -bottom-2 -right-2 bg-emerald-600 text-white text-[10px] font-bold px-2 py-1 rounded-md border border-gray-900 shadow-lg">
+                        <div className="absolute -bottom-2 -right-2 bg-emerald-600 text-white text-[10px] font-bold px-2 py-1 rounded-md border border-gray-900 shadow-lg flex items-center gap-1">
+                            {currentLevelConfig?.icon && renderLevelIcon(currentLevelConfig.icon, "w-3 h-3 text-white")}
                             LVL {currentLevel}
                         </div>
                     </div>
@@ -143,10 +234,18 @@ const PlayerProfileModal = ({
                         {user.name}
                         {userId === currentUser.id && <span className="text-xs bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/30 font-mono">YOU</span>}
                     </h2>
-                    <p className="text-gray-500 text-xs uppercase font-bold tracking-widest mb-6">Runner Profile</p>
+                    
+                    {/* Level Title */}
+                    {currentLevelConfig?.title && (
+                        <div className="flex items-center justify-center gap-1 mb-2">
+                            <span className="text-xs font-bold text-gray-300 uppercase tracking-widest bg-gray-800 px-2 py-0.5 rounded border border-gray-700">
+                                {currentLevelConfig.title}
+                            </span>
+                        </div>
+                    )}
 
                     {/* Stats Grid 2x2 */}
-                    <div className="grid grid-cols-2 gap-3 mb-6">
+                    <div className="grid grid-cols-2 gap-3 mb-6 mt-4">
                         <div className="bg-gray-800 p-3 rounded-xl border border-gray-700">
                             <div className="text-[10px] text-gray-400 uppercase font-bold mb-1">{t('leader.profile.total_km')}</div>
                             <div className="text-xl font-mono font-bold text-white">{user.totalKm.toLocaleString()} KM</div>
@@ -212,7 +311,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
   const getScore = (user: MockUser | User, config: LeaderboardConfig, isCurrentUser: boolean): number => {
       // Determine the effective start time filter
       const timeFilter = config.lastResetTimestamp || config.startTime || 0;
-      const endTimeFilter = config.endTime || Infinity;
+      const endTimeFilter = config.endTime || Number.POSITIVE_INFINITY;
 
       // 1. Current User: Use real data
       if (isCurrentUser) {
@@ -292,7 +391,9 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
      return { ...u, score: getScore(u, activeBoard, false), badgeId: u.favoriteBadgeId };
   }).sort((a, b) => b.score - a.score);
 
-  const timeLeft = activeBoard.endTime ? Math.max(0, activeBoard.endTime - Date.now()) : 0;
+  const now = Date.now();
+  const endTime = activeBoard.endTime || 0;
+  const timeLeft = Math.max(0, endTime - now);
   const daysLeft = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
   const hasEnded = activeBoard.type === 'TEMPORARY' && timeLeft <= 0;
 
