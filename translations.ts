@@ -208,6 +208,10 @@ export const translations = {
     "admin.levels.min_km": "Min Distance (KM)",
     "admin.levels.level_title": "Title (Optional)",
     "admin.levels.delete_confirm": "Delete this level?",
+    
+    // Admin Suggestions
+    "admin.ideas.title": "Player Suggestions",
+    "admin.ideas.no_ideas": "No suggestions received yet.",
 
     // Profile
     "profile.premium_agent": "Premium Agent",
@@ -359,6 +363,18 @@ export const translations = {
     "report.success_desc": "Thank you for helping us improve ZoneRun.",
     "report.error_desc": "Please provide a description.",
 
+    // Suggestion Page
+    "suggest.title": "Suggest Idea",
+    "suggest.subtitle": "Have an idea to make ZoneRun better? We're listening.",
+    "suggest.title_label": "Idea Title",
+    "suggest.title_placeholder": "e.g. Guild Wars",
+    "suggest.desc_label": "Description",
+    "suggest.desc_placeholder": "How should it work?",
+    "suggest.submit_btn": "Submit Idea",
+    "suggest.success_title": "Idea Submitted",
+    "suggest.success_desc": "Thanks for your feedback! The community will review it.",
+    "suggest.error_desc": "Please provide both title and description.",
+
     // Alerts
     "alert.insufficient_run": "Insufficient RUN balance!",
     "alert.insufficient_gov": "Insufficient GOV balance!",
@@ -384,6 +400,7 @@ export const translations = {
     "footer.terms": "Terms of Service",
     "footer.community": "Community",
     "footer.report_bug": "Report Bug",
+    "footer.suggestion": "Suggest Idea",
     "footer.legal_info": "Legal & Info",
     "footer.subtitle": "Run. Conquer. Govern.",
 
@@ -711,6 +728,10 @@ export const translations = {
     "admin.levels.level_title": "Titolo (Opzionale)",
     "admin.levels.delete_confirm": "Eliminare questo livello?",
 
+    // Admin Suggestions
+    "admin.ideas.title": "Suggerimenti Giocatori",
+    "admin.ideas.no_ideas": "Nessun suggerimento ricevuto.",
+
     // Profile
     "profile.premium_agent": "Agente Premium",
     "profile.no_email": "Nessuna email collegata",
@@ -861,6 +882,18 @@ export const translations = {
     "report.success_desc": "Grazie per aiutarci a migliorare ZoneRun.",
     "report.error_desc": "Per favore fornisci una descrizione.",
 
+    // Suggestion Page
+    "suggest.title": "Suggerisci Idea",
+    "suggest.subtitle": "Hai un'idea per migliorare ZoneRun? Ti ascoltiamo.",
+    "suggest.title_label": "Titolo Idea",
+    "suggest.title_placeholder": "es. Guerra tra Gilde",
+    "suggest.desc_label": "Descrizione",
+    "suggest.desc_placeholder": "Come dovrebbe funzionare?",
+    "suggest.submit_btn": "Invia Idea",
+    "suggest.success_title": "Idea Inviata",
+    "suggest.success_desc": "Grazie per il feedback! La community lo valuterà.",
+    "suggest.error_desc": "Per favore fornisci titolo e descrizione.",
+
     // Alerts
     "alert.insufficient_run": "Saldo RUN insufficiente!",
     "alert.insufficient_gov": "Saldo GOV insufficiente!",
@@ -886,6 +919,7 @@ export const translations = {
     "footer.terms": "Termini di Servizio",
     "footer.community": "Community",
     "footer.report_bug": "Segnala Bug",
+    "footer.suggestion": "Suggerisci Idea",
     "footer.legal_info": "Info Legali",
     "footer.subtitle": "Run. Conquer. Govern.",
 

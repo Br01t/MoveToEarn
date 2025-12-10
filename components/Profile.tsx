@@ -1,9 +1,13 @@
+
 import React, { useState, useMemo } from 'react';
 import { User, Zone, Mission, Badge, Rarity, LevelConfig, LeaderboardConfig } from '../types';
-import { Save, User as UserIcon, Mail, Activity, Coins, Shield, Crown, Award, History, Clock, CheckCircle, TrendingUp, BarChart3, MapPin, Camera, X, Flag, Zap, Mountain, Globe, Home, Landmark, Swords, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users, Trophy, Medal, Filter, ChevronUp, ChevronDown, AlignLeft } from 'lucide-react';
-import { PREMIUM_COST } from '../constants';
-import Pagination from './Pagination';
+import { Award, History, Coins, BarChart3, Shield, Trophy, MapPin, ChevronUp, ChevronDown, Users, X, Medal } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
+import Pagination from './Pagination';
+
+// Sub Components
+import ProfileHeader from './profile/ProfileHeader';
+import ProfileAchievementsTab from './profile/ProfileAchievementsTab';
 
 interface ProfileProps {
   user: User;
@@ -17,155 +21,34 @@ interface ProfileProps {
   onUpgradePremium: () => void;
 }
 
-const BADGES_PER_PAGE = 24;
 const RUNS_PER_PAGE = 8;
-const COMPLETED_MISSIONS_PER_PAGE = 5;
 const ZONES_PER_PAGE = 5;
 
 const Profile: React.FC<ProfileProps> = ({ 
-    user, 
-    zones, 
-    missions = [], 
-    badges = [], 
-    levels = [], 
-    leaderboards = [], 
-    allUsers = {},
-    onUpdateUser, 
-    onUpgradePremium 
+    user, zones, missions = [], badges = [], levels = [], leaderboards = [], allUsers = {},
+    onUpdateUser, onUpgradePremium 
 }) => {
   const { t } = useLanguage();
-  const [name, setName] = useState(user.name);
-  const [email, setEmail] = useState(user.email || '');
-  const [avatar, setAvatar] = useState(user.avatar);
-  const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState<'ACHIEVEMENTS' | 'HISTORY'>('ACHIEVEMENTS');
   
-  // Pagination & Filtering States
-  const [badgePage, setBadgePage] = useState(1);
-  const [badgeFilter, setBadgeFilter] = useState<'ALL' | Rarity>('ALL');
-
+  // Local states for history/zones that remain in parent for now or can be extracted further
   const [runPage, setRunPage] = useState(1);
-  
-  const [completedMissionPage, setCompletedMissionPage] = useState(1);
-  const [missionLogFilter, setMissionLogFilter] = useState<'ALL' | Rarity>('ALL');
-
   const [zonePage, setZonePage] = useState(1);
-  // Sort State for Zone Stats
   const [sortConfig, setSortConfig] = useState<{ key: 'rank' | 'count' | 'km'; direction: 'asc' | 'desc' }>({ key: 'km', direction: 'desc' });
-
-  // Modal State for Zone Details
   const [selectedZoneDetail, setSelectedZoneDetail] = useState<string | null>(null);
 
   // --- DERIVED STATS ---
   const myZones = zones.filter(z => z.ownerId === user.id);
-  
-  // Base Lists
   const allEarnedBadges = badges.filter(b => user.earnedBadgeIds.includes(b.id));
   const allCompletedMissions = missions.filter(m => user.completedMissionIds.includes(m.id));
-  
-  // Filtered Lists
-  const filteredBadges = allEarnedBadges.filter(b => badgeFilter === 'ALL' || b.rarity === badgeFilter);
-  const filteredMissions = allCompletedMissions.filter(m => missionLogFilter === 'ALL' || m.rarity === missionLogFilter);
-
   const favoriteBadge = badges.find(b => b.id === user.favoriteBadgeId);
 
-  // Running Stats
+  // Stats
   const totalRuns = user.runHistory.length;
   const avgDistance = totalRuns > 0 ? (user.totalKm / totalRuns).toFixed(2) : '0.00';
   const maxDistance = totalRuns > 0 ? Math.max(...user.runHistory.map(r => r.km)).toFixed(2) : '0.00';
-  
-  // Economy Stats
-  const dailyYield = myZones.reduce((acc, z) => acc + (z.interestRate * 0.5 * 6 * 24), 0); 
-  const totalNetWorth = user.runBalance + (user.govBalance * 10); 
 
-  // --- ZONE RANK CALCULATION HELPER ---
-  // Defined early so useMemo can access it
-  const getZoneRank = (zoneName: string, myKm: number) => {
-      const leaderboard = Object.values(allUsers).map((u: any) => {
-          if (u.id === user.id) return { id: u.id, km: myKm };
-          const seed = (u.id.charCodeAt(u.id.length - 1) + zoneName.length) % 100;
-          const fakeKm = (u.totalKm * (seed / 100)) / 5;
-          return { id: u.id, km: fakeKm };
-      });
-      
-      leaderboard.sort((a, b) => b.km - a.km);
-      return leaderboard.findIndex(u => u.id === user.id) + 1;
-  };
-
-  // --- ZONE POPUP DATA HELPER ---
-  const getZonePopupData = (zoneName: string) => {
-      // 1. Find Static Data
-      const zoneStatic = zones.find(z => z.name === zoneName);
-      
-      // 2. Calculate Stats from user history
-      const myRuns = user.runHistory.filter(r => r.location === zoneName);
-      const myTotalKm = myRuns.reduce((acc, r) => acc + r.km, 0);
-
-      // 3. Build Full Leaderboard (Simulated for other users based on seed like getZoneRank)
-      const leaderboard = [
-          { id: user.id, name: user.name, avatar: user.avatar, km: myTotalKm },
-          ...Object.values(allUsers).map((u: any) => {
-              const seed = (u.id.charCodeAt(u.id.length - 1) + zoneName.length) % 100;
-              const fakeKm = (u.totalKm * (seed / 100)) / 5;
-              // Randomize avatar slightly if missing
-              const av = u.avatar || `https://ui-avatars.com/api/?name=${u.name}&background=random`;
-              return { id: u.id, name: u.name, avatar: av, km: fakeKm };
-          })
-      ];
-
-      // Sort by KM descending
-      leaderboard.sort((a, b) => b.km - a.km);
-
-      // Filter out users with 0 km
-      const activeRunners = leaderboard.filter(u => u.km > 0);
-
-      return {
-          name: zoneName,
-          interestRate: zoneStatic ? zoneStatic.interestRate : 0,
-          totalRunners: activeRunners.length,
-          leaderboard: activeRunners.slice(0, 10), // Top 10
-          isOwner: zoneStatic?.ownerId === user.id
-      };
-  };
-
-  // --- ZONE AGGREGATION & SORTING LOGIC ---
-  const sortedZoneStats = useMemo(() => {
-      // 1. Aggregate
-      const stats: Record<string, { name: string; count: number; km: number }> = {};
-      user.runHistory.forEach(run => {
-          if (!stats[run.location]) {
-              stats[run.location] = { name: run.location, count: 0, km: 0 };
-          }
-          stats[run.location].count += 1;
-          stats[run.location].km += run.km;
-      });
-
-      // 2. Add Rank to objects
-      const dataWithRank = Object.values(stats).map(stat => ({
-          ...stat,
-          rank: getZoneRank(stat.name, stat.km)
-      }));
-
-      // 3. Sort
-      return dataWithRank.sort((a, b) => {
-          const modifier = sortConfig.direction === 'asc' ? 1 : -1;
-          if (a[sortConfig.key] < b[sortConfig.key]) return -1 * modifier;
-          if (a[sortConfig.key] > b[sortConfig.key]) return 1 * modifier;
-          return 0;
-      });
-  }, [user.runHistory, sortConfig, allUsers]);
-
-  const currentZoneStats = sortedZoneStats.slice((zonePage - 1) * ZONES_PER_PAGE, zonePage * ZONES_PER_PAGE);
-  const totalZonePages = Math.ceil(sortedZoneStats.length / ZONES_PER_PAGE);
-
-  const handleSort = (key: 'rank' | 'count' | 'km') => {
-      setSortConfig(current => ({
-          key,
-          direction: current.key === key && current.direction === 'desc' ? 'asc' : 'desc'
-      }));
-  };
-
-  // Dynamic Level Calculation
+  // --- LEVEL LOGIC ---
   let currentLevel = 1;
   let nextLevelKm = 50; 
   let progressToNextLevel = 0;
@@ -173,15 +56,12 @@ const Profile: React.FC<ProfileProps> = ({
   if (levels && levels.length > 0) {
       const currentLevelConfig = levels.slice().reverse().find(l => user.totalKm >= l.minKm) || levels[0];
       currentLevel = currentLevelConfig.level;
-      
       const nextLevelConfig = levels.find(l => l.level === currentLevel + 1);
       
       if (nextLevelConfig) {
           nextLevelKm = nextLevelConfig.minKm;
-          const currentLevelMin = currentLevelConfig.minKm;
-          const range = nextLevelConfig.minKm - currentLevelMin;
-          const progress = user.totalKm - currentLevelMin;
-          progressToNextLevel = Math.min(100, Math.max(0, (progress / range) * 100));
+          const range = nextLevelConfig.minKm - currentLevelConfig.minKm;
+          progressToNextLevel = Math.min(100, Math.max(0, ((user.totalKm - currentLevelConfig.minKm) / range) * 100));
       } else {
           nextLevelKm = user.totalKm;
           progressToNextLevel = 100;
@@ -192,164 +72,73 @@ const Profile: React.FC<ProfileProps> = ({
       progressToNextLevel = ((user.totalKm - ((currentLevel - 1) * 50)) / 50) * 100;
   }
 
-  // --- LEADERBOARD RANKING CALCULATION ---
+  // --- ZONE RANK LOGIC ---
+  const getZoneRank = (zoneName: string, myKm: number) => {
+      const leaderboard = Object.values(allUsers).map((u: any) => {
+          if (u.id === user.id) return { id: u.id, km: myKm };
+          const seed = (u.id.charCodeAt(u.id.length - 1) + zoneName.length) % 100;
+          const fakeKm = (u.totalKm * (seed / 100)) / 5;
+          return { id: u.id, km: fakeKm };
+      });
+      leaderboard.sort((a, b) => b.km - a.km);
+      return leaderboard.findIndex(u => u.id === user.id) + 1;
+  };
+
+  const sortedZoneStats = useMemo(() => {
+      const stats: Record<string, { name: string; count: number; km: number }> = {};
+      user.runHistory.forEach(run => {
+          if (!stats[run.location]) stats[run.location] = { name: run.location, count: 0, km: 0 };
+          stats[run.location].count += 1;
+          stats[run.location].km += run.km;
+      });
+      const dataWithRank = Object.values(stats).map(stat => ({ ...stat, rank: getZoneRank(stat.name, stat.km) }));
+      return dataWithRank.sort((a, b) => {
+          const modifier = sortConfig.direction === 'asc' ? 1 : -1;
+          if (a[sortConfig.key] < b[sortConfig.key]) return -1 * modifier;
+          if (a[sortConfig.key] > b[sortConfig.key]) return 1 * modifier;
+          return 0;
+      });
+  }, [user.runHistory, sortConfig, allUsers]);
+
+  const currentZoneStats = sortedZoneStats.slice((zonePage - 1) * ZONES_PER_PAGE, zonePage * ZONES_PER_PAGE);
+  const currentRuns = user.runHistory.slice((runPage - 1) * RUNS_PER_PAGE, runPage * RUNS_PER_PAGE);
+
+  // --- LEADERBOARD LOGIC ---
   const getLeaderboardRank = (board: LeaderboardConfig) => {
       const getScore = (u: any, isCurrentUser: boolean) => {
           const timeFilter = board.lastResetTimestamp || board.startTime || 0;
           const endTimeFilter = board.endTime || Infinity;
-          
           if (isCurrentUser) {
-              const uReal = u as User;
-              const validRuns = uReal.runHistory.filter(r => r.timestamp >= timeFilter && r.timestamp <= endTimeFilter);
+              const validRuns = u.runHistory.filter((r: any) => r.timestamp >= timeFilter && r.timestamp <= endTimeFilter);
               switch(board.metric) {
-                  case 'TOTAL_KM': return validRuns.reduce((acc, r) => acc + r.km, 0);
-                  case 'OWNED_ZONES': return zones.filter(z => z.ownerId === uReal.id).length;
-                  case 'RUN_BALANCE': return uReal.runBalance;
-                  case 'GOV_BALANCE': return uReal.govBalance;
-                  case 'UNIQUE_ZONES': return new Set(validRuns.map(r => r.location)).size;
+                  case 'TOTAL_KM': return validRuns.reduce((acc: number, r: any) => acc + r.km, 0);
+                  case 'OWNED_ZONES': return zones.filter(z => z.ownerId === u.id).length;
+                  case 'RUN_BALANCE': return u.runBalance;
+                  case 'GOV_BALANCE': return u.govBalance;
+                  case 'UNIQUE_ZONES': return new Set(validRuns.map((r: any) => r.location)).size;
                   default: return 0;
               }
           } else {
               const seed = u.name.length;
-              const activityRatio = (board.type === 'TEMPORARY' || !!board.lastResetTimestamp) ? 0.2 : 1.0;
+              const ratio = (board.type === 'TEMPORARY' || !!board.lastResetTimestamp) ? 0.2 : 1.0;
               switch(board.metric) {
-                  case 'TOTAL_KM': return u.totalKm * activityRatio;
+                  case 'TOTAL_KM': return u.totalKm * ratio;
                   case 'OWNED_ZONES': return zones.filter(z => z.ownerId === u.id).length;
                   case 'RUN_BALANCE': return u.runBalance ?? ((u.totalKm * 10) + (seed * 50));
                   case 'GOV_BALANCE': return u.govBalance ?? ((u.totalKm / 10) + (seed * 2));
-                  case 'UNIQUE_ZONES': return Math.floor((u.totalKm * activityRatio) / 5) + 1;
+                  case 'UNIQUE_ZONES': return Math.floor((u.totalKm * ratio) / 5) + 1;
                   default: return 0;
               }
           }
       };
-
       const userScore = getScore(user, true);
-      
-      const allScores = [
-          { id: user.id, score: userScore },
-          ...Object.values(allUsers).map((u: any) => ({ id: u.id, score: getScore(u, false) }))
-      ];
-      
+      const allScores = [{ id: user.id, score: userScore }, ...Object.values(allUsers).map((u: any) => ({ id: u.id, score: getScore(u, false) }))];
       allScores.sort((a, b) => b.score - a.score);
-      const rank = allScores.findIndex(s => s.id === user.id) + 1;
-      
-      return { rank, score: userScore };
+      return { rank: allScores.findIndex(s => s.id === user.id) + 1, score: userScore };
   };
 
-  // Pagination Data
-  const currentBadges = filteredBadges.slice((badgePage - 1) * BADGES_PER_PAGE, badgePage * BADGES_PER_PAGE);
-  const totalBadgePages = Math.ceil(filteredBadges.length / BADGES_PER_PAGE);
-  
-  const currentRuns = user.runHistory.slice((runPage - 1) * RUNS_PER_PAGE, runPage * RUNS_PER_PAGE);
-  const totalRunPages = Math.ceil(user.runHistory.length / RUNS_PER_PAGE);
-
-  const currentCompletedMissions = filteredMissions.slice((completedMissionPage - 1) * COMPLETED_MISSIONS_PER_PAGE, completedMissionPage * COMPLETED_MISSIONS_PER_PAGE);
-  const totalCompletedMissionPages = Math.ceil(filteredMissions.length / COMPLETED_MISSIONS_PER_PAGE);
-
-  const handleSave = () => {
-    onUpdateUser({ name, email, avatar });
-    setIsEditing(false);
-  };
-
-  const handleCancel = () => {
-      setIsEditing(false);
-      setName(user.name);
-      setEmail(user.email || '');
-      setAvatar(user.avatar);
-  };
-
-  const handleEquipBadge = (badgeId: string) => {
-      onUpdateUser({ favoriteBadgeId: badgeId });
-  };
-
-  const renderBadgeIcon = (iconName: string, className: string) => {
-      switch(iconName) {
-          case 'Flag': return <Flag className={className} />;
-          case 'Crown': return <Crown className={className} />;
-          case 'Award': return <Award className={className} />;
-          case 'Zap': return <Zap className={className} />;
-          case 'Mountain': return <Mountain className={className} />;
-          case 'Globe': return <Globe className={className} />;
-          case 'Home': return <Home className={className} />;
-          case 'Landmark': return <Landmark className={className} />;
-          case 'Swords': return <Swords className={className} />;
-          case 'Footprints': return <Footprints className={className} />;
-          case 'Rocket': return <Rocket className={className} />;
-          case 'Tent': return <Tent className={className} />;
-          case 'Timer': return <Timer className={className} />;
-          case 'Building2': return <Building2 className={className} />;
-          case 'Moon': return <Moon className={className} />;
-          case 'Sun': return <Sun className={className} />;
-          case 'ShieldCheck': return <ShieldCheck className={className} />;
-          case 'Gem': return <Gem className={className} />;
-          case 'Users': return <Users className={className} />;
-          default: return <Award className={className} />;
-      }
-  };
-
-  const getRarityColor = (rarity: Rarity) => {
-      switch(rarity) {
-          case 'LEGENDARY': return 'text-yellow-400 border-yellow-500/50 bg-yellow-900/20';
-          case 'EPIC': return 'text-purple-400 border-purple-500/50 bg-purple-900/20';
-          case 'RARE': return 'text-cyan-400 border-cyan-500/50 bg-cyan-900/20';
-          default: return 'text-gray-300 border-gray-600 bg-gray-800';
-      }
-  };
-
-  const getRarityText = (rarity: Rarity) => {
-      switch(rarity) {
-          case 'LEGENDARY': return 'text-yellow-400';
-          case 'EPIC': return 'text-purple-400';
-          case 'RARE': return 'text-cyan-400';
-          default: return 'text-gray-400';
-      }
-  };
-
-  const getRarityGlow = (rarity: Rarity) => {
-      switch(rarity) {
-          case 'LEGENDARY': return 'shadow-[0_0_15px_rgba(250,204,21,0.5)] border-yellow-500/50 bg-yellow-500/10 text-yellow-400';
-          case 'EPIC': return 'shadow-[0_0_10px_rgba(168,85,247,0.5)] border-purple-500/50 bg-purple-500/10 text-purple-400';
-          case 'RARE': return 'shadow-[0_0_8px_rgba(6,182,212,0.4)] border-cyan-500/50 bg-cyan-500/10 text-cyan-400';
-          default: return 'border-gray-600 bg-gray-800 text-gray-400';
-      }
-  };
-
-  // Reusable Filter Button Component with Permanent Colors
-  const FilterButton = ({ label, isActive, onClick, variant }: { label: string, isActive: boolean, onClick: () => void, variant: 'ALL' | Rarity }) => {
-      let activeClasses = '';
-      let inactiveClasses = '';
-
-      switch(variant) {
-          case 'ALL':
-              activeClasses = 'bg-white text-black border-white';
-              inactiveClasses = 'bg-gray-900 text-gray-300 border-gray-600 hover:text-white hover:border-white';
-              break;
-          case 'COMMON':
-              activeClasses = 'bg-gray-500 text-white border-gray-500';
-              inactiveClasses = 'bg-gray-900 text-gray-500 border-gray-500/50 hover:bg-gray-800 hover:text-gray-300';
-              break;
-          case 'RARE':
-              activeClasses = 'bg-cyan-500 text-black border-cyan-500';
-              inactiveClasses = 'bg-gray-900 text-cyan-500 border-cyan-500/50 hover:bg-cyan-900/20';
-              break;
-          case 'EPIC':
-              activeClasses = 'bg-purple-500 text-white border-purple-500';
-              inactiveClasses = 'bg-gray-900 text-purple-500 border-purple-500/50 hover:bg-purple-900/20';
-              break;
-          case 'LEGENDARY':
-              activeClasses = 'bg-yellow-500 text-black border-yellow-500';
-              inactiveClasses = 'bg-gray-900 text-yellow-500 border-yellow-500/50 hover:bg-yellow-900/20';
-              break;
-      }
-
-      return (
-        <button 
-            onClick={onClick}
-            className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-colors whitespace-nowrap border ${isActive ? activeClasses : inactiveClasses}`}
-        >
-            {label}
-        </button>
-      );
+  const handleSort = (key: 'rank' | 'count' | 'km') => {
+      setSortConfig(current => ({ key, direction: current.key === key && current.direction === 'desc' ? 'asc' : 'desc' }));
   };
 
   const renderSortArrow = (key: 'rank' | 'count' | 'km') => {
@@ -357,182 +146,21 @@ const Profile: React.FC<ProfileProps> = ({
       return sortConfig.direction === 'asc' ? <ChevronUp size={12} /> : <ChevronDown size={12} />;
   };
 
-  // --- MODAL RENDERER ---
-  const renderZoneDetailModal = () => {
-      if (!selectedZoneDetail) return null;
-      const data = getZonePopupData(selectedZoneDetail);
-
-      return (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in">
-              <div className="bg-gray-800 rounded-2xl border border-gray-700 w-full max-w-sm shadow-2xl relative overflow-hidden flex flex-col max-h-[80vh] animate-slide-up">
-                  
-                  {/* Header */}
-                  <div className="bg-gradient-to-r from-gray-900 to-gray-800 p-5 border-b border-gray-700 flex justify-between items-start">
-                      <div className="pr-4">
-                          <h3 className="text-xl font-bold text-white mb-1 leading-tight">{data.name}</h3>
-                          <div className="flex gap-2">
-                              {data.isOwner && (
-                                  <span className="text-[10px] bg-emerald-900/50 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/30 font-bold uppercase">Owner</span>
-                              )}
-                              <span className="text-[10px] bg-gray-700 text-gray-300 px-2 py-0.5 rounded font-bold uppercase">{t('zone.status')}</span>
-                          </div>
-                      </div>
-                      <button onClick={() => setSelectedZoneDetail(null)} className="text-gray-400 hover:text-white bg-gray-800 p-1.5 rounded-full hover:bg-gray-700 transition-colors">
-                          <X size={20} />
-                      </button>
-                  </div>
-
-                  {/* Stats Grid */}
-                  <div className="grid grid-cols-2 gap-4 p-5 bg-gray-800/50">
-                      <div className="bg-gray-900 p-3 rounded-xl border border-gray-700 text-center">
-                          <span className="block text-[10px] text-gray-500 uppercase font-bold mb-1">{t('dash.yield')}</span>
-                          <span className="text-xl font-bold text-amber-400 font-mono">{data.interestRate}%</span>
-                      </div>
-                      <div className="bg-gray-900 p-3 rounded-xl border border-gray-700 text-center">
-                          <span className="block text-[10px] text-gray-500 uppercase font-bold mb-1">Runners</span>
-                          <span className="text-xl font-bold text-white font-mono flex items-center justify-center gap-1">
-                              <Users size={16} className="text-gray-400" /> {data.totalRunners}
-                          </span>
-                      </div>
-                  </div>
-
-                  {/* Leaderboard */}
-                  <div className="flex-1 overflow-y-auto p-5 pt-0">
-                      <h4 className="text-xs font-bold text-gray-400 uppercase mb-3 flex items-center gap-2 sticky top-0 bg-gray-800 py-3 border-b border-gray-700/50">
-                          <Trophy size={14} className="text-yellow-500" /> {t('zone.top_runners')}
-                      </h4>
-                      <div className="space-y-2">
-                          {data.leaderboard.map((u, index) => {
-                              const isMe = u.id === user.id;
-                              let rankColor = "text-gray-500 bg-gray-800";
-                              if (index === 0) rankColor = "text-yellow-400 bg-yellow-900/20 border-yellow-500/30";
-                              else if (index === 1) rankColor = "text-gray-300 bg-gray-700/50";
-                              else if (index === 2) rankColor = "text-amber-600 bg-amber-900/10";
-
-                              return (
-                                  <div key={u.id} className={`flex items-center justify-between p-2 rounded-lg border border-transparent ${isMe ? 'bg-emerald-900/20 border-emerald-500/30' : 'hover:bg-gray-700/30'}`}>
-                                      <div className="flex items-center gap-3">
-                                          <div className={`w-6 h-6 flex items-center justify-center rounded text-xs font-bold ${rankColor}`}>
-                                              {index + 1}
-                                          </div>
-                                          <img src={u.avatar} className="w-8 h-8 rounded-full bg-gray-700 object-cover" alt={u.name} />
-                                          <div>
-                                              <div className={`text-xs font-bold ${isMe ? 'text-emerald-400' : 'text-white'}`}>
-                                                  {u.name} {isMe && '(You)'}
-                                              </div>
-                                          </div>
-                                      </div>
-                                      <div className="text-xs font-mono font-bold text-gray-300">
-                                          {u.km.toFixed(1)} km
-                                      </div>
-                                  </div>
-                              );
-                          })}
-                      </div>
-                  </div>
-              </div>
-          </div>
-      );
-  };
-
   return (
     <div className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
       
-      {/* RENDER MODAL IF OPEN */}
-      {renderZoneDetailModal()}
+      {/* HEADER */}
+      <ProfileHeader 
+          user={user} 
+          favoriteBadge={favoriteBadge} 
+          nextLevelKm={nextLevelKm} 
+          currentLevel={currentLevel} 
+          progressToNextLevel={progressToNextLevel}
+          onUpdateUser={onUpdateUser}
+          onUpgradePremium={onUpgradePremium}
+      />
 
-      {/* --- HEADER SECTION: IDENTITY & LEVEL --- */}
-      <div className="bg-gray-800 rounded-2xl border border-gray-700 overflow-hidden shadow-xl">
-          {/* ... (Header banner, Avatar, Edit Form logic preserved exactly as is) ... */}
-          <div className="h-32 bg-gradient-to-r from-gray-900 via-emerald-950 to-gray-900 relative">
-              <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-30"></div>
-              {user.isPremium && (
-                 <div className="absolute top-4 right-4 bg-yellow-500 text-black text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-lg z-10">
-                    <Crown size={12} fill="black" /> {t('profile.premium_agent')}
-                 </div>
-              )}
-          </div>
-          
-          <div className="px-6 md:px-8 pb-6 flex flex-col md:flex-row items-end md:items-start gap-6 -mt-12 relative z-10">
-             <div className="relative group">
-                 <img src={isEditing ? avatar : user.avatar} alt="Avatar" className={`w-32 h-32 rounded-2xl border-4 bg-gray-800 shadow-2xl object-cover ${user.isPremium ? 'border-yellow-500' : 'border-gray-700'}`} />
-                 <div className="absolute -bottom-3 -right-3 bg-gray-900 text-white text-xs font-bold px-3 py-1 rounded-lg border border-gray-600 shadow-lg z-20">
-                    LVL {currentLevel}
-                 </div>
-                 {isEditing && (
-                     <div className="absolute inset-0 bg-black/60 flex items-center justify-center rounded-2xl border-4 border-transparent z-10">
-                         <Camera className="text-white opacity-80" />
-                     </div>
-                 )}
-             </div>
-
-             <div className="flex-1 w-full md:w-auto pt-2">
-                 {!isEditing ? (
-                    <div>
-                        <div className="flex flex-wrap items-center gap-3 mb-1">
-                            <h1 className="text-3xl font-bold text-white tracking-tight">{user.name}</h1>
-                            {favoriteBadge && (
-                                <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full border bg-gray-900/80 ${getRarityColor(favoriteBadge.rarity)}`} title={favoriteBadge.name}>
-                                    {renderBadgeIcon(favoriteBadge.icon, "w-4 h-4")}
-                                    <span className="text-[10px] font-bold uppercase tracking-wider">{favoriteBadge.name}</span>
-                                </div>
-                            )}
-                            <button onClick={() => setIsEditing(true)} className="text-gray-500 hover:text-emerald-400 p-1 hover:bg-gray-700/50 rounded-lg transition-colors"><Save size={18}/></button>
-                        </div>
-                        <p className="text-gray-400 flex items-center gap-2 text-sm mt-1">
-                            <Mail size={14} className="text-emerald-500" /> {user.email || t('profile.no_email')}
-                        </p>
-                        <div className="mt-4 max-w-lg">
-                            <div className="flex justify-between text-[10px] uppercase font-bold text-gray-500 mb-1">
-                                <span>{t('profile.xp_progress')}</span>
-                                <span>{user.totalKm.toFixed(1)} / {nextLevelKm} KM</span>
-                            </div>
-                            <div className="w-full bg-gray-900 rounded-full h-2 border border-gray-700">
-                                <div className="bg-emerald-500 h-full rounded-full transition-all duration-500" style={{ width: `${progressToNextLevel}%` }}></div>
-                            </div>
-                        </div>
-                    </div>
-                 ) : (
-                    <div className="flex flex-col gap-3 w-full max-w-lg animate-fade-in bg-gray-900/50 p-4 rounded-xl border border-gray-700">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <div>
-                                <label className="text-[10px] uppercase font-bold text-gray-500 block mb-1">{t('profile.agent_name')}</label>
-                                <input value={name} onChange={e => setName(e.target.value)} className="w-full bg-gray-900 border border-emerald-500 rounded px-3 py-2 text-white text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500" />
-                            </div>
-                            <div>
-                                <label className="text-[10px] uppercase font-bold text-gray-500 block mb-1">{t('profile.contact_email')}</label>
-                                <input value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-gray-900 border border-gray-600 focus:border-emerald-500 rounded px-3 py-2 text-white text-sm focus:outline-none" />
-                            </div>
-                        </div>
-                        <div>
-                             <label className="text-[10px] uppercase font-bold text-gray-500 block mb-1">{t('profile.avatar_url')}</label>
-                             <input value={avatar} onChange={e => setAvatar(e.target.value)} placeholder="https://..." className="w-full bg-gray-900 border border-gray-600 focus:border-emerald-500 rounded px-3 py-2 text-white text-sm focus:outline-none" />
-                        </div>
-                        <div className="flex gap-2 mt-2">
-                            <button onClick={handleSave} className="flex-1 bg-emerald-600 hover:bg-emerald-500 px-3 py-2 rounded text-white text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2">
-                                <CheckCircle size={14}/> {t('profile.save_profile')}
-                            </button>
-                            <button onClick={handleCancel} className="flex-1 bg-gray-700 hover:bg-gray-600 px-3 py-2 rounded text-white text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2">
-                                <X size={14}/> {t('profile.cancel')}
-                            </button>
-                        </div>
-                    </div>
-                 )}
-             </div>
-
-             {!isEditing && (
-                <div className="flex gap-3 mt-4 md:mt-12">
-                    {!user.isPremium && (
-                        <button onClick={onUpgradePremium} className="px-5 py-2.5 bg-yellow-600 hover:bg-yellow-500 text-white font-bold rounded-xl text-sm shadow-lg flex items-center gap-2 transition-colors">
-                            <Crown size={16} /> {t('profile.upgrade_pro')}
-                        </button>
-                    )}
-                </div>
-             )}
-          </div>
-      </div>
-
-      {/* --- STATS ROW (3 COLUMNS) --- */}
+      {/* STATS ROW */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl border border-gray-700 p-5 relative overflow-hidden flex flex-col justify-between">
               <div className="absolute top-0 right-0 p-4 opacity-5"><Coins size={80}/></div>
@@ -564,10 +192,6 @@ const Profile: React.FC<ProfileProps> = ({
                       <span className="text-sm text-gray-400">{t('profile.avg_dist')}</span>
                       <span className="text-white font-mono font-bold">{avgDistance} km</span>
                   </div>
-                  <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-400">{t('profile.activity_freq')}</span>
-                      <span className="text-emerald-400 text-xs font-bold px-2 py-0.5 bg-emerald-900/30 rounded">HIGH</span>
-                  </div>
               </div>
           </div>
 
@@ -585,25 +209,22 @@ const Profile: React.FC<ProfileProps> = ({
                       <span className="text-[10px] text-gray-500 uppercase">{t('profile.high_yield')}</span>
                   </div>
               </div>
-              <div className="text-xs text-gray-500 text-center">
-                  {t('profile.empire_desc')}
-              </div>
           </div>
       </div>
 
-      {/* --- LEADERBOARD RANKS (Active Competitions) --- */}
+      {/* LEADERBOARD RANKS */}
       {leaderboards.length > 0 && (
           <div className="bg-gray-800 rounded-xl border border-gray-700 p-5">
               <h3 className="text-white font-bold mb-4 flex items-center gap-2">
                   <Trophy size={18} className="text-yellow-400"/> {t('profile.active_rankings')}
               </h3>
-              <div className="flex gap-2 w-full overflow-hidden">
+              {/* Changed from flex gap-2 w-full overflow-hidden to responsive grid */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   {leaderboards.map(lb => {
                       const { rank, score } = getLeaderboardRank(lb);
                       const isTop3 = rank <= 3;
-                      
                       return (
-                          <div key={lb.id} className={`flex-1 min-w-0 p-3 rounded-xl border transition-colors flex flex-col justify-between ${isTop3 ? 'bg-gradient-to-br from-gray-900 to-yellow-900/20 border-yellow-500/30' : 'bg-gray-900 border-gray-700'}`}>
+                          <div key={lb.id} className={`p-3 rounded-xl border transition-colors flex flex-col justify-between ${isTop3 ? 'bg-gradient-to-br from-gray-900 to-yellow-900/20 border-yellow-500/30' : 'bg-gray-900 border-gray-700'}`}>
                               <div className="flex justify-between items-start mb-2 gap-2">
                                   <div className="min-w-0">
                                       <h4 className="font-bold text-white text-xs truncate" title={lb.title}>{lb.title}</h4>
@@ -629,49 +250,31 @@ const Profile: React.FC<ProfileProps> = ({
           </div>
       )}
 
-      {/* --- NEW: ZONE STATS & RANKING SECTION (Tactical List Style with Sort) --- */}
+      {/* ZONE STATS */}
       <div className="bg-gray-800 rounded-xl border border-gray-700 p-5">
           <h3 className="text-white font-bold mb-4 flex items-center gap-2">
               <MapPin size={18} className="text-emerald-400"/> {t('profile.zone_stats')}
           </h3>
-          
           {sortedZoneStats.length === 0 ? (
-              <div className="text-center py-8 text-gray-500 border border-dashed border-gray-700 rounded-lg">
-                  <p>{t('profile.no_runs')}</p>
-              </div>
+              <div className="text-center py-8 text-gray-500 border border-dashed border-gray-700 rounded-lg"><p>{t('profile.no_runs')}</p></div>
           ) : (
               <div>
                   <div className="rounded-lg overflow-hidden border border-gray-700 bg-gray-900 mb-4">
-                      {/* Table Header */}
                       <div className="grid grid-cols-12 gap-2 p-3 bg-gray-950 text-[10px] font-bold text-gray-500 uppercase tracking-wider border-b border-gray-700">
-                          <button onClick={() => handleSort('rank')} className="col-span-1 text-center hover:text-white flex items-center justify-center gap-1">
-                              # {renderSortArrow('rank')}
-                          </button>
+                          <button onClick={() => handleSort('rank')} className="col-span-1 text-center hover:text-white flex items-center justify-center gap-1"># {renderSortArrow('rank')}</button>
                           <div className="col-span-7">{t('profile.location')}</div>
-                          <button onClick={() => handleSort('count')} className="col-span-2 text-right hover:text-white flex items-center justify-end gap-1">
-                              {renderSortArrow('count')} {t('profile.zone_runs')}
-                          </button>
-                          <button onClick={() => handleSort('km')} className="col-span-2 text-right hover:text-white flex items-center justify-end gap-1">
-                              {renderSortArrow('km')} {t('profile.zone_total')}
-                          </button>
+                          <button onClick={() => handleSort('count')} className="col-span-2 text-right hover:text-white flex items-center justify-end gap-1">{renderSortArrow('count')} {t('profile.zone_runs')}</button>
+                          <button onClick={() => handleSort('km')} className="col-span-2 text-right hover:text-white flex items-center justify-end gap-1">{renderSortArrow('km')} {t('profile.zone_total')}</button>
                       </div>
-                      
-                      {/* Table Rows */}
                       <div className="divide-y divide-gray-800">
                           {currentZoneStats.map((stat, idx) => {
-                              // We use the pre-calculated rank from sortedZoneStats
                               const rank = stat.rank; 
                               let rankColor = "text-gray-500";
                               if (rank === 1) rankColor = "text-yellow-400";
                               else if (rank === 2) rankColor = "text-gray-300";
                               else if (rank === 3) rankColor = "text-amber-600";
-
                               return (
-                                  <div 
-                                    key={idx} 
-                                    onClick={() => setSelectedZoneDetail(stat.name)}
-                                    className="grid grid-cols-12 gap-2 p-3 items-center hover:bg-gray-800 transition-colors cursor-pointer group"
-                                  >
+                                  <div key={idx} className="grid grid-cols-12 gap-2 p-3 items-center hover:bg-gray-800 transition-colors cursor-pointer group" onClick={() => setSelectedZoneDetail(stat.name)}>
                                       <div className={`col-span-1 text-center font-black ${rankColor} text-sm`}>{rank}</div>
                                       <div className="col-span-7 font-bold text-white text-xs truncate group-hover:text-emerald-400 transition-colors" title={stat.name}>{stat.name}</div>
                                       <div className="col-span-2 text-right font-mono text-gray-300 text-xs">{stat.count}</div>
@@ -681,182 +284,56 @@ const Profile: React.FC<ProfileProps> = ({
                           })}
                       </div>
                   </div>
-                  <Pagination currentPage={zonePage} totalPages={totalZonePages} onPageChange={setZonePage} />
+                  <Pagination currentPage={zonePage} totalPages={Math.ceil(sortedZoneStats.length / ZONES_PER_PAGE)} onPageChange={setZonePage} />
               </div>
           )}
       </div>
 
-      {/* --- CONTENT ROW: FULL WIDTH TABS (HISTORY & ACHIEVEMENTS) --- */}
+      {/* TABS */}
       <div className="w-full">
           <div className="bg-gray-800 rounded-xl border border-gray-700 min-h-[500px] flex flex-col relative z-0">
-              {/* Tabs Header */}
               <div className="flex border-b border-gray-700 bg-gray-900/50 rounded-t-xl">
-                  <button 
-                    onClick={() => setActiveTab('ACHIEVEMENTS')}
-                    className={`flex-1 py-4 text-sm font-bold flex items-center justify-center gap-2 border-b-2 transition-colors ${activeTab === 'ACHIEVEMENTS' ? 'border-yellow-500 text-yellow-400 bg-gray-800 rounded-tl-xl' : 'border-transparent text-gray-500 hover:text-white rounded-tl-xl'}`}
-                  >
+                  <button onClick={() => setActiveTab('ACHIEVEMENTS')} className={`flex-1 py-4 text-sm font-bold flex items-center justify-center gap-2 border-b-2 transition-colors ${activeTab === 'ACHIEVEMENTS' ? 'border-yellow-500 text-yellow-400 bg-gray-800 rounded-tl-xl' : 'border-transparent text-gray-500 hover:text-white rounded-tl-xl'}`}>
                       <Award size={16} /> {t('profile.tab.achievements')}
                   </button>
-                  <button 
-                    onClick={() => setActiveTab('HISTORY')}
-                    className={`flex-1 py-4 text-sm font-bold flex items-center justify-center gap-2 border-b-2 transition-colors ${activeTab === 'HISTORY' ? 'border-emerald-500 text-emerald-400 bg-gray-800 rounded-tr-xl' : 'border-transparent text-gray-500 hover:text-white rounded-tr-xl'}`}
-                  >
+                  <button onClick={() => setActiveTab('HISTORY')} className={`flex-1 py-4 text-sm font-bold flex items-center justify-center gap-2 border-b-2 transition-colors ${activeTab === 'HISTORY' ? 'border-emerald-500 text-emerald-400 bg-gray-800 rounded-tr-xl' : 'border-transparent text-gray-500 hover:text-white rounded-tr-xl'}`}>
                       <History size={16} /> {t('profile.tab.history')}
                   </button>
               </div>
 
-              {/* Tab Content */}
               <div className="p-6 flex-1 bg-gray-800 rounded-b-xl">
-
-                  {/* --- ACHIEVEMENTS TAB --- */}
                   {activeTab === 'ACHIEVEMENTS' && (
-                      <div className="space-y-8">
-                          {/* BADGES SECTION */}
-                          <div>
-                              <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
-                                  <div className="flex items-center gap-2">
-                                      <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t('profile.badges_collected')} ({allEarnedBadges.length})</h4>
-                                      <span className="text-[9px] text-gray-500 italic hidden md:inline">{t('profile.tap_equip')}</span>
-                                  </div>
-                                  
-                                  {/* Badges Filter */}
-                                  <div className="flex gap-2 overflow-x-auto pb-1 max-w-full no-scrollbar">
-                                      <FilterButton label={t('miss.filter.all')} isActive={badgeFilter === 'ALL'} onClick={() => { setBadgeFilter('ALL'); setBadgePage(1); }} variant="ALL" />
-                                      <FilterButton label={t('miss.filter.common')} isActive={badgeFilter === 'COMMON'} onClick={() => { setBadgeFilter('COMMON'); setBadgePage(1); }} variant="COMMON" />
-                                      <FilterButton label={t('miss.filter.rare')} isActive={badgeFilter === 'RARE'} onClick={() => { setBadgeFilter('RARE'); setBadgePage(1); }} variant="RARE" />
-                                      <FilterButton label={t('miss.filter.epic')} isActive={badgeFilter === 'EPIC'} onClick={() => { setBadgeFilter('EPIC'); setBadgePage(1); }} variant="EPIC" />
-                                      <FilterButton label={t('miss.filter.legendary')} isActive={badgeFilter === 'LEGENDARY'} onClick={() => { setBadgeFilter('LEGENDARY'); setBadgePage(1); }} variant="LEGENDARY" />
-                                  </div>
-                              </div>
-                              
-                              {filteredBadges.length === 0 ? (
-                                  <div className="text-center py-10 border border-dashed border-gray-700 rounded-xl">
-                                      <p className="text-gray-500 text-xs">
-                                          {badgeFilter === 'ALL' ? t('profile.start_earning') : t('miss.no_found')}
-                                      </p>
-                                  </div>
-                              ) : (
-                                  <>
-                                    <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-3">
-                                        {currentBadges.map(badge => {
-                                            const isEquipped = user.favoriteBadgeId === badge.id;
-                                            return (
-                                              <button 
-                                                key={badge.id} 
-                                                onClick={() => handleEquipBadge(badge.id)}
-                                                className={`flex flex-col items-center gap-1 group relative p-1 transition-all rounded-xl ${isEquipped ? 'bg-gray-900/50 ring-1 ring-emerald-500/50' : 'hover:bg-gray-700/30'}`} 
-                                              >
-                                                  <div className={`p-3 rounded-full border bg-opacity-10 backdrop-blur-sm transition-transform group-hover:scale-110 ${getRarityGlow(badge.rarity)}`}>
-                                                      {renderBadgeIcon(badge.icon, "w-6 h-6 md:w-8 md:h-8")}
-                                                  </div>
-                                                  <span className={`text-[9px] font-bold text-center leading-none truncate w-full group-hover:text-white ${isEquipped ? 'text-emerald-400' : 'text-gray-500'}`}>
-                                                      {badge.name}
-                                                  </span>
-                                                  {isEquipped && (
-                                                      <div className="absolute top-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-gray-800 shadow shadow-emerald-500/50"></div>
-                                                  )}
-
-                                                  {/* BADGE TOOLTIP */}
-                                                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-40 bg-gray-950/95 backdrop-blur-xl border border-gray-700 p-3 rounded-xl shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 invisible group-hover:visible text-left">
-                                                      <div className={`text-[9px] font-bold uppercase mb-1 ${getRarityText(badge.rarity)}`}>{badge.rarity}</div>
-                                                      <div className="text-xs font-bold text-white mb-1 leading-tight">{badge.name}</div>
-                                                      <div className="text-[9px] text-gray-400 leading-tight">{badge.description}</div>
-                                                      <div className="absolute left-1/2 -bottom-1 -translate-x-1/2 w-2 h-2 bg-gray-950 border-r border-b border-gray-700 transform rotate-45"></div>
-                                                  </div>
-                                              </button>
-                                            )
-                                        })}
-                                    </div>
-                                    <Pagination currentPage={badgePage} totalPages={totalBadgePages} onPageChange={setBadgePage} />
-                                  </>
-                              )}
-                          </div>
-
-                          {/* MISSIONS LOG SECTION */}
-                          <div className="pt-8 border-t border-gray-700/50">
-                              <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
-                                  <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t('profile.missions_log')}</h4>
-                                  
-                                  {/* Missions Filter */}
-                                  <div className="flex gap-2 overflow-x-auto pb-1 max-w-full no-scrollbar">
-                                      <FilterButton label={t('miss.filter.all')} isActive={missionLogFilter === 'ALL'} onClick={() => { setMissionLogFilter('ALL'); setCompletedMissionPage(1); }} variant="ALL" />
-                                      <FilterButton label={t('miss.filter.common')} isActive={missionLogFilter === 'COMMON'} onClick={() => { setMissionLogFilter('COMMON'); setCompletedMissionPage(1); }} variant="COMMON" />
-                                      <FilterButton label={t('miss.filter.rare')} isActive={missionLogFilter === 'RARE'} onClick={() => { setMissionLogFilter('RARE'); setCompletedMissionPage(1); }} variant="RARE" />
-                                      <FilterButton label={t('miss.filter.epic')} isActive={missionLogFilter === 'EPIC'} onClick={() => { setMissionLogFilter('EPIC'); setCompletedMissionPage(1); }} variant="EPIC" />
-                                      <FilterButton label={t('miss.filter.legendary')} isActive={missionLogFilter === 'LEGENDARY'} onClick={() => { setMissionLogFilter('LEGENDARY'); setCompletedMissionPage(1); }} variant="LEGENDARY" />
-                                  </div>
-                              </div>
-                              
-                              <div className="space-y-2">
-                                  {currentCompletedMissions.map(m => (
-                                      <div key={m.id} className="relative group bg-gray-900 p-3 rounded-lg border border-gray-700 flex justify-between items-center hover:border-gray-600 transition-colors">
-                                          <div className="flex items-center gap-3">
-                                              <CheckCircle size={16} className={getRarityText(m.rarity)} />
-                                              <span className="text-sm font-bold text-gray-300 group-hover:text-white transition-colors">{m.title}</span>
-                                          </div>
-                                          <div className="text-right">
-                                              <span className="text-xs font-mono text-emerald-400 block">+{m.rewardRun} RUN</span>
-                                              {m.rewardGov && m.rewardGov > 0 && <span className="text-[10px] font-mono text-cyan-400 block">+{m.rewardGov} GOV</span>}
-                                          </div>
-
-                                          {/* MISSION TOOLTIP */}
-                                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 bg-gray-950/95 backdrop-blur-xl border border-gray-700 p-3 rounded-xl shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 invisible group-hover:visible text-left">
-                                              <div className={`text-[9px] font-bold uppercase mb-1 ${getRarityText(m.rarity)}`}>{m.rarity}</div>
-                                              <div className="text-xs font-bold text-white mb-1 leading-tight">{m.title}</div>
-                                              <div className="text-[9px] text-gray-400 leading-tight">{m.description}</div>
-                                              <div className="absolute left-1/2 -bottom-1 -translate-x-1/2 w-2 h-2 bg-gray-950 border-r border-b border-gray-700 transform rotate-45"></div>
-                                          </div>
-                                      </div>
-                                  ))}
-                                  {filteredMissions.length === 0 && (
-                                      <p className="text-gray-500 text-xs italic text-center py-4">{missionLogFilter === 'ALL' ? t('profile.no_missions') : t('miss.no_found')}</p>
-                                  )}
-                              </div>
-                              <Pagination currentPage={completedMissionPage} totalPages={totalCompletedMissionPages} onPageChange={setCompletedMissionPage} />
-                          </div>
-                      </div>
+                      <ProfileAchievementsTab 
+                          user={user} 
+                          earnedBadges={allEarnedBadges} 
+                          completedMissions={allCompletedMissions} 
+                          onEquipBadge={(id) => onUpdateUser({ favoriteBadgeId: id })}
+                      />
                   )}
-                  
-                  {/* --- RUN HISTORY TAB --- */}
                   {activeTab === 'HISTORY' && (
                       <div className="space-y-4">
                           {user.runHistory.length === 0 ? (
-                              <div className="text-center py-20 text-gray-500">
-                                  <Clock size={48} className="mx-auto mb-4 opacity-20" />
-                                  <p>{t('profile.no_runs')}</p>
-                              </div>
+                              <div className="text-center py-20 text-gray-500"><History size={48} className="mx-auto mb-4 opacity-20" /><p>{t('profile.no_runs')}</p></div>
                           ) : (
                               <>
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-left">
                                         <thead className="text-[10px] uppercase font-bold text-gray-500 border-b border-gray-700">
-                                            <tr>
-                                                <th className="pb-3 pl-2">{t('profile.date')}</th>
-                                                <th className="pb-3">{t('profile.location')}</th>
-                                                <th className="pb-3 text-right">Dist</th>
-                                                <th className="pb-3 text-right pr-2">{t('profile.rewards')}</th>
-                                            </tr>
+                                            <tr><th className="pb-3 pl-2">{t('profile.date')}</th><th className="pb-3">{t('profile.location')}</th><th className="pb-3 text-right">Dist</th><th className="pb-3 text-right pr-2">{t('profile.rewards')}</th></tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-700/50 text-sm">
                                             {currentRuns.map(run => (
                                                 <tr key={run.id} className="hover:bg-gray-750 transition-colors">
-                                                    <td className="py-3 pl-2 text-gray-400 text-xs">
-                                                        {new Date(run.timestamp).toLocaleDateString()}
-                                                    </td>
+                                                    <td className="py-3 pl-2 text-gray-400 text-xs">{new Date(run.timestamp).toLocaleDateString()}</td>
                                                     <td className="py-3 font-medium text-white">{run.location}</td>
                                                     <td className="py-3 text-right font-mono text-emerald-400">{run.km.toFixed(2)} km</td>
-                                                    <td className="py-3 text-right pr-2">
-                                                        <div className="flex flex-col items-end">
-                                                            <span className="text-xs font-bold text-white">+{run.runEarned} RUN</span>
-                                                            {run.govEarned && <span className="text-[10px] text-cyan-400">+{run.govEarned} GOV</span>}
-                                                        </div>
-                                                    </td>
+                                                    <td className="py-3 text-right pr-2"><div className="flex flex-col items-end"><span className="text-xs font-bold text-white">+{run.runEarned} RUN</span>{run.govEarned && <span className="text-[10px] text-cyan-400">+{run.govEarned} GOV</span>}</div></td>
                                                 </tr>
                                             ))}
                                         </tbody>
                                     </table>
                                 </div>
-                                <Pagination currentPage={runPage} totalPages={totalRunPages} onPageChange={setRunPage} />
+                                <Pagination currentPage={runPage} totalPages={Math.ceil(user.runHistory.length / RUNS_PER_PAGE)} onPageChange={setRunPage} />
                               </>
                           )}
                       </div>
@@ -864,7 +341,6 @@ const Profile: React.FC<ProfileProps> = ({
               </div>
           </div>
       </div>
-
     </div>
   );
 };

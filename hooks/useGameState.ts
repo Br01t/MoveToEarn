@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { User, Zone, Item, Mission, Badge, InventoryItem, BugReport, LeaderboardConfig, LevelConfig } from '../types';
+import { User, Zone, Item, Mission, Badge, InventoryItem, BugReport, LeaderboardConfig, LevelConfig, Suggestion } from '../types';
 import { MOCK_ZONES, INITIAL_USER, MOCK_USERS, MOCK_ITEMS, MOCK_MISSIONS, MOCK_BADGES, PREMIUM_COST, CONQUEST_REWARD_GOV, DEFAULT_LEADERBOARDS, DEFAULT_LEVELS } from '../constants';
 
 export const useGameState = () => {
@@ -12,6 +12,7 @@ export const useGameState = () => {
   const [missions, setMissions] = useState<Mission[]>(MOCK_MISSIONS);
   const [badges, setBadges] = useState<Badge[]>(MOCK_BADGES);
   const [bugReports, setBugReports] = useState<BugReport[]>([]);
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [leaderboards, setLeaderboards] = useState<LeaderboardConfig[]>(DEFAULT_LEADERBOARDS);
   const [levels, setLevels] = useState<LevelConfig[]>(DEFAULT_LEVELS);
   
@@ -125,6 +126,20 @@ export const useGameState = () => {
       setBugReports(prev => [newReport, ...prev]);
   };
 
+  // Suggestion System
+  const submitSuggestion = (title: string, description: string) => {
+      if (!user) return;
+      const newSuggestion: Suggestion = {
+          id: `idea_${Date.now()}`,
+          userId: user.id,
+          userName: user.name,
+          title,
+          description,
+          timestamp: Date.now()
+      };
+      setSuggestions(prev => [newSuggestion, ...prev]);
+  };
+
   // Leaderboard Actions
   const addLeaderboard = (config: LeaderboardConfig) => {
       setLeaderboards(prev => [...prev, config]);
@@ -187,6 +202,7 @@ export const useGameState = () => {
     badges,
     govToRunRate,
     bugReports,
+    suggestions,
     leaderboards,
     levels,
     // Setters
@@ -210,6 +226,7 @@ export const useGameState = () => {
     claimZone,
     upgradePremium,
     reportBug,
+    submitSuggestion,
     addLeaderboard,
     updateLeaderboard,
     deleteLeaderboard,

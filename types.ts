@@ -1,5 +1,5 @@
 
-export type ViewState = 'LANDING' | 'DASHBOARD' | 'MARKETPLACE' | 'INVENTORY' | 'LEADERBOARD' | 'WALLET' | 'PROFILE' | 'MISSIONS' | 'RULES' | 'HOW_TO_PLAY' | 'PRIVACY' | 'TERMS' | 'COMMUNITY' | 'ADMIN' | 'REPORT_BUG';
+export type ViewState = 'LANDING' | 'DASHBOARD' | 'MARKETPLACE' | 'INVENTORY' | 'LEADERBOARD' | 'WALLET' | 'PROFILE' | 'MISSIONS' | 'RULES' | 'HOW_TO_PLAY' | 'PRIVACY' | 'TERMS' | 'COMMUNITY' | 'ADMIN' | 'REPORT_BUG' | 'SUGGESTION';
 
 export type Rarity = 'COMMON' | 'RARE' | 'EPIC' | 'LEGENDARY';
 
@@ -120,6 +120,15 @@ export interface BugReport {
   screenshot?: string; // Base64 string
   timestamp: number;
   status: 'OPEN' | 'RESOLVED';
+}
+
+export interface Suggestion {
+  id: string;
+  userId: string;
+  userName: string;
+  title: string;
+  description: string;
+  timestamp: number;
 }
 
 export type LeaderboardMetric = 'TOTAL_KM' | 'OWNED_ZONES' | 'RUN_BALANCE' | 'GOV_BALANCE' | 'UNIQUE_ZONES';

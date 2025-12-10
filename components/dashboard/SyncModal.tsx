@@ -143,8 +143,8 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in">
-      <div className="bg-gray-800 rounded-t-2xl md:rounded-2xl border border-gray-700 w-full max-w-md shadow-2xl overflow-hidden animate-slide-up flex flex-col max-h-[85vh]">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in">
+      <div className="bg-gray-800 rounded-2xl border border-gray-700 w-full max-w-md shadow-2xl overflow-hidden animate-slide-up flex flex-col max-h-[85vh]">
          
          {/* Header */}
          <div className="p-4 border-b border-gray-700 flex justify-between items-center bg-gray-900">
@@ -336,7 +336,7 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
                         </div>
                     ) : (
                         <div className="space-y-6">
-                            <div className="bg-gray-900/50 p-4 rounded-xl border border-emerald-500/30 flex items-center justify-between">
+                            <div className="bg-gray-900/50 p-4 rounded-xl border border-emerald-500/30 flex items-center justify-center">
                                 <div className="flex items-center gap-3">
                                     <div className="bg-[#FC4C02] p-2 rounded text-white font-bold text-xs">STRAVA</div>
                                     <div>
