@@ -24,6 +24,7 @@ interface AdminProps {
   suggestions?: Suggestion[];
   leaderboards?: LeaderboardConfig[];
   levels?: LevelConfig[];
+  // CRUD Actions
   onAddItem: (item: Item) => void;
   onUpdateItem: (item: Item) => void;
   onRemoveItem: (id: string) => void;
@@ -35,10 +36,12 @@ interface AdminProps {
   onRemoveBadge: (id: string) => void;
   onUpdateZone: (id: string, updates: Partial<Zone>) => void;
   onDeleteZone: (id: string) => void;
+  // Config Actions
   onTriggerBurn: () => void;
   onDistributeRewards: () => void;
   onResetSeason: () => void;
   onUpdateExchangeRate: (rate: number) => void;
+  // Leaderboard & Levels
   onAddLeaderboard?: (config: LeaderboardConfig) => void;
   onUpdateLeaderboard?: (config: LeaderboardConfig) => void;
   onDeleteLeaderboard?: (id: string) => void;
@@ -72,7 +75,7 @@ const Admin: React.FC<AdminProps> = ({
         {['ITEMS', 'MISSIONS', 'ZONES', 'ECONOMY', 'LEADERBOARD', 'LEVELS', 'REPORTS', 'IDEAS'].map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab as any)} 
             className={`px-6 py-4 font-bold text-sm border-b-2 transition-colors whitespace-nowrap ${activeTab === tab ? 'border-emerald-500 text-emerald-400' : 'border-transparent text-gray-500 hover:text-white'}`}>
-                {tab === 'ITEMS' ? 'Market Items' : tab === 'MISSIONS' ? 'Missions' : tab === 'ZONES' ? 'Map Zones' : tab === 'ECONOMY' ? 'Economy Ops' : tab === 'REPORTS' ? 'Reports' : tab === 'IDEAS' ? 'Player Ideas' : tab === 'LEVELS' ? 'Levels' : 'Leaderboards'}
+                {tab === 'ITEMS' ? 'Market Items' : tab === 'MISSIONS' ? 'Missions' : tab === 'ZONES' ? 'Zones' : tab === 'ECONOMY' ? 'Economy' : tab === 'LEADERBOARD' ? 'Leaderboards' : tab === 'LEVELS' ? 'Levels' : tab === 'REPORTS' ? 'Reports' : 'Suggestions'}
             </button>
         ))}
       </div>
@@ -88,10 +91,10 @@ const Admin: React.FC<AdminProps> = ({
 
       {activeTab === 'MISSIONS' && (
           <AdminMissionsTab 
-              missions={missions}
+              missions={missions} 
               badges={badges}
-              onAddMission={onAddMission}
-              onUpdateMission={onUpdateMission}
+              onAddMission={onAddMission} 
+              onUpdateMission={onUpdateMission} 
               onRemoveMission={onRemoveMission}
               onAddBadge={onAddBadge}
               onUpdateBadge={onUpdateBadge}
@@ -101,24 +104,24 @@ const Admin: React.FC<AdminProps> = ({
 
       {activeTab === 'ZONES' && (
           <AdminZonesTab 
-              zones={zones}
-              onUpdateZone={onUpdateZone}
-              onDeleteZone={onDeleteZone}
+              zones={zones} 
+              onUpdateZone={onUpdateZone} 
+              onDeleteZone={onDeleteZone} 
           />
       )}
 
       {activeTab === 'ECONOMY' && (
           <AdminEconomyTab 
-              govToRunRate={govToRunRate}
-              onUpdateExchangeRate={onUpdateExchangeRate}
-              onTriggerBurn={onTriggerBurn}
-              onDistributeRewards={onDistributeRewards}
+              govToRunRate={govToRunRate} 
+              onUpdateExchangeRate={onUpdateExchangeRate} 
+              onTriggerBurn={onTriggerBurn} 
+              onDistributeRewards={onDistributeRewards} 
           />
       )}
 
       {activeTab === 'LEADERBOARD' && (
           <AdminLeaderboardTab 
-              leaderboards={leaderboards}
+              leaderboards={leaderboards || []}
               onAddLeaderboard={onAddLeaderboard}
               onUpdateLeaderboard={onUpdateLeaderboard}
               onDeleteLeaderboard={onDeleteLeaderboard}
@@ -127,8 +130,8 @@ const Admin: React.FC<AdminProps> = ({
       )}
 
       {activeTab === 'LEVELS' && (
-          <AdminLevelsTab 
-              levels={levels}
+          <AdminLevelsTab
+              levels={levels || []}
               onAddLevel={onAddLevel}
               onUpdateLevel={onUpdateLevel}
               onDeleteLevel={onDeleteLevel}
