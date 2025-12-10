@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { User, Zone, Mission, Badge, Rarity, LevelConfig, LeaderboardConfig } from '../types';
-import { Save, User as UserIcon, Mail, Activity, Coins, Shield, Crown, Award, History, Clock, CheckCircle, TrendingUp, BarChart3, MapPin, Camera, X, Flag, Zap, Mountain, Globe, Home, Landmark, Swords, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users, Trophy, Medal, Filter, ChevronUp, ChevronDown } from 'lucide-react';
+import { Save, User as UserIcon, Mail, Activity, Coins, Shield, Crown, Award, History, Clock, CheckCircle, TrendingUp, BarChart3, MapPin, Camera, X, Flag, Zap, Mountain, Globe, Home, Landmark, Swords, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users, Trophy, Medal, Filter, ChevronUp, ChevronDown, AlignLeft } from 'lucide-react';
 import { PREMIUM_COST } from '../constants';
 import Pagination from './Pagination';
 import { useLanguage } from '../LanguageContext';
@@ -53,6 +53,9 @@ const Profile: React.FC<ProfileProps> = ({
   // Sort State for Zone Stats
   const [sortConfig, setSortConfig] = useState<{ key: 'rank' | 'count' | 'km'; direction: 'asc' | 'desc' }>({ key: 'km', direction: 'desc' });
 
+  // Modal State for Zone Details
+  const [selectedZoneDetail, setSelectedZoneDetail] = useState<string | null>(null);
+
   // --- DERIVED STATS ---
   const myZones = zones.filter(z => z.ownerId === user.id);
   
@@ -87,6 +90,42 @@ const Profile: React.FC<ProfileProps> = ({
       
       leaderboard.sort((a, b) => b.km - a.km);
       return leaderboard.findIndex(u => u.id === user.id) + 1;
+  };
+
+  // --- ZONE POPUP DATA HELPER ---
+  const getZonePopupData = (zoneName: string) => {
+      // 1. Find Static Data
+      const zoneStatic = zones.find(z => z.name === zoneName);
+      
+      // 2. Calculate Stats from user history
+      const myRuns = user.runHistory.filter(r => r.location === zoneName);
+      const myTotalKm = myRuns.reduce((acc, r) => acc + r.km, 0);
+
+      // 3. Build Full Leaderboard (Simulated for other users based on seed like getZoneRank)
+      const leaderboard = [
+          { id: user.id, name: user.name, avatar: user.avatar, km: myTotalKm },
+          ...Object.values(allUsers).map((u: any) => {
+              const seed = (u.id.charCodeAt(u.id.length - 1) + zoneName.length) % 100;
+              const fakeKm = (u.totalKm * (seed / 100)) / 5;
+              // Randomize avatar slightly if missing
+              const av = u.avatar || `https://ui-avatars.com/api/?name=${u.name}&background=random`;
+              return { id: u.id, name: u.name, avatar: av, km: fakeKm };
+          })
+      ];
+
+      // Sort by KM descending
+      leaderboard.sort((a, b) => b.km - a.km);
+
+      // Filter out users with 0 km
+      const activeRunners = leaderboard.filter(u => u.km > 0);
+
+      return {
+          name: zoneName,
+          interestRate: zoneStatic ? zoneStatic.interestRate : 0,
+          totalRunners: activeRunners.length,
+          leaderboard: activeRunners.slice(0, 10), // Top 10
+          isOwner: zoneStatic?.ownerId === user.id
+      };
   };
 
   // --- ZONE AGGREGATION & SORTING LOGIC ---
@@ -318,9 +357,90 @@ const Profile: React.FC<ProfileProps> = ({
       return sortConfig.direction === 'asc' ? <ChevronUp size={12} /> : <ChevronDown size={12} />;
   };
 
+  // --- MODAL RENDERER ---
+  const renderZoneDetailModal = () => {
+      if (!selectedZoneDetail) return null;
+      const data = getZonePopupData(selectedZoneDetail);
+
+      return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in">
+              <div className="bg-gray-800 rounded-2xl border border-gray-700 w-full max-w-sm shadow-2xl relative overflow-hidden flex flex-col max-h-[80vh] animate-slide-up">
+                  
+                  {/* Header */}
+                  <div className="bg-gradient-to-r from-gray-900 to-gray-800 p-5 border-b border-gray-700 flex justify-between items-start">
+                      <div className="pr-4">
+                          <h3 className="text-xl font-bold text-white mb-1 leading-tight">{data.name}</h3>
+                          <div className="flex gap-2">
+                              {data.isOwner && (
+                                  <span className="text-[10px] bg-emerald-900/50 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/30 font-bold uppercase">Owner</span>
+                              )}
+                              <span className="text-[10px] bg-gray-700 text-gray-300 px-2 py-0.5 rounded font-bold uppercase">{t('zone.status')}</span>
+                          </div>
+                      </div>
+                      <button onClick={() => setSelectedZoneDetail(null)} className="text-gray-400 hover:text-white bg-gray-800 p-1.5 rounded-full hover:bg-gray-700 transition-colors">
+                          <X size={20} />
+                      </button>
+                  </div>
+
+                  {/* Stats Grid */}
+                  <div className="grid grid-cols-2 gap-4 p-5 bg-gray-800/50">
+                      <div className="bg-gray-900 p-3 rounded-xl border border-gray-700 text-center">
+                          <span className="block text-[10px] text-gray-500 uppercase font-bold mb-1">{t('dash.yield')}</span>
+                          <span className="text-xl font-bold text-amber-400 font-mono">{data.interestRate}%</span>
+                      </div>
+                      <div className="bg-gray-900 p-3 rounded-xl border border-gray-700 text-center">
+                          <span className="block text-[10px] text-gray-500 uppercase font-bold mb-1">Runners</span>
+                          <span className="text-xl font-bold text-white font-mono flex items-center justify-center gap-1">
+                              <Users size={16} className="text-gray-400" /> {data.totalRunners}
+                          </span>
+                      </div>
+                  </div>
+
+                  {/* Leaderboard */}
+                  <div className="flex-1 overflow-y-auto p-5 pt-0">
+                      <h4 className="text-xs font-bold text-gray-400 uppercase mb-3 flex items-center gap-2 sticky top-0 bg-gray-800 py-3 border-b border-gray-700/50">
+                          <Trophy size={14} className="text-yellow-500" /> {t('zone.top_runners')}
+                      </h4>
+                      <div className="space-y-2">
+                          {data.leaderboard.map((u, index) => {
+                              const isMe = u.id === user.id;
+                              let rankColor = "text-gray-500 bg-gray-800";
+                              if (index === 0) rankColor = "text-yellow-400 bg-yellow-900/20 border-yellow-500/30";
+                              else if (index === 1) rankColor = "text-gray-300 bg-gray-700/50";
+                              else if (index === 2) rankColor = "text-amber-600 bg-amber-900/10";
+
+                              return (
+                                  <div key={u.id} className={`flex items-center justify-between p-2 rounded-lg border border-transparent ${isMe ? 'bg-emerald-900/20 border-emerald-500/30' : 'hover:bg-gray-700/30'}`}>
+                                      <div className="flex items-center gap-3">
+                                          <div className={`w-6 h-6 flex items-center justify-center rounded text-xs font-bold ${rankColor}`}>
+                                              {index + 1}
+                                          </div>
+                                          <img src={u.avatar} className="w-8 h-8 rounded-full bg-gray-700 object-cover" alt={u.name} />
+                                          <div>
+                                              <div className={`text-xs font-bold ${isMe ? 'text-emerald-400' : 'text-white'}`}>
+                                                  {u.name} {isMe && '(You)'}
+                                              </div>
+                                          </div>
+                                      </div>
+                                      <div className="text-xs font-mono font-bold text-gray-300">
+                                          {u.km.toFixed(1)} km
+                                      </div>
+                                  </div>
+                              );
+                          })}
+                      </div>
+                  </div>
+              </div>
+          </div>
+      );
+  };
+
   return (
     <div className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
       
+      {/* RENDER MODAL IF OPEN */}
+      {renderZoneDetailModal()}
+
       {/* --- HEADER SECTION: IDENTITY & LEVEL --- */}
       <div className="bg-gray-800 rounded-2xl border border-gray-700 overflow-hidden shadow-xl">
           {/* ... (Header banner, Avatar, Edit Form logic preserved exactly as is) ... */}
@@ -547,9 +667,13 @@ const Profile: React.FC<ProfileProps> = ({
                               else if (rank === 3) rankColor = "text-amber-600";
 
                               return (
-                                  <div key={idx} className="grid grid-cols-12 gap-2 p-3 items-center hover:bg-gray-800/50 transition-colors">
+                                  <div 
+                                    key={idx} 
+                                    onClick={() => setSelectedZoneDetail(stat.name)}
+                                    className="grid grid-cols-12 gap-2 p-3 items-center hover:bg-gray-800 transition-colors cursor-pointer group"
+                                  >
                                       <div className={`col-span-1 text-center font-black ${rankColor} text-sm`}>{rank}</div>
-                                      <div className="col-span-7 font-bold text-white text-xs truncate" title={stat.name}>{stat.name}</div>
+                                      <div className="col-span-7 font-bold text-white text-xs truncate group-hover:text-emerald-400 transition-colors" title={stat.name}>{stat.name}</div>
                                       <div className="col-span-2 text-right font-mono text-gray-300 text-xs">{stat.count}</div>
                                       <div className="col-span-2 text-right font-mono text-emerald-400 font-bold text-xs">{stat.km.toFixed(1)}</div>
                                   </div>
