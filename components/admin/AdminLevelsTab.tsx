@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { LevelConfig } from '../../types';
-import { BarChart3, Edit2, Plus, Trash2 } from 'lucide-react';
+import { BarChart3, Edit2, Plus, Trash2, Image } from 'lucide-react';
 import { useLanguage } from '../../LanguageContext';
 import { NotificationToast, ConfirmModal } from './AdminUI';
 
@@ -19,8 +19,8 @@ const AdminLevelsTab: React.FC<AdminLevelsTabProps> = ({ levels, onAddLevel, onU
   const [confirmAction, setConfirmAction] = useState<{ title: string, message: string, action: () => void } | null>(null);
 
   const [editingLvlId, setEditingLvlId] = useState<string | null>(null);
-  const [lvlForm, setLvlForm] = useState<{ level: string; minKm: string; title: string }>({
-      level: '', minKm: '', title: ''
+  const [lvlForm, setLvlForm] = useState<{ level: string; minKm: string; title: string; icon: string }>({
+      level: '', minKm: '', title: '', icon: ''
   });
 
   const startEditLevel = (lvl: LevelConfig) => {
@@ -28,13 +28,14 @@ const AdminLevelsTab: React.FC<AdminLevelsTabProps> = ({ levels, onAddLevel, onU
       setLvlForm({
           level: lvl.level.toString(),
           minKm: lvl.minKm.toString(),
-          title: lvl.title || ''
+          title: lvl.title || '',
+          icon: lvl.icon || ''
       });
   };
 
   const cancelEditLevel = () => {
       setEditingLvlId(null);
-      setLvlForm({ level: '', minKm: '', title: '' });
+      setLvlForm({ level: '', minKm: '', title: '', icon: '' });
   };
 
   const handleSubmitLevel = async (e: React.FormEvent) => {
@@ -45,7 +46,8 @@ const AdminLevelsTab: React.FC<AdminLevelsTabProps> = ({ levels, onAddLevel, onU
           id: editingLvlId || `lvl_${Date.now()}`,
           level: parseInt(lvlForm.level),
           minKm: parseInt(lvlForm.minKm),
-          title: lvlForm.title
+          title: lvlForm.title,
+          icon: lvlForm.icon
       };
 
       let result;
@@ -96,17 +98,25 @@ const AdminLevelsTab: React.FC<AdminLevelsTabProps> = ({ levels, onAddLevel, onU
                 {editingLvlId ? t('admin.levels.edit') : t('admin.levels.add_btn')}
             </h3>
             <form onSubmit={handleSubmitLevel} className="space-y-4">
-                <div>
-                    <label className="text-xs text-gray-400 uppercase font-bold">{t('admin.levels.level_num')}</label>
-                    <input type="number" required value={lvlForm.level} onChange={e => setLvlForm({...lvlForm, level: e.target.value})} className="w-full bg-gray-900 border border-gray-600 rounded p-2 text-white" />
-                </div>
-                <div>
-                    <label className="text-xs text-gray-400 uppercase font-bold">{t('admin.levels.min_km')}</label>
-                    <input type="number" required value={lvlForm.minKm} onChange={e => setLvlForm({...lvlForm, minKm: e.target.value})} className="w-full bg-gray-900 border border-gray-600 rounded p-2 text-white" />
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label className="text-xs text-gray-400 uppercase font-bold">{t('admin.levels.level_num')}</label>
+                        <input type="number" required value={lvlForm.level} onChange={e => setLvlForm({...lvlForm, level: e.target.value})} className="w-full bg-gray-900 border border-gray-600 rounded p-2 text-white" />
+                    </div>
+                    <div>
+                        <label className="text-xs text-gray-400 uppercase font-bold">{t('admin.levels.min_km')}</label>
+                        <input type="number" required value={lvlForm.minKm} onChange={e => setLvlForm({...lvlForm, minKm: e.target.value})} className="w-full bg-gray-900 border border-gray-600 rounded p-2 text-white" />
+                    </div>
                 </div>
                 <div>
                     <label className="text-xs text-gray-400 uppercase font-bold">{t('admin.levels.level_title')}</label>
                     <input type="text" value={lvlForm.title} onChange={e => setLvlForm({...lvlForm, title: e.target.value})} className="w-full bg-gray-900 border border-gray-600 rounded p-2 text-white" />
+                </div>
+                <div>
+                    <label className="text-xs text-gray-400 uppercase font-bold flex items-center gap-1">
+                        Icon Name <span className="text-gray-500 font-normal normal-case">(Lucide icon name, e.g. "Crown")</span>
+                    </label>
+                    <input type="text" value={lvlForm.icon} onChange={e => setLvlForm({...lvlForm, icon: e.target.value})} className="w-full bg-gray-900 border border-gray-600 rounded p-2 text-white" placeholder="e.g. Star, Shield, Zap" />
                 </div>
                 
                 <div className="flex gap-2">
@@ -134,7 +144,14 @@ const AdminLevelsTab: React.FC<AdminLevelsTabProps> = ({ levels, onAddLevel, onU
                             <span className="font-mono font-bold text-emerald-400 text-lg">LVL {lvl.level}</span>
                             <span className="text-sm font-bold text-white">{lvl.title}</span>
                         </div>
-                        <p className="text-xs text-gray-400 mt-1">Min Distance: <span className="font-mono text-white">{lvl.minKm} km</span></p>
+                        <div className="flex flex-col gap-0.5 mt-1">
+                            <p className="text-xs text-gray-400">Min Distance: <span className="font-mono text-white">{lvl.minKm} km</span></p>
+                            {lvl.icon && (
+                                <p className="text-xs text-gray-500 flex items-center gap-1">
+                                    <Image size={10} /> Icon: <span className="font-mono text-gray-300">{lvl.icon}</span>
+                                </p>
+                            )}
+                        </div>
                     </div>
                     <div className="flex gap-2">
                         <button 
