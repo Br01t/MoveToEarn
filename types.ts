@@ -152,6 +152,7 @@ export interface LevelConfig {
   level: number;
   minKm: number;
   title?: string;
+  icon?: string; // ADDED: Icon support for levels
 }
 
 export interface GameState {

@@ -134,7 +134,8 @@ export const useGameState = () => {
                   id: l.id,
                   level: l.level,
                   minKm: l.min_km,
-                  title: l.title
+                  title: l.title,
+                  icon: l.icon // Added icon field mapping
               })));
           }
 

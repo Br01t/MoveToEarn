@@ -1,7 +1,6 @@
-
 import React, { useState } from 'react';
 import { User, Badge } from '../../types';
-import { Crown, Save, Mail, Camera, CheckCircle, X, Flag, Award, Zap, Mountain, Globe, Home, Landmark, Swords, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users, FileText } from 'lucide-react';
+import { Crown, Save, Mail, Camera, CheckCircle, X, Flag, Award, Zap, Mountain, Globe, Home, Landmark, Swords, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users, FileText, Egg, Baby, Activity, MapPin, Smile, Wind, Compass, Navigation, TrendingUp, Move, Target, Watch, Droplets, Shield, Star, BatteryCharging, Flame, Truck, CloudLightning, Hexagon, FastForward, Trophy, Plane, Map, Layers, Briefcase, GraduationCap, Brain, Crosshair, Anchor, Heart, Lock, Disc, Feather, FlagTriangleRight, Globe2, Sparkles, Radio, BookOpen, Waves, Snowflake, CloudRain, ThermometerSnowflake, SunDim, MoonStar, Atom, Sword, Axe, Ghost, Ship, PlusSquare, Skull, ChevronsUp, Orbit, CloudFog, Circle, Infinity, Sparkle, ArrowUpCircle, Clock, Eye, Type, Delete, PenTool, Medal } from 'lucide-react';
 import { useLanguage } from '../../LanguageContext';
 
 interface ProfileHeaderProps {
@@ -9,6 +8,8 @@ interface ProfileHeaderProps {
   favoriteBadge: Badge | undefined;
   nextLevelKm: number;
   currentLevel: number;
+  levelTitle?: string;
+  levelIcon?: string;
   progressToNextLevel: number;
   onUpdateUser: (updates: Partial<User>) => void;
   onUpgradePremium: () => void;
@@ -16,7 +17,7 @@ interface ProfileHeaderProps {
 }
 
 const ProfileHeader: React.FC<ProfileHeaderProps> = ({ 
-    user, favoriteBadge, nextLevelKm, currentLevel, progressToNextLevel, onUpdateUser, onUpgradePremium, onViewSubmissions 
+    user, favoriteBadge, nextLevelKm, currentLevel, levelTitle, levelIcon, progressToNextLevel, onUpdateUser, onUpgradePremium, onViewSubmissions 
 }) => {
   const { t } = useLanguage();
   const [isEditing, setIsEditing] = useState(false);
@@ -61,6 +62,97 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
       }
   };
 
+  // Helper for Level Icons (using the list from SQL)
+  const renderLevelIcon = (iconName: string, className: string) => {
+      switch(iconName) {
+          case 'Egg': return <Egg className={className} />;
+          case 'Footprints': return <Footprints className={className} />;
+          case 'Baby': return <Baby className={className} />;
+          case 'Activity': return <Activity className={className} />;
+          case 'MapPin': return <MapPin className={className} />;
+          case 'Sun': return <Sun className={className} />;
+          case 'Smile': return <Smile className={className} />;
+          case 'Wind': return <Wind className={className} />;
+          case 'Compass': return <Compass className={className} />;
+          case 'Navigation': return <Navigation className={className} />;
+          case 'TrendingUp': return <TrendingUp className={className} />;
+          case 'Move': return <Move className={className} />;
+          case 'Building': return <Building2 className={className} />;
+          case 'Trees': return <Mountain className={className} />; // Fallback for Trees
+          case 'Target': return <Target className={className} />;
+          case 'Watch': return <Watch className={className} />;
+          case 'Droplets': return <Droplets className={className} />;
+          case 'Shield': return <Shield className={className} />;
+          case 'Mountain': return <Mountain className={className} />;
+          case 'Star': return <Star className={className} />;
+          case 'Flag': return <Flag className={className} />;
+          case 'BatteryCharging': return <BatteryCharging className={className} />;
+          case 'Flame': return <Flame className={className} />;
+          case 'Truck': return <Truck className={className} />;
+          case 'Award': return <Award className={className} />;
+          case 'ShieldCheck': return <ShieldCheck className={className} />;
+          case 'Zap': return <Zap className={className} />;
+          case 'Moon': return <Moon className={className} />;
+          case 'Sunrise': return <Sun className={className} />;
+          case 'Medal': return <Medal className={className} />;
+          case 'Repeat': return <Timer className={className} />; // Fallback
+          case 'CloudLightning': return <CloudLightning className={className} />;
+          case 'Hexagon': return <Hexagon className={className} />;
+          case 'FastForward': return <FastForward className={className} />;
+          case 'Trophy': return <Trophy className={className} />;
+          case 'Globe': return <Globe className={className} />;
+          case 'Plane': return <Plane className={className} />;
+          case 'Map': return <Map className={className} />;
+          case 'Layers': return <Layers className={className} />;
+          case 'Briefcase': return <Briefcase className={className} />;
+          case 'GraduationCap': return <GraduationCap className={className} />;
+          case 'Users': return <Users className={className} />;
+          case 'Brain': return <Brain className={className} />;
+          case 'Crosshair': return <Crosshair className={className} />;
+          case 'Anchor': return <Anchor className={className} />;
+          case 'Heart': return <Heart className={className} />;
+          case 'Lock': return <Lock className={className} />;
+          case 'Disc': return <Disc className={className} />;
+          case 'Gem': return <Gem className={className} />;
+          case 'Crown': return <Crown className={className} />;
+          case 'Feather': return <Feather className={className} />;
+          case 'FlagTriangleRight': return <FlagTriangleRight className={className} />;
+          case 'Globe2': return <Globe2 className={className} />;
+          case 'Camera': return <Camera className={className} />;
+          case 'Sparkles': return <Sparkles className={className} />;
+          case 'Radio': return <Radio className={className} />;
+          case 'BookOpen': return <BookOpen className={className} />;
+          case 'Waves': return <Waves className={className} />;
+          case 'Snowflake': return <Snowflake className={className} />;
+          case 'CloudRain': return <CloudRain className={className} />;
+          case 'ThermometerSnowflake': return <ThermometerSnowflake className={className} />;
+          case 'SunDim': return <SunDim className={className} />;
+          case 'MoonStar': return <MoonStar className={className} />;
+          case 'Atom': return <Atom className={className} />;
+          case 'Sword': return <Sword className={className} />;
+          case 'Axe': return <Axe className={className} />;
+          case 'Ghost': return <Ghost className={className} />;
+          case 'Ship': return <Ship className={className} />;
+          case 'PlusSquare': return <PlusSquare className={className} />;
+          case 'Skull': return <Skull className={className} />;
+          case 'ChevronsUp': return <ChevronsUp className={className} />;
+          case 'Rocket': return <Rocket className={className} />;
+          case 'User': return <Users className={className} />;
+          case 'Orbit': return <Globe className={className} />;
+          case 'CloudFog': return <CloudFog className={className} />;
+          case 'Circle': return <Circle className={className} />;
+          case 'Infinity': return <Infinity className={className} />;
+          case 'Sparkle': return <Sparkle className={className} />;
+          case 'ArrowUpCircle': return <ArrowUpCircle className={className} />;
+          case 'Clock': return <Clock className={className} />;
+          case 'Eye': return <Eye className={className} />;
+          case 'Type': return <Type className={className} />;
+          case 'Delete': return <Delete className={className} />;
+          case 'PenTool': return <PenTool className={className} />;
+          default: return <Award className={className} />;
+      }
+  };
+
   return (
       <div className="bg-gray-800 rounded-2xl border border-gray-700 overflow-hidden shadow-xl">
           <div className="h-32 bg-gradient-to-r from-gray-900 via-emerald-950 to-gray-900 relative">
@@ -75,7 +167,8 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           <div className="px-6 md:px-8 pb-6 flex flex-col md:flex-row items-end md:items-start gap-6 -mt-12 relative z-10">
              <div className="relative group">
                  <img src={isEditing ? avatar : user.avatar} alt="Avatar" className={`w-32 h-32 rounded-2xl border-4 bg-gray-800 shadow-2xl object-cover ${user.isPremium ? 'border-yellow-500' : 'border-gray-700'}`} />
-                 <div className="absolute -bottom-3 -right-3 bg-gray-900 text-white text-xs font-bold px-3 py-1 rounded-lg border border-gray-600 shadow-lg z-20">
+                 <div className="absolute -bottom-3 -right-3 bg-gray-900 text-white text-xs font-bold px-3 py-1 rounded-lg border border-gray-600 shadow-lg z-20 flex items-center gap-1.5">
+                    {levelIcon ? renderLevelIcon(levelIcon, "w-3 h-3 text-emerald-400") : null}
                     LVL {currentLevel}
                  </div>
                  {isEditing && (
@@ -101,7 +194,19 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                         <p className="text-gray-400 flex items-center gap-2 text-sm mt-1">
                             <Mail size={14} className="text-emerald-500" /> {user.email || t('profile.no_email')}
                         </p>
+                        
                         <div className="mt-4 max-w-lg">
+                            {/* Level Title Display - Positioned above Progress */}
+                            {levelTitle && (
+                                <div className="mb-2">
+                                    <span className="text-gray-500 text-[10px] font-bold uppercase tracking-wider block mb-0.5">Rank</span>
+                                    <h3 className="text-white font-bold text-lg flex items-center gap-2">
+                                        {levelIcon && renderLevelIcon(levelIcon, "w-5 h-5 text-emerald-400")}
+                                        {levelTitle}
+                                    </h3>
+                                </div>
+                            )}
+
                             <div className="flex justify-between text-[10px] uppercase font-bold text-gray-500 mb-1">
                                 <span>{t('profile.xp_progress')}</span>
                                 <span>{user.totalKm.toFixed(1)} / {nextLevelKm} KM</span>
