@@ -195,6 +195,8 @@ const AppContent: React.FC = () => {
                   badges={gameState.badges}
                   levels={gameState.levels}
                   leaderboards={gameState.leaderboards}
+                  bugReports={gameState.bugReports}
+                  suggestions={gameState.suggestions}
                   allUsers={gameState.usersMock}
                   onUpdateUser={gameState.updateUser}
                   onUpgradePremium={gameState.upgradePremium}

@@ -246,13 +246,6 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
       }
   };
 
-  const rankings = Object.values(users).map((u: MockUser) => {
-     if (u.id === currentUser.id) {
-        return { ...u, score: getScore(currentUser, activeBoard, true), badgeId: currentUser.favoriteBadgeId };
-     }
-     return { ...u, score: getScore(u, activeBoard, false), badgeId: u.favoriteBadgeId };
-  }).sort((a, b) => b.score - a.score);
-
   const getMetricIcon = (metric: LeaderboardMetric) => {
       switch(metric) {
           case 'TOTAL_KM': return <Footprints size={16} />;
@@ -281,6 +274,23 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
           default: return 'text-gray-400 bg-gray-800 border-gray-600';
       }
   };
+
+  if (!activeBoard) {
+      return (
+          <div className="max-w-7xl mx-auto p-4 md:p-6 text-center text-gray-500 min-h-[400px] flex flex-col items-center justify-center">
+              <Trophy size={64} className="mx-auto mb-4 opacity-20" />
+              <h2 className="text-2xl font-bold text-white mb-2">No active leaderboards</h2>
+              <p>Check back later for global rankings.</p>
+          </div>
+      );
+  }
+
+  const rankings = Object.values(users).map((u: MockUser) => {
+     if (u.id === currentUser.id) {
+        return { ...u, score: getScore(currentUser, activeBoard, true), badgeId: currentUser.favoriteBadgeId };
+     }
+     return { ...u, score: getScore(u, activeBoard, false), badgeId: u.favoriteBadgeId };
+  }).sort((a, b) => b.score - a.score);
 
   const timeLeft = activeBoard.endTime ? Math.max(0, activeBoard.endTime - Date.now()) : 0;
   const daysLeft = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
