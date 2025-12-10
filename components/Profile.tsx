@@ -4,6 +4,7 @@ import { User, Zone, Mission, Badge, Rarity, LevelConfig, LeaderboardConfig } fr
 import { Award, History, Coins, BarChart3, Shield, Trophy, MapPin, ChevronUp, ChevronDown, Users, X, Medal } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 import Pagination from './Pagination';
+import ZoneStatsModal from './profile/ZoneStatsModal';
 
 // Sub Components
 import ProfileHeader from './profile/ProfileHeader';
@@ -19,6 +20,9 @@ interface ProfileProps {
   allUsers?: Record<string, any>;
   onUpdateUser: (updates: Partial<User>) => void;
   onUpgradePremium: () => void;
+  onClaim: (zoneId: string) => void;
+  onBoost: (zoneId: string) => void;
+  onDefend: (zoneId: string) => void;
 }
 
 const RUNS_PER_PAGE = 8;
@@ -26,7 +30,7 @@ const ZONES_PER_PAGE = 5;
 
 const Profile: React.FC<ProfileProps> = ({ 
     user, zones, missions = [], badges = [], levels = [], leaderboards = [], allUsers = {},
-    onUpdateUser, onUpgradePremium 
+    onUpdateUser, onUpgradePremium, onClaim, onBoost, onDefend
 }) => {
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<'ACHIEVEMENTS' | 'HISTORY'>('ACHIEVEMENTS');
@@ -72,7 +76,33 @@ const Profile: React.FC<ProfileProps> = ({
       progressToNextLevel = ((user.totalKm - ((currentLevel - 1) * 50)) / 50) * 100;
   }
 
-  // --- ZONE RANK LOGIC ---
+  // --- ZONE DATA LOOKUP FOR MODAL ---
+  const selectedZone = useMemo(() => zones.find(z => z.name === selectedZoneDetail), [zones, selectedZoneDetail]);
+
+  const ownerDetails = useMemo(() => {
+      if (!selectedZone) return null;
+      if (!selectedZone.ownerId) return { name: 'Unclaimed', avatar: null, badge: null };
+      let userData = selectedZone.ownerId === user.id ? user : allUsers[selectedZone.ownerId];
+      if (!userData) return { name: 'Unknown', avatar: null, badge: null };
+      const userBadge = userData.favoriteBadgeId ? badges.find(b => b.id === userData.favoriteBadgeId) : null;
+      return { name: userData.name, avatar: userData.avatar, badge: userBadge };
+  }, [selectedZone, allUsers, user, badges]);
+
+  const zoneLeaderboard = useMemo(() => {
+      if (!selectedZone) return [];
+      const zoneName = selectedZone.name;
+      const myRuns = user.runHistory.filter(r => r.location === zoneName);
+      const myTotalKm = myRuns.reduce((acc, r) => acc + r.km, 0);
+      const leaderboard = Object.values(allUsers).map((u: any) => {
+          if (u.id === user.id) return { id: u.id, name: u.name, avatar: u.avatar, km: myTotalKm };
+          const seed = (u.id.charCodeAt(u.id.length - 1) + zoneName.length) % 100;
+          const fakeKm = (u.totalKm * (seed / 100)) / 5;
+          return { id: u.id, name: u.name, avatar: u.avatar, km: fakeKm };
+      });
+      return leaderboard.sort((a, b) => b.km - a.km).slice(0, 10);
+  }, [selectedZone, allUsers, user]);
+
+  // --- ZONE RANK LOGIC (FOR TABLE) ---
   const getZoneRank = (zoneName: string, myKm: number) => {
       const leaderboard = Object.values(allUsers).map((u: any) => {
           if (u.id === user.id) return { id: u.id, km: myKm };
@@ -341,6 +371,18 @@ const Profile: React.FC<ProfileProps> = ({
               </div>
           </div>
       </div>
+
+      {/* ZONE DETAILS MODAL (Displayed when a zone is selected from stats) */}
+      {selectedZone && (
+          <ZoneStatsModal 
+              zone={selectedZone}
+              user={user}
+              onClose={() => setSelectedZoneDetail(null)}
+              ownerDetails={ownerDetails}
+              zoneLeaderboard={zoneLeaderboard}
+          />
+      )}
+
     </div>
   );
 };

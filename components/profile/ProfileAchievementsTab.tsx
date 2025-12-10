@@ -76,14 +76,32 @@ const ProfileAchievementsTab: React.FC<ProfileAchievementsTabProps> = ({ user, e
   };
 
   const FilterButton = ({ label, isActive, onClick, variant }: { label: string, isActive: boolean, onClick: () => void, variant: 'ALL' | Rarity }) => {
-      // (Simplified logic to save space, assuming same styles as Profile.tsx)
-      const activeBase = "border bg-opacity-100";
-      const inactiveBase = "bg-gray-900 border-opacity-50 hover:bg-opacity-20";
+      let className = "px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all duration-300 whitespace-nowrap border ";
+      
+      if (variant === 'ALL') {
+          className += isActive 
+            ? 'bg-white text-black border-white shadow-[0_0_10px_rgba(255,255,255,0.3)]' 
+            : 'bg-gray-900 text-gray-400 border-gray-700 hover:text-white hover:border-gray-500';
+      } else if (variant === 'COMMON') {
+          className += isActive 
+            ? 'bg-gray-500 text-white border-gray-500 shadow-[0_0_10px_rgba(107,114,128,0.4)]' 
+            : 'bg-gray-900 text-gray-500 border-gray-700 hover:text-gray-300 hover:border-gray-500';
+      } else if (variant === 'RARE') {
+          className += isActive 
+            ? 'bg-cyan-500 text-black border-cyan-500 shadow-[0_0_15px_rgba(6,182,212,0.5)]' 
+            : 'bg-gray-900 text-cyan-500 border-gray-700 hover:bg-cyan-900/20 hover:border-cyan-500/50';
+      } else if (variant === 'EPIC') {
+          className += isActive 
+            ? 'bg-purple-500 text-white border-purple-500 shadow-[0_0_15px_rgba(168,85,247,0.5)]' 
+            : 'bg-gray-900 text-purple-500 border-gray-700 hover:bg-purple-900/20 hover:border-purple-500/50';
+      } else if (variant === 'LEGENDARY') {
+          className += isActive 
+            ? 'bg-yellow-500 text-black border-yellow-500 shadow-[0_0_15px_rgba(234,179,8,0.5)]' 
+            : 'bg-gray-900 text-yellow-500 border-gray-700 hover:bg-yellow-900/20 hover:border-yellow-500/50';
+      }
+
       return (
-        <button 
-            onClick={onClick}
-            className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-colors whitespace-nowrap border ${isActive ? 'bg-white text-black border-white' : 'bg-gray-900 text-gray-400 border-gray-700'}`}
-        >
+        <button onClick={onClick} className={className}>
             {label}
         </button>
       );
@@ -100,8 +118,7 @@ const ProfileAchievementsTab: React.FC<ProfileAchievementsTabProps> = ({ user, e
                   </div>
                   
                   {/* Badges Filter */}
-                  {/* Changed from overflow-x-auto to flex-wrap */}
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2 justify-center md:justify-end">
                       <FilterButton label={t('miss.filter.all')} isActive={badgeFilter === 'ALL'} onClick={() => { setBadgeFilter('ALL'); setBadgePage(1); }} variant="ALL" />
                       <FilterButton label={t('miss.filter.common')} isActive={badgeFilter === 'COMMON'} onClick={() => { setBadgeFilter('COMMON'); setBadgePage(1); }} variant="COMMON" />
                       <FilterButton label={t('miss.filter.rare')} isActive={badgeFilter === 'RARE'} onClick={() => { setBadgeFilter('RARE'); setBadgePage(1); }} variant="RARE" />
@@ -151,8 +168,7 @@ const ProfileAchievementsTab: React.FC<ProfileAchievementsTabProps> = ({ user, e
                   <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t('profile.missions_log')}</h4>
                   
                   {/* Missions Filter */}
-                  {/* Changed from overflow-x-auto to flex-wrap */}
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2 justify-center md:justify-end">
                       <FilterButton label={t('miss.filter.all')} isActive={missionLogFilter === 'ALL'} onClick={() => { setMissionLogFilter('ALL'); setCompletedMissionPage(1); }} variant="ALL" />
                       <FilterButton label={t('miss.filter.common')} isActive={missionLogFilter === 'COMMON'} onClick={() => { setMissionLogFilter('COMMON'); setCompletedMissionPage(1); }} variant="COMMON" />
                       <FilterButton label={t('miss.filter.rare')} isActive={missionLogFilter === 'RARE'} onClick={() => { setMissionLogFilter('RARE'); setCompletedMissionPage(1); }} variant="RARE" />
