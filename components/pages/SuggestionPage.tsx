@@ -1,10 +1,10 @@
 
 import React, { useState } from 'react';
-import { Lightbulb, Send, CheckCircle, AlertTriangle, Sparkles } from 'lucide-react';
+import { Lightbulb, Send, CheckCircle, AlertTriangle, Sparkles, Loader2 } from 'lucide-react';
 import { useLanguage } from '../../LanguageContext';
 
 interface SuggestionPageProps {
-  onSubmit: (title: string, description: string) => void;
+  onSubmit: (title: string, description: string) => Promise<boolean>;
 }
 
 const SuggestionPage: React.FC<SuggestionPageProps> = ({ onSubmit }) => {
@@ -12,17 +12,27 @@ const SuggestionPage: React.FC<SuggestionPageProps> = ({ onSubmit }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !description.trim()) {
         setError(t('suggest.error_desc'));
         return;
     }
-    onSubmit(title, description);
-    setIsSubmitted(true);
+    
+    setIsSending(true);
     setError(null);
+    
+    const success = await onSubmit(title, description);
+    
+    setIsSending(false);
+    if (success) {
+        setIsSubmitted(true);
+    } else {
+        setError("Failed to submit suggestion. Please try again.");
+    }
   };
 
   return (
@@ -58,6 +68,7 @@ const SuggestionPage: React.FC<SuggestionPageProps> = ({ onSubmit }) => {
                       placeholder={t('suggest.title_placeholder')}
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
+                      disabled={isSending}
                   />
               </div>
 
@@ -68,15 +79,18 @@ const SuggestionPage: React.FC<SuggestionPageProps> = ({ onSubmit }) => {
                       placeholder={t('suggest.desc_placeholder')}
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
+                      disabled={isSending}
                   />
                   {error && <p className="text-red-400 text-xs mt-1 flex items-center gap-1"><AlertTriangle size={12}/> {error}</p>}
               </div>
 
               <button 
                   type="submit"
-                  className="w-full py-4 bg-yellow-600 hover:bg-yellow-500 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-colors shadow-lg shadow-yellow-900/20"
+                  disabled={isSending}
+                  className="w-full py-4 bg-yellow-600 hover:bg-yellow-500 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-colors shadow-lg shadow-yellow-900/20 disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                  <Send size={20} /> {t('suggest.submit_btn')}
+                  {isSending ? <Loader2 size={20} className="animate-spin"/> : <Send size={20} />} 
+                  {isSending ? 'Sending...' : t('suggest.submit_btn')}
               </button>
           </form>
       )}

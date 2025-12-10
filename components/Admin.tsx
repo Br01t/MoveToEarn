@@ -49,6 +49,10 @@ interface AdminProps {
   onAddLevel?: (level: LevelConfig) => Promise<{ error?: string; success?: boolean }>;
   onUpdateLevel?: (level: LevelConfig) => Promise<{ error?: string; success?: boolean }>;
   onDeleteLevel?: (id: string) => Promise<{ error?: string; success?: boolean }>;
+  // Bugs & Suggestions
+  onUpdateBugStatus?: (id: string, status: any) => Promise<{ error?: string; success?: boolean }>;
+  onDeleteBugReport?: (id: string) => Promise<{ error?: string; success?: boolean }>;
+  onDeleteSuggestion?: (id: string) => Promise<{ error?: string; success?: boolean }>;
 }
 
 const Admin: React.FC<AdminProps> = ({ 
@@ -59,7 +63,8 @@ const Admin: React.FC<AdminProps> = ({
   onUpdateZone, onDeleteZone,
   onTriggerBurn, onDistributeRewards, onUpdateExchangeRate, 
   onAddLeaderboard, onUpdateLeaderboard, onDeleteLeaderboard, onResetLeaderboard,
-  onAddLevel, onUpdateLevel, onDeleteLevel
+  onAddLevel, onUpdateLevel, onDeleteLevel,
+  onUpdateBugStatus, onDeleteBugReport, onDeleteSuggestion
 }) => {
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<'ITEMS' | 'ECONOMY' | 'MISSIONS' | 'ZONES' | 'LEADERBOARD' | 'REPORTS' | 'IDEAS' | 'LEVELS'>('ITEMS');
@@ -139,11 +144,18 @@ const Admin: React.FC<AdminProps> = ({
       )}
 
       {activeTab === 'REPORTS' && (
-          <AdminReportsTab bugReports={bugReports} />
+          <AdminReportsTab 
+              bugReports={bugReports} 
+              onUpdateStatus={onUpdateBugStatus}
+              onDelete={onDeleteBugReport}
+          />
       )}
 
       {activeTab === 'IDEAS' && (
-          <AdminSuggestionsTab suggestions={suggestions} />
+          <AdminSuggestionsTab 
+              suggestions={suggestions} 
+              onDelete={onDeleteSuggestion}
+          />
       )}
 
     </div>
