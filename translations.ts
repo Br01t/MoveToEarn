@@ -1,7 +1,7 @@
 
 export const translations = {
   en: {
-    // Navbar
+    // ... (existing translations)
     "nav.map": "Map",
     "nav.market": "Market",
     "nav.inventory": "Inventory",
@@ -11,6 +11,21 @@ export const translations = {
     "nav.profile": "Profile",
     "nav.admin": "Admin",
     "nav.logout": "Logout",
+
+    // Auth
+    "auth.title": "Identify Runner",
+    "auth.subtitle": "Enter the grid. Sync your biometrics.",
+    "auth.email_label": "Neuro-Link Email",
+    "auth.email_placeholder": "runner@zonerun.net",
+    "auth.magic_link": "Send Magic Link",
+    "auth.or": "OR",
+    "auth.guest": "Enter as Rogue (Guest)",
+    "auth.guest_desc": "Progress is local only. No cloud sync.",
+    "auth.sending": "Establishing Link...",
+    "auth.check_email": "Check Transmission",
+    "auth.check_email_desc": "A secure access link has been sent to your inbox. Click it to enter the protocol.",
+    "auth.back": "Back to Login",
+    "auth.error": "Connection Failed",
 
     // Landing
     "landing.title_suffix": "Govern.",
@@ -250,8 +265,8 @@ export const translations = {
     "profile.score": "Score",
     "profile.zone_stats": "Zone Performance",
     "profile.zone_rank": "Local Rank",
-    "profile.zone_runs": "Runs",
-    "profile.zone_total": "Total",
+    "profile.zone_runs": "Corse",
+    "profile.zone_total": "Totale",
 
     // Missions
     "miss.title": "Operations",
@@ -520,7 +535,7 @@ export const translations = {
     "rules.footer_text": "ZoneRun Protocol © 2025. Built for the decentralized fitness economy.",
   },
   it: {
-    // Navbar
+    // ... (existing translations)
     "nav.map": "Mappa",
     "nav.market": "Mercato",
     "nav.inventory": "Zaino",
@@ -530,6 +545,21 @@ export const translations = {
     "nav.profile": "Profilo",
     "nav.admin": "Admin",
     "nav.logout": "Esci",
+
+    // Auth
+    "auth.title": "Identificazione Runner",
+    "auth.subtitle": "Entra nella griglia. Sincronizza biometria.",
+    "auth.email_label": "Email Neuro-Link",
+    "auth.email_placeholder": "runner@zonerun.net",
+    "auth.magic_link": "Invia Magic Link",
+    "auth.or": "OPPURE",
+    "auth.guest": "Entra come Ribelle (Ospite)",
+    "auth.guest_desc": "Il progresso è solo locale. Nessun sync cloud.",
+    "auth.sending": "Stabilendo Link...",
+    "auth.check_email": "Controlla Trasmissione",
+    "auth.check_email_desc": "Un link di accesso sicuro è stato inviato. Cliccalo per entrare nel protocollo.",
+    "auth.back": "Torna al Login",
+    "auth.error": "Connessione Fallita",
 
     // Landing
     "landing.title_suffix": "Governa.",
@@ -586,7 +616,7 @@ export const translations = {
     "sync.manual": "Caricamento Manuale",
     "sync.auto": "Auto-Sync",
     "sync.upload_label": "Carica Dati Corsa",
-    "sync.click_select": "Clicca per Selezionare File",
+    "sync.click_select": "Click per Selezionare File",
     "sync.supports": "Supporta .GPX, .TCX, .FIT, .ZIP",
     "sync.ready": "Pronto per l'analisi",
     "sync.loc_name": "Nome Luogo",

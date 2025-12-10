@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Navbar from "./components/Navbar";
 import LandingPage from "./components/LandingPage";
 import Dashboard from "./components/Dashboard";
@@ -22,6 +22,7 @@ import AchievementModal from "./components/AchievementModal";
 import ZoneDiscoveryModal from "./components/ZoneDiscoveryModal";
 import RunSummaryModal from "./components/RunSummaryModal";
 import SyncModal from "./components/dashboard/SyncModal";
+import LoginModal from "./components/auth/LoginModal";
 import { ViewState } from "./types";
 import { Layers, CheckCircle } from "lucide-react";
 import { LanguageProvider, useLanguage } from "./LanguageContext";
@@ -36,10 +37,11 @@ const AppContent: React.FC = () => {
   const { t } = useLanguage();
   const [currentView, setCurrentView] = useState<ViewState>("LANDING");
   const [showSyncModal, setShowSyncModal] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   // 1. GAME STATE (Virtual Database)
   const gameState = useGameState();
-  const { user, zones, setUser, setZones } = gameState;
+  const { user, zones, setUser, setZones, loading } = gameState;
 
   // 2. WORKFLOWS (Business Logic)
   const runWorkflow = useRunWorkflow({ user, zones, setUser, setZones });
@@ -49,6 +51,34 @@ const AppContent: React.FC = () => {
       badges: gameState.badges, 
       setUser 
   });
+
+  // --- AUTOMATIC REDIRECT & MODAL HANDLING ---
+  useEffect(() => {
+    // If user is authenticated
+    if (user) {
+        // If currently on landing page, move to dashboard
+        if (currentView === "LANDING") {
+            setCurrentView("DASHBOARD");
+        }
+        // Force close login modal if it's open
+        if (showLoginModal) {
+            setShowLoginModal(false);
+        }
+        
+        // Security Check: If trying to access ADMIN but not admin, kick to dashboard
+        if (currentView === "ADMIN" && !user.isAdmin) {
+            setCurrentView("DASHBOARD");
+        }
+
+    } else if (!loading && !user && currentView !== "LANDING") {
+        // If logged out and loading finished, return to landing
+        // But allow rules/privacy pages to be viewed without login
+        const publicPages: ViewState[] = ["RULES", "HOW_TO_PLAY", "PRIVACY", "TERMS", "COMMUNITY"];
+        if (!publicPages.includes(currentView)) {
+            setCurrentView("LANDING");
+        }
+    }
+  }, [user, loading, currentView, showLoginModal]);
 
   // --- UI Handlers Wrapper ---
   const handleZoneConfirm = (name: string) => {
@@ -96,12 +126,9 @@ const AppContent: React.FC = () => {
       setCurrentView("LANDING");
   };
 
-  const handleLogin = () => {
-      gameState.login();
-      // Delay view switch slightly to allow state to settle if needed, or just switch
-      setTimeout(() => setCurrentView("DASHBOARD"), 800);
-  };
-
+  // Auth Handlers
+  const handleOpenLogin = () => setShowLoginModal(true);
+  
   const isLanding = currentView === "LANDING";
   const showNavbar = !isLanding && user;
   const isDashboard = currentView === "DASHBOARD";
@@ -109,6 +136,7 @@ const AppContent: React.FC = () => {
   // Determine if any full-screen modal is open to hide footer elements
   const isAnyModalOpen = 
       showSyncModal || 
+      showLoginModal ||
       runWorkflow.zoneCreationQueue.length > 0 || 
       !!runWorkflow.runSummary || 
       achievementSystem.achievementQueue.length > 0;
@@ -119,7 +147,7 @@ const AppContent: React.FC = () => {
 
       <main className={`flex-1 bg-gray-900 relative flex flex-col ${showNavbar && !isDashboard ? "pb-16 md:pb-0" : ""}`}>
         <div className="flex-1 relative">
-          {isLanding && <LandingPage onLogin={handleLogin} onNavigate={setCurrentView} />}
+          {isLanding && <LandingPage onLogin={handleOpenLogin} onNavigate={setCurrentView} />}
 
           {!isLanding && user && (
             <>
@@ -177,7 +205,7 @@ const AppContent: React.FC = () => {
               )}
               {currentView === "MISSIONS" && <Missions user={user} zones={zones} missions={gameState.missions} badges={gameState.badges} />}
               
-              {currentView === "ADMIN" && (
+              {currentView === "ADMIN" && user.isAdmin && (
                 <Admin
                   marketItems={gameState.marketItems}
                   missions={gameState.missions}
@@ -226,6 +254,14 @@ const AppContent: React.FC = () => {
       </main>
 
       {/* --- GLOBAL MODALS --- */}
+
+      {showLoginModal && (
+          <LoginModal 
+              onClose={() => setShowLoginModal(false)}
+              onLogin={gameState.login}
+              onRegister={gameState.register}
+          />
+      )}
 
       {showSyncModal && user && (
           <SyncModal 

@@ -68,6 +68,7 @@ export interface User {
   govBalance: number;
   totalKm: number;
   isPremium: boolean;
+  isAdmin: boolean; // Added Admin Flag
   inventory: InventoryItem[];
   runHistory: RunEntry[];
   completedMissionIds: string[];
