@@ -533,6 +533,24 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
                 <div className="absolute z-50 top-0 left-1/2 transform -translate-x-1/2 mt-[-10px] w-56 p-3 bg-gray-700 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
                     <h5 className={`font-bold text-sm mb-1 ${style.text}`}>{badge.name}</h5>
                     <p className="text-xs text-gray-300">{badge.description}</p>
+                    <div className="flex flex-wrap justify-center items-center gap-2 pt-2 border-t border-gray-600">
+                <span className="text-[10px] text-gray-400 font-bold uppercase">{t('miss.reward')}:</span>
+                
+                {/* Visualizza la ricompensa RUN */}
+                {rewardRun > 0 && (
+                    <span className="text-xs text-emerald-400 font-bold font-mono">+{rewardRun} RUN</span>
+                )}
+                
+                {/* Visualizza la ricompensa GOV (se presente) */}
+                {rewardGov > 0 && (
+                    <span className="text-xs text-cyan-400 font-bold font-mono border border-cyan-500/30 px-1 rounded">+{rewardGov} GOV</span>
+                )}
+
+                {/* Se non ci sono ricompense, mostra un testo placeholder */}
+                {rewardRun === 0 && rewardGov === 0 && (
+                    <span className="text-xs text-gray-500 font-mono">Nessuna ricompensa</span>
+                )}
+            </div>
                     {/* Puntatore del tooltip */}
                     <div className="absolute left-1/2 transform -translate-x-1/2 bottom-[-4px] w-2 h-2 rotate-45 bg-gray-700"></div>
                 </div>
