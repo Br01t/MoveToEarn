@@ -104,6 +104,7 @@ const AppContent: React.FC = () => {
 
   const isLanding = currentView === "LANDING";
   const showNavbar = !isLanding && user;
+  const isDashboard = currentView === "DASHBOARD";
 
   // Determine if any full-screen modal is open to hide footer elements
   const isAnyModalOpen = 
@@ -116,7 +117,7 @@ const AppContent: React.FC = () => {
     <div className="min-h-screen bg-gray-900 text-white font-sans flex flex-col">
       {showNavbar && <Navbar currentView={currentView} onNavigate={setCurrentView} user={user} onLogout={handleLogout} />}
 
-      <main className={`flex-1 bg-gray-900 relative flex flex-col ${showNavbar ? "pb-16 md:pb-0" : ""}`}>
+      <main className={`flex-1 bg-gray-900 relative flex flex-col ${showNavbar && !isDashboard ? "pb-16 md:pb-0" : ""}`}>
         <div className="flex-1 relative">
           {isLanding && <LandingPage onLogin={handleLogin} onNavigate={setCurrentView} />}
 
