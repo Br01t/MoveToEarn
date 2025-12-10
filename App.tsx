@@ -156,7 +156,7 @@ const AppContent: React.FC = () => {
                   user={user}
                   zones={zones}
                   badges={gameState.badges}
-                  users={gameState.usersMock}
+                  users={gameState.allUsers}
                   onSyncRun={runWorkflow.startSync}
                   onClaim={handleClaimZone}
                   onBoost={handleBoostZone}
@@ -178,7 +178,7 @@ const AppContent: React.FC = () => {
               
               {currentView === "LEADERBOARD" && (
                   <Leaderboard 
-                      users={gameState.usersMock} 
+                      users={gameState.allUsers} 
                       currentUser={user} 
                       zones={zones} 
                       badges={gameState.badges}
@@ -197,7 +197,7 @@ const AppContent: React.FC = () => {
                   leaderboards={gameState.leaderboards}
                   bugReports={gameState.bugReports}
                   suggestions={gameState.suggestions}
-                  allUsers={gameState.usersMock}
+                  allUsers={gameState.allUsers}
                   onUpdateUser={gameState.updateUser}
                   onUpgradePremium={gameState.upgradePremium}
                   onClaim={handleClaimZone}
@@ -231,7 +231,7 @@ const AppContent: React.FC = () => {
                   onDeleteZone={gameState.deleteZone}
                   onTriggerBurn={() => alert("Burn Executed")}
                   onDistributeRewards={() => alert("Rewards Distributed")}
-                  onResetSeason={() => { if(confirm("Reset?")) gameState.setUsersMock({}); }}
+                  onResetSeason={() => { if(confirm("Reset?")) gameState.setAllUsers({}); }}
                   onUpdateExchangeRate={gameState.setGovToRunRate}
                   onAddLeaderboard={gameState.addLeaderboard}
                   onUpdateLeaderboard={gameState.updateLeaderboard}
@@ -240,10 +240,11 @@ const AppContent: React.FC = () => {
                   onAddLevel={gameState.addLevel}
                   onUpdateLevel={gameState.updateLevel}
                   onDeleteLevel={gameState.deleteLevel}
-                  // Added missing handlers for reports and suggestions
                   onUpdateBugStatus={gameState.updateBugStatus}
                   onDeleteBugReport={gameState.deleteBugReport}
                   onDeleteSuggestion={gameState.deleteSuggestion}
+                  onRevokeUserAchievement={gameState.revokeUserAchievement}
+                  onAdjustBalance={gameState.adjustUserBalance}
                 />
               )}
               {currentView === "REPORT_BUG" && <ReportBug onReport={gameState.reportBug} />}

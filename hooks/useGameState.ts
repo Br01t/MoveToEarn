@@ -8,7 +8,7 @@ export const useGameState = () => {
   // --- DATABASE STATE ---
   const [user, setUser] = useState<User | null>(null);
   const [zones, setZones] = useState<Zone[]>(MOCK_ZONES); 
-  const [usersMock, setUsersMock] = useState(MOCK_USERS); 
+  const [allUsers, setAllUsers] = useState<Record<string, Omit<User, 'inventory'>>>({}); 
   
   // Real DB Data
   const [missions, setMissions] = useState<Mission[]>([]);
@@ -19,31 +19,52 @@ export const useGameState = () => {
   const [bugReports, setBugReports] = useState<BugReport[]>([]);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   
+  
   // --- CONFIG STATE ---
   const [govToRunRate, setGovToRunRate] = useState<number>(100);
   const [loading, setLoading] = useState(true);
 
   // --- INITIALIZATION & AUTH LISTENER ---
   useEffect(() => {
-    const initSession = async () => {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        await fetchGameData();
-        if (error) throw error;
-        if (session) await fetchUserProfile(session.user.id);
-        else setLoading(false);
-      } catch (err) {
-        console.warn("Supabase connection issue:", err);
-        setLoading(false);
-      }
-    };
-    initSession();
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) fetchUserProfile(session.user.id);
-      else { setUser(null); setZones(MOCK_ZONES); }
-    });
-    return () => subscription.unsubscribe();
-  }, []);
+  const initSession = async () => {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+
+    if (session) {
+      // Utente già loggato
+      await fetchUserProfile(session.user.id);
+      await fetchGameData(); 
+    } else {
+      // Utente NON loggato → reset dati
+      setUser(null);
+      setZones(MOCK_ZONES);
+      setAllUsers({});
+    }
+
+  } catch (err) {
+    console.warn("Supabase connection issue:", err);
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+  initSession();
+
+  const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    if (session) {
+      fetchUserProfile(session.user.id);
+      fetchGameData(); // aggiorna anche allUsers dopo login
+    } else {
+      setUser(null);
+      setZones(MOCK_ZONES);
+      setAllUsers({});
+    }
+  });
+
+  return () => subscription.unsubscribe();
+}, []);
+
 
   // --- REAL DATA FETCHING ---
   const fetchGameData = async () => {
@@ -56,7 +77,8 @@ export const useGameState = () => {
               { data: levelData },
               { data: reportData },
               { data: suggestData },
-              { data: zoneData }
+              { data: zoneData },
+              { data: allProfiles }
           ] = await Promise.all([
               supabase.from('missions').select('*'),
               supabase.from('badges').select('*'),
@@ -65,7 +87,8 @@ export const useGameState = () => {
               supabase.from('levels').select('*').order('level', { ascending: true }),
               supabase.from('bug_reports').select('*').order('timestamp', { ascending: false }),
               supabase.from('suggestions').select('*').order('timestamp', { ascending: false }),
-              supabase.from('zones').select('*')
+              supabase.from('zones').select('*'),
+              supabase.from('profiles').select('*')
           ]);
 
           if (missionData) {
@@ -135,7 +158,7 @@ export const useGameState = () => {
                   level: l.level,
                   minKm: l.min_km,
                   title: l.title,
-                  icon: l.icon // Added icon field mapping
+                  icon: l.icon
               })));
           }
 
@@ -179,6 +202,29 @@ export const useGameState = () => {
               })));
           }
 
+          // Populate All Users for Leaderboard & Admin
+          if (allProfiles) {
+              const usersMap: Record<string, Omit<User, 'inventory'>> = {};
+              allProfiles.forEach((p: any) => {
+                  usersMap[p.id] = {
+                      id: p.id,
+                      name: p.name || 'Runner',
+                      email: p.email,
+                      avatar: p.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${p.id}`,
+                      runBalance: p.run_balance || 0,
+                      govBalance: p.gov_balance || 0,
+                      totalKm: p.total_km || 0,
+                      isPremium: p.is_premium || false,
+                      isAdmin: p.is_admin || false,
+                      runHistory: [], 
+                      completedMissionIds: p.completed_mission_ids || [], 
+                      earnedBadgeIds: p.earned_badge_ids || [],         
+                      favoriteBadgeId: p.favorite_badge_id
+                  };
+              });
+              setAllUsers(usersMap);
+          }
+
       } catch (err) {
           console.error("Error fetching game data:", err);
       }
@@ -208,8 +254,8 @@ export const useGameState = () => {
                 isAdmin: profile.is_admin || false,
                 inventory: [], 
                 runHistory: [], 
-                completedMissionIds: [], 
-                earnedBadgeIds: [], 
+                completedMissionIds: profile.completed_mission_ids || [], 
+                earnedBadgeIds: profile.earned_badge_ids || [], 
                 favoriteBadgeId: profile.favorite_badge_id
             };
             setUser(realUser);
@@ -283,7 +329,7 @@ export const useGameState = () => {
       return false;
   };
 
-  // --- ADMIN: MANAGE REPORTS & SUGGESTIONS ---
+  // --- ADMIN: MANAGE REPORTS & SUGGESTIONS & USERS ---
   const updateBugStatus = async (id: string, status: 'OPEN' | 'WIP' | 'FIXED' | 'RESOLVED') => {
       const { error } = await supabase.from('bug_reports').update({ status }).eq('id', id);
       if (error) return { error: error.message };
@@ -302,6 +348,74 @@ export const useGameState = () => {
       const { error } = await supabase.from('suggestions').delete().eq('id', id);
       if (error) return { error: error.message };
       setSuggestions(prev => prev.filter(s => s.id !== id));
+      return { success: true };
+  };
+
+  const revokeUserAchievement = async (userId: string, type: 'MISSION' | 'BADGE', idToRemove: string) => {
+      const targetUser = allUsers[userId];
+      if (!targetUser) return { error: "User not found" };
+
+      let updatedList: string[] = [];
+      let dbColumn = '';
+
+      if (type === 'MISSION') {
+          updatedList = targetUser.completedMissionIds.filter(id => id !== idToRemove);
+          dbColumn = 'completed_mission_ids';
+      } else {
+          updatedList = targetUser.earnedBadgeIds.filter(id => id !== idToRemove);
+          dbColumn = 'earned_badge_ids';
+          // Also check if favorite badge needs removal
+          if (targetUser.favoriteBadgeId === idToRemove) {
+              await supabase.from('profiles').update({ favorite_badge_id: null }).eq('id', userId);
+              setAllUsers(prev => ({ ...prev, [userId]: { ...prev[userId], favoriteBadgeId: undefined } }));
+          }
+      }
+
+      // Optimistic Update
+      const updatedUser = {
+          ...targetUser,
+          [type === 'MISSION' ? 'completedMissionIds' : 'earnedBadgeIds']: updatedList,
+          favoriteBadgeId: type === 'BADGE' && targetUser.favoriteBadgeId === idToRemove ? undefined : targetUser.favoriteBadgeId
+      };
+      
+      setAllUsers(prev => ({ ...prev, [userId]: updatedUser }));
+
+      // DB Update
+      const { error } = await supabase
+          .from('profiles')
+          .update({ [dbColumn]: updatedList })
+          .eq('id', userId);
+
+      if (error) {
+          console.error("Failed to revoke:", error);
+          return { error: error.message };
+      }
+      return { success: true };
+  };
+
+  const adjustUserBalance = async (userId: string, runChange: number, govChange: number) => {
+      const targetUser = allUsers[userId];
+      if (!targetUser) return { error: "User not found" };
+
+      const newRunBalance = Math.max(0, targetUser.runBalance + runChange);
+      const newGovBalance = Math.max(0, targetUser.govBalance + govChange);
+
+      // Optimistic
+      setAllUsers(prev => ({
+          ...prev,
+          [userId]: { ...targetUser, runBalance: newRunBalance, govBalance: newGovBalance }
+      }));
+
+      // DB
+      const { error } = await supabase
+          .from('profiles')
+          .update({ run_balance: newRunBalance, gov_balance: newGovBalance })
+          .eq('id', userId);
+
+      if (error) {
+          console.error("Failed to adjust balance:", error);
+          return { error: error.message };
+      }
       return { success: true };
   };
 
@@ -577,17 +691,19 @@ export const useGameState = () => {
   };
 
   return {
-    user, zones, usersMock, marketItems, missions, badges, govToRunRate, bugReports, suggestions, leaderboards, levels, loading, 
-    setUser, setZones, setMarketItems, setMissions, setBadges, setUsersMock, setGovToRunRate, setBugReports, setLevels, setSuggestions,
+    user, zones, allUsers, marketItems, missions, badges, govToRunRate, bugReports, suggestions, leaderboards, levels, loading, 
+    setUser, setZones, setAllUsers, setMarketItems, setMissions, setBadges, setGovToRunRate, setBugReports, setLevels, setSuggestions,
     login, loginWithGoogle, register, logout, updateUser, buyItem, useItem, swapGovToRun, buyFiatGov, claimZone, upgradePremium, reportBug, submitSuggestion,
     // Admin Actions
-    updateBugStatus, deleteBugReport, deleteSuggestion,
+    updateBugStatus, deleteBugReport, deleteSuggestion, revokeUserAchievement, adjustUserBalance,
     // CRUD Exports
     addItem, updateItem, removeItem,
     addMission, updateMission, removeMission,
     addBadge, updateBadge, removeBadge,
     updateZone, deleteZone,
     addLeaderboard, updateLeaderboard, deleteLeaderboard, resetLeaderboard,
-    addLevel, updateLevel, deleteLevel
+    addLevel, updateLevel, deleteLevel,
+    // Expose data fetcher
+    refreshData: fetchGameData
   };
 };

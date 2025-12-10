@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Item, Mission, Badge, Zone, BugReport, LeaderboardConfig, LevelConfig, Suggestion } from '../types';
+import { Item, Mission, Badge, Zone, BugReport, LeaderboardConfig, LevelConfig, Suggestion, User } from '../types';
 import { Settings } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 
@@ -13,6 +13,7 @@ import AdminLeaderboardTab from './admin/AdminLeaderboardTab';
 import AdminLevelsTab from './admin/AdminLevelsTab';
 import AdminReportsTab from './admin/AdminReportsTab';
 import AdminSuggestionsTab from './admin/AdminSuggestionsTab';
+import AdminUsersTab from './admin/AdminUsersTab';
 
 interface AdminProps {
   marketItems: Item[];
@@ -24,6 +25,7 @@ interface AdminProps {
   suggestions?: Suggestion[];
   leaderboards?: LeaderboardConfig[];
   levels?: LevelConfig[];
+  allUsers?: Record<string, Omit<User, 'inventory'>>;
   // CRUD Actions
   onAddItem: (item: Item) => Promise<{ error?: string; success?: boolean }>;
   onUpdateItem: (item: Item) => Promise<{ error?: string; success?: boolean }>;
@@ -53,10 +55,13 @@ interface AdminProps {
   onUpdateBugStatus?: (id: string, status: any) => Promise<{ error?: string; success?: boolean }>;
   onDeleteBugReport?: (id: string) => Promise<{ error?: string; success?: boolean }>;
   onDeleteSuggestion?: (id: string) => Promise<{ error?: string; success?: boolean }>;
+  // Users
+  onRevokeUserAchievement?: (userId: string, type: 'MISSION' | 'BADGE', idToRemove: string) => Promise<{ error?: string; success?: boolean }>;
+  onAdjustBalance?: (userId: string, runChange: number, govChange: number) => Promise<{ error?: string; success?: boolean }>;
 }
 
 const Admin: React.FC<AdminProps> = ({ 
-  marketItems, missions, badges, zones, govToRunRate, bugReports = [], suggestions = [], leaderboards = [], levels = [],
+  marketItems, missions, badges, zones, govToRunRate, bugReports = [], suggestions = [], leaderboards = [], levels = [], allUsers = {},
   onAddItem, onUpdateItem, onRemoveItem,
   onAddMission, onUpdateMission, onRemoveMission,
   onAddBadge, onUpdateBadge, onRemoveBadge,
@@ -64,10 +69,11 @@ const Admin: React.FC<AdminProps> = ({
   onTriggerBurn, onDistributeRewards, onUpdateExchangeRate, 
   onAddLeaderboard, onUpdateLeaderboard, onDeleteLeaderboard, onResetLeaderboard,
   onAddLevel, onUpdateLevel, onDeleteLevel,
-  onUpdateBugStatus, onDeleteBugReport, onDeleteSuggestion
+  onUpdateBugStatus, onDeleteBugReport, onDeleteSuggestion,
+  onRevokeUserAchievement, onAdjustBalance
 }) => {
   const { t } = useLanguage();
-  const [activeTab, setActiveTab] = useState<'ITEMS' | 'ECONOMY' | 'MISSIONS' | 'ZONES' | 'LEADERBOARD' | 'REPORTS' | 'IDEAS' | 'LEVELS'>('ITEMS');
+  const [activeTab, setActiveTab] = useState<'ITEMS' | 'ECONOMY' | 'MISSIONS' | 'ZONES' | 'LEADERBOARD' | 'REPORTS' | 'IDEAS' | 'LEVELS' | 'USERS'>('ITEMS');
 
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-8 relative">
@@ -77,10 +83,10 @@ const Admin: React.FC<AdminProps> = ({
       </div>
 
       <div className="flex border-b border-gray-700 mb-8 overflow-x-auto">
-        {['ITEMS', 'MISSIONS', 'ZONES', 'ECONOMY', 'LEADERBOARD', 'LEVELS', 'REPORTS', 'IDEAS'].map(tab => (
+        {['ITEMS', 'MISSIONS', 'ZONES', 'USERS', 'ECONOMY', 'LEADERBOARD', 'LEVELS', 'REPORTS', 'IDEAS'].map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab as any)} 
             className={`px-6 py-4 font-bold text-sm border-b-2 transition-colors whitespace-nowrap ${activeTab === tab ? 'border-emerald-500 text-emerald-400' : 'border-transparent text-gray-500 hover:text-white'}`}>
-                {tab === 'ITEMS' ? 'Market Items' : tab === 'MISSIONS' ? 'Missions' : tab === 'ZONES' ? 'Zones' : tab === 'ECONOMY' ? 'Economy' : tab === 'LEADERBOARD' ? 'Leaderboards' : tab === 'LEVELS' ? 'Levels' : tab === 'REPORTS' ? 'Reports' : 'Suggestions'}
+                {tab === 'ITEMS' ? 'Market Items' : tab === 'MISSIONS' ? 'Missions' : tab === 'ZONES' ? 'Zones' : tab === 'USERS' ? 'Users' : tab === 'ECONOMY' ? 'Economy' : tab === 'LEADERBOARD' ? 'Leaderboards' : tab === 'LEVELS' ? 'Levels' : tab === 'REPORTS' ? 'Reports' : 'Suggestions'}
             </button>
         ))}
       </div>
@@ -112,6 +118,17 @@ const Admin: React.FC<AdminProps> = ({
               zones={zones} 
               onUpdateZone={onUpdateZone} 
               onDeleteZone={onDeleteZone} 
+          />
+      )}
+
+      {activeTab === 'USERS' && (
+          <AdminUsersTab
+              allUsers={allUsers}
+              missions={missions}
+              badges={badges}
+              levels={levels}
+              onRevokeAchievement={onRevokeUserAchievement}
+              onAdjustBalance={onAdjustBalance}
           />
       )}
 

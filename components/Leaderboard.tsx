@@ -1,21 +1,11 @@
+
 import React, { useState } from 'react';
 import { User, Zone, Badge, Rarity, LeaderboardConfig, LeaderboardMetric, LevelConfig } from '../types';
-import { Trophy, Medal, Map, Award, Flag, Crown, Zap, Mountain, Globe, Home, Landmark, Swords, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users, Clock, Coins, Activity, X, Egg, Baby, MapPin, Smile, Wind, Compass, Navigation, TrendingUp, Move, Target, Watch, Droplets, Shield, Star, BatteryCharging, Flame, Truck, CloudLightning, Hexagon, FastForward, Plane, Layers, Briefcase, GraduationCap, Brain, Crosshair, Anchor, Heart, Lock, Disc, Feather, FlagTriangleRight, Globe2, Camera, Sparkles, Radio, BookOpen, Waves, Snowflake, CloudRain, ThermometerSnowflake, SunDim, MoonStar, Atom, Sword, Axe, Ghost, Ship, PlusSquare, Skull, ChevronsUp, Orbit, CloudFog, Circle, Infinity, Sparkle, ArrowUpCircle, Eye, Type, Delete, PenTool } from 'lucide-react';
+import { Trophy, Medal, Map as MapIcon, Award, Flag, Crown, Zap, Mountain, Globe, Home, Landmark, Swords, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users, Clock, Coins, Activity, X, Egg, Baby, MapPin, Smile, Wind, Compass, Navigation, TrendingUp, Move, Target, Watch, Droplets, Shield, Star, BatteryCharging, Flame, Truck, CloudLightning, Hexagon, FastForward, Plane, Layers, Briefcase, GraduationCap, Brain, Crosshair, Anchor, Heart, Lock, Disc, Feather, FlagTriangleRight, Globe2, Camera, Sparkles, Radio, BookOpen, Waves, Snowflake, CloudRain, ThermometerSnowflake, SunDim, MoonStar, Atom, Sword, Axe, Ghost, Ship, PlusSquare, Skull, ChevronsUp, Orbit, CloudFog, Circle, Infinity, Sparkle, ArrowUpCircle, Eye, Type, Delete, PenTool } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 
-interface MockUser {
-  id: string;
-  name: string;
-  totalKm: number;
-  avatar: string;
-  favoriteBadgeId?: string;
-  // Added balances
-  runBalance?: number;
-  govBalance?: number;
-}
-
 interface LeaderboardProps {
-  users: Record<string, MockUser>;
+  users: Record<string, Omit<User, 'inventory'>>;
   currentUser: User;
   zones: Zone[];
   badges: Badge[];
@@ -87,7 +77,7 @@ const renderLevelIcon = (iconName: string, className: string) => {
         case 'Trophy': return <Trophy className={className} />;
         case 'Globe': return <Globe className={className} />;
         case 'Plane': return <Plane className={className} />;
-        case 'Map': return <Map className={className} />;
+        case 'Map': return <MapIcon className={className} />;
         case 'Layers': return <Layers className={className} />;
         case 'Briefcase': return <Briefcase className={className} />;
         case 'GraduationCap': return <GraduationCap className={className} />;
@@ -150,7 +140,7 @@ const PlayerProfileModal = ({
     levels
 }: { 
     userId: string, 
-    allUsers: Record<string, MockUser>, 
+    allUsers: Record<string, Omit<User, 'inventory'>>, 
     currentUser: User, 
     zones: Zone[], 
     badges: Badge[], 
@@ -159,8 +149,7 @@ const PlayerProfileModal = ({
     levels: LevelConfig[] | undefined
 }) => {
     
-    // Determine if it's the current user or a mock user
-    let user: MockUser | User;
+    let user: Omit<User, 'inventory'> | User;
     if (userId === currentUser.id) {
         user = currentUser;
     } else {
@@ -308,39 +297,41 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
   const activeBoard = leaderboards.find(b => b.id === activeBoardId) || leaderboards[0];
 
   // --- SCORE CALCULATION LOGIC ---
-  const getScore = (user: MockUser | User, config: LeaderboardConfig, isCurrentUser: boolean): number => {
-      // Determine the effective start time filter
-      const timeFilter = config.lastResetTimestamp || config.startTime || 0;
-      const endTimeFilter = config.endTime || Number.POSITIVE_INFINITY;
-
-      // 1. Current User: Use real data
-      if (isCurrentUser) {
-          const u = user as User;
-          const validRuns = u.runHistory.filter(r => r.timestamp >= timeFilter && r.timestamp <= endTimeFilter);
-
-          switch(config.metric) {
-              case 'TOTAL_KM': return validRuns.reduce((acc, r) => acc + r.km, 0);
-              case 'UNIQUE_ZONES': return new Set(validRuns.map(r => r.location)).size;
-              case 'OWNED_ZONES': return zones.filter(z => z.ownerId === u.id).length;
-              case 'RUN_BALANCE': return u.runBalance;
-              case 'GOV_BALANCE': return u.govBalance;
-              default: return 0;
-          }
-      }
+  const getScore = (user: Omit<User, 'inventory'> | User, config: LeaderboardConfig): number => {
+      // Metric logic now applies generally to all users based on available profile data
       
-      // 2. Mock User
-      const u = user as MockUser;
-      const seed = u.name.length; 
-      const isTemporary = config.type === 'TEMPORARY' || !!config.lastResetTimestamp;
-      const activityRatio = isTemporary ? 0.2 : 1.0; 
+      // NOTE: For 'other' users, we might not have runHistory loaded in the frontend state 
+      // (to save bandwidth), so we fallback to aggregate fields in the profile table.
+      // Ideally, the backend would compute temporary leaderboard scores. 
+      // Here we approximate for the frontend view using available profile data.
 
+      const isMe = user.id === currentUser.id;
+      
       switch(config.metric) {
-          case 'TOTAL_KM': return u.totalKm * activityRatio;
-          case 'OWNED_ZONES': return zones.filter(z => z.ownerId === u.id).length; 
-          // Use provided balances or fallback to simulation
-          case 'RUN_BALANCE': return u.runBalance ?? ((u.totalKm * 10) + (seed * 50)); 
-          case 'GOV_BALANCE': return u.govBalance ?? ((u.totalKm / 10) + (seed * 2)); 
-          case 'UNIQUE_ZONES': return Math.floor((u.totalKm * activityRatio) / 5) + 1;
+          case 'TOTAL_KM': 
+              // Profile.totalKm is lifetime. Good for permanent boards.
+              // For temporary, we'd need a backend view or store seasonal km in profile.
+              // Fallback: Show lifetime for now.
+              return user.totalKm;
+              
+          case 'OWNED_ZONES': 
+              // We have all zones loaded in frontend state, so we can calculate this accurately.
+              return zones.filter(z => z.ownerId === user.id).length;
+              
+          case 'RUN_BALANCE': 
+              return user.runBalance;
+              
+          case 'GOV_BALANCE': 
+              return user.govBalance;
+              
+          case 'UNIQUE_ZONES': 
+              // Hard to calculate without full history for everyone.
+              // Approximation: totalKm / 5 (just for visual filler if history missing)
+              if (isMe && currentUser.runHistory) {
+                  return new Set(currentUser.runHistory.map(r => r.location)).size;
+              }
+              return Math.floor(user.totalKm / 5) + 1; // Fallback estimate
+              
           default: return 0;
       }
   };
@@ -348,7 +339,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
   const getMetricIcon = (metric: LeaderboardMetric) => {
       switch(metric) {
           case 'TOTAL_KM': return <Footprints size={16} />;
-          case 'OWNED_ZONES': return <Map size={16} />;
+          case 'OWNED_ZONES': return <MapIcon size={16} />;
           case 'RUN_BALANCE': return <Activity size={16} />;
           case 'GOV_BALANCE': return <Crown size={16} />;
           case 'UNIQUE_ZONES': return <Globe size={16} />;
@@ -384,11 +375,22 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
       );
   }
 
-  const rankings = Object.values(users).map((u: MockUser) => {
-     if (u.id === currentUser.id) {
-        return { ...u, score: getScore(currentUser, activeBoard, true), badgeId: currentUser.favoriteBadgeId };
-     }
-     return { ...u, score: getScore(u, activeBoard, false), badgeId: u.favoriteBadgeId };
+  // Combine current user (full data) with all other users (profile data)
+  // Ensure we don't duplicate the current user if they are in the allUsers list
+  const allUserList = Object.values(users);
+  // If currentUser is not in allUsers (e.g. strict separate state), add them. 
+  // But usually useGameState updates allUsers. We'll dedup by ID just in case.
+  const uniqueUsers = new Map<string, Omit<User, 'inventory'> | User>();
+  
+  allUserList.forEach(u => uniqueUsers.set(u.id, u));
+  uniqueUsers.set(currentUser.id, currentUser); // Ensure current user is latest
+
+  const rankings = Array.from(uniqueUsers.values()).map((u) => {
+     return { 
+         ...u, 
+         score: getScore(u, activeBoard), 
+         badgeId: u.favoriteBadgeId 
+     };
   }).sort((a, b) => b.score - a.score);
 
   const now = Date.now();
