@@ -54,8 +54,13 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, user, onLogout
               <NavItem view="LEADERBOARD" icon={Trophy} label={t('nav.rank')} />
               <NavItem view="WALLET" icon={Wallet} label={t('nav.wallet')} />
               <NavItem view="PROFILE" icon={UserIcon} label={t('nav.profile')} />
-              <div className="h-6 w-px bg-gray-700 mx-2"></div>
-              <NavItem view="ADMIN" icon={Settings} label={t('nav.admin')} isAdmin={true} />
+              
+              {user.isAdmin && (
+                  <>
+                    <div className="h-6 w-px bg-gray-700 mx-2"></div>
+                    <NavItem view="ADMIN" icon={Settings} label={t('nav.admin')} isAdmin={true} />
+                  </>
+              )}
             </div>
 
             <div className="flex items-center ml-4 gap-2">
@@ -90,7 +95,11 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, user, onLogout
               >
                 {language === 'en' ? '🇮🇹' : '🇬🇧'}
               </button>
-             <button onClick={() => onNavigate('ADMIN')} className={`text-gray-400 ${currentView === 'ADMIN' ? 'text-red-400' : ''}`}><Settings size={20}/></button>
+             {user.isAdmin && (
+                 <button onClick={() => onNavigate('ADMIN')} className={`text-gray-400 ${currentView === 'ADMIN' ? 'text-red-400' : ''}`}>
+                    <Settings size={20}/>
+                 </button>
+             )}
              <button onClick={onLogout} className="text-gray-400"><LogOut size={20}/></button>
           </div>
       </nav>
