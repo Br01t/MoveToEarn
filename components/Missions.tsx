@@ -19,7 +19,10 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
   const { t, language } = useLanguage();
   const [missionPage, setMissionPage] = useState(1);
   const [badgePage, setBadgePage] = useState(1);
+  
+  // Filter States
   const [missionFilter, setMissionFilter] = useState<'ALL' | Rarity>('ALL');
+  const [badgeFilter, setBadgeFilter] = useState<'ALL' | Rarity>('ALL');
   
   // Search States
   const [missionSearch, setMissionSearch] = useState('');
@@ -28,13 +31,8 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
   const ownedZonesCount = zones.filter(z => z.ownerId === user.id).length;
 
   // --- LOCALIZATION LOGIC ---
-  // We process the raw missions/badges to inject translated titles/descriptions 
-  // BEFORE filtering, so the search works on the current language.
-  
   const localizedMissions = useMemo(() => {
       return missions.map(m => {
-          // Construct Translation Keys based on logicId (e.g., "mission.1.title")
-          // Fallback to ID if logicId is missing
           const id = m.logicId || m.id; 
           const titleKey = `mission.${id}.title`;
           const descKey = `mission.${id}.desc`;
@@ -42,7 +40,6 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
           const tTitle = t(titleKey);
           const tDesc = t(descKey);
 
-          // If translation returns the key itself, it means no translation exists -> use default
           return {
               ...m,
               title: tTitle !== titleKey ? tTitle : m.title,
@@ -68,7 +65,7 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
       });
   }, [badges, language, t]);
 
-  // Filter Logic - Missions (Using Localized Data)
+  // Filter Logic - Missions
   const filteredMissions = localizedMissions.filter(m => {
       const matchesRarity = missionFilter === 'ALL' || m.rarity === missionFilter;
       const matchesSearch = m.title.toLowerCase().includes(missionSearch.toLowerCase()) || 
@@ -76,27 +73,28 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
       return matchesRarity && matchesSearch;
   });
 
-  // Filter Logic - Badges (Using Localized Data)
+  // Filter Logic - Badges
   const filteredBadges = localizedBadges.filter(b => {
-      return b.name.toLowerCase().includes(badgeSearch.toLowerCase()) || 
+      const matchesRarity = badgeFilter === 'ALL' || b.rarity === badgeFilter;
+      const matchesSearch = b.name.toLowerCase().includes(badgeSearch.toLowerCase()) || 
              b.description.toLowerCase().includes(badgeSearch.toLowerCase());
+      return matchesRarity && matchesSearch;
   });
 
-  // Pagination Logic - Missions
+  // Pagination Logic
   const totalMissionPages = Math.ceil(filteredMissions.length / MISSIONS_PER_PAGE);
   const currentMissions = filteredMissions.slice(
     (missionPage - 1) * MISSIONS_PER_PAGE,
     missionPage * MISSIONS_PER_PAGE
   );
 
-  // Pagination Logic - Badges
   const totalBadgePages = Math.ceil(filteredBadges.length / BADGES_PER_PAGE);
   const currentBadges = filteredBadges.slice(
     (badgePage - 1) * BADGES_PER_PAGE,
     badgePage * BADGES_PER_PAGE
   );
 
-  // --- HELPER: Calculate Streak ---
+  // --- HELPERS ---
   const calculateStreak = (history: RunEntry[]): number => {
       if (history.length === 0) return 0;
       const days = Array.from(new Set(history.map(run => {
@@ -125,9 +123,7 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
       return streak;
   };
 
-  // --- HELPER: Calculate Progress for specific Logic ID ---
   const getMissionStats = (mission: Mission): { current: number; target: number; unit: string; percent: number } => {
-      // Default / Legacy fallback
       if (!mission.logicId) {
           if (mission.conditionType === 'TOTAL_KM') {
               const target = mission.conditionValue || 100;
@@ -207,17 +203,14 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
           default: 
              target = 1; 
              unit = 'task'; 
-             // If completed, current is 1, else 0
              current = user.completedMissionIds.includes(mission.id) ? 1 : 0; 
              break;
       }
 
-      // Cap percent at 100
       const percent = Math.min(100, Math.max(0, (current / target) * 100));
       return { current, target, unit, percent };
   };
 
-  // Helper to render dynamic icon based on string name
   const renderIcon = (iconName: string, className: string) => {
       switch(iconName) {
           case 'Flag': return <Flag className={className} />;
@@ -243,7 +236,6 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
       }
   };
 
-  // Helper for Rarity Styling
   const getRarityStyles = (rarity: Rarity) => {
       switch(rarity) {
           case 'COMMON': return { 
@@ -289,10 +281,51 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
       }
   };
 
-  const handleFilterChange = (filter: 'ALL' | Rarity) => {
+  const handleMissionFilterChange = (filter: 'ALL' | Rarity) => {
       setMissionFilter(filter);
-      setMissionPage(1); // Reset to first page
+      setMissionPage(1);
   };
+
+  const handleBadgeFilterChange = (filter: 'ALL' | Rarity) => {
+      setBadgeFilter(filter);
+      setBadgePage(1);
+  };
+
+  // Helper component for filter buttons to reduce duplication
+  const FilterGroup = ({ currentFilter, onFilterChange }: { currentFilter: 'ALL' | Rarity, onFilterChange: (f: 'ALL' | Rarity) => void }) => (
+      <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
+        <button 
+            onClick={() => onFilterChange('ALL')}
+            className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-colors whitespace-nowrap ${currentFilter === 'ALL' ? 'bg-white text-black' : 'bg-gray-800 text-gray-400 hover:text-white'}`}
+        >
+            {t('miss.filter.all')}
+        </button>
+        <button 
+            onClick={() => onFilterChange('COMMON')}
+            className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-colors whitespace-nowrap ${currentFilter === 'COMMON' ? 'bg-gray-500 text-white' : 'bg-gray-800 text-gray-500 hover:text-gray-300'}`}
+        >
+            {t('miss.filter.common')}
+        </button>
+        <button 
+            onClick={() => onFilterChange('RARE')}
+            className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-colors whitespace-nowrap ${currentFilter === 'RARE' ? 'bg-cyan-500 text-black' : 'bg-gray-800 text-cyan-500 hover:bg-cyan-900/20'}`}
+        >
+            {t('miss.filter.rare')}
+        </button>
+        <button 
+            onClick={() => onFilterChange('EPIC')}
+            className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-colors whitespace-nowrap ${currentFilter === 'EPIC' ? 'bg-purple-500 text-white' : 'bg-gray-800 text-purple-500 hover:bg-purple-900/20'}`}
+        >
+            {t('miss.filter.epic')}
+        </button>
+        <button 
+            onClick={() => onFilterChange('LEGENDARY')}
+            className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-colors whitespace-nowrap ${currentFilter === 'LEGENDARY' ? 'bg-yellow-500 text-black' : 'bg-gray-800 text-yellow-500 hover:bg-yellow-900/20'}`}
+        >
+            {t('miss.filter.legendary')}
+        </button>
+      </div>
+  );
 
   return (
     <div className="max-w-6xl mx-auto p-4 space-y-8">
@@ -329,38 +362,7 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
                 </div>
 
                 {/* Filter Controls */}
-                <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
-                    <button 
-                    onClick={() => handleFilterChange('ALL')}
-                    className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-colors whitespace-nowrap ${missionFilter === 'ALL' ? 'bg-white text-black' : 'bg-gray-800 text-gray-400 hover:text-white'}`}
-                    >
-                        {t('miss.filter.all')}
-                    </button>
-                    <button 
-                    onClick={() => handleFilterChange('COMMON')}
-                    className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-colors whitespace-nowrap ${missionFilter === 'COMMON' ? 'bg-gray-500 text-white' : 'bg-gray-800 text-gray-500 hover:text-gray-300'}`}
-                    >
-                        {t('miss.filter.common')}
-                    </button>
-                    <button 
-                    onClick={() => handleFilterChange('RARE')}
-                    className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-colors whitespace-nowrap ${missionFilter === 'RARE' ? 'bg-cyan-500 text-black' : 'bg-gray-800 text-cyan-500 hover:bg-cyan-900/20'}`}
-                    >
-                        {t('miss.filter.rare')}
-                    </button>
-                    <button 
-                    onClick={() => handleFilterChange('EPIC')}
-                    className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-colors whitespace-nowrap ${missionFilter === 'EPIC' ? 'bg-purple-500 text-white' : 'bg-gray-800 text-purple-500 hover:bg-purple-900/20'}`}
-                    >
-                        {t('miss.filter.epic')}
-                    </button>
-                    <button 
-                    onClick={() => handleFilterChange('LEGENDARY')}
-                    className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-colors whitespace-nowrap ${missionFilter === 'LEGENDARY' ? 'bg-yellow-500 text-black' : 'bg-gray-800 text-yellow-500 hover:bg-yellow-900/20'}`}
-                    >
-                        {t('miss.filter.legendary')}
-                    </button>
-                </div>
+                <FilterGroup currentFilter={missionFilter} onFilterChange={handleMissionFilterChange} />
             </div>
         </div>
 
@@ -368,7 +370,7 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
             <div className="text-center py-12 bg-gray-800 rounded-xl border border-gray-700 border-dashed">
                 <Filter className="mx-auto text-gray-600 mb-2" />
                 <p className="text-gray-500 text-sm">{t('miss.no_found')}</p>
-                <button onClick={() => { handleFilterChange('ALL'); setMissionSearch(''); }} className="text-emerald-400 text-xs mt-2 hover:underline">{t('miss.clear_filter')}</button>
+                <button onClick={() => { handleMissionFilterChange('ALL'); setMissionSearch(''); }} className="text-emerald-400 text-xs mt-2 hover:underline">{t('miss.clear_filter')}</button>
             </div>
         ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -377,15 +379,12 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
                     const stats = getMissionStats(mission);
                     const style = getRarityStyles(mission.rarity);
                     
-                    // Completed missions show full rarity colors.
                     const containerClass = isCompleted 
                         ? `${style.bg} ${style.border}` 
                         : 'bg-gray-800 border-gray-700';
 
                     return (
                         <div key={mission.id} className={`rounded-lg border p-4 flex flex-col justify-between relative overflow-hidden transition-all ${containerClass}`}>
-                            
-                            {/* Header: Title + Badges */}
                             <div className="flex justify-between items-start mb-2">
                                 <h3 className={`font-bold text-sm pr-2 ${isCompleted ? 'text-white' : 'text-gray-200'}`}>
                                     {mission.title}
@@ -402,10 +401,8 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
                                 </div>
                             </div>
 
-                            {/* Description */}
                             <p className={`text-xs text-gray-400 mb-3 leading-tight ${isCompleted ? 'opacity-70' : ''}`}>{mission.description}</p>
                             
-                            {/* Progress Bar */}
                             <div className="mb-3">
                                 <div className="flex justify-between text-[10px] mb-1 font-mono">
                                     <span className="text-gray-500">{t('miss.progress')}</span>
@@ -421,7 +418,6 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
                                 </div>
                             </div>
 
-                            {/* Footer: Reward */}
                             <div className={`flex flex-wrap justify-between items-center pt-2 border-t gap-1 ${isCompleted ? 'border-gray-700/30 opacity-70' : 'border-gray-700/50'}`}>
                                 <span className="text-[10px] text-gray-500 font-bold uppercase">{t('miss.reward')}</span>
                                 <div className="flex items-center gap-2">
@@ -448,19 +444,24 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
         <div className="flex flex-col gap-4 mb-4">
             <h2 className="text-lg font-bold text-white border-l-4 border-yellow-500 pl-3">{t('miss.gallery')}</h2>
             
-            {/* Search Bar for Badges - Left Aligned in new row */}
-            <div className="relative w-full md:w-64">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" size={16} />
-                <input 
-                    type="text" 
-                    placeholder={t('miss.search_badges')} 
-                    value={badgeSearch}
-                    onChange={(e) => {
-                        setBadgeSearch(e.target.value);
-                        setBadgePage(1);
-                    }}
-                    className="w-full bg-gray-800 border border-gray-600 rounded-lg pl-9 pr-3 py-2 text-xs text-white focus:border-yellow-500 focus:outline-none"
-                />
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                {/* Search Bar for Badges */}
+                <div className="relative w-full md:w-64">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" size={16} />
+                    <input 
+                        type="text" 
+                        placeholder={t('miss.search_badges')} 
+                        value={badgeSearch}
+                        onChange={(e) => {
+                            setBadgeSearch(e.target.value);
+                            setBadgePage(1);
+                        }}
+                        className="w-full bg-gray-800 border border-gray-600 rounded-lg pl-9 pr-3 py-2 text-xs text-white focus:border-yellow-500 focus:outline-none"
+                    />
+                </div>
+
+                {/* Filter Controls for Badges */}
+                <FilterGroup currentFilter={badgeFilter} onFilterChange={handleBadgeFilterChange} />
             </div>
         </div>
 
@@ -468,7 +469,7 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
             <div className="text-center py-12 bg-gray-800 rounded-xl border border-gray-700 border-dashed">
                 <Award className="mx-auto text-gray-600 mb-2" />
                 <p className="text-gray-500 text-sm">No badges found.</p>
-                <button onClick={() => setBadgeSearch('')} className="text-yellow-400 text-xs mt-2 hover:underline">{t('miss.clear_filter')}</button>
+                <button onClick={() => { handleBadgeFilterChange('ALL'); setBadgeSearch(''); }} className="text-yellow-400 text-xs mt-2 hover:underline">{t('miss.clear_filter')}</button>
             </div>
         ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
@@ -481,7 +482,6 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
                     return (
                         <div key={badge.id} className={`aspect-square rounded-xl flex flex-col items-center justify-between p-3 text-center border transition-all relative overflow-hidden group ${isUnlocked ? `${style.bg} ${style.border}` : 'bg-gray-900 border-gray-800 opacity-60 grayscale'}`}>
                             
-                            {/* Rarity Glow Background for High Tier */}
                             {isUnlocked && (badge.rarity === 'LEGENDARY' || badge.rarity === 'EPIC') && (
                                 <div className={`absolute top-0 left-0 w-full h-full opacity-20 bg-gradient-to-br ${badge.rarity === 'LEGENDARY' ? 'from-yellow-500 to-transparent' : 'from-purple-500 to-transparent'}`}></div>
                             )}
@@ -493,13 +493,11 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
                                 
                                 <h4 className={`font-bold text-xs truncate w-full px-1 ${isUnlocked ? style.text : 'text-gray-500'}`}>{badge.name}</h4>
                                 
-                                {/* Added Description */}
                                 <p className={`text-[9px] leading-tight line-clamp-2 px-1 mt-1 ${isUnlocked ? 'text-gray-300' : 'text-gray-600'}`}>
                                     {badge.description}
                                 </p>
                             </div>
                             
-                            {/* Footer Status */}
                             <div className="relative z-10 mt-1">
                                 {isUnlocked ? (
                                     <div className="flex flex-col items-center">

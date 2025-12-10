@@ -170,6 +170,9 @@ const AppContent: React.FC = () => {
                   allUsers={gameState.usersMock}
                   onUpdateUser={gameState.updateUser}
                   onUpgradePremium={gameState.upgradePremium}
+                  onClaim={handleClaimZone}
+                  onBoost={handleBoostZone}
+                  onDefend={handleDefendZone}
                 />
               )}
               {currentView === "MISSIONS" && <Missions user={user} zones={zones} missions={gameState.missions} badges={gameState.badges} />}
