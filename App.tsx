@@ -216,17 +216,17 @@ const AppContent: React.FC = () => {
                   suggestions={gameState.suggestions} 
                   leaderboards={gameState.leaderboards}
                   levels={gameState.levels}
-                  onAddItem={(i) => gameState.setMarketItems(p => [...p, i])}
-                  onUpdateItem={(i) => gameState.setMarketItems(p => p.map(x => x.id === i.id ? i : x))}
-                  onRemoveItem={(id) => gameState.setMarketItems(p => p.filter(x => x.id !== id))}
-                  onAddMission={(m) => gameState.setMissions(p => [...p, m])}
-                  onUpdateMission={(m) => gameState.setMissions(p => p.map(x => x.id === m.id ? m : x))}
-                  onRemoveMission={(id) => gameState.setMissions(p => p.filter(x => x.id !== id))}
-                  onAddBadge={(b) => gameState.setBadges(p => [...p, b])}
-                  onUpdateBadge={(b) => gameState.setBadges(p => p.map(x => x.id === b.id ? b : x))}
-                  onRemoveBadge={(id) => gameState.setBadges(p => p.filter(x => x.id !== id))}
-                  onUpdateZone={(id, updates) => setZones(p => p.map(z => z.id === id ? {...z, ...updates} : z))}
-                  onDeleteZone={(id) => setZones(p => p.filter(z => z.id !== id))}
+                  onAddItem={gameState.addItem}
+                  onUpdateItem={gameState.updateItem}
+                  onRemoveItem={gameState.removeItem}
+                  onAddMission={gameState.addMission}
+                  onUpdateMission={gameState.updateMission}
+                  onRemoveMission={gameState.removeMission}
+                  onAddBadge={gameState.addBadge}
+                  onUpdateBadge={gameState.updateBadge}
+                  onRemoveBadge={gameState.removeBadge}
+                  onUpdateZone={gameState.updateZone}
+                  onDeleteZone={gameState.deleteZone}
                   onTriggerBurn={() => alert("Burn Executed")}
                   onDistributeRewards={() => alert("Rewards Distributed")}
                   onResetSeason={() => { if(confirm("Reset?")) gameState.setUsersMock({}); }}
