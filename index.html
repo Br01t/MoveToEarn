@@ -24,6 +24,14 @@
         0%, 100% { box-shadow: 0 0 5px #10b981, 0 0 10px #10b981; }
         50% { box-shadow: 0 0 20px #10b981, 0 0 30px #10b981; }
       }
+
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;  /* IE and Edge */
+        scrollbar-width: none;  /* Firefox */
+      }
     </style>
   <!-- <script type="importmap">
 {

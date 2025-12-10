@@ -156,7 +156,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   const zoneLeaderboard = selectedZone ? getZoneLeaderboard(selectedZone.name) : [];
 
   return (
-    <div className="relative w-full h-[calc(100vh-64px)] md:h-[calc(100vh-64px)] overflow-hidden bg-gray-900 shadow-inner">
+    <div className="relative w-full h-[calc(100vh-56px)] md:h-[calc(100vh-64px)] overflow-hidden bg-gray-900 shadow-inner">
       
       <DashboardHUD 
           runBalance={user.runBalance} 
