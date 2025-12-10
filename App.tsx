@@ -17,9 +17,11 @@ import Privacy from "./components/pages/Privacy";
 import Terms from "./components/pages/Terms";
 import Community from "./components/pages/Community";
 import ReportBug from "./components/pages/ReportBug";
+import SuggestionPage from "./components/pages/SuggestionPage"; 
 import AchievementModal from "./components/AchievementModal";
 import ZoneDiscoveryModal from "./components/ZoneDiscoveryModal";
 import RunSummaryModal from "./components/RunSummaryModal";
+import SyncModal from "./components/dashboard/SyncModal";
 import { ViewState } from "./types";
 import { Layers, CheckCircle } from "lucide-react";
 import { LanguageProvider, useLanguage } from "./LanguageContext";
@@ -33,6 +35,7 @@ import { useAchievements } from "./hooks/useAchievements";
 const AppContent: React.FC = () => {
   const { t } = useLanguage();
   const [currentView, setCurrentView] = useState<ViewState>("LANDING");
+  const [showSyncModal, setShowSyncModal] = useState(false);
 
   // 1. GAME STATE (Virtual Database)
   const gameState = useGameState();
@@ -102,6 +105,13 @@ const AppContent: React.FC = () => {
   const isLanding = currentView === "LANDING";
   const showNavbar = !isLanding && user;
 
+  // Determine if any full-screen modal is open to hide footer elements
+  const isAnyModalOpen = 
+      showSyncModal || 
+      runWorkflow.zoneCreationQueue.length > 0 || 
+      !!runWorkflow.runSummary || 
+      achievementSystem.achievementQueue.length > 0;
+
   return (
     <div className="min-h-screen bg-gray-900 text-white font-sans flex flex-col">
       {showNavbar && <Navbar currentView={currentView} onNavigate={setCurrentView} user={user} onLogout={handleLogout} />}
@@ -123,6 +133,7 @@ const AppContent: React.FC = () => {
                   onBoost={handleBoostZone}
                   onDefend={handleDefendZone}
                   onNavigate={setCurrentView}
+                  onOpenSync={() => setShowSyncModal(true)}
                 />
               )}
               {currentView === "MARKETPLACE" && <Marketplace user={user} items={gameState.marketItems} onBuy={gameState.buyItem} />}
@@ -170,6 +181,7 @@ const AppContent: React.FC = () => {
                   zones={zones}
                   govToRunRate={gameState.govToRunRate}
                   bugReports={gameState.bugReports}
+                  suggestions={gameState.suggestions} 
                   leaderboards={gameState.leaderboards}
                   levels={gameState.levels}
                   onAddItem={(i) => gameState.setMarketItems(p => [...p, i])}
@@ -181,7 +193,7 @@ const AppContent: React.FC = () => {
                   onAddBadge={(b) => gameState.setBadges(p => [...p, b])}
                   onUpdateBadge={(b) => gameState.setBadges(p => p.map(x => x.id === b.id ? b : x))}
                   onRemoveBadge={(id) => gameState.setBadges(p => p.filter(x => x.id !== id))}
-                  onUpdateZoneName={(id, name) => setZones(p => p.map(z => z.id === id ? {...z, name} : z))}
+                  onUpdateZone={(id, updates) => setZones(p => p.map(z => z.id === id ? {...z, ...updates} : z))}
                   onDeleteZone={(id) => setZones(p => p.filter(z => z.id !== id))}
                   onTriggerBurn={() => alert("Burn Executed")}
                   onDistributeRewards={() => alert("Rewards Distributed")}
@@ -197,6 +209,7 @@ const AppContent: React.FC = () => {
                 />
               )}
               {currentView === "REPORT_BUG" && <ReportBug onReport={gameState.reportBug} />}
+              {currentView === "SUGGESTION" && <SuggestionPage onSubmit={gameState.submitSuggestion} />}
             </>
           )}
 
@@ -208,7 +221,16 @@ const AppContent: React.FC = () => {
         </div>
       </main>
 
-      {/* --- MODALS MANAGED BY WORKFLOWS --- */}
+      {/* --- GLOBAL MODALS --- */}
+
+      {showSyncModal && user && (
+          <SyncModal 
+              onClose={() => setShowSyncModal(false)}
+              onNavigate={setCurrentView}
+              onSyncRun={runWorkflow.startSync}
+              user={user}
+          />
+      )}
 
       {runWorkflow.zoneCreationQueue.length > 0 && (
           <ZoneDiscoveryModal
@@ -269,7 +291,7 @@ const AppContent: React.FC = () => {
         </div>
       )}
 
-      <Footer onNavigate={setCurrentView} currentView={currentView} isAuthenticated={!!user} />
+      <Footer onNavigate={setCurrentView} currentView={currentView} isAuthenticated={!!user} isHidden={isAnyModalOpen} />
     </div>
   );
 };

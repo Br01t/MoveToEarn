@@ -8,9 +8,10 @@ interface FooterProps {
     onNavigate: (view: ViewState) => void;
     currentView: ViewState;
     isAuthenticated: boolean;
+    isHidden?: boolean;
 }
 
-const Footer: React.FC<FooterProps> = ({ onNavigate, currentView, isAuthenticated }) => {
+const Footer: React.FC<FooterProps> = ({ onNavigate, currentView, isAuthenticated, isHidden }) => {
   const { t } = useLanguage();
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -39,12 +40,13 @@ const Footer: React.FC<FooterProps> = ({ onNavigate, currentView, isAuthenticate
                         <button onClick={() => onNavigate('TERMS')} className="hover:text-emerald-400 transition-colors">{t('footer.terms')}</button>
                         <button onClick={() => onNavigate('COMMUNITY')} className="hover:text-emerald-400 transition-colors">{t('footer.community')}</button>
                         <button onClick={() => onNavigate('REPORT_BUG')} className="hover:text-red-400 transition-colors">{t('footer.report_bug')}</button>
+                        <button onClick={() => onNavigate('SUGGESTION')} className="hover:text-yellow-400 transition-colors">{t('footer.suggestion')}</button>
                      </div>
                   </div>
               </div>
 
               {/* Triggers (Visible only when collapsed) */}
-              <div className={`pointer-events-auto absolute bottom-[66px] md:bottom-0 transition-opacity duration-300 ${isExpanded ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+              <div className={`pointer-events-auto absolute bottom-[66px] md:bottom-0 transition-opacity duration-300 ${isExpanded || isHidden ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
                   
                   {/* Mobile Trigger: Round Icon above Bottom Nav */}
                   <button 
@@ -81,7 +83,10 @@ const Footer: React.FC<FooterProps> = ({ onNavigate, currentView, isAuthenticate
           <button onClick={() => onNavigate('TERMS')} className="hover:text-emerald-400 transition-colors">{t('footer.terms')}</button>
           <button onClick={() => onNavigate('COMMUNITY')} className="hover:text-emerald-400 transition-colors">{t('footer.community')}</button>
           {isAuthenticated && (
-            <button onClick={() => onNavigate('REPORT_BUG')} className="hover:text-red-400 transition-colors">{t('footer.report_bug')}</button>
+            <>
+                <button onClick={() => onNavigate('REPORT_BUG')} className="hover:text-red-400 transition-colors">{t('footer.report_bug')}</button>
+                <button onClick={() => onNavigate('SUGGESTION')} className="hover:text-yellow-400 transition-colors">{t('footer.suggestion')}</button>
+            </>
           )}
         </div>
       </div>

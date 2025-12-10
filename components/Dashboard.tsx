@@ -1,13 +1,15 @@
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { User, Zone, InventoryItem, ViewState, Badge, RunAnalysisData } from '../types';
-import { ZoomIn, ZoomOut, UploadCloud, Search, Filter, Activity, History, X, Globe, Calendar } from 'lucide-react';
+import { UploadCloud, History, X, Calendar } from 'lucide-react';
 import Pagination from './Pagination';
 import { useLanguage } from '../LanguageContext';
 import { getHexPixelPosition } from '../utils/geo';
 import HexMap from './dashboard/HexMap';
 import ZoneDetails from './dashboard/ZoneDetails';
-import SyncModal from './dashboard/SyncModal';
+import DashboardHUD from './dashboard/DashboardHUD';
+import DashboardSidebar from './dashboard/DashboardSidebar';
+import DashboardControls from './dashboard/DashboardControls';
 
 interface DashboardProps {
   user: User;
@@ -19,12 +21,16 @@ interface DashboardProps {
   onBoost: (zoneId: string) => void;
   onDefend: (zoneId: string) => void;
   onNavigate: (view: ViewState) => void;
+  onOpenSync: () => void;
 }
 
 const HEX_SIZE = 100;
 const RUNS_PER_PAGE = 5;
 
-const Dashboard: React.FC<DashboardProps> = ({ user, zones, users, badges, onSyncRun, onClaim, onBoost, onDefend, onNavigate }) => {
+const Dashboard: React.FC<DashboardProps> = ({ 
+    user, zones, users, badges, 
+    onSyncRun, onClaim, onBoost, onDefend, onNavigate, onOpenSync 
+}) => {
   const { t } = useLanguage();
   const [selectedZone, setSelectedZone] = useState<Zone | null>(null);
   
@@ -32,14 +38,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, users, badges, onSyn
   const [searchTerm, setSearchTerm] = useState('');
   const [filterMode, setFilterMode] = useState<'ALL' | 'MINE' | 'ENEMY'>('ALL');
   const [filterCountry, setFilterCountry] = useState<string>('ALL');
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [isLegendOpen, setIsLegendOpen] = useState(false);
-  const [isLastRunOpen, setIsLastRunOpen] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [historyPage, setHistoryPage] = useState(1);
-
-  // Sync Modal State
-  const [showSyncModal, setShowSyncModal] = useState(false);
 
   // Map View State
   const [view, setView] = useState({ x: window.innerWidth / 2, y: window.innerHeight / 2, scale: 0.8 });
@@ -158,128 +158,33 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, users, badges, onSyn
   return (
     <div className="relative w-full h-[calc(100vh-64px)] md:h-[calc(100vh-64px)] overflow-hidden bg-gray-900 shadow-inner">
       
-      {/* HUD - Stats */}
-      <div className="absolute top-2 left-2 right-2 z-20 flex overflow-x-auto no-scrollbar gap-2 pointer-events-none pr-12">
-         <div className="bg-gray-800/90 backdrop-blur-md px-3 py-1.5 rounded-full border border-gray-700 shadow-xl flex items-center gap-2 pointer-events-auto shrink-0">
-             <span className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">RUN</span>
-             <span className="font-mono text-emerald-400 font-bold text-sm">{user.runBalance.toFixed(1)}</span>
-         </div>
-         <div className="bg-gray-800/90 backdrop-blur-md px-3 py-1.5 rounded-full border border-gray-700 shadow-xl flex items-center gap-2 pointer-events-auto shrink-0">
-             <span className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">GOV</span>
-             <span className="font-mono text-cyan-400 font-bold text-sm">{user.govBalance.toFixed(1)}</span>
-         </div>
-         {earningRate > 0 && (
-            <div className="bg-emerald-900/50 backdrop-blur-md px-3 py-1.5 rounded-full border border-emerald-500/30 shadow-xl flex items-center gap-2 pointer-events-auto shrink-0">
-                <span className="text-[10px] text-emerald-300 uppercase font-bold tracking-wider">{t('dash.yield')}</span>
-                <span className="font-mono text-white font-bold text-sm">~{earningRate.toFixed(1)}/m</span>
-            </div>
-         )}
-      </div>
+      <DashboardHUD 
+          runBalance={user.runBalance} 
+          govBalance={user.govBalance} 
+          earningRate={earningRate} 
+      />
 
-      {/* LEFT TOOLBAR: SEARCH & LAST RUN */}
-      <div className="absolute top-14 left-2 z-20 flex flex-col gap-2 items-start pointer-events-none">
-          <div className={`flex flex-col items-start transition-all duration-300 pointer-events-auto ${isFilterOpen ? 'w-64 z-50' : 'w-10 z-40'}`}>
-            <button 
-                onClick={() => { setIsFilterOpen(!isFilterOpen); if (isLastRunOpen) setIsLastRunOpen(false); }} 
-                className="w-10 h-10 bg-gray-800/90 backdrop-blur-md rounded-full border border-gray-700 shadow-lg flex items-center justify-center text-white hover:text-emerald-400 relative shrink-0"
-            >
-                {isFilterOpen ? <X size={20}/> : <Search size={20}/>}
-            </button>
+      <DashboardSidebar
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          filterMode={filterMode}
+          setFilterMode={setFilterMode}
+          filterCountry={filterCountry}
+          setFilterCountry={setFilterCountry}
+          countries={countries}
+          lastRun={lastRun}
+          onViewHistory={() => { setHistoryPage(1); setShowHistoryModal(true); }}
+      />
 
-            {isFilterOpen && (
-                <div className="mt-2 w-full bg-gray-800/90 backdrop-blur-md rounded-xl border border-gray-700 shadow-xl p-3 flex flex-col gap-3 animate-fade-in origin-top-left">
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={14} />
-                        <input 
-                            type="text" 
-                            placeholder={t('dash.search_placeholder')}
-                            className="w-full bg-gray-900/80 text-white rounded-lg pl-8 pr-3 py-2 text-xs border border-gray-600 focus:border-emerald-500 focus:outline-none"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                    </div>
-                    <div className="relative">
-                        <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={14} />
-                        <select 
-                        value={filterCountry}
-                        onChange={(e) => setFilterCountry(e.target.value)}
-                        className="w-full bg-gray-900/80 text-white rounded-lg pl-8 pr-3 py-2 text-xs border border-gray-600 focus:border-emerald-500 focus:outline-none appearance-none"
-                        >
-                        <option value="ALL">All Nations</option>
-                        {countries.map(c => (
-                            <option key={c} value={c}>{c}</option>
-                        ))}
-                        </select>
-                    </div>
-                    <div className="flex gap-1">
-                        <button onClick={() => setFilterMode('ALL')} className={`flex-1 py-1.5 text-[10px] font-bold rounded ${filterMode === 'ALL' ? 'bg-gray-600 text-white' : 'bg-gray-900 text-gray-400'}`}>{t('dash.filter.all')}</button>
-                        <button onClick={() => setFilterMode('MINE')} className={`flex-1 py-1.5 text-[10px] font-bold rounded ${filterMode === 'MINE' ? 'bg-emerald-600 text-white' : 'bg-gray-900 text-gray-400'}`}>{t('dash.filter.mine')}</button>
-                        <button onClick={() => setFilterMode('ENEMY')} className={`flex-1 py-1.5 text-[10px] font-bold rounded ${filterMode === 'ENEMY' ? 'bg-red-600 text-white' : 'bg-gray-900 text-gray-400'}`}>{t('dash.filter.enemy')}</button>
-                    </div>
-                </div>
-            )}
-          </div>
+      <DashboardControls onZoomIn={zoomIn} onZoomOut={zoomOut} />
 
-          {lastRun && (
-             <div className="relative pointer-events-auto z-30">
-                 <button 
-                    onClick={() => { setIsLastRunOpen(!isLastRunOpen); if (isFilterOpen) setIsFilterOpen(false); }}
-                    className={`w-10 h-10 bg-gray-800/90 backdrop-blur-md rounded-full border border-gray-700 shadow-lg flex items-center justify-center transition-colors ${isLastRunOpen ? 'text-white border-emerald-500' : 'text-emerald-400 hover:text-white'}`}
-                 >
-                     <Activity size={20} />
-                 </button>
-
-                 {isLastRunOpen && (
-                     <div className="mt-2 w-56 bg-gray-800/90 backdrop-blur-md border border-gray-700 rounded-xl p-3 shadow-lg animate-fade-in origin-top-left">
-                        <div className="flex items-center gap-2 mb-2">
-                            <Activity size={14} className="text-emerald-400" />
-                            <span className="text-xs font-bold text-gray-300 uppercase tracking-wide">Latest Activity</span>
-                        </div>
-                        <div className="space-y-1 mb-3">
-                            <div className="text-sm font-bold text-white truncate">{lastRun.location}</div>
-                            <div className="flex justify-between items-center text-xs">
-                                <span className="text-gray-400">{new Date(lastRun.timestamp).toLocaleDateString()}</span>
-                                <span className="text-emerald-400 font-mono font-bold">{lastRun.km.toFixed(1)} km</span>
-                            </div>
-                        </div>
-                        <button 
-                            onClick={() => { setIsLastRunOpen(false); setHistoryPage(1); setShowHistoryModal(true); }}
-                            className="w-full py-1.5 bg-gray-700/50 hover:bg-emerald-500/20 hover:text-emerald-400 text-xs text-gray-400 rounded transition-colors flex items-center justify-center gap-1"
-                        >
-                            <History size={12} /> View History
-                        </button>
-                     </div>
-                 )}
-             </div>
-          )}
-      </div>
-
-      {/* Map Controls & Legend */}
-      <div className="absolute top-14 right-2 z-20 flex flex-col items-end gap-2">
-          <div className="relative flex flex-col items-end">
-             <button onClick={() => setIsLegendOpen(!isLegendOpen)} className="p-2 bg-gray-800/90 text-gray-400 rounded-lg border border-gray-700 shadow-lg mb-2">
-                 <Filter size={20} />
-             </button>
-             {isLegendOpen && (
-                 <div className="bg-gray-800/90 backdrop-blur p-2 rounded-lg border border-gray-700 text-[10px] text-white flex flex-col gap-1 w-28 animate-fade-in">
-                      <span className="flex items-center gap-2"><div className="w-2 h-2 bg-emerald-400 rounded-sm"></div> {t('dash.legend.my_zones')}</span>
-                      <span className="flex items-center gap-2"><div className="w-2 h-2 bg-red-400 rounded-sm"></div> {t('dash.legend.enemy')}</span>
-                      <span className="flex items-center gap-2"><div className="w-2 h-2 bg-amber-400 rounded-sm"></div> {t('dash.legend.boosted')}</span>
-                      <span className="flex items-center gap-2"><div className="w-2 h-2 bg-cyan-400 rounded-sm"></div> {t('dash.legend.shielded')}</span>
-                 </div>
-             )}
-          </div>
-          <button onClick={zoomIn} className="p-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg border border-gray-600 shadow-lg"><ZoomIn size={20}/></button>
-          <button onClick={zoomOut} className="p-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg border border-gray-600 shadow-lg"><ZoomOut size={20}/></button>
-      </div>
-
-      {/* Sync Run Button */}
-      <div className="absolute bottom-24 md:bottom-10 left-1/2 transform -translate-x-1/2 z-30 flex items-center justify-center">
+      {/* Sync Run Button - Adjusted bottom position for mobile from 24 to 36 */}
+      <div className="absolute bottom-36 md:bottom-10 left-1/2 transform -translate-x-1/2 z-30 flex items-center justify-center">
             <div className="absolute inset-0 bg-emerald-500 rounded-full animate-ping opacity-20 duration-1000"></div>
             <div className="absolute inset-0 bg-emerald-400 rounded-full blur-xl opacity-40"></div>
             
             <button 
-              onClick={() => setShowSyncModal(true)}
+              onClick={onOpenSync}
               className="relative group flex items-center gap-3 px-8 py-4 bg-gray-900/90 backdrop-blur-xl border-2 border-emerald-400 rounded-full shadow-[0_0_30px_rgba(16,185,129,0.4)] hover:shadow-[0_0_50px_rgba(16,185,129,0.7)] hover:border-emerald-300 hover:scale-105 transition-all duration-300"
             >
                 <div className="bg-emerald-500 text-black p-2 rounded-full">
@@ -328,17 +233,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, zones, users, badges, onSyn
           />
       )}
 
-      {/* SYNC MODAL */}
-      {showSyncModal && (
-          <SyncModal 
-              onClose={() => setShowSyncModal(false)}
-              onNavigate={onNavigate}
-              onSyncRun={onSyncRun}
-              user={user}
-          />
-      )}
-
-      {/* HISTORY MODAL */}
+      {/* HISTORY MODAL (Inline for now, could be extracted further) */}
       {showHistoryModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in">
               <div className="bg-gray-800 rounded-2xl border border-gray-700 w-full max-w-lg shadow-2xl flex flex-col max-h-[80vh]">
