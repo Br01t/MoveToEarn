@@ -219,6 +219,7 @@ const DEFAULT_USER_STATE = {
   govBalance: 0,
   totalKm: 0,
   isPremium: false,
+  isAdmin: false,
   inventory: [],
   runHistory: [],
   completedMissionIds: [],
