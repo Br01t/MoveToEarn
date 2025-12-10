@@ -30,7 +30,7 @@ export const NotificationToast: React.FC<NotificationToastProps> = ({ message, t
 interface ConfirmModalProps {
   title: string;
   message: string;
-  onConfirm: () => void;
+  onConfirm: () => void | Promise<void>;
   onCancel: () => void;
   confirmLabel?: string;
   isDestructive?: boolean;
@@ -58,7 +58,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
                 </button>
                 <div className="w-px bg-gray-800"></div>
                 <button 
-                    onClick={onConfirm}
+                    onClick={onConfirm as any}
                     className={`flex-1 py-4 text-sm font-bold transition-colors ${isDestructive ? 'text-red-400 hover:bg-red-900/20' : 'text-emerald-400 hover:bg-emerald-900/20'}`}
                 >
                     {confirmLabel}

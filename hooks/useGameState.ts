@@ -250,64 +250,58 @@ export const useGameState = () => {
   const claimZone = async (zoneId: string) => {};
   const upgradePremium = () => {};
 
-  const reportBug = async (description: string, screenshot?: string) => {
-      if (!user) return;
-      
-      const newReport: BugReport = { 
-          id: `bug_${Date.now()}`, 
-          userId: user.id, 
-          userName: user.name, 
-          description, 
-          screenshot, 
-          timestamp: Date.now(), 
-          status: 'OPEN' 
-      };
-      
-      // Optimistic update
-      setBugReports(prev => [newReport, ...prev]);
-      
-      const { error } = await supabase.from('bug_reports').insert({
-          user_id: user.id, 
-          user_name: user.name, 
-          description, 
-          screenshot, 
-          timestamp: Date.now(), 
-          status: 'OPEN'
-      });
+  const reportBug = async (description: string, screenshot?: string): Promise<boolean> => {
+      if (!user) return false;
+      const newId = crypto.randomUUID();
+      const { data, error } = await supabase.from('bug_reports').insert({
+          id: newId, user_id: user.id, user_name: user.name, description, screenshot, timestamp: Date.now(), status: 'OPEN'
+      }).select().single();
 
-      if (error) {
-          console.error("FAILED to save bug report to DB:", error);
-          alert("Error saving bug report. Check console.");
+      if (error) { console.error("FAILED to save bug report:", error); return false; }
+      if (data) {
+          const newReport: BugReport = { id: data.id, userId: user.id, userName: user.name, description, screenshot, timestamp: data.timestamp || Date.now(), status: 'OPEN' };
+          setBugReports(prev => [newReport, ...prev]);
+          return true;
       }
+      return false;
   };
 
-  const submitSuggestion = async (title: string, description: string) => {
-      if (!user) return;
-      
-      const newSuggestion: Suggestion = { 
-          id: `idea_${Date.now()}`, 
-          userId: user.id, 
-          userName: user.name, 
-          title, 
-          description, 
-          timestamp: Date.now() 
-      };
-      
-      // Optimistic update
-      setSuggestions(prev => [newSuggestion, ...prev]);
-      
-      const { error } = await supabase.from('suggestions').insert({
-          user_id: user.id, 
-          user_name: user.name, 
-          title, 
-          description, 
-          timestamp: Date.now()
-      });
+  const submitSuggestion = async (title: string, description: string): Promise<boolean> => {
+      if (!user) return false;
+      const newId = crypto.randomUUID();
+      const { data, error } = await supabase.from('suggestions').insert({
+          id: newId, user_id: user.id, user_name: user.name, title, description, timestamp: Date.now()
+      }).select().single();
 
-      if (error) {
-          console.error("FAILED to save suggestion to DB:", error);
-          alert("Error saving suggestion. Check console.");
+      if (error) { console.error("FAILED to save suggestion:", error); return false; }
+      if (data) {
+          const newSuggestion: Suggestion = { id: data.id, userId: user.id, userName: user.name, title, description, timestamp: data.timestamp || Date.now() };
+          setSuggestions(prev => [newSuggestion, ...prev]);
+          return true;
       }
+      return false;
+  };
+
+  // --- ADMIN: MANAGE REPORTS & SUGGESTIONS ---
+  const updateBugStatus = async (id: string, status: 'OPEN' | 'WIP' | 'FIXED' | 'RESOLVED') => {
+      const { error } = await supabase.from('bug_reports').update({ status }).eq('id', id);
+      if (error) return { error: error.message };
+      setBugReports(prev => prev.map(bug => bug.id === id ? { ...bug, status } : bug));
+      return { success: true };
+  };
+
+  const deleteBugReport = async (id: string) => {
+      const { error } = await supabase.from('bug_reports').delete().eq('id', id);
+      if (error) return { error: error.message };
+      setBugReports(prev => prev.filter(bug => bug.id !== id));
+      return { success: true };
+  };
+
+  const deleteSuggestion = async (id: string) => {
+      const { error } = await supabase.from('suggestions').delete().eq('id', id);
+      if (error) return { error: error.message };
+      setSuggestions(prev => prev.filter(s => s.id !== id));
+      return { success: true };
   };
 
   // =================================================================
@@ -583,8 +577,10 @@ export const useGameState = () => {
 
   return {
     user, zones, usersMock, marketItems, missions, badges, govToRunRate, bugReports, suggestions, leaderboards, levels, loading, 
-    setUser, setZones, setMarketItems, setMissions, setBadges, setUsersMock, setGovToRunRate, setBugReports, setLevels,
+    setUser, setZones, setMarketItems, setMissions, setBadges, setUsersMock, setGovToRunRate, setBugReports, setLevels, setSuggestions,
     login, loginWithGoogle, register, logout, updateUser, buyItem, useItem, swapGovToRun, buyFiatGov, claimZone, upgradePremium, reportBug, submitSuggestion,
+    // Admin Actions
+    updateBugStatus, deleteBugReport, deleteSuggestion,
     // CRUD Exports
     addItem, updateItem, removeItem,
     addMission, updateMission, removeMission,

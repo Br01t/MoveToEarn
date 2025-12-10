@@ -240,6 +240,10 @@ const AppContent: React.FC = () => {
                   onAddLevel={gameState.addLevel}
                   onUpdateLevel={gameState.updateLevel}
                   onDeleteLevel={gameState.deleteLevel}
+                  // Added missing handlers for reports and suggestions
+                  onUpdateBugStatus={gameState.updateBugStatus}
+                  onDeleteBugReport={gameState.deleteBugReport}
+                  onDeleteSuggestion={gameState.deleteSuggestion}
                 />
               )}
               {currentView === "REPORT_BUG" && <ReportBug onReport={gameState.reportBug} />}

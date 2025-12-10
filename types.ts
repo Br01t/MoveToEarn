@@ -120,7 +120,7 @@ export interface BugReport {
   description: string;
   screenshot?: string; // Base64 string
   timestamp: number;
-  status: 'OPEN' | 'RESOLVED';
+  status: 'OPEN' | 'WIP' | 'FIXED' | 'RESOLVED';
 }
 
 export interface Suggestion {

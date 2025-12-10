@@ -1,10 +1,10 @@
 
 import React, { useState } from 'react';
-import { Bug, Camera, Send, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Bug, Camera, Send, CheckCircle, AlertTriangle, Loader2 } from 'lucide-react';
 import { useLanguage } from '../../LanguageContext';
 
 interface ReportBugProps {
-  onReport: (description: string, screenshot?: string) => void;
+  onReport: (description: string, screenshot?: string) => Promise<boolean>;
 }
 
 const ReportBug: React.FC<ReportBugProps> = ({ onReport }) => {
@@ -12,6 +12,7 @@ const ReportBug: React.FC<ReportBugProps> = ({ onReport }) => {
   const [description, setDescription] = useState('');
   const [screenshot, setScreenshot] = useState<string | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -30,15 +31,24 @@ const ReportBug: React.FC<ReportBugProps> = ({ onReport }) => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!description.trim()) {
         setError(t('report.error_desc'));
         return;
     }
-    onReport(description, screenshot || undefined);
-    setIsSubmitted(true);
+    
+    setIsSending(true);
     setError(null);
+    
+    const success = await onReport(description, screenshot || undefined);
+    
+    setIsSending(false);
+    if (success) {
+        setIsSubmitted(true);
+    } else {
+        setError("Failed to send report. Please check your connection and try again.");
+    }
   };
 
   return (
@@ -72,6 +82,7 @@ const ReportBug: React.FC<ReportBugProps> = ({ onReport }) => {
                       placeholder={t('report.desc_placeholder')}
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
+                      disabled={isSending}
                   />
                   {error && <p className="text-red-400 text-xs mt-1 flex items-center gap-1"><AlertTriangle size={12}/> {error}</p>}
               </div>
@@ -79,10 +90,10 @@ const ReportBug: React.FC<ReportBugProps> = ({ onReport }) => {
               <div>
                   <label className="block text-sm font-bold text-gray-400 uppercase mb-2">{t('report.screenshot_label')}</label>
                   <div className="flex items-center gap-4">
-                      <label className="cursor-pointer flex items-center gap-2 px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg hover:border-emerald-500 transition-colors group">
+                      <label className={`cursor-pointer flex items-center gap-2 px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg hover:border-emerald-500 transition-colors group ${isSending ? 'opacity-50 cursor-not-allowed' : ''}`}>
                           <Camera size={20} className="text-gray-400 group-hover:text-emerald-400" />
                           <span className="text-sm text-gray-300">Upload Image</span>
-                          <input type="file" accept="image/*" onChange={handleFileChange} hidden />
+                          <input type="file" accept="image/*" onChange={handleFileChange} hidden disabled={isSending} />
                       </label>
                       {screenshot && (
                           <div className="relative group">
@@ -91,6 +102,7 @@ const ReportBug: React.FC<ReportBugProps> = ({ onReport }) => {
                                 type="button"
                                 onClick={() => setScreenshot(null)}
                                 className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                                disabled={isSending}
                               >
                                   <AlertTriangle size={10} />
                               </button>
@@ -101,9 +113,11 @@ const ReportBug: React.FC<ReportBugProps> = ({ onReport }) => {
 
               <button 
                   type="submit"
-                  className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-colors shadow-lg"
+                  disabled={isSending}
+                  className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-colors shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                  <Send size={20} /> {t('report.submit_btn')}
+                  {isSending ? <Loader2 size={20} className="animate-spin"/> : <Send size={20} />} 
+                  {isSending ? 'Sending...' : t('report.submit_btn')}
               </button>
           </form>
       )}
