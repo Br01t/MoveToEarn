@@ -516,64 +516,72 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
             </div>
         ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                {currentBadges.map(badge => {
-                    const style = getRarityStyles(badge.rarity);
-                    const rewardRun = badge.rewardRun || 0;
-                    const rewardGov = badge.rewardGov || 0;
-                    
-                    return (
-                        <div 
-                            key={badge.id} 
-                            // CLASSE CONTENITORE: sempre visibile (non opacità/grayscale), con stili basati sullo sblocco
-                            className={`aspect-square rounded-xl flex flex-col items-center justify-between p-3 text-center border transition-all relative overflow-hidden group 
-                                ${badge.isUnlocked ? `${style.bg} ${style.border}` : 'bg-gray-900 border-gray-700'}`} 
-                        >
-                            
-                            {/* EFFETTO VISIVO PER EPIC/LEGENDARY SBLOCCATI */}
-                            {badge.isUnlocked && (badge.rarity === 'LEGENDARY' || badge.rarity === 'EPIC') && (
-                                <div className={`absolute top-0 left-0 w-full h-full opacity-20 bg-gradient-to-br ${badge.rarity === 'LEGENDARY' ? 'from-yellow-500 to-transparent' : 'from-purple-500 to-transparent'}`}></div>
-                            )}
+    {currentBadges.map(badge => {
+        const style = getRarityStyles(badge.rarity);
+        const rewardRun = badge.rewardRun || 0;
+        const rewardGov = badge.rewardGov || 0;
+        
+        return (
+            <div 
+                key={badge.id} 
+                // CLASSE CONTENITORE: Aggiunto 'group' per l'effetto hover
+                className={`aspect-square rounded-xl flex flex-col items-center justify-between p-3 text-center border transition-all relative overflow-visible group 
+                    ${badge.isUnlocked ? `${style.bg} ${style.border}` : 'bg-gray-900 border-gray-700'}`} 
+            >
+                
+                {/* TOOLTIP: Il nuovo blocco per la descrizione */}
+                <div className="absolute z-50 top-0 left-1/2 transform -translate-x-1/2 mt-[-10px] w-56 p-3 bg-gray-700 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                    <h5 className={`font-bold text-sm mb-1 ${style.text}`}>{badge.name}</h5>
+                    <p className="text-xs text-gray-300">{badge.description}</p>
+                    {/* Puntatore del tooltip */}
+                    <div className="absolute left-1/2 transform -translate-x-1/2 bottom-[-4px] w-2 h-2 rotate-45 bg-gray-700"></div>
+                </div>
 
-                            <div className="flex-1 flex flex-col items-center justify-center w-full relative z-10">
-                                {/* CONTENITORE ICONA */}
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center mb-1 
-                                    ${badge.isUnlocked ? `${style.badge} ring-2 ring-opacity-50` : `${style.badge} bg-gray-800 text-gray-400 ring-2 ring-gray-600/50`}`} 
-                                >
-                                    {/* ICONA: Mostra SEMPRE l'icona corretta, non il lucchetto */}
-                                    {renderIcon(badge.icon, "w-4 h-4")} 
-                                </div>
-                                
-                                {/* NOME BADGE */}
-                                <h4 className={`font-bold text-xs truncate w-full px-1 ${badge.isUnlocked ? style.text : 'text-gray-400'}`}>{badge.name}</h4>
-                                
-                                {/* PROGRESSO: Mostra lo stato di avanzamento se BLOCACCATO */}
-                                {!badge.isUnlocked && (
-                                    <div className="w-full px-2 mt-2 text-center">
-                                        <span className="text-[9px] text-gray-500 font-mono bg-gray-900/50 px-2 py-0.5 rounded border border-gray-800">
-                                            {badge.stats.current.toFixed(0)} / {badge.stats.target} {badge.stats.unit}
-                                        </span>
-                                    </div>
-                                )}
-                            </div>
-                            
-                            {/* PIE' DI PAGINA: Mostra rarità e ricompensa/stato bloccato */}
-                            <div className="relative z-10 mt-1">
-                                {badge.isUnlocked ? (
-                                    <div className="flex flex-col items-center">
-                                        {/* Rarità e Ricompense quando SBLOCCATO */}
-                                        <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded ${style.badge}`}>{badge.rarity}</span>
-                                        {rewardRun > 0 && <span className="text-[8px] text-emerald-400 font-mono mt-0.5">+{rewardRun} RUN</span>}
-                                        {rewardGov > 0 && <span className="text-[8px] text-cyan-400 font-mono">+{rewardGov} GOV</span>}
-                                    </div>
-                                ) : (
-                                    // Mostra solo la rarità quando bloccato per evitare 'LOCKED'
-                                    <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded ${style.badge}`}>{badge.rarity}</span>
-                                )}
-                            </div>
+                {/* EFFETTO VISIVO PER EPIC/LEGENDARY SBLOCCATI */}
+                {badge.isUnlocked && (badge.rarity === 'LEGENDARY' || badge.rarity === 'EPIC') && (
+                    <div className={`absolute top-0 left-0 w-full h-full opacity-20 bg-gradient-to-br ${badge.rarity === 'LEGENDARY' ? 'from-yellow-500 to-transparent' : 'from-purple-500 to-transparent'}`}></div>
+                )}
+
+                <div className="flex-1 flex flex-col items-center justify-center w-full relative z-10">
+                    {/* CONTENITORE ICONA */}
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center mb-1 
+                        ${badge.isUnlocked ? `${style.badge} ring-2 ring-opacity-50` : `${style.badge} bg-gray-800 text-gray-400 ring-2 ring-gray-600/50`}`} 
+                    >
+                        {/* ICONA: Mostra SEMPRE l'icona corretta, non il lucchetto */}
+                        {renderIcon(badge.icon, "w-4 h-4")} 
+                    </div>
+                    
+                    {/* NOME BADGE */}
+                    <h4 className={`font-bold text-xs truncate w-full px-1 ${badge.isUnlocked ? style.text : 'text-gray-400'}`}>{badge.name}</h4>
+                    
+                    {/* PROGRESSO: Mostra lo stato di avanzamento se BLOCACCATO */}
+                    {!badge.isUnlocked && (
+                        <div className="w-full px-2 mt-2 text-center">
+                            <span className="text-[9px] text-gray-500 font-mono bg-gray-900/50 px-2 py-0.5 rounded border border-gray-800">
+                                {badge.stats.current.toFixed(0)} / {badge.stats.target} {badge.stats.unit}
+                            </span>
                         </div>
-                    );
-                })}
+                    )}
+                </div>
+                
+                {/* PIE' DI PAGINA: Mostra rarità e ricompensa/stato bloccato */}
+                <div className="relative z-10 mt-1">
+                    {badge.isUnlocked ? (
+                        <div className="flex flex-col items-center">
+                            {/* Rarità e Ricompense quando SBLOCCATO */}
+                            <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded ${style.badge}`}>{badge.rarity}</span>
+                            {rewardRun > 0 && <span className="text-[8px] text-emerald-400 font-mono mt-0.5">+{rewardRun} RUN</span>}
+                            {rewardGov > 0 && <span className="text-[8px] text-cyan-400 font-mono">+{rewardGov} GOV</span>}
+                        </div>
+                    ) : (
+                        // Mostra solo la rarità quando bloccato per evitare 'LOCKED'
+                        <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded ${style.badge}`}>{badge.rarity}</span>
+                    )}
+                </div>
             </div>
+        );
+    })}
+</div>
         )}
         <Pagination 
           currentPage={badgePage} 
