@@ -3,12 +3,13 @@ import React, { useState } from 'react';
 import { Item } from '../../types';
 import { Edit2, Plus, Search, Trash2 } from 'lucide-react';
 import Pagination from '../Pagination';
+import { NotificationToast, ConfirmModal } from './AdminUI';
 
 interface AdminItemsTabProps {
   items: Item[];
-  onAddItem: (item: Item) => void;
-  onUpdateItem: (item: Item) => void;
-  onRemoveItem: (id: string) => void;
+  onAddItem: (item: Item) => Promise<{ error?: string, success?: boolean }>;
+  onUpdateItem: (item: Item) => Promise<{ error?: string, success?: boolean }>;
+  onRemoveItem: (id: string) => Promise<{ error?: string, success?: boolean }>;
 }
 
 const ITEMS_PER_PAGE = 5;
@@ -18,6 +19,10 @@ const AdminItemsTab: React.FC<AdminItemsTabProps> = ({ items, onAddItem, onUpdat
   const [page, setPage] = useState(1);
   const [editingId, setEditingId] = useState<string | null>(null);
   
+  // UI Feedback States
+  const [notification, setNotification] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{ title: string, message: string, action: () => void } | null>(null);
+
   const [formData, setFormData] = useState<{
     name: string; description: string; priceRun: string; quantity: string;
     type: 'DEFENSE' | 'BOOST' | 'CURRENCY'; effectValue: string;
@@ -44,7 +49,7 @@ const AdminItemsTab: React.FC<AdminItemsTabProps> = ({ items, onAddItem, onUpdat
     setFormData({ name: '', description: '', priceRun: '100', quantity: '100', type: 'DEFENSE', effectValue: '1' });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name) return;
     
@@ -63,16 +68,52 @@ const AdminItemsTab: React.FC<AdminItemsTabProps> = ({ items, onAddItem, onUpdat
       icon: iconName
     };
 
+    let result;
     if (editingId) {
-        onUpdateItem(itemData);
+        result = await onUpdateItem(itemData);
     } else {
-        onAddItem(itemData);
+        result = await onAddItem(itemData);
     }
-    cancelEdit();
+
+    if (result.success) {
+        setNotification({ message: editingId ? "Item updated successfully!" : "Item created successfully!", type: 'success' });
+        cancelEdit();
+    } else {
+        setNotification({ message: result.error || "Operation failed", type: 'error' });
+    }
+  };
+
+  const handleDeleteClick = (item: Item) => {
+      setConfirmAction({
+          title: "Delete Item",
+          message: `Are you sure you want to delete "${item.name}"? This action cannot be undone.`,
+          action: async () => {
+              const result = await onRemoveItem(item.id);
+              if (result.success) {
+                  setNotification({ message: "Item deleted successfully", type: 'success' });
+              } else {
+                  setNotification({ message: result.error || "Failed to delete item", type: 'error' });
+              }
+              setConfirmAction(null);
+          }
+      });
   };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      {/* Notifications & Modals */}
+      {notification && <NotificationToast message={notification.message} type={notification.type} onClose={() => setNotification(null)} />}
+      {confirmAction && (
+          <ConfirmModal 
+              title={confirmAction.title} 
+              message={confirmAction.message} 
+              onConfirm={confirmAction.action} 
+              onCancel={() => setConfirmAction(null)} 
+              isDestructive
+              confirmLabel="Delete"
+          />
+      )}
+
       {/* Form */}
       <div className="bg-gray-800 p-6 rounded-xl border border-gray-700 h-fit">
         <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
@@ -117,7 +158,7 @@ const AdminItemsTab: React.FC<AdminItemsTabProps> = ({ items, onAddItem, onUpdat
                <div><h4 className="font-bold text-white">{item.name}</h4><p className="text-xs text-gray-400">{item.description}</p></div>
                <div className="flex gap-2">
                     <button onClick={() => startEdit(item)} className="text-blue-400 hover:bg-blue-500/10 p-2 rounded"><Edit2 size={20}/></button>
-                    <button onClick={() => onRemoveItem(item.id)} className="text-red-500 hover:bg-red-500/10 p-2 rounded"><Trash2 size={20}/></button>
+                    <button onClick={() => handleDeleteClick(item)} className="text-red-500 hover:bg-red-500/10 p-2 rounded"><Trash2 size={20}/></button>
                </div>
             </div>
          ))}

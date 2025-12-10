@@ -7,7 +7,7 @@ import { supabase } from '../supabaseClient';
 export const useGameState = () => {
   // --- DATABASE STATE ---
   const [user, setUser] = useState<User | null>(null);
-  const [zones, setZones] = useState<Zone[]>(MOCK_ZONES); // Fallback to mock if DB empty, but will fetch
+  const [zones, setZones] = useState<Zone[]>(MOCK_ZONES); 
   const [usersMock, setUsersMock] = useState(MOCK_USERS); 
   
   // Real DB Data
@@ -28,34 +28,20 @@ export const useGameState = () => {
     const initSession = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
-        
-        // Fetch Global Game Data independently of auth
         await fetchGameData();
-
         if (error) throw error;
-        
-        if (session) {
-          await fetchUserProfile(session.user.id);
-        } else {
-          setLoading(false);
-        }
+        if (session) await fetchUserProfile(session.user.id);
+        else setLoading(false);
       } catch (err) {
-        console.warn("Supabase connection issue (likely missing credentials), defaulting to offline mode:", err);
+        console.warn("Supabase connection issue:", err);
         setLoading(false);
       }
     };
-
     initSession();
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) {
-        fetchUserProfile(session.user.id);
-      } else {
-        setUser(null);
-        setZones(MOCK_ZONES);
-      }
+      if (session) fetchUserProfile(session.user.id);
+      else { setUser(null); setZones(MOCK_ZONES); }
     });
-
     return () => subscription.unsubscribe();
   }, []);
 
@@ -235,7 +221,7 @@ export const useGameState = () => {
     }
   };
 
-  // --- AUTH ACTIONS ---
+  // --- ACTIONS ---
   const login = async (email: string, password: string) => await supabase.auth.signInWithPassword({ email, password });
   const loginWithGoogle = async () => await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } });
   const register = async (email: string, password: string, username: string) => {
@@ -247,7 +233,6 @@ export const useGameState = () => {
   };
   const logout = async () => { await supabase.auth.signOut(); setUser(null); };
 
-  // --- GAMEPLAY ACTIONS ---
   const updateUser = async (updates: Partial<User>) => {
     setUser((prev) => (prev ? { ...prev, ...updates } : null));
     if (user) {
@@ -258,30 +243,71 @@ export const useGameState = () => {
     }
   };
 
-  const buyItem = (item: Item) => { /* ... existing logic ... */ };
-  const useItem = async (item: InventoryItem, targetZoneId: string) => { /* ... existing logic ... */ };
-  const swapGovToRun = (govAmount: number) => { /* ... existing logic ... */ };
-  const buyFiatGov = (amountUSD: number) => { /* ... existing logic ... */ };
-  const claimZone = async (zoneId: string) => { /* ... existing logic ... */ };
-  const upgradePremium = () => { /* ... existing logic ... */ };
+  const buyItem = (item: Item) => {};
+  const useItem = async (item: InventoryItem, targetZoneId: string) => {};
+  const swapGovToRun = (govAmount: number) => {};
+  const buyFiatGov = (amountUSD: number) => {};
+  const claimZone = async (zoneId: string) => {};
+  const upgradePremium = () => {};
 
-  // --- USER INTERACTION (Reports/Suggestions) ---
   const reportBug = async (description: string, screenshot?: string) => {
       if (!user) return;
-      const newReport: BugReport = { id: `bug_${Date.now()}`, userId: user.id, userName: user.name, description, screenshot, timestamp: Date.now(), status: 'OPEN' };
+      
+      const newReport: BugReport = { 
+          id: `bug_${Date.now()}`, 
+          userId: user.id, 
+          userName: user.name, 
+          description, 
+          screenshot, 
+          timestamp: Date.now(), 
+          status: 'OPEN' 
+      };
+      
+      // Optimistic update
       setBugReports(prev => [newReport, ...prev]);
-      await supabase.from('bug_reports').insert({
-          user_id: user.id, user_name: user.name, description, screenshot, timestamp: Date.now(), status: 'OPEN'
+      
+      const { error } = await supabase.from('bug_reports').insert({
+          user_id: user.id, 
+          user_name: user.name, 
+          description, 
+          screenshot, 
+          timestamp: Date.now(), 
+          status: 'OPEN'
       });
+
+      if (error) {
+          console.error("FAILED to save bug report to DB:", error);
+          alert("Error saving bug report. Check console.");
+      }
   };
 
   const submitSuggestion = async (title: string, description: string) => {
       if (!user) return;
-      const newSuggestion: Suggestion = { id: `idea_${Date.now()}`, userId: user.id, userName: user.name, title, description, timestamp: Date.now() };
+      
+      const newSuggestion: Suggestion = { 
+          id: `idea_${Date.now()}`, 
+          userId: user.id, 
+          userName: user.name, 
+          title, 
+          description, 
+          timestamp: Date.now() 
+      };
+      
+      // Optimistic update
       setSuggestions(prev => [newSuggestion, ...prev]);
-      await supabase.from('suggestions').insert({
-          user_id: user.id, user_name: user.name, title, description, timestamp: Date.now()
+      
+      const { error } = await supabase.from('suggestions').insert({
+          user_id: user.id, 
+          user_name: user.name, 
+          title, 
+          description, 
+          timestamp: Date.now()
       });
+
+      if (error) {
+          console.error("FAILED to save suggestion to DB:", error);
+          alert("Error saving suggestion. Check console.");
+      }
   };
 
   // =================================================================
@@ -290,122 +316,269 @@ export const useGameState = () => {
 
   // --- MARKET ITEMS ---
   const addItem = async (item: Item) => {
+      const tempId = item.id;
       setMarketItems(p => [...p, item]);
-      await supabase.from('items').insert({
-          id: item.id, name: item.name, description: item.description, 
+      const { error } = await supabase.from('items').insert({
+          id: item.id,
+          name: item.name, description: item.description, 
           price_run: item.priceRun, quantity: item.quantity, type: item.type, 
           effect_value: item.effectValue, icon: item.icon
-      });
+      }).select().single();
+
+      if (error) {
+          console.error("DB Insert Error", error);
+          setMarketItems(p => p.filter(x => x.id !== tempId)); 
+          return { error: error.message };
+      }
+      return { success: true };
   };
+  
   const updateItem = async (item: Item) => {
+      const original = marketItems.find(x => x.id === item.id);
       setMarketItems(p => p.map(x => x.id === item.id ? item : x));
-      await supabase.from('items').update({
+      const { error } = await supabase.from('items').update({
           name: item.name, description: item.description, price_run: item.priceRun, 
           quantity: item.quantity, type: item.type, effect_value: item.effectValue
       }).eq('id', item.id);
+      
+      if (error && original) {
+          console.error("DB Update Error", error);
+          setMarketItems(p => p.map(x => x.id === item.id ? original : x)); 
+          return { error: error.message };
+      }
+      return { success: true };
   };
+  
   const removeItem = async (id: string) => {
+      const originalList = [...marketItems];
       setMarketItems(p => p.filter(x => x.id !== id));
-      await supabase.from('items').delete().eq('id', id);
+      const { error } = await supabase.from('items').delete().eq('id', id);
+      if (error) {
+          setMarketItems(originalList);
+          return { error: error.message };
+      }
+      return { success: true };
   };
 
   // --- MISSIONS ---
   const addMission = async (m: Mission) => {
+      const tempId = m.id;
       setMissions(p => [...p, m]);
-      await supabase.from('missions').insert({
-          id: m.id, title: m.title, description: m.description, 
+      
+      const { error } = await supabase.from('missions').insert({
+          id: m.id, 
+          title: m.title, description: m.description, 
           reward_run: m.rewardRun, reward_gov: m.rewardGov, rarity: m.rarity, 
-          condition_type: m.conditionType, condition_value: m.conditionValue,
           logic_id: m.logicId, category: m.category, difficulty: m.difficulty
-      });
+      }).select().single();
+
+      if (error) {
+          console.error("DB Insert Error", error);
+          setMissions(p => p.filter(x => x.id !== tempId)); 
+          return { error: error.message };
+      }
+      return { success: true };
   };
+
   const updateMission = async (m: Mission) => {
+      const original = missions.find(x => x.id === m.id);
       setMissions(p => p.map(x => x.id === m.id ? m : x));
-      await supabase.from('missions').update({
+      
+      const { error } = await supabase.from('missions').update({
           title: m.title, description: m.description, reward_run: m.rewardRun, reward_gov: m.rewardGov, 
-          rarity: m.rarity, condition_type: m.conditionType, condition_value: m.conditionValue,
+          rarity: m.rarity,
           logic_id: m.logicId, category: m.category, difficulty: m.difficulty
       }).eq('id', m.id);
+      
+      if (error && original) {
+          console.error("DB Update Error", error);
+          setMissions(p => p.map(x => x.id === m.id ? original : x)); 
+          return { error: error.message };
+      }
+      return { success: true };
   };
+
   const removeMission = async (id: string) => {
+      const originalList = [...missions];
       setMissions(p => p.filter(x => x.id !== id));
-      await supabase.from('missions').delete().eq('id', id);
+      const { error } = await supabase.from('missions').delete().eq('id', id);
+      if (error) {
+          setMissions(originalList);
+          return { error: error.message };
+      }
+      return { success: true };
   };
 
   // --- BADGES ---
   const addBadge = async (b: Badge) => {
+      const tempId = b.id;
       setBadges(p => [...p, b]);
-      await supabase.from('badges').insert({
-          id: b.id, name: b.name, description: b.description, icon: b.icon, rarity: b.rarity, 
-          reward_run: b.rewardRun, reward_gov: b.rewardGov, condition_type: b.conditionType, condition_value: b.conditionValue,
-          logic_id: b.logicId, category: b.category, difficulty: b.difficulty
-      });
-  };
-  const updateBadge = async (b: Badge) => {
-      setBadges(p => p.map(x => x.id === b.id ? b : x));
-      await supabase.from('badges').update({
+      
+      const { error } = await supabase.from('badges').insert({
+          id: b.id, 
           name: b.name, description: b.description, icon: b.icon, rarity: b.rarity, 
-          reward_run: b.rewardRun, reward_gov: b.rewardGov, condition_type: b.conditionType, condition_value: b.conditionValue,
+          reward_run: b.rewardRun, reward_gov: b.rewardGov,
+          logic_id: b.logicId, category: b.category, difficulty: b.difficulty
+      }).select().single();
+
+      if (error) {
+          console.error("DB Insert Error", error);
+          setBadges(p => p.filter(x => x.id !== tempId));
+          return { error: error.message };
+      }
+      return { success: true };
+  };
+
+  const updateBadge = async (b: Badge) => {
+      const original = badges.find(x => x.id === b.id);
+      setBadges(p => p.map(x => x.id === b.id ? b : x));
+      
+      const { error } = await supabase.from('badges').update({
+          name: b.name, description: b.description, icon: b.icon, rarity: b.rarity, 
+          reward_run: b.rewardRun, reward_gov: b.rewardGov,
           logic_id: b.logicId, category: b.category, difficulty: b.difficulty
       }).eq('id', b.id);
+      
+      if (error && original) {
+          console.error("DB Update Error", error);
+          setBadges(p => p.map(x => x.id === b.id ? original : x));
+          return { error: error.message };
+      }
+      return { success: true };
   };
+
   const removeBadge = async (id: string) => {
+      const originalList = [...badges];
       setBadges(p => p.filter(x => x.id !== id));
-      await supabase.from('badges').delete().eq('id', id);
+      const { error } = await supabase.from('badges').delete().eq('id', id);
+      if (error) {
+          setBadges(originalList);
+          return { error: error.message };
+      }
+      return { success: true };
   };
 
   // --- ZONES ---
   const updateZone = async (id: string, updates: Partial<Zone>) => {
+      const original = zones.find(z => z.id === id);
       setZones(p => p.map(z => z.id === id ? { ...z, ...updates } : z));
       const dbUpdates: any = {};
       if (updates.name) dbUpdates.name = updates.name;
       if (updates.interestRate !== undefined) dbUpdates.interest_rate = updates.interestRate;
-      await supabase.from('zones').update(dbUpdates).eq('id', id);
+      
+      const { error } = await supabase.from('zones').update(dbUpdates).eq('id', id);
+      if (error && original) {
+          setZones(p => p.map(z => z.id === id ? original : z));
+          return { error: error.message };
+      }
+      return { success: true };
   };
+
   const deleteZone = async (id: string) => {
+      const originalList = [...zones];
       setZones(p => p.filter(z => z.id !== id));
-      await supabase.from('zones').delete().eq('id', id);
+      const { error } = await supabase.from('zones').delete().eq('id', id);
+      if (error) {
+          setZones(originalList);
+          return { error: error.message };
+      }
+      return { success: true };
   };
 
   // --- LEADERBOARDS ---
   const addLeaderboard = async (c: LeaderboardConfig) => {
+      const tempId = c.id;
       setLeaderboards(p => [...p, c]);
-      await supabase.from('leaderboards').insert({
-          id: c.id, title: c.title, description: c.description, metric: c.metric, 
+      const { error } = await supabase.from('leaderboards').insert({
+          id: c.id, 
+          title: c.title, description: c.description, metric: c.metric, 
           type: c.type, start_time: c.startTime, end_time: c.endTime, 
           reward_pool: c.rewardPool, reward_currency: c.rewardCurrency
-      });
+      }).select().single();
+
+      if (error) {
+          console.error("DB Error", error);
+          setLeaderboards(p => p.filter(x => x.id !== tempId));
+          return { error: error.message };
+      }
+      return { success: true };
   };
+
   const updateLeaderboard = async (c: LeaderboardConfig) => {
+      const original = leaderboards.find(l => l.id === c.id);
       setLeaderboards(p => p.map(l => l.id === c.id ? c : l));
-      await supabase.from('leaderboards').update({
+      const { error } = await supabase.from('leaderboards').update({
           title: c.title, description: c.description, metric: c.metric, 
           type: c.type, start_time: c.startTime, end_time: c.endTime, 
           reward_pool: c.rewardPool, reward_currency: c.rewardCurrency
       }).eq('id', c.id);
+      
+      if (error && original) {
+          setLeaderboards(p => p.map(l => l.id === c.id ? original : l));
+          return { error: error.message };
+      }
+      return { success: true };
   };
+
   const deleteLeaderboard = async (id: string) => {
+      const originalList = [...leaderboards];
       setLeaderboards(p => p.filter(l => l.id !== id));
-      await supabase.from('leaderboards').delete().eq('id', id);
+      const { error } = await supabase.from('leaderboards').delete().eq('id', id);
+      if (error) {
+          setLeaderboards(originalList);
+          return { error: error.message };
+      }
+      return { success: true };
   };
+
   const resetLeaderboard = async (id: string) => {
       const now = Date.now();
+      const original = leaderboards.find(l => l.id === id);
       setLeaderboards(p => p.map(l => l.id === id ? {...l, lastResetTimestamp: now} : l));
-      await supabase.from('leaderboards').update({ last_reset_timestamp: now }).eq('id', id);
+      const { error } = await supabase.from('leaderboards').update({ last_reset_timestamp: now }).eq('id', id);
+      if (error && original) {
+          setLeaderboards(p => p.map(l => l.id === id ? original : l));
+          return { error: error.message };
+      }
+      return { success: true };
   };
 
   // --- LEVELS ---
   const addLevel = async (l: LevelConfig) => {
+      const tempId = l.id;
       setLevels(p => [...p, l]);
-      await supabase.from('levels').insert({ id: l.id, level: l.level, min_km: l.minKm, title: l.title });
+      const { error } = await supabase.from('levels').insert({ 
+          id: l.id, level: l.level, min_km: l.minKm, title: l.title 
+      }).select().single();
+      
+      if (error) {
+          console.error("DB Error", error);
+          setLevels(p => p.filter(x => x.id !== tempId));
+          return { error: error.message };
+      }
+      return { success: true };
   };
+
   const updateLevel = async (l: LevelConfig) => {
+      const original = levels.find(x => x.id === l.id);
       setLevels(p => p.map(x => x.id === l.id ? l : x));
-      await supabase.from('levels').update({ level: l.level, min_km: l.minKm, title: l.title }).eq('id', l.id);
+      const { error } = await supabase.from('levels').update({ level: l.level, min_km: l.minKm, title: l.title }).eq('id', l.id);
+      if (error && original) {
+          setLevels(p => p.map(x => x.id === l.id ? original : x));
+          return { error: error.message };
+      }
+      return { success: true };
   };
+
   const deleteLevel = async (id: string) => {
+      const originalList = [...levels];
       setLevels(p => p.filter(x => x.id !== id));
-      await supabase.from('levels').delete().eq('id', id);
+      const { error } = await supabase.from('levels').delete().eq('id', id);
+      if (error) {
+          setLevels(p => originalList);
+          return { error: error.message };
+      }
+      return { success: true };
   };
 
   return {

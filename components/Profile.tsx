@@ -1,10 +1,11 @@
 
 import React, { useState, useMemo } from 'react';
-import { User, Zone, Mission, Badge, Rarity, LevelConfig, LeaderboardConfig } from '../types';
+import { User, Zone, Mission, Badge, Rarity, LevelConfig, LeaderboardConfig, BugReport, Suggestion } from '../types';
 import { Award, History, Coins, BarChart3, Shield, Trophy, MapPin, ChevronUp, ChevronDown, Users, X, Medal } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 import Pagination from './Pagination';
 import ZoneStatsModal from './profile/ZoneStatsModal';
+import UserSubmissionsModal from './profile/UserSubmissionsModal';
 
 // Sub Components
 import ProfileHeader from './profile/ProfileHeader';
@@ -17,6 +18,8 @@ interface ProfileProps {
   badges?: Badge[];
   levels?: LevelConfig[]; 
   leaderboards?: LeaderboardConfig[];
+  bugReports?: BugReport[];
+  suggestions?: Suggestion[];
   allUsers?: Record<string, any>;
   onUpdateUser: (updates: Partial<User>) => void;
   onUpgradePremium: () => void;
@@ -29,11 +32,13 @@ const RUNS_PER_PAGE = 8;
 const ZONES_PER_PAGE = 5;
 
 const Profile: React.FC<ProfileProps> = ({ 
-    user, zones, missions = [], badges = [], levels = [], leaderboards = [], allUsers = {},
+    user, zones, missions = [], badges = [], levels = [], leaderboards = [], 
+    bugReports = [], suggestions = [], allUsers = {},
     onUpdateUser, onUpgradePremium, onClaim, onBoost, onDefend
 }) => {
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<'ACHIEVEMENTS' | 'HISTORY'>('ACHIEVEMENTS');
+  const [showSubmissionsModal, setShowSubmissionsModal] = useState(false);
   
   // Local states for history/zones that remain in parent for now or can be extracted further
   const [runPage, setRunPage] = useState(1);
@@ -46,6 +51,10 @@ const Profile: React.FC<ProfileProps> = ({
   const allEarnedBadges = badges.filter(b => user.earnedBadgeIds.includes(b.id));
   const allCompletedMissions = missions.filter(m => user.completedMissionIds.includes(m.id));
   const favoriteBadge = badges.find(b => b.id === user.favoriteBadgeId);
+
+  // Filter reports for this user
+  const myBugReports = useMemo(() => bugReports.filter(b => b.userId === user.id), [bugReports, user.id]);
+  const mySuggestions = useMemo(() => suggestions.filter(s => s.userId === user.id), [suggestions, user.id]);
 
   // Stats
   const totalRuns = user.runHistory.length;
@@ -188,6 +197,7 @@ const Profile: React.FC<ProfileProps> = ({
           progressToNextLevel={progressToNextLevel}
           onUpdateUser={onUpdateUser}
           onUpgradePremium={onUpgradePremium}
+          onViewSubmissions={() => setShowSubmissionsModal(true)}
       />
 
       {/* STATS ROW */}
@@ -380,6 +390,15 @@ const Profile: React.FC<ProfileProps> = ({
               onClose={() => setSelectedZoneDetail(null)}
               ownerDetails={ownerDetails}
               zoneLeaderboard={zoneLeaderboard}
+          />
+      )}
+
+      {/* SUBMISSIONS MODAL */}
+      {showSubmissionsModal && (
+          <UserSubmissionsModal 
+              bugReports={myBugReports}
+              suggestions={mySuggestions}
+              onClose={() => setShowSubmissionsModal(false)}
           />
       )}
 

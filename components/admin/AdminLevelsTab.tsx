@@ -3,16 +3,21 @@ import React, { useState } from 'react';
 import { LevelConfig } from '../../types';
 import { BarChart3, Edit2, Plus, Trash2 } from 'lucide-react';
 import { useLanguage } from '../../LanguageContext';
+import { NotificationToast, ConfirmModal } from './AdminUI';
 
 interface AdminLevelsTabProps {
   levels: LevelConfig[];
-  onAddLevel?: (level: LevelConfig) => void;
-  onUpdateLevel?: (level: LevelConfig) => void;
-  onDeleteLevel?: (id: string) => void;
+  onAddLevel?: (level: LevelConfig) => Promise<{ error?: string, success?: boolean }>;
+  onUpdateLevel?: (level: LevelConfig) => Promise<{ error?: string, success?: boolean }>;
+  onDeleteLevel?: (id: string) => Promise<{ error?: string, success?: boolean }>;
 }
 
 const AdminLevelsTab: React.FC<AdminLevelsTabProps> = ({ levels, onAddLevel, onUpdateLevel, onDeleteLevel }) => {
   const { t } = useLanguage();
+  // UI Feedback States
+  const [notification, setNotification] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{ title: string, message: string, action: () => void } | null>(null);
+
   const [editingLvlId, setEditingLvlId] = useState<string | null>(null);
   const [lvlForm, setLvlForm] = useState<{ level: string; minKm: string; title: string }>({
       level: '', minKm: '', title: ''
@@ -32,7 +37,7 @@ const AdminLevelsTab: React.FC<AdminLevelsTabProps> = ({ levels, onAddLevel, onU
       setLvlForm({ level: '', minKm: '', title: '' });
   };
 
-  const handleSubmitLevel = (e: React.FormEvent) => {
+  const handleSubmitLevel = async (e: React.FormEvent) => {
       e.preventDefault();
       if (!onAddLevel || !onUpdateLevel) return;
 
@@ -43,22 +48,47 @@ const AdminLevelsTab: React.FC<AdminLevelsTabProps> = ({ levels, onAddLevel, onU
           title: lvlForm.title
       };
 
-      if (editingLvlId) {
-          onUpdateLevel(newLevel);
+      let result;
+      if (editingLvlId) result = await onUpdateLevel(newLevel);
+      else result = await onAddLevel(newLevel);
+
+      if (result.success) {
+          setNotification({ message: editingLvlId ? "Level updated" : "Level added", type: 'success' });
+          cancelEditLevel();
       } else {
-          onAddLevel(newLevel);
+          setNotification({ message: result.error || "Operation failed", type: 'error' });
       }
-      cancelEditLevel();
   };
 
   const handleDeleteLevelClick = (id: string) => {
-      if (confirm(t('admin.levels.delete_confirm'))) {
-          onDeleteLevel && onDeleteLevel(id);
-      }
+      setConfirmAction({
+          title: "Delete Level",
+          message: t('admin.levels.delete_confirm'),
+          action: async () => {
+              if (onDeleteLevel) {
+                  const result = await onDeleteLevel(id);
+                  if (result.success) setNotification({ message: "Level deleted", type: 'success' });
+                  else setNotification({ message: result.error || "Delete failed", type: 'error' });
+              }
+              setConfirmAction(null);
+          }
+      });
   };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {notification && <NotificationToast message={notification.message} type={notification.type} onClose={() => setNotification(null)} />}
+        {confirmAction && (
+            <ConfirmModal 
+                title={confirmAction.title} 
+                message={confirmAction.message} 
+                onConfirm={confirmAction.action} 
+                onCancel={() => setConfirmAction(null)} 
+                isDestructive
+                confirmLabel="Delete"
+            />
+        )}
+
         {/* Level Form */}
         <div className="bg-gray-800 p-6 rounded-xl border border-gray-700 h-fit">
             <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">

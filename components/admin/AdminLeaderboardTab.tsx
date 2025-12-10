@@ -3,19 +3,24 @@ import React, { useState } from 'react';
 import { LeaderboardConfig, LeaderboardMetric } from '../../types';
 import { Calendar, Edit2, Plus, RefreshCw, Trash2, Trophy } from 'lucide-react';
 import { useLanguage } from '../../LanguageContext';
+import { NotificationToast, ConfirmModal } from './AdminUI';
 
 interface AdminLeaderboardTabProps {
   leaderboards: LeaderboardConfig[];
-  onAddLeaderboard?: (config: LeaderboardConfig) => void;
-  onUpdateLeaderboard?: (config: LeaderboardConfig) => void;
-  onDeleteLeaderboard?: (id: string) => void;
-  onResetLeaderboard?: (id: string) => void;
+  onAddLeaderboard?: (config: LeaderboardConfig) => Promise<{ error?: string, success?: boolean }>;
+  onUpdateLeaderboard?: (config: LeaderboardConfig) => Promise<{ error?: string, success?: boolean }>;
+  onDeleteLeaderboard?: (id: string) => Promise<{ error?: string, success?: boolean }>;
+  onResetLeaderboard?: (id: string) => Promise<{ error?: string, success?: boolean }>;
 }
 
 const AdminLeaderboardTab: React.FC<AdminLeaderboardTabProps> = ({ 
     leaderboards, onAddLeaderboard, onUpdateLeaderboard, onDeleteLeaderboard, onResetLeaderboard 
 }) => {
   const { t } = useLanguage();
+  // UI Feedback States
+  const [notification, setNotification] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{ title: string, message: string, action: () => void } | null>(null);
+
   const [editingLbId, setEditingLbId] = useState<string | null>(null);
   const [lbForm, setLbForm] = useState<{ title: string; desc: string; metric: LeaderboardMetric; type: 'PERMANENT' | 'TEMPORARY'; pool: string; currency: 'GOV' | 'RUN'; endTime?: string }>({
       title: '', desc: '', metric: 'TOTAL_KM', type: 'PERMANENT', pool: '', currency: 'GOV'
@@ -60,7 +65,7 @@ const AdminLeaderboardTab: React.FC<AdminLeaderboardTabProps> = ({
       setLbForm({ ...lbForm, type: newType, endTime: newEndTime });
   };
 
-  const handleSubmitLeaderboard = (e: React.FormEvent) => {
+  const handleSubmitLeaderboard = async (e: React.FormEvent) => {
       e.preventDefault();
       if (!onAddLeaderboard || !onUpdateLeaderboard) return;
       
@@ -76,29 +81,70 @@ const AdminLeaderboardTab: React.FC<AdminLeaderboardTabProps> = ({
           endTime: lbForm.endTime ? new Date(lbForm.endTime).getTime() : undefined
       };
       
+      let result;
       if (editingLbId) {
           const existing = leaderboards.find(l => l.id === editingLbId);
           if (existing) {
               config.startTime = existing.startTime;
               config.lastResetTimestamp = existing.lastResetTimestamp;
           }
-          onUpdateLeaderboard(config);
-          alert('Leaderboard updated!');
+          result = await onUpdateLeaderboard(config);
       } else {
-          onAddLeaderboard(config);
-          alert('Leaderboard created!');
+          result = await onAddLeaderboard(config);
       }
-      cancelEditLeaderboard();
+
+      if (result.success) {
+          setNotification({ message: editingLbId ? "Leaderboard updated" : "Leaderboard created", type: 'success' });
+          cancelEditLeaderboard();
+      } else {
+          setNotification({ message: result.error || "Failed to save leaderboard", type: 'error' });
+      }
   };
 
-  const handleResetLeaderboard = (id: string) => {
-      if (confirm(t('admin.leader.reset_confirm'))) {
-          onResetLeaderboard && onResetLeaderboard(id);
-      }
+  const handleResetClick = (id: string) => {
+      setConfirmAction({
+          title: "Reset Leaderboard",
+          message: t('admin.leader.reset_confirm'),
+          action: async () => {
+              if (onResetLeaderboard) {
+                  const result = await onResetLeaderboard(id);
+                  if (result.success) setNotification({ message: "Leaderboard reset!", type: 'success' });
+                  else setNotification({ message: result.error || "Reset failed", type: 'error' });
+              }
+              setConfirmAction(null);
+          }
+      });
+  };
+
+  const handleDeleteClick = (id: string) => {
+      setConfirmAction({
+          title: "Delete Leaderboard",
+          message: "Are you sure you want to delete this leaderboard?",
+          action: async () => {
+              if (onDeleteLeaderboard) {
+                  const result = await onDeleteLeaderboard(id);
+                  if (result.success) setNotification({ message: "Leaderboard deleted", type: 'success' });
+                  else setNotification({ message: result.error || "Delete failed", type: 'error' });
+              }
+              setConfirmAction(null);
+          }
+      });
   };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {notification && <NotificationToast message={notification.message} type={notification.type} onClose={() => setNotification(null)} />}
+        {confirmAction && (
+            <ConfirmModal 
+                title={confirmAction.title} 
+                message={confirmAction.message} 
+                onConfirm={confirmAction.action} 
+                onCancel={() => setConfirmAction(null)} 
+                isDestructive
+                confirmLabel="Confirm"
+            />
+        )}
+
         {/* Creator/Editor */}
         <div className="bg-gray-800 p-6 rounded-xl border border-gray-700 h-fit">
             <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
@@ -127,7 +173,7 @@ const AdminLeaderboardTab: React.FC<AdminLeaderboardTabProps> = ({
                     </div>
                     <div>
                         <label className="text-xs text-gray-400 uppercase font-bold">{t('admin.leader.type')}</label>
-                        <select value={lbForm.type} onChange={handleLbTypeChange} disabled={!!editingLbId} className="w-full bg-gray-900 border border-gray-600 rounded p-2 text-white disabled:opacity-50">
+                        <select value={lbForm.type} onChange={handleLbTypeChange} className="w-full bg-gray-900 border border-gray-600 rounded p-2 text-white">
                             <option value="PERMANENT">{t('admin.leader.perm')}</option>
                             <option value="TEMPORARY">{t('admin.leader.temp')}</option>
                         </select>
@@ -207,24 +253,22 @@ const AdminLeaderboardTab: React.FC<AdminLeaderboardTabProps> = ({
                             )}
                         </div>
                         <div className="flex gap-2">
-                            {board.type === 'TEMPORARY' && (
-                                <button 
-                                    onClick={() => startEditLeaderboard(board)}
-                                    className="p-2 text-blue-400 hover:bg-blue-500/10 rounded transition-colors"
-                                    title={t('admin.leader.edit')}
-                                >
-                                    <Edit2 size={18} />
-                                </button>
-                            )}
                             <button 
-                                onClick={() => handleResetLeaderboard(board.id)}
+                                onClick={() => startEditLeaderboard(board)}
+                                className="p-2 text-blue-400 hover:bg-blue-500/10 rounded transition-colors"
+                                title={t('admin.leader.edit')}
+                            >
+                                <Edit2 size={18} />
+                            </button>
+                            <button 
+                                onClick={() => handleResetClick(board.id)}
                                 className="p-2 text-amber-500 hover:bg-amber-500/10 rounded transition-colors"
                                 title={t('admin.leader.reset')}
                             >
                                 <RefreshCw size={18} />
                             </button>
                             <button 
-                                onClick={() => onDeleteLeaderboard && onDeleteLeaderboard(board.id)} 
+                                onClick={() => handleDeleteClick(board.id)} 
                                 className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-500/10 rounded transition-colors"
                                 title={t('admin.leader.delete_confirm')}
                             >

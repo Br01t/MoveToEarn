@@ -3,11 +3,12 @@ import React, { useState } from 'react';
 import { Zone } from '../../types';
 import { Edit2, Map, Search, Trash2, X, Save, CheckCircle } from 'lucide-react';
 import Pagination from '../Pagination';
+import { NotificationToast, ConfirmModal } from './AdminUI';
 
 interface AdminZonesTabProps {
   zones: Zone[];
-  onUpdateZone: (id: string, updates: Partial<Zone>) => void;
-  onDeleteZone: (id: string) => void;
+  onUpdateZone: (id: string, updates: Partial<Zone>) => Promise<{ error?: string, success?: boolean }>;
+  onDeleteZone: (id: string) => Promise<{ error?: string, success?: boolean }>;
 }
 
 const ZONES_PER_PAGE = 10;
@@ -16,6 +17,10 @@ const AdminZonesTab: React.FC<AdminZonesTabProps> = ({ zones, onUpdateZone, onDe
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   
+  // UI Feedback States
+  const [notification, setNotification] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{ title: string, message: string, action: () => void } | null>(null);
+
   const [editingId, setEditingId] = useState<string | null>(null);
   const [tempName, setTempName] = useState('');
   const [tempInterest, setTempInterest] = useState('');
@@ -30,26 +35,54 @@ const AdminZonesTab: React.FC<AdminZonesTabProps> = ({ zones, onUpdateZone, onDe
     setTempInterest(zone.interestRate.toString());
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (editingId && tempName) {
-      onUpdateZone(editingId, {
+      const result = await onUpdateZone(editingId, {
           name: tempName,
           interestRate: parseFloat(tempInterest) || 0
       });
-      setEditingId(null);
-      setTempName('');
-      setTempInterest('');
+      
+      if (result.success) {
+          setNotification({ message: "Zone updated successfully", type: 'success' });
+          setEditingId(null);
+          setTempName('');
+          setTempInterest('');
+      } else {
+          setNotification({ message: result.error || "Update failed", type: 'error' });
+      }
     }
   };
 
   const handleDelete = (id: string, name: string) => {
-      if (window.confirm(`Are you sure you want to permanently delete zone "${name}"?`)) {
-          onDeleteZone(id);
-      }
+      setConfirmAction({
+          title: "Delete Zone",
+          message: `Are you sure you want to delete zone "${name}"? This will remove it from the map permanently.`,
+          action: async () => {
+              const result = await onDeleteZone(id);
+              if (result.success) {
+                  setNotification({ message: "Zone deleted", type: 'success' });
+              } else {
+                  setNotification({ message: result.error || "Delete failed", type: 'error' });
+              }
+              setConfirmAction(null);
+          }
+      });
   };
 
   return (
     <div className="space-y-6">
+       {notification && <NotificationToast message={notification.message} type={notification.type} onClose={() => setNotification(null)} />}
+       {confirmAction && (
+          <ConfirmModal 
+              title={confirmAction.title} 
+              message={confirmAction.message} 
+              onConfirm={confirmAction.action} 
+              onCancel={() => setConfirmAction(null)} 
+              isDestructive
+              confirmLabel="Delete Zone"
+          />
+       )}
+
        <h3 className="text-xl font-bold text-white flex gap-2"><Map className="text-blue-400"/> Map Zones</h3>
        <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
           <div className="relative mb-4">

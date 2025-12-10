@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { User, Badge } from '../../types';
-import { Crown, Save, Mail, Camera, CheckCircle, X, Flag, Award, Zap, Mountain, Globe, Home, Landmark, Swords, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users } from 'lucide-react';
+import { Crown, Save, Mail, Camera, CheckCircle, X, Flag, Award, Zap, Mountain, Globe, Home, Landmark, Swords, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users, FileText } from 'lucide-react';
 import { useLanguage } from '../../LanguageContext';
 
 interface ProfileHeaderProps {
@@ -12,10 +12,11 @@ interface ProfileHeaderProps {
   progressToNextLevel: number;
   onUpdateUser: (updates: Partial<User>) => void;
   onUpgradePremium: () => void;
+  onViewSubmissions: () => void;
 }
 
 const ProfileHeader: React.FC<ProfileHeaderProps> = ({ 
-    user, favoriteBadge, nextLevelKm, currentLevel, progressToNextLevel, onUpdateUser, onUpgradePremium 
+    user, favoriteBadge, nextLevelKm, currentLevel, progressToNextLevel, onUpdateUser, onUpgradePremium, onViewSubmissions 
 }) => {
   const { t } = useLanguage();
   const [isEditing, setIsEditing] = useState(false);
@@ -139,12 +140,18 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
              </div>
 
              {!isEditing && (
-                <div className="flex gap-3 mt-4 md:mt-12">
+                <div className="flex flex-col gap-2 mt-4 md:mt-8 items-end min-w-[140px]">
                     {!user.isPremium && (
-                        <button onClick={onUpgradePremium} className="px-5 py-2.5 bg-yellow-600 hover:bg-yellow-500 text-white font-bold rounded-xl text-sm shadow-lg flex items-center gap-2 transition-colors">
+                        <button onClick={onUpgradePremium} className="w-full px-5 py-2.5 bg-yellow-600 hover:bg-yellow-500 text-white font-bold rounded-xl text-sm shadow-lg flex items-center justify-center gap-2 transition-colors">
                             <Crown size={16} /> {t('profile.upgrade_pro')}
                         </button>
                     )}
+                    <button 
+                        onClick={onViewSubmissions}
+                        className="w-full px-4 py-2 bg-gray-900 border border-gray-700 hover:border-gray-500 text-gray-400 hover:text-white rounded-xl text-xs font-medium transition-colors flex items-center justify-center gap-2"
+                    >
+                        <FileText size={14} /> My Reports
+                    </button>
                 </div>
              )}
           </div>

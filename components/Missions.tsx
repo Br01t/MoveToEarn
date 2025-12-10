@@ -30,70 +30,6 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
 
   const ownedZonesCount = zones.filter(z => z.ownerId === user.id).length;
 
-  // --- LOCALIZATION LOGIC ---
-  const localizedMissions = useMemo(() => {
-      return missions.map(m => {
-          const id = m.logicId || m.id; 
-          const titleKey = `mission.${id}.title`;
-          const descKey = `mission.${id}.desc`;
-          
-          const tTitle = t(titleKey);
-          const tDesc = t(descKey);
-
-          return {
-              ...m,
-              title: tTitle !== titleKey ? tTitle : m.title,
-              description: tDesc !== descKey ? tDesc : m.description
-          };
-      });
-  }, [missions, language, t]);
-
-  const localizedBadges = useMemo(() => {
-      return badges.map(b => {
-          const id = b.logicId || b.id;
-          const titleKey = `badge.${id}.name`;
-          const descKey = `badge.${id}.desc`;
-          
-          const tName = t(titleKey);
-          const tDesc = t(descKey);
-
-          return {
-              ...b,
-              name: tName !== titleKey ? tName : b.name,
-              description: tDesc !== descKey ? tDesc : b.description
-          };
-      });
-  }, [badges, language, t]);
-
-  // Filter Logic - Missions
-  const filteredMissions = localizedMissions.filter(m => {
-      const matchesRarity = missionFilter === 'ALL' || m.rarity === missionFilter;
-      const matchesSearch = m.title.toLowerCase().includes(missionSearch.toLowerCase()) || 
-                            m.description.toLowerCase().includes(missionSearch.toLowerCase());
-      return matchesRarity && matchesSearch;
-  });
-
-  // Filter Logic - Badges
-  const filteredBadges = localizedBadges.filter(b => {
-      const matchesRarity = badgeFilter === 'ALL' || b.rarity === badgeFilter;
-      const matchesSearch = b.name.toLowerCase().includes(badgeSearch.toLowerCase()) || 
-             b.description.toLowerCase().includes(badgeSearch.toLowerCase());
-      return matchesRarity && matchesSearch;
-  });
-
-  // Pagination Logic
-  const totalMissionPages = Math.ceil(filteredMissions.length / MISSIONS_PER_PAGE);
-  const currentMissions = filteredMissions.slice(
-    (missionPage - 1) * MISSIONS_PER_PAGE,
-    missionPage * MISSIONS_PER_PAGE
-  );
-
-  const totalBadgePages = Math.ceil(filteredBadges.length / BADGES_PER_PAGE);
-  const currentBadges = filteredBadges.slice(
-    (badgePage - 1) * BADGES_PER_PAGE,
-    badgePage * BADGES_PER_PAGE
-  );
-
   // --- HELPERS ---
   const calculateStreak = (history: RunEntry[]): number => {
       if (history.length === 0) return 0;
@@ -123,17 +59,25 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
       return streak;
   };
 
-  const getMissionStats = (mission: Mission): { current: number; target: number; unit: string; percent: number } => {
-      if (!mission.logicId) {
-          if (mission.conditionType === 'TOTAL_KM') {
-              const target = mission.conditionValue || 100;
+  // Generic function to calculate progress for both Missions and Badges
+  const getItemStats = (item: Mission | Badge, isCompleted: boolean): { current: number; target: number; unit: string; percent: number } => {
+      // If already marked as completed/earned by the caller, return 100%
+      if (isCompleted) {
+          return { current: 1, target: 1, unit: '', percent: 100 };
+      }
+
+      // Fallback for manual items (no logic ID)
+      if (!item.logicId) {
+          if (item.conditionType === 'TOTAL_KM') {
+              const target = item.conditionValue || 100;
               return { current: user.totalKm, target, unit: 'km', percent: Math.min(100, (user.totalKm / target) * 100) };
           }
-          if (mission.conditionType === 'OWN_ZONES') {
-              const target = mission.conditionValue || 1;
+          if (item.conditionType === 'OWN_ZONES') {
+              const target = item.conditionValue || 1;
               return { current: ownedZonesCount, target, unit: 'zones', percent: Math.min(100, (ownedZonesCount / target) * 100) };
           }
-          return { current: 0, target: 1, unit: '', percent: 0 };
+          // Default manual
+          return { current: 0, target: 1, unit: 'task', percent: 0 };
       }
 
       const history = user.runHistory;
@@ -141,7 +85,7 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
       let target = 0;
       let unit = '';
 
-      switch (mission.logicId) {
+      switch (item.logicId) {
           // --- DISTANCE (Total) ---
           case 1: target = 10; unit = 'km'; current = user.totalKm; break;
           case 2: target = 50; unit = 'km'; current = user.totalKm; break;
@@ -203,13 +147,115 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
           default: 
              target = 1; 
              unit = 'task'; 
-             current = user.completedMissionIds.includes(mission.id) ? 1 : 0; 
+             current = 0; 
              break;
       }
 
       const percent = Math.min(100, Math.max(0, (current / target) * 100));
       return { current, target, unit, percent };
   };
+
+  // --- DATA PREPARATION & SORTING ---
+  
+  // 1. Process Missions (Calculate Progress & Sort)
+  const processedMissions = useMemo(() => {
+      return missions.map(m => {
+          const isCompleted = user.completedMissionIds.includes(m.id);
+          const stats = getItemStats(m, isCompleted);
+          
+          // Localization
+          const id = m.logicId || m.id; 
+          const titleKey = `mission.${id}.title`;
+          const descKey = `mission.${id}.desc`;
+          const tTitle = t(titleKey);
+          const tDesc = t(descKey);
+
+          return {
+              ...m,
+              title: tTitle !== titleKey ? tTitle : m.title,
+              description: tDesc !== descKey ? tDesc : m.description,
+              isCompleted,
+              stats
+          };
+      }).sort((a, b) => {
+          // Sort Logic:
+          // 1. Incomplete items first (Completed goes to bottom)
+          if (a.isCompleted !== b.isCompleted) return a.isCompleted ? 1 : -1;
+          
+          // 2. Highest Percentage First (Closest to completion)
+          if (a.stats.percent !== b.stats.percent) return b.stats.percent - a.stats.percent;
+          
+          // 3. Newest ID First (Admin created items or just ID sort)
+          if (a.id > b.id) return -1;
+          if (a.id < b.id) return 1;
+          return 0;
+      });
+  }, [missions, language, t, user.completedMissionIds, user.totalKm, user.runHistory, ownedZonesCount]);
+
+  // 2. Process Badges (Calculate Progress & Sort)
+  const processedBadges = useMemo(() => {
+      return badges.map(b => {
+          const isUnlocked = user.earnedBadgeIds.includes(b.id);
+          const stats = getItemStats(b, isUnlocked);
+
+          // Localization
+          const id = b.logicId || b.id;
+          const titleKey = `badge.${id}.name`;
+          const descKey = `badge.${id}.desc`;
+          const tName = t(titleKey);
+          const tDesc = t(descKey);
+
+          return {
+              ...b,
+              name: tName !== titleKey ? tName : b.name,
+              description: tDesc !== descKey ? tDesc : b.description,
+              isUnlocked,
+              stats
+          };
+      }).sort((a, b) => {
+          // Sort Logic:
+          // 1. Locked items first (Unlocked goes to bottom)
+          if (a.isUnlocked !== b.isUnlocked) return a.isUnlocked ? 1 : -1;
+          
+          // 2. Highest Percentage First (Closest to unlock)
+          if (a.stats.percent !== b.stats.percent) return b.stats.percent - a.stats.percent;
+          
+          // 3. Newest ID First
+          if (a.id > b.id) return -1;
+          if (a.id < b.id) return 1;
+          return 0;
+      });
+  }, [badges, language, t, user.earnedBadgeIds, user.totalKm, user.runHistory, ownedZonesCount]);
+
+  // --- FILTERING ---
+  
+  const filteredMissions = processedMissions.filter(m => {
+      const matchesRarity = missionFilter === 'ALL' || m.rarity === missionFilter;
+      const matchesSearch = m.title.toLowerCase().includes(missionSearch.toLowerCase()) || 
+                            m.description.toLowerCase().includes(missionSearch.toLowerCase());
+      return matchesRarity && matchesSearch;
+  });
+
+  const filteredBadges = processedBadges.filter(b => {
+      const matchesRarity = badgeFilter === 'ALL' || b.rarity === badgeFilter;
+      const matchesSearch = b.name.toLowerCase().includes(badgeSearch.toLowerCase()) || 
+             b.description.toLowerCase().includes(badgeSearch.toLowerCase());
+      return matchesRarity && matchesSearch;
+  });
+
+  // --- PAGINATION ---
+  
+  const totalMissionPages = Math.ceil(filteredMissions.length / MISSIONS_PER_PAGE);
+  const currentMissions = filteredMissions.slice(
+    (missionPage - 1) * MISSIONS_PER_PAGE,
+    missionPage * MISSIONS_PER_PAGE
+  );
+
+  const totalBadgePages = Math.ceil(filteredBadges.length / BADGES_PER_PAGE);
+  const currentBadges = filteredBadges.slice(
+    (badgePage - 1) * BADGES_PER_PAGE,
+    badgePage * BADGES_PER_PAGE
+  );
 
   const renderIcon = (iconName: string, className: string) => {
       switch(iconName) {
@@ -291,7 +337,6 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
       setBadgePage(1);
   };
 
-  // Helper component for filter buttons to reduce duplication
   const FilterGroup = ({ currentFilter, onFilterChange }: { currentFilter: 'ALL' | Rarity, onFilterChange: (f: 'ALL' | Rarity) => void }) => (
       <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
         <button 
@@ -375,25 +420,23 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
         ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {currentMissions.map(mission => {
-                    const isCompleted = user.completedMissionIds.includes(mission.id);
-                    const stats = getMissionStats(mission);
                     const style = getRarityStyles(mission.rarity);
                     
-                    const containerClass = isCompleted 
-                        ? `${style.bg} ${style.border}` 
+                    const containerClass = mission.isCompleted 
+                        ? `${style.bg} ${style.border} opacity-70` 
                         : 'bg-gray-800 border-gray-700';
 
                     return (
                         <div key={mission.id} className={`rounded-lg border p-4 flex flex-col justify-between relative overflow-hidden transition-all ${containerClass}`}>
                             <div className="flex justify-between items-start mb-2">
-                                <h3 className={`font-bold text-sm pr-2 ${isCompleted ? 'text-white' : 'text-gray-200'}`}>
+                                <h3 className={`font-bold text-sm pr-2 ${mission.isCompleted ? 'text-white' : 'text-gray-200'}`}>
                                     {mission.title}
                                 </h3>
                                 <div className="flex flex-col items-end gap-1 shrink-0">
                                     <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${style.badge}`}>
                                         {mission.rarity}
                                     </span>
-                                    {isCompleted && (
+                                    {mission.isCompleted && (
                                         <span className={`${style.doneBadge} text-[9px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1`}>
                                             <CheckCircle size={8} /> DONE
                                         </span>
@@ -401,29 +444,29 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
                                 </div>
                             </div>
 
-                            <p className={`text-xs text-gray-400 mb-3 leading-tight ${isCompleted ? 'opacity-70' : ''}`}>{mission.description}</p>
+                            <p className={`text-xs text-gray-400 mb-3 leading-tight ${mission.isCompleted ? 'opacity-70' : ''}`}>{mission.description}</p>
                             
                             <div className="mb-3">
                                 <div className="flex justify-between text-[10px] mb-1 font-mono">
                                     <span className="text-gray-500">{t('miss.progress')}</span>
-                                    <span className={isCompleted ? style.text : 'text-gray-300'}>
-                                        {stats.current % 1 !== 0 ? stats.current.toFixed(1) : stats.current} / {stats.target} {stats.unit}
+                                    <span className={mission.isCompleted ? style.text : 'text-gray-300'}>
+                                        {mission.stats.current % 1 !== 0 ? mission.stats.current.toFixed(1) : mission.stats.current} / {mission.stats.target} {mission.stats.unit}
                                     </span>
                                 </div>
                                 <div className="w-full bg-gray-900 rounded-full h-1.5 border border-gray-700/50">
                                     <div 
                                         className={`h-full rounded-full transition-all duration-500 ${style.progress}`} 
-                                        style={{ width: `${isCompleted ? 100 : stats.percent}%` }}
+                                        style={{ width: `${mission.stats.percent}%` }}
                                     ></div>
                                 </div>
                             </div>
 
-                            <div className={`flex flex-wrap justify-between items-center pt-2 border-t gap-1 ${isCompleted ? 'border-gray-700/30 opacity-70' : 'border-gray-700/50'}`}>
+                            <div className={`flex flex-wrap justify-between items-center pt-2 border-t gap-1 ${mission.isCompleted ? 'border-gray-700/30 opacity-70' : 'border-gray-700/50'}`}>
                                 <span className="text-[10px] text-gray-500 font-bold uppercase">{t('miss.reward')}</span>
                                 <div className="flex items-center gap-2">
-                                    <span className={`${isCompleted ? style.text : 'text-emerald-400'} text-xs font-bold font-mono`}>+{mission.rewardRun} RUN</span>
+                                    <span className={`${mission.isCompleted ? style.text : 'text-emerald-400'} text-xs font-bold font-mono`}>+{mission.rewardRun} RUN</span>
                                     {mission.rewardGov && mission.rewardGov > 0 && (
-                                        <span className={`${isCompleted ? style.text : 'text-cyan-400'} text-xs font-bold font-mono border border-cyan-500/30 px-1 rounded`}>+{mission.rewardGov} GOV</span>
+                                        <span className={`${mission.isCompleted ? style.text : 'text-cyan-400'} text-xs font-bold font-mono border border-cyan-500/30 px-1 rounded`}>+{mission.rewardGov} GOV</span>
                                     )}
                                 </div>
                             </div>
@@ -474,32 +517,35 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
         ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
                 {currentBadges.map(badge => {
-                    const isUnlocked = user.earnedBadgeIds.includes(badge.id);
                     const style = getRarityStyles(badge.rarity);
                     const rewardRun = badge.rewardRun || 0;
                     const rewardGov = badge.rewardGov || 0;
                     
                     return (
-                        <div key={badge.id} className={`aspect-square rounded-xl flex flex-col items-center justify-between p-3 text-center border transition-all relative overflow-hidden group ${isUnlocked ? `${style.bg} ${style.border}` : 'bg-gray-900 border-gray-800 opacity-60 grayscale'}`}>
+                        <div key={badge.id} className={`aspect-square rounded-xl flex flex-col items-center justify-between p-3 text-center border transition-all relative overflow-hidden group ${badge.isUnlocked ? `${style.bg} ${style.border}` : 'bg-gray-900 border-gray-800 opacity-60 grayscale'}`}>
                             
-                            {isUnlocked && (badge.rarity === 'LEGENDARY' || badge.rarity === 'EPIC') && (
+                            {badge.isUnlocked && (badge.rarity === 'LEGENDARY' || badge.rarity === 'EPIC') && (
                                 <div className={`absolute top-0 left-0 w-full h-full opacity-20 bg-gradient-to-br ${badge.rarity === 'LEGENDARY' ? 'from-yellow-500 to-transparent' : 'from-purple-500 to-transparent'}`}></div>
                             )}
 
                             <div className="flex-1 flex flex-col items-center justify-center w-full relative z-10">
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center mb-1 ${isUnlocked ? `${style.badge} ring-2 ring-opacity-50` : 'bg-gray-800 text-gray-600'}`}>
-                                    {isUnlocked ? renderIcon(badge.icon, "w-4 h-4") : <Lock size={14} />}
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center mb-1 ${badge.isUnlocked ? `${style.badge} ring-2 ring-opacity-50` : 'bg-gray-800 text-gray-600'}`}>
+                                    {badge.isUnlocked ? renderIcon(badge.icon, "w-4 h-4") : <Lock size={14} />}
                                 </div>
                                 
-                                <h4 className={`font-bold text-xs truncate w-full px-1 ${isUnlocked ? style.text : 'text-gray-500'}`}>{badge.name}</h4>
+                                <h4 className={`font-bold text-xs truncate w-full px-1 ${badge.isUnlocked ? style.text : 'text-gray-500'}`}>{badge.name}</h4>
                                 
-                                <p className={`text-[9px] leading-tight line-clamp-2 px-1 mt-1 ${isUnlocked ? 'text-gray-300' : 'text-gray-600'}`}>
-                                    {badge.description}
-                                </p>
+                                {!badge.isUnlocked && (
+                                    <div className="w-full px-2 mt-2 text-center">
+                                        <span className="text-[9px] text-gray-500 font-mono bg-gray-900/50 px-2 py-0.5 rounded border border-gray-800">
+                                            {badge.stats.current.toFixed(0)} / {badge.stats.target} {badge.stats.unit}
+                                        </span>
+                                    </div>
+                                )}
                             </div>
                             
                             <div className="relative z-10 mt-1">
-                                {isUnlocked ? (
+                                {badge.isUnlocked ? (
                                     <div className="flex flex-col items-center">
                                         <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded ${style.badge}`}>{badge.rarity}</span>
                                         {rewardRun > 0 && <span className="text-[8px] text-emerald-400 font-mono mt-0.5">+{rewardRun} RUN</span>}

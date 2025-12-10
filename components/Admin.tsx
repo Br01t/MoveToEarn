@@ -25,30 +25,30 @@ interface AdminProps {
   leaderboards?: LeaderboardConfig[];
   levels?: LevelConfig[];
   // CRUD Actions
-  onAddItem: (item: Item) => void;
-  onUpdateItem: (item: Item) => void;
-  onRemoveItem: (id: string) => void;
-  onAddMission: (mission: Mission) => void;
-  onUpdateMission: (mission: Mission) => void;
-  onRemoveMission: (id: string) => void;
-  onAddBadge: (badge: Badge) => void;
-  onUpdateBadge: (badge: Badge) => void;
-  onRemoveBadge: (id: string) => void;
-  onUpdateZone: (id: string, updates: Partial<Zone>) => void;
-  onDeleteZone: (id: string) => void;
+  onAddItem: (item: Item) => Promise<{ error?: string; success?: boolean }>;
+  onUpdateItem: (item: Item) => Promise<{ error?: string; success?: boolean }>;
+  onRemoveItem: (id: string) => Promise<{ error?: string; success?: boolean }>;
+  onAddMission: (mission: Mission) => Promise<{ error?: string; success?: boolean }>;
+  onUpdateMission: (mission: Mission) => Promise<{ error?: string; success?: boolean }>;
+  onRemoveMission: (id: string) => Promise<{ error?: string; success?: boolean }>;
+  onAddBadge: (badge: Badge) => Promise<{ error?: string; success?: boolean }>;
+  onUpdateBadge: (badge: Badge) => Promise<{ error?: string; success?: boolean }>;
+  onRemoveBadge: (id: string) => Promise<{ error?: string; success?: boolean }>;
+  onUpdateZone: (id: string, updates: Partial<Zone>) => Promise<{ error?: string; success?: boolean }>;
+  onDeleteZone: (id: string) => Promise<{ error?: string; success?: boolean }>;
   // Config Actions
   onTriggerBurn: () => void;
   onDistributeRewards: () => void;
   onResetSeason: () => void;
   onUpdateExchangeRate: (rate: number) => void;
   // Leaderboard & Levels
-  onAddLeaderboard?: (config: LeaderboardConfig) => void;
-  onUpdateLeaderboard?: (config: LeaderboardConfig) => void;
-  onDeleteLeaderboard?: (id: string) => void;
-  onResetLeaderboard?: (id: string) => void;
-  onAddLevel?: (level: LevelConfig) => void;
-  onUpdateLevel?: (level: LevelConfig) => void;
-  onDeleteLevel?: (id: string) => void;
+  onAddLeaderboard?: (config: LeaderboardConfig) => Promise<{ error?: string; success?: boolean }>;
+  onUpdateLeaderboard?: (config: LeaderboardConfig) => Promise<{ error?: string; success?: boolean }>;
+  onDeleteLeaderboard?: (id: string) => Promise<{ error?: string; success?: boolean }>;
+  onResetLeaderboard?: (id: string) => Promise<{ error?: string; success?: boolean }>;
+  onAddLevel?: (level: LevelConfig) => Promise<{ error?: string; success?: boolean }>;
+  onUpdateLevel?: (level: LevelConfig) => Promise<{ error?: string; success?: boolean }>;
+  onDeleteLevel?: (id: string) => Promise<{ error?: string; success?: boolean }>;
 }
 
 const Admin: React.FC<AdminProps> = ({ 
