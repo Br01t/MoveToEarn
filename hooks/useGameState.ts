@@ -383,26 +383,51 @@ export const useGameState = () => {
   const buyItem = async (item: Item) => {
       if (!user || user.runBalance < item.priceRun || item.quantity <= 0) return;
       
-      const newBalance = user.runBalance - item.priceRun;
+      const newRunBalance = user.runBalance - item.priceRun;
       
-      // 1. Log Transaction
+      // 1. Log Transaction (RUN SPENT)
       await logTransaction(user.id, 'OUT', 'RUN', item.priceRun, `Market Purchase: ${item.name}`);
 
-      // 2. Update User State
-      const existingItem = user.inventory.find(i => i.id === item.id);
-      let newInventory;
-      if (existingItem) {
-          newInventory = user.inventory.map(i => i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i);
+      // Handle CURRENCY type (Instant Consumption) vs Normal Item
+      if (item.type === 'CURRENCY') {
+          // Instant Swap: Deduct RUN, Add GOV (effectValue), Decrease Market Stock
+          const newGovBalance = user.govBalance + item.effectValue;
+          
+          await logTransaction(user.id, 'IN', 'GOV', item.effectValue, `Opened: ${item.name}`);
+
+          setUser({ 
+              ...user, 
+              runBalance: newRunBalance, 
+              govBalance: newGovBalance 
+          });
+
+          // DB Updates
+          await supabase.from('profiles').update({ 
+              run_balance: newRunBalance,
+              gov_balance: newGovBalance
+          }).eq('id', user.id);
+
       } else {
-          newInventory = [...user.inventory, { ...item, quantity: 1 }];
+          // Normal Item: Add to Inventory
+          const existingItem = user.inventory.find(i => i.id === item.id);
+          let newInventory;
+          if (existingItem) {
+              newInventory = user.inventory.map(i => i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i);
+          } else {
+              newInventory = [...user.inventory, { ...item, quantity: 1 }];
+          }
+          
+          setUser({ ...user, runBalance: newRunBalance, inventory: newInventory });
+          
+          await supabase.from('profiles').update({ run_balance: newRunBalance }).eq('id', user.id);
+          // Note: Inventory persistence in DB would typically require a separate table or jsonb column update
+          // Here we assume inventory is derived or not fully persisted in this MVP demo beyond session if using jsonb
       }
       
-      setUser({ ...user, runBalance: newBalance, inventory: newInventory });
-      
-      // 3. Update DB
-      await supabase.from('profiles').update({ run_balance: newBalance }).eq('id', user.id);
+      // 3. Update Market Stock (Common for both types)
       await supabase.from('items').update({ quantity: item.quantity - 1 }).eq('id', item.id);
       
+      // Update local market state
       setMarketItems(prev => prev.map(i => i.id === item.id ? { ...i, quantity: i.quantity - 1 } : i));
   };
 

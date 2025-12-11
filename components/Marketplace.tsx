@@ -25,6 +25,9 @@ const Marketplace: React.FC<MarketplaceProps> = ({ user, items, onBuy }) => {
     }
   };
 
+  // Check if there are any special currency items (Flash Drops)
+  const hasFlashItems = items.some(i => i.type === 'CURRENCY' && i.quantity > 0);
+
   return (
     <div className="max-w-7xl mx-auto p-6 relative">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
@@ -40,24 +43,26 @@ const Marketplace: React.FC<MarketplaceProps> = ({ user, items, onBuy }) => {
         </div>
       </div>
 
-      {/* FLASH DROP INFO BANNER */}
-      <div className="bg-gradient-to-r from-yellow-900/40 to-transparent border-l-4 border-yellow-500 p-6 rounded-r-xl mb-8 relative overflow-hidden group">
-         <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-            <Clock size={100} className="text-yellow-500" />
-         </div>
-         <div className="relative z-10 flex items-start gap-4">
-             <div className="bg-yellow-500/20 p-3 rounded-lg text-yellow-400 shrink-0 animate-pulse">
-                 <TrendingUp size={24} />
-             </div>
-             <div>
-                 <h4 className="font-bold text-white text-lg mb-1">{t('market.flash_active')}</h4>
-                 <p className="text-gray-300 text-sm max-w-2xl leading-relaxed">
-                     {t('market.flash_desc')}
-                     <span className="text-yellow-400 font-bold block mt-1">{t('market.flash_warn')}</span>
-                 </p>
-             </div>
-         </div>
-      </div>
+      {/* FLASH DROP INFO BANNER - Visible ONLY if CURRENCY items exist */}
+      {hasFlashItems && (
+        <div className="bg-gradient-to-r from-yellow-900/40 to-transparent border-l-4 border-yellow-500 p-6 rounded-r-xl mb-8 relative overflow-hidden group animate-fade-in">
+           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+              <Clock size={100} className="text-yellow-500" />
+           </div>
+           <div className="relative z-10 flex items-start gap-4">
+               <div className="bg-yellow-500/20 p-3 rounded-lg text-yellow-400 shrink-0 animate-pulse">
+                   <TrendingUp size={24} />
+               </div>
+               <div>
+                   <h4 className="font-bold text-white text-lg mb-1">{t('market.flash_active')}</h4>
+                   <p className="text-gray-300 text-sm max-w-2xl leading-relaxed">
+                       {t('market.flash_desc')}
+                       <span className="text-yellow-400 font-bold block mt-1">{t('market.flash_warn')}</span>
+                   </p>
+               </div>
+           </div>
+        </div>
+      )}
 
       {items.length === 0 ? (
         <div className="text-center py-12 bg-gray-800 rounded-xl border border-gray-700">
@@ -137,8 +142,8 @@ const Marketplace: React.FC<MarketplaceProps> = ({ user, items, onBuy }) => {
 
              <div className="p-6 space-y-4">
                 <div className="flex items-center gap-4 bg-gray-900 p-4 rounded-xl border border-gray-700">
-                   <div className={`p-3 rounded-lg ${confirmItem.type === 'DEFENSE' ? 'bg-blue-500/20 text-blue-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
-                      {confirmItem.type === 'DEFENSE' ? <Shield size={24}/> : <Zap size={24}/>}
+                   <div className={`p-3 rounded-lg ${confirmItem.type === 'DEFENSE' ? 'bg-blue-500/20 text-blue-400' : (confirmItem.type === 'CURRENCY' ? 'bg-cyan-500/20 text-cyan-400' : 'bg-yellow-500/20 text-yellow-400')}`}>
+                      {confirmItem.type === 'DEFENSE' ? <Shield size={24}/> : (confirmItem.type === 'CURRENCY' ? <Coins size={24}/> : <Zap size={24}/>)}
                    </div>
                    <div>
                       <div className="text-white font-bold">{confirmItem.name}</div>
@@ -155,11 +160,11 @@ const Marketplace: React.FC<MarketplaceProps> = ({ user, items, onBuy }) => {
                 </div>
                 {confirmItem.type === 'CURRENCY' && (
                      <div className="bg-cyan-900/30 p-3 rounded-lg border border-cyan-500/30 text-center">
-                         <p className="text-xs text-cyan-400 font-bold">
+                         <p className="text-xs text-cyan-400 font-bold mb-1">
                              {t('market.instant_effect')}
                          </p>
                          <p className="text-sm text-white">
-                             {t('market.receive_immediate')} <strong>{confirmItem.effectValue} GOV</strong>.
+                             {t('market.receive_immediate')} <strong className="text-cyan-400">+{confirmItem.effectValue} GOV</strong>
                          </p>
                      </div>
                 )}
