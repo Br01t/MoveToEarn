@@ -354,8 +354,15 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                                           {l.icon ? renderLevelIcon(l.icon, "w-5 h-5") : <Image size={16}/>}
                                       </div>
                                       <div className="ml-3 flex-1">
-                                          <div className={`text-sm font-bold ${isCurrent ? 'text-white' : 'text-gray-300'}`}>{l.title || `Level ${l.level}`}</div>
-                                          <div className="text-[10px] text-gray-500 font-mono">Minimum distance: {l.minKm} KM</div>
+                                          <div className="flex items-center gap-2">
+                                              <span className={`text-[10px] font-mono font-bold px-1.5 rounded border ${isCurrent ? 'border-emerald-500 text-emerald-400 bg-emerald-900/30' : 'border-gray-600 text-gray-500 bg-gray-800'}`}>
+                                                  #{l.level}
+                                              </span>
+                                              <span className={`text-sm font-bold ${isCurrent ? 'text-white' : 'text-gray-300'}`}>
+                                                  {l.title || `Rank ${l.level}`}
+                                              </span>
+                                          </div>
+                                          <div className="text-[10px] text-gray-500 font-mono mt-0.5">Minimum distance: {l.minKm} KM</div>
                                       </div>
                                       {isCurrent && (
                                           <div className="text-xs bg-emerald-500 text-black px-2 py-0.5 rounded font-bold uppercase">Current</div>

@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { User, Zone, RunAnalysisData, RunEntry } from '../types';
 import { getDistanceFromLatLonInKm, calculateHexPosition } from '../utils/geo';
 import { processRunRewards } from '../utils/rewards';
-import { MINT_COST, MINT_REWARD_GOV } from '../constants';
+import { MINT_COST, MINT_REWARD_GOV, ITEM_DURATION_SEC, DEFAULT_ZONE_INTEREST_RATE } from '../constants';
 
 interface RunWorkflowProps {
     user: User | null;
@@ -221,8 +221,10 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction,
           name: finalName,
           defenseLevel: 1,
           recordKm: 0, 
-          interestRate: 2.0,
-          interestPool: 0 
+          interestRate: DEFAULT_ZONE_INTEREST_RATE, // Set to default 2.0%
+          interestPool: 0,
+          // AUTO SHIELD: New zones get 24h protection
+          shieldExpiresAt: Date.now() + (ITEM_DURATION_SEC * 1000) 
       };
 
       const updatedUser = { 
