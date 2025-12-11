@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Item, Mission, Badge, Zone, BugReport, LeaderboardConfig, LevelConfig, Suggestion, User } from '../types';
 import { Settings } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
@@ -58,6 +58,7 @@ interface AdminProps {
   // Users
   onRevokeUserAchievement?: (userId: string, type: 'MISSION' | 'BADGE', idToRemove: string) => Promise<{ error?: string; success?: boolean }>;
   onAdjustBalance?: (userId: string, runChange: number, govChange: number) => Promise<{ error?: string; success?: boolean }>;
+  onRefreshData?: () => Promise<void>;
 }
 
 const Admin: React.FC<AdminProps> = ({ 
@@ -70,10 +71,20 @@ const Admin: React.FC<AdminProps> = ({
   onAddLeaderboard, onUpdateLeaderboard, onDeleteLeaderboard, onResetLeaderboard,
   onAddLevel, onUpdateLevel, onDeleteLevel,
   onUpdateBugStatus, onDeleteBugReport, onDeleteSuggestion,
-  onRevokeUserAchievement, onAdjustBalance
+  onRevokeUserAchievement, onAdjustBalance, onRefreshData
 }) => {
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<'ITEMS' | 'ECONOMY' | 'MISSIONS' | 'ZONES' | 'LEADERBOARD' | 'REPORTS' | 'IDEAS' | 'LEVELS' | 'USERS'>('ITEMS');
+
+  // Trigger data refresh when Admin component mounts.
+  // This ensures that if the app was loaded as a guest (where RLS blocks profile fetching),
+  // entering the Admin panel (which implies authentication) will force a re-fetch of all data,
+  // including users, reports, and suggestions that might have been skipped initially.
+  useEffect(() => {
+      if (onRefreshData) {
+          onRefreshData();
+      }
+  }, []);
 
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-8 relative">
@@ -129,6 +140,7 @@ const Admin: React.FC<AdminProps> = ({
               levels={levels}
               onRevokeAchievement={onRevokeUserAchievement}
               onAdjustBalance={onAdjustBalance}
+              onRefreshData={onRefreshData}
           />
       )}
 

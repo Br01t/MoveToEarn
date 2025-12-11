@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { User, Mission, Badge, LevelConfig } from '../../types';
-import { Search, User as UserIcon, Award, Target, Trash2, Wallet } from 'lucide-react';
+import { Search, User as UserIcon, Award, Target, Trash2, CheckCircle, AlertTriangle, Coins, Wallet, RefreshCw } from 'lucide-react';
 import { NotificationToast, ConfirmModal } from './AdminUI';
 
 interface AdminUsersTabProps {
@@ -10,86 +11,80 @@ interface AdminUsersTabProps {
   levels?: LevelConfig[];
   onRevokeAchievement?: (userId: string, type: 'MISSION' | 'BADGE', idToRemove: string) => Promise<{ error?: string, success?: boolean }>;
   onAdjustBalance?: (userId: string, runChange: number, govChange: number) => Promise<{ error?: string, success?: boolean }>;
+  onRefreshData?: () => Promise<void>;
 }
 
-const AdminUsersTab: React.FC<AdminUsersTabProps> = ({ allUsers, missions, badges, levels = [], onRevokeAchievement, onAdjustBalance }) => {
+const AdminUsersTab: React.FC<AdminUsersTabProps> = ({ allUsers, missions, badges, levels = [], onRevokeAchievement, onAdjustBalance, onRefreshData }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [balanceAmount, setBalanceAmount] = useState<string>('');
+  const [isRefreshing, setIsRefreshing] = useState(false);
   
+  // UI Feedback
   const [notification, setNotification] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
   const [confirmAction, setConfirmAction] = useState<{ title: string, message: string, action: () => Promise<void> } | null>(null);
 
-  // 👇 LOG allUsers when the component loads or updates
-  useEffect(() => {
-    console.log("🔍 allUsers received by AdminUsersTab:", allUsers);
-  }, [allUsers]);
-
-
-  const filteredUsers = Object.values(allUsers).filter((u): u is Omit<User, 'inventory'> => 
-    (u as any).name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (u as any).email?.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredUsers = (Object.values(allUsers) as Array<Omit<User, 'inventory'>>).filter(u => 
+      (u.name || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+      (u.email && u.email.toLowerCase().includes(searchTerm.toLowerCase()))
   );
-
-  // 👇 LOG users filtered by search
-  useEffect(() => {
-    console.log("🔎 Users after search filter:", filteredUsers);
-  }, [searchTerm, filteredUsers]);
-
 
   const selectedUser = selectedUserId ? allUsers[selectedUserId] : null;
 
-  // 👇 LOG selected user
-  useEffect(() => {
-    console.log("👤 Selected User:", selectedUser);
-  }, [selectedUserId, selectedUser]);
-
-
-  // Calculate Level
+  // Calculate Level for Selected User
   const getUserLevel = (user: Omit<User, 'inventory'>) => {
-    if (!levels || levels.length === 0) return 1;
-    const currentLevelConfig = levels.slice().reverse().find(l => user.totalKm >= l.minKm) || levels[0];
-    return currentLevelConfig.level;
+      if (!levels || levels.length === 0) return 1;
+      const currentLevelConfig = levels.slice().reverse().find(l => user.totalKm >= l.minKm) || levels[0];
+      return currentLevelConfig.level;
   };
 
   const handleRevoke = (type: 'MISSION' | 'BADGE', itemId: string, itemName: string) => {
-    if (!selectedUserId || !onRevokeAchievement) return;
+      if (!selectedUserId || !onRevokeAchievement) return;
 
-    console.log(`⚠️ Revoking ${type} with ID ${itemId} from user`, selectedUserId);
-
-    setConfirmAction({
-      title: `Revoke ${type === 'MISSION' ? 'Mission' : 'Badge'}`,
-      message: `Are you sure you want to remove "${itemName}" from ${selectedUser?.name}?`,
-      action: async () => {
-        const result = await onRevokeAchievement(selectedUserId, type, itemId);
-        setNotification(result.success
-          ? { message: `${type} revoked successfully`, type: 'success' }
-          : { message: result.error || "Revoke failed", type: 'error' }
-        );
-        setConfirmAction(null);
-      }
-    });
+      setConfirmAction({
+          title: `Revoke ${type === 'MISSION' ? 'Mission' : 'Badge'}`,
+          message: `Are you sure you want to remove "${itemName}" from ${selectedUser?.name}? This action will update the database immediately.`,
+          action: async () => {
+              const result = await onRevokeAchievement(selectedUserId, type, itemId);
+              if (result.success) {
+                  setNotification({ message: `${type === 'MISSION' ? 'Mission' : 'Badge'} revoked successfully`, type: 'success' });
+              } else {
+                  setNotification({ message: result.error || "Revoke failed", type: 'error' });
+              }
+              setConfirmAction(null);
+          }
+      });
   };
 
   const handleBalanceUpdate = async (type: 'RUN' | 'GOV', operation: 'ADD' | 'REMOVE') => {
-    if (!selectedUserId || !onAdjustBalance || !balanceAmount) return;
+      if (!selectedUserId || !onAdjustBalance || !balanceAmount) return;
+      
+      const amount = parseFloat(balanceAmount);
+      if (isNaN(amount) || amount <= 0) {
+          setNotification({ message: "Invalid amount", type: 'error' });
+          return;
+      }
 
-    const amount = parseFloat(balanceAmount);
-    if (isNaN(amount) || amount <= 0) {
-        setNotification({ message: "Invalid amount", type: 'error' });
-        return;
-    }
+      const runChange = type === 'RUN' ? (operation === 'ADD' ? amount : -amount) : 0;
+      const govChange = type === 'GOV' ? (operation === 'ADD' ? amount : -amount) : 0;
 
-    console.log(`💰 Updating balance: type=${type}, operation=${operation}, amount=${amount}, user=${selectedUserId}`);
+      const result = await onAdjustBalance(selectedUserId, runChange, govChange);
+      
+      if (result.success) {
+          setNotification({ message: `Balance updated successfully`, type: 'success' });
+          setBalanceAmount('');
+      } else {
+          setNotification({ message: result.error || "Update failed", type: 'error' });
+      }
+  };
 
-    const runChange = type === 'RUN' ? (operation === 'ADD' ? amount : -amount) : 0;
-    const govChange = type === 'GOV' ? (operation === 'ADD' ? amount : -amount) : 0;
-
-    const result = await onAdjustBalance(selectedUserId, runChange, govChange);
-    setNotification(result.success
-      ? { message: `Balance updated successfully`, type: 'success' }
-      : { message: result.error || "Update failed", type: 'error' }
-    );
+  const handleManualRefresh = async () => {
+      if (onRefreshData) {
+          setIsRefreshing(true);
+          await onRefreshData();
+          setIsRefreshing(false);
+          setNotification({ message: "Users refreshed from database", type: 'success' });
+      }
   };
 
   return (
@@ -113,6 +108,13 @@ const AdminUsersTab: React.FC<AdminUsersTabProps> = ({ allUsers, missions, badge
                     <h3 className="font-bold text-white flex items-center gap-2">
                         <UserIcon size={18} className="text-emerald-400" /> Users ({Object.keys(allUsers).length})
                     </h3>
+                    <button 
+                        onClick={handleManualRefresh}
+                        className={`p-1.5 rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-300 transition-colors ${isRefreshing ? 'animate-spin text-emerald-400' : ''}`}
+                        title="Refresh Users"
+                    >
+                        <RefreshCw size={16} />
+                    </button>
                 </div>
                 <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" size={14} />
@@ -127,7 +129,16 @@ const AdminUsersTab: React.FC<AdminUsersTabProps> = ({ allUsers, missions, badge
             </div>
             <div className="flex-1 overflow-y-auto p-2 space-y-1">
                 {filteredUsers.length === 0 ? (
-                    <div className="p-4 text-center text-gray-500 text-xs">No users found.</div>
+                    <div className="flex flex-col items-center justify-center h-full text-center text-gray-500 p-4">
+                        {Object.keys(allUsers).length === 0 ? (
+                            <>
+                                <p className="text-xs mb-2">No users found.</p>
+                                <button onClick={handleManualRefresh} className="text-xs text-emerald-400 hover:underline">Try Refreshing</button>
+                            </>
+                        ) : (
+                            <p className="text-xs">No users match filter.</p>
+                        )}
+                    </div>
                 ) : (
                     filteredUsers.map(user => (
                         <button 

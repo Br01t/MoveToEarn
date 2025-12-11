@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
+
+import React, { useState, useRef } from 'react';
 import { User, Badge } from '../../types';
-import { Crown, Save, Mail, Camera, CheckCircle, X, Flag, Award, Zap, Mountain, Globe, Home, Landmark, Swords, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users, FileText, Egg, Baby, Activity, MapPin, Smile, Wind, Compass, Navigation, TrendingUp, Move, Target, Watch, Droplets, Shield, Star, BatteryCharging, Flame, Truck, CloudLightning, Hexagon, FastForward, Trophy, Plane, Map, Layers, Briefcase, GraduationCap, Brain, Crosshair, Anchor, Heart, Lock, Disc, Feather, FlagTriangleRight, Globe2, Sparkles, Radio, BookOpen, Waves, Snowflake, CloudRain, ThermometerSnowflake, SunDim, MoonStar, Atom, Sword, Axe, Ghost, Ship, PlusSquare, Skull, ChevronsUp, Orbit, CloudFog, Circle, Infinity, Sparkle, ArrowUpCircle, Clock, Eye, Type, Delete, PenTool, Medal } from 'lucide-react';
+import { Crown, Save, Mail, Camera, CheckCircle, X, Flag, Award, Zap, Mountain, Globe, Home, Landmark, Swords, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users, FileText, Egg, Baby, Activity, MapPin, Smile, Wind, Compass, Navigation, TrendingUp, Move, Target, Watch, Droplets, Shield, Star, BatteryCharging, Flame, Truck, CloudLightning, Hexagon, FastForward, Trophy, Plane, Map, Layers, Briefcase, GraduationCap, Brain, Crosshair, Anchor, Heart, Lock, Disc, Feather, FlagTriangleRight, Globe2, Sparkles, Radio, BookOpen, Waves, Snowflake, CloudRain, ThermometerSnowflake, SunDim, MoonStar, Atom, Sword, Axe, Ghost, Ship, PlusSquare, Skull, ChevronsUp, Orbit, CloudFog, Circle, Infinity, Sparkle, ArrowUpCircle, Clock, Eye, Type, Delete, PenTool, Medal, UploadCloud, Loader2, Edit2 } from 'lucide-react';
 import { useLanguage } from '../../LanguageContext';
+import { compressImage } from '../../utils/imageCompression';
+import { useGameState } from '../../hooks/useGameState';
 
 interface ProfileHeaderProps {
   user: User;
@@ -20,10 +23,13 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     user, favoriteBadge, nextLevelKm, currentLevel, levelTitle, levelIcon, progressToNextLevel, onUpdateUser, onUpgradePremium, onViewSubmissions 
 }) => {
   const { t } = useLanguage();
+  const { uploadFile } = useGameState();
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(user.name);
   const [email, setEmail] = useState(user.email || '');
   const [avatar, setAvatar] = useState(user.avatar);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleSave = () => {
     onUpdateUser({ name, email, avatar });
@@ -37,6 +43,36 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
       setAvatar(user.avatar);
   };
 
+  const handleAvatarClick = () => {
+      if (isEditing && fileInputRef.current) {
+          fileInputRef.current.click();
+      }
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.files && e.target.files[0]) {
+          setIsUploading(true);
+          try {
+              const originalFile = e.target.files[0];
+              // Compress aggressively: max 250px width (plenty for avatar), 0.5 quality WebP
+              const compressedFile = await compressImage(originalFile, 250, 0.5);
+              const publicUrl = await uploadFile(compressedFile, 'avatars');
+              
+              if (publicUrl) {
+                  setAvatar(publicUrl);
+              } else {
+                  alert("Upload failed. Please check your connection.");
+              }
+          } catch (error) {
+              console.error("Error processing image:", error);
+              alert("Error processing image.");
+          } finally {
+              setIsUploading(false);
+          }
+      }
+  };
+
+  // ... (renderBadgeIcon and renderLevelIcon helper functions remain same as before)
   const renderBadgeIcon = (iconName: string, className: string) => {
       switch(iconName) {
           case 'Flag': return <Flag className={className} />;
@@ -62,7 +98,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
       }
   };
 
-  // Helper for Level Icons (using the list from SQL)
   const renderLevelIcon = (iconName: string, className: string) => {
       switch(iconName) {
           case 'Egg': return <Egg className={className} />;
@@ -78,7 +113,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           case 'TrendingUp': return <TrendingUp className={className} />;
           case 'Move': return <Move className={className} />;
           case 'Building': return <Building2 className={className} />;
-          case 'Trees': return <Mountain className={className} />; // Fallback for Trees
+          case 'Trees': return <Mountain className={className} />; 
           case 'Target': return <Target className={className} />;
           case 'Watch': return <Watch className={className} />;
           case 'Droplets': return <Droplets className={className} />;
@@ -95,7 +130,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           case 'Moon': return <Moon className={className} />;
           case 'Sunrise': return <Sun className={className} />;
           case 'Medal': return <Medal className={className} />;
-          case 'Repeat': return <Timer className={className} />; // Fallback
+          case 'Repeat': return <Timer className={className} />; 
           case 'CloudLightning': return <CloudLightning className={className} />;
           case 'Hexagon': return <Hexagon className={className} />;
           case 'FastForward': return <FastForward className={className} />;
@@ -165,17 +200,35 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           </div>
           
           <div className="px-6 md:px-8 pb-6 flex flex-col md:flex-row items-end md:items-start gap-6 -mt-12 relative z-10">
-             <div className="relative group">
+             {/* AVATAR SECTION */}
+             <div className={`relative group ${isEditing ? 'cursor-pointer' : ''}`} onClick={handleAvatarClick}>
                  <img src={isEditing ? avatar : user.avatar} alt="Avatar" className={`w-32 h-32 rounded-2xl border-4 bg-gray-800 shadow-2xl object-cover ${user.isPremium ? 'border-yellow-500' : 'border-gray-700'}`} />
+                 
                  <div className="absolute -bottom-3 -right-3 bg-gray-900 text-white text-xs font-bold px-3 py-1 rounded-lg border border-gray-600 shadow-lg z-20 flex items-center gap-1.5">
                     {levelIcon ? renderLevelIcon(levelIcon, "w-3 h-3 text-emerald-400") : null}
                     LVL {currentLevel}
                  </div>
+                 
                  {isEditing && (
-                     <div className="absolute inset-0 bg-black/60 flex items-center justify-center rounded-2xl border-4 border-transparent z-10">
-                         <Camera className="text-white opacity-80" />
+                     <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center rounded-2xl border-4 border-emerald-500 z-10 transition-opacity hover:bg-black/70 animate-pulse">
+                         {isUploading ? (
+                             <Loader2 className="text-emerald-400 animate-spin" />
+                         ) : (
+                             <>
+                                 <Camera size={24} className="text-white mb-1" />
+                                 <span className="text-[10px] font-bold text-white uppercase text-center leading-tight px-2">Click to Upload</span>
+                             </>
+                         )}
                      </div>
                  )}
+                 <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    onChange={handleFileChange} 
+                    accept="image/*" 
+                    hidden 
+                    disabled={isUploading || !isEditing}
+                 />
              </div>
 
              <div className="flex-1 w-full md:w-auto pt-2">
@@ -189,7 +242,9 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                                     <span className="text-[10px] font-bold uppercase tracking-wider">{favoriteBadge.name}</span>
                                 </div>
                             )}
-                            <button onClick={() => setIsEditing(true)} className="text-gray-500 hover:text-emerald-400 p-1 hover:bg-gray-700/50 rounded-lg transition-colors"><Save size={18}/></button>
+                            <button onClick={() => setIsEditing(true)} className="text-gray-500 hover:text-emerald-400 p-1 hover:bg-gray-700/50 rounded-lg transition-colors">
+                                <Edit2 size={18}/>
+                            </button>
                         </div>
                         <p className="text-gray-400 flex items-center gap-2 text-sm mt-1">
                             <Mail size={14} className="text-emerald-500" /> {user.email || t('profile.no_email')}
@@ -228,10 +283,11 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                                 <input value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-gray-900 border border-gray-600 focus:border-emerald-500 rounded px-3 py-2 text-white text-sm focus:outline-none" />
                             </div>
                         </div>
-                        <div>
-                             <label className="text-[10px] uppercase font-bold text-gray-500 block mb-1">{t('profile.avatar_url')}</label>
-                             <input value={avatar} onChange={e => setAvatar(e.target.value)} placeholder="https://..." className="w-full bg-gray-900 border border-gray-600 focus:border-emerald-500 rounded px-3 py-2 text-white text-sm focus:outline-none" />
+                        
+                        <div className="text-[10px] text-emerald-400 italic flex items-center gap-1">
+                            <CheckCircle size={10} /> Click on the avatar image to upload a new photo.
                         </div>
+
                         <div className="flex gap-2 mt-2">
                             <button onClick={handleSave} className="flex-1 bg-emerald-600 hover:bg-emerald-500 px-3 py-2 rounded text-white text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2">
                                 <CheckCircle size={14}/> {t('profile.save_profile')}

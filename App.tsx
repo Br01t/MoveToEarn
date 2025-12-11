@@ -218,6 +218,7 @@ const AppContent: React.FC = () => {
                   suggestions={gameState.suggestions} 
                   leaderboards={gameState.leaderboards}
                   levels={gameState.levels}
+                  allUsers={gameState.allUsers} // <--- THE FIX
                   onAddItem={gameState.addItem}
                   onUpdateItem={gameState.updateItem}
                   onRemoveItem={gameState.removeItem}
@@ -245,6 +246,7 @@ const AppContent: React.FC = () => {
                   onDeleteSuggestion={gameState.deleteSuggestion}
                   onRevokeUserAchievement={gameState.revokeUserAchievement}
                   onAdjustBalance={gameState.adjustUserBalance}
+                  onRefreshData={gameState.refreshData}
                 />
               )}
               {currentView === "REPORT_BUG" && <ReportBug onReport={gameState.reportBug} />}

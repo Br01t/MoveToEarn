@@ -19,193 +19,41 @@ export const useGameState = () => {
   const [bugReports, setBugReports] = useState<BugReport[]>([]);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   
-  
   // --- CONFIG STATE ---
   const [govToRunRate, setGovToRunRate] = useState<number>(100);
   const [loading, setLoading] = useState(true);
 
-  // --- INITIALIZATION & AUTH LISTENER ---
-  useEffect(() => {
-  const initSession = async () => {
-  try {
-    const { data: { session } } = await supabase.auth.getSession();
-
-    if (session) {
-      // Utente già loggato
-      await fetchUserProfile(session.user.id);
-      await fetchGameData(); 
-    } else {
-      // Utente NON loggato → reset dati
-      setUser(null);
-      setZones(MOCK_ZONES);
-      setAllUsers({});
-    }
-
-  } catch (err) {
-    console.warn("Supabase connection issue:", err);
-  } finally {
-    setLoading(false);
-  }
-};
-
-
-  initSession();
-
-  const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-    if (session) {
-      fetchUserProfile(session.user.id);
-      fetchGameData(); // aggiorna anche allUsers dopo login
-    } else {
-      setUser(null);
-      setZones(MOCK_ZONES);
-      setAllUsers({});
-    }
-  });
-
-  return () => subscription.unsubscribe();
-}, []);
-
-
-  // --- REAL DATA FETCHING ---
+  // --- DATA FETCHING ---
   const fetchGameData = async () => {
       try {
+          
           const [
-              { data: missionData },
-              { data: badgeData },
-              { data: itemData },
-              { data: lbData },
-              { data: levelData },
-              { data: reportData },
-              { data: suggestData },
-              { data: zoneData },
-              { data: allProfiles }
+              profilesRes,
+              missionsRes,
+              badgesRes,
+              itemsRes,
+              zonesRes,
+              leaderboardsRes,
+              levelsRes,
+              reportsRes,
+              suggestionsRes
           ] = await Promise.all([
+              supabase.from('profiles').select('*'),
               supabase.from('missions').select('*'),
               supabase.from('badges').select('*'),
               supabase.from('items').select('*'),
+              supabase.from('zones').select('*'),
               supabase.from('leaderboards').select('*'),
               supabase.from('levels').select('*').order('level', { ascending: true }),
               supabase.from('bug_reports').select('*').order('timestamp', { ascending: false }),
-              supabase.from('suggestions').select('*').order('timestamp', { ascending: false }),
-              supabase.from('zones').select('*'),
-              supabase.from('profiles').select('*')
+              supabase.from('suggestions').select('*').order('timestamp', { ascending: false })
           ]);
 
-          if (missionData) {
-              setMissions(missionData.map((m: any) => ({
-                  id: m.id,
-                  title: m.title,
-                  description: m.description,
-                  rewardRun: m.reward_run,
-                  rewardGov: m.reward_gov,
-                  rarity: m.rarity,
-                  logicId: m.logic_id,
-                  category: m.category,
-                  difficulty: m.difficulty,
-                  conditionType: m.condition_type,
-                  conditionValue: m.condition_value
-              })));
-          }
-
-          if (badgeData) {
-              setBadges(badgeData.map((b: any) => ({
-                  id: b.id,
-                  name: b.name,
-                  description: b.description,
-                  icon: b.icon,
-                  rarity: b.rarity,
-                  rewardRun: b.reward_run,
-                  rewardGov: b.reward_gov,
-                  logicId: b.logic_id,
-                  category: b.category,
-                  difficulty: b.difficulty,
-                  conditionType: b.condition_type,
-                  conditionValue: b.condition_value
-              })));
-          }
-
-          if (itemData) {
-              setMarketItems(itemData.map((i: any) => ({
-                  id: i.id,
-                  name: i.name,
-                  description: i.description,
-                  priceRun: i.price_run,
-                  quantity: i.quantity,
-                  type: i.type,
-                  effectValue: i.effect_value,
-                  icon: i.icon
-              })));
-          }
-
-          if (lbData) {
-              setLeaderboards(lbData.map((l: any) => ({
-                  id: l.id,
-                  title: l.title,
-                  description: l.description,
-                  metric: l.metric,
-                  type: l.type,
-                  startTime: l.start_time,
-                  endTime: l.end_time,
-                  rewardPool: l.reward_pool,
-                  rewardCurrency: l.reward_currency,
-                  lastResetTimestamp: l.last_reset_timestamp
-              })));
-          }
-
-          if (levelData) {
-              setLevels(levelData.map((l: any) => ({
-                  id: l.id,
-                  level: l.level,
-                  minKm: l.min_km,
-                  title: l.title,
-                  icon: l.icon
-              })));
-          }
-
-          if (reportData) {
-              setBugReports(reportData.map((r: any) => ({
-                  id: r.id,
-                  userId: r.user_id,
-                  userName: r.user_name,
-                  description: r.description,
-                  screenshot: r.screenshot,
-                  timestamp: r.timestamp,
-                  status: r.status
-              })));
-          }
-
-          if (suggestData) {
-              setSuggestions(suggestData.map((s: any) => ({
-                  id: s.id,
-                  userId: s.user_id,
-                  userName: s.user_name,
-                  title: s.title,
-                  description: s.description,
-                  timestamp: s.timestamp
-              })));
-          }
-
-          if (zoneData && zoneData.length > 0) {
-              setZones(zoneData.map((z: any) => ({
-                  id: z.id,
-                  name: z.name,
-                  ownerId: z.owner_id,
-                  x: z.x,
-                  y: z.y,
-                  lat: z.lat || 0,
-                  lng: z.lng || 0,
-                  defenseLevel: 1, 
-                  recordKm: z.record_km,
-                  interestRate: z.interest_rate,
-                  boostExpiresAt: z.boost_expires_at,
-                  shieldExpiresAt: z.shield_expires_at
-              })));
-          }
-
-          // Populate All Users for Leaderboard & Admin
-          if (allProfiles) {
+          // --- 1. PROFILES (USERS) ---
+          
+          if (profilesRes.data) {
               const usersMap: Record<string, Omit<User, 'inventory'>> = {};
-              allProfiles.forEach((p: any) => {
+              profilesRes.data.forEach((p: any) => {
                   usersMap[p.id] = {
                       id: p.id,
                       name: p.name || 'Runner',
@@ -222,11 +70,127 @@ export const useGameState = () => {
                       favoriteBadgeId: p.favorite_badge_id
                   };
               });
+              
               setAllUsers(usersMap);
+          } else if (profilesRes.error) {
+              console.warn("⚠️ [GAME STATE] Failed to fetch profiles (RLS?):", profilesRes.error.message);
+          }
+
+          // --- 2. CONFIG DATA ---
+          if (missionsRes.data) {
+              setMissions(missionsRes.data.map((m: any) => ({
+                  id: m.id,
+                  title: m.title,
+                  description: m.description,
+                  rewardRun: m.reward_run,
+                  rewardGov: m.reward_gov,
+                  rarity: m.rarity,
+                  logicId: m.logic_id,
+                  category: m.category,
+                  difficulty: m.difficulty,
+                  conditionType: m.condition_type,
+                  conditionValue: m.condition_value
+              })));
+          }
+
+          if (badgesRes.data) {
+              setBadges(badgesRes.data.map((b: any) => ({
+                  id: b.id,
+                  name: b.name,
+                  description: b.description,
+                  icon: b.icon,
+                  rarity: b.rarity,
+                  rewardRun: b.reward_run,
+                  rewardGov: b.reward_gov,
+                  logicId: b.logic_id,
+                  category: b.category,
+                  difficulty: b.difficulty,
+                  conditionType: b.condition_type,
+                  conditionValue: b.condition_value
+              })));
+          }
+
+          if (itemsRes.data) {
+              setMarketItems(itemsRes.data.map((i: any) => ({
+                  id: i.id,
+                  name: i.name,
+                  description: i.description,
+                  priceRun: i.price_run,
+                  quantity: i.quantity,
+                  type: i.type,
+                  effectValue: i.effect_value,
+                  icon: i.icon
+              })));
+          }
+
+          if (zonesRes.data && zonesRes.data.length > 0) {
+              setZones(zonesRes.data.map((z: any) => ({
+                  id: z.id,
+                  name: z.name,
+                  ownerId: z.owner_id,
+                  x: z.x,
+                  y: z.y,
+                  lat: z.lat || 0,
+                  lng: z.lng || 0,
+                  defenseLevel: 1, 
+                  recordKm: z.record_km,
+                  interestRate: z.interest_rate,
+                  boostExpiresAt: z.boost_expires_at,
+                  shieldExpiresAt: z.shield_expires_at
+              })));
+          }
+
+          if (leaderboardsRes.data) {
+              setLeaderboards(leaderboardsRes.data.map((l: any) => ({
+                  id: l.id,
+                  title: l.title,
+                  description: l.description,
+                  metric: l.metric,
+                  type: l.type,
+                  startTime: l.start_time,
+                  endTime: l.end_time,
+                  rewardPool: l.reward_pool,
+                  rewardCurrency: l.reward_currency,
+                  lastResetTimestamp: l.last_reset_timestamp
+              })));
+          }
+
+          if (levelsRes.data) {
+              setLevels(levelsRes.data.map((l: any) => ({
+                  id: l.id,
+                  level: l.level,
+                  minKm: l.min_km,
+                  title: l.title,
+                  icon: l.icon
+              })));
+          }
+
+          // --- 3. ADMIN DATA (May be empty if not admin) ---
+          if (reportsRes.data) {
+              setBugReports(reportsRes.data.map((r: any) => ({
+                  id: r.id,
+                  userId: r.user_id,
+                  userName: r.user_name,
+                  description: r.description,
+                  screenshot: r.screenshot,
+                  timestamp: r.timestamp,
+                  status: r.status
+              })));
+          }
+
+          if (suggestionsRes.data) {
+              setSuggestions(suggestionsRes.data.map((s: any) => ({
+                  id: s.id,
+                  userId: s.user_id,
+                  userName: s.user_name,
+                  title: s.title,
+                  description: s.description,
+                  timestamp: s.timestamp
+              })));
           }
 
       } catch (err) {
-          console.error("Error fetching game data:", err);
+          console.error("❌ [GAME STATE] Critical error fetching data:", err);
       }
   };
 
@@ -268,6 +232,39 @@ export const useGameState = () => {
     }
   };
 
+  // --- INITIALIZATION & AUTH LISTENER ---
+  useEffect(() => {
+    const initSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (session) {
+            await fetchUserProfile(session.user.id);
+        }
+        
+        // Fetch global data regardless of session (RLS will filter what can be seen)
+        await fetchGameData();
+        
+        if (error) throw error;
+        if (!session) setLoading(false);
+      } catch (err) {
+        console.warn("Supabase connection issue:", err);
+        setLoading(false);
+      }
+    };
+    initSession();
+    
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) {
+          fetchUserProfile(session.user.id);
+          // Wait slightly for session propogation then fetch global data (important for Admin to get all users)
+          setTimeout(() => fetchGameData(), 500);
+      }
+      else { setUser(null); setZones(MOCK_ZONES); }
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
   // --- ACTIONS ---
   const login = async (email: string, password: string) => await supabase.auth.signInWithPassword({ email, password });
   const loginWithGoogle = async () => await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } });
@@ -280,11 +277,50 @@ export const useGameState = () => {
   };
   const logout = async () => { await supabase.auth.signOut(); setUser(null); };
 
+  // --- STORAGE HELPERS ---
+  const uploadFile = async (file: File, folder: 'avatars' | 'bugs'): Promise<string | null> => {
+      if (!user) return null;
+      try {
+          const isAvatar = folder === 'avatars';
+          
+          // KEY STRATEGY FOR SPACE SAVING:
+          // 1. Force .webp extension (already done in compression util, but safety first)
+          // 2. For avatars: Use fixed name `${user.id}.webp`. This forces overwrite (UPSERT), so only 1 file per user exists.
+          // 3. For bugs: Use timestamp to allow history.
+          
+          const fileName = isAvatar ? `${user.id}.webp` : `${user.id}_${Date.now()}.webp`;
+          const filePath = `${folder}/${fileName}`;
+
+          // UPSERT = TRUE ensures we overwrite old files, saving space for avatars
+          const { error: uploadError } = await supabase.storage
+              .from('images')
+              .upload(filePath, file, { upsert: true });
+
+          if (uploadError) throw uploadError;
+
+          const { data } = supabase.storage
+              .from('images')
+              .getPublicUrl(filePath);
+
+          // Add a cache-buster timestamp query param for avatars so the browser sees the new image immediately
+          // even though the URL path is the same
+          if (isAvatar) {
+              return `${data.publicUrl}?t=${Date.now()}`;
+          }
+
+          return data.publicUrl;
+      } catch (error) {
+          console.error("Upload failed:", error);
+          return null;
+      }
+  };
+
   const updateUser = async (updates: Partial<User>) => {
     setUser((prev) => (prev ? { ...prev, ...updates } : null));
     if (user) {
         const dbUpdates: any = {};
         if (updates.name) dbUpdates.name = updates.name;
+        if (updates.avatar) dbUpdates.avatar = updates.avatar;
         if (updates.favoriteBadgeId) dbUpdates.favorite_badge_id = updates.favoriteBadgeId;
         await supabase.from('profiles').update(dbUpdates).eq('id', user.id);
     }
@@ -297,16 +333,30 @@ export const useGameState = () => {
   const claimZone = async (zoneId: string) => {};
   const upgradePremium = () => {};
 
-  const reportBug = async (description: string, screenshot?: string): Promise<boolean> => {
+  const reportBug = async (description: string, screenshotFile?: File): Promise<boolean> => {
       if (!user) return false;
       const newId = crypto.randomUUID();
+      
+      let screenshotUrl = '';
+      if (screenshotFile) {
+          const url = await uploadFile(screenshotFile, 'bugs');
+          if (url) screenshotUrl = url;
+          else console.warn("Screenshot upload failed, sending report without image.");
+      }
+
       const { data, error } = await supabase.from('bug_reports').insert({
-          id: newId, user_id: user.id, user_name: user.name, description, screenshot, timestamp: Date.now(), status: 'OPEN'
+          id: newId, 
+          user_id: user.id, 
+          user_name: user.name, 
+          description, 
+          screenshot: screenshotUrl, // Save URL instead of Base64
+          timestamp: Date.now(), 
+          status: 'OPEN'
       }).select().single();
 
       if (error) { console.error("FAILED to save bug report:", error); return false; }
       if (data) {
-          const newReport: BugReport = { id: data.id, userId: user.id, userName: user.name, description, screenshot, timestamp: data.timestamp || Date.now(), status: 'OPEN' };
+          const newReport: BugReport = { id: data.id, userId: user.id, userName: user.name, description, screenshot: screenshotUrl, timestamp: data.timestamp || Date.now(), status: 'OPEN' };
           setBugReports(prev => [newReport, ...prev]);
           return true;
       }
@@ -357,17 +407,20 @@ export const useGameState = () => {
 
       let updatedList: string[] = [];
       let dbColumn = '';
+      let updatePayload: any = {};
 
       if (type === 'MISSION') {
           updatedList = targetUser.completedMissionIds.filter(id => id !== idToRemove);
           dbColumn = 'completed_mission_ids';
+          updatePayload[dbColumn] = updatedList;
       } else {
           updatedList = targetUser.earnedBadgeIds.filter(id => id !== idToRemove);
           dbColumn = 'earned_badge_ids';
-          // Also check if favorite badge needs removal
+          updatePayload[dbColumn] = updatedList;
+
+          // Check if favorite badge needs removal
           if (targetUser.favoriteBadgeId === idToRemove) {
-              await supabase.from('profiles').update({ favorite_badge_id: null }).eq('id', userId);
-              setAllUsers(prev => ({ ...prev, [userId]: { ...prev[userId], favoriteBadgeId: undefined } }));
+              updatePayload['favorite_badge_id'] = null;
           }
       }
 
@@ -375,7 +428,7 @@ export const useGameState = () => {
       const updatedUser = {
           ...targetUser,
           [type === 'MISSION' ? 'completedMissionIds' : 'earnedBadgeIds']: updatedList,
-          favoriteBadgeId: type === 'BADGE' && targetUser.favoriteBadgeId === idToRemove ? undefined : targetUser.favoriteBadgeId
+          favoriteBadgeId: (type === 'BADGE' && targetUser.favoriteBadgeId === idToRemove) ? undefined : targetUser.favoriteBadgeId
       };
       
       setAllUsers(prev => ({ ...prev, [userId]: updatedUser }));
@@ -383,7 +436,7 @@ export const useGameState = () => {
       // DB Update
       const { error } = await supabase
           .from('profiles')
-          .update({ [dbColumn]: updatedList })
+          .update(updatePayload)
           .eq('id', userId);
 
       if (error) {
@@ -694,7 +747,8 @@ export const useGameState = () => {
     user, zones, allUsers, marketItems, missions, badges, govToRunRate, bugReports, suggestions, leaderboards, levels, loading, 
     setUser, setZones, setAllUsers, setMarketItems, setMissions, setBadges, setGovToRunRate, setBugReports, setLevels, setSuggestions,
     login, loginWithGoogle, register, logout, updateUser, buyItem, useItem, swapGovToRun, buyFiatGov, claimZone, upgradePremium, reportBug, submitSuggestion,
-    // Admin Actions
+    // Storage & Admin Actions
+    uploadFile,
     updateBugStatus, deleteBugReport, deleteSuggestion, revokeUserAchievement, adjustUserBalance,
     // CRUD Exports
     addItem, updateItem, removeItem,
