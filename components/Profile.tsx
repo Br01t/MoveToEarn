@@ -411,14 +411,20 @@ const Profile: React.FC<ProfileProps> = ({
                                             <tr><th className="pb-3 pl-2">{t('profile.date')}</th><th className="pb-3">{t('profile.location')}</th><th className="pb-3 text-right">Dist</th><th className="pb-3 text-right pr-2">{t('profile.rewards')}</th></tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-700/50 text-sm">
-                                            {currentRuns.map(run => (
-                                                <tr key={run.id} className="hover:bg-gray-750 transition-colors">
-                                                    <td className="py-3 pl-2 text-gray-400 text-xs">{new Date(run.timestamp).toLocaleDateString()}</td>
-                                                    <td className="py-3 font-medium text-white">{run.location}</td>
-                                                    <td className="py-3 text-right font-mono text-emerald-400">{run.km.toFixed(2)} km</td>
-                                                    <td className="py-3 text-right pr-2"><div className="flex flex-col items-end"><span className="text-xs font-bold text-white">+{run.runEarned} RUN</span>{run.govEarned && <span className="text-[10px] text-cyan-400">+{run.govEarned} GOV</span>}</div></td>
-                                                </tr>
-                                            ))}
+                                            {currentRuns.map(run => {
+                                                const locationDisplay = (run.involvedZones && run.involvedZones.length > 0)
+                                                    ? run.involvedZones.map(id => zones.find(z => z.id === id)?.name).filter(Boolean).join(', ')
+                                                    : run.location;
+
+                                                return (
+                                                    <tr key={run.id} className="hover:bg-gray-750 transition-colors">
+                                                        <td className="py-3 pl-2 text-gray-400 text-xs">{new Date(run.timestamp).toLocaleDateString()}</td>
+                                                        <td className="py-3 font-medium text-white">{locationDisplay}</td>
+                                                        <td className="py-3 text-right font-mono text-emerald-400">{run.km.toFixed(2)} km</td>
+                                                        <td className="py-3 text-right pr-2"><div className="flex flex-col items-end"><span className="text-xs font-bold text-white">+{run.runEarned} RUN</span>{run.govEarned && <span className="text-[10px] text-cyan-400">+{run.govEarned} GOV</span>}</div></td>
+                                                    </tr>
+                                                );
+                                            })}
                                         </tbody>
                                     </table>
                                 </div>

@@ -175,6 +175,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           setFilterCountry={setFilterCountry}
           countries={countries}
           lastRun={lastRun}
+          zones={zones}
           onViewHistory={() => { setHistoryPage(1); setShowHistoryModal(true); }}
       />
 
@@ -249,24 +250,30 @@ const Dashboard: React.FC<DashboardProps> = ({
                      {user.runHistory.length === 0 ? (
                          <div className="text-center py-8 text-gray-500">No runs recorded yet.</div>
                      ) : (
-                         currentHistoryRuns.map(run => (
-                             <div key={run.id} className="bg-gray-900 border border-gray-700 p-4 rounded-xl flex justify-between items-center">
-                                 <div>
-                                     <div className="font-bold text-white text-sm">{run.location}</div>
-                                     <div className="text-xs text-gray-500 flex items-center gap-2 mt-1">
-                                         <Calendar size={10} />
-                                         {new Date(run.timestamp).toLocaleDateString()}
+                         currentHistoryRuns.map(run => {
+                             const locationDisplay = (run.involvedZones && run.involvedZones.length > 0)
+                                ? run.involvedZones.map(id => zones.find(z => z.id === id)?.name).filter(Boolean).join(', ')
+                                : run.location;
+
+                             return (
+                                 <div key={run.id} className="bg-gray-900 border border-gray-700 p-4 rounded-xl flex justify-between items-center">
+                                     <div>
+                                         <div className="font-bold text-white text-sm">{locationDisplay}</div>
+                                         <div className="text-xs text-gray-500 flex items-center gap-2 mt-1">
+                                             <Calendar size={10} />
+                                             {new Date(run.timestamp).toLocaleDateString()}
+                                         </div>
+                                     </div>
+                                     <div className="text-right">
+                                         <div className="font-mono text-emerald-400 font-bold">{run.km.toFixed(2)} km</div>
+                                         <div className="text-[10px] text-gray-400 mt-1">
+                                             +{run.runEarned} RUN
+                                             {run.govEarned ? <span className="text-cyan-400 ml-1">+{run.govEarned} GOV</span> : ''}
+                                         </div>
                                      </div>
                                  </div>
-                                 <div className="text-right">
-                                     <div className="font-mono text-emerald-400 font-bold">{run.km.toFixed(2)} km</div>
-                                     <div className="text-[10px] text-gray-400 mt-1">
-                                         +{run.runEarned} RUN
-                                         {run.govEarned ? <span className="text-cyan-400 ml-1">+{run.govEarned} GOV</span> : ''}
-                                     </div>
-                                 </div>
-                             </div>
-                         ))
+                             );
+                         })
                      )}
                   </div>
                   <div className="p-4 border-t border-gray-700 bg-gray-900 rounded-b-2xl">

@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Search, X, Globe, Activity, History } from 'lucide-react';
 import { useLanguage } from '../../LanguageContext';
-import { RunEntry } from '../../types';
+import { RunEntry, Zone } from '../../types';
 
 interface DashboardSidebarProps {
   searchTerm: string;
@@ -14,6 +14,7 @@ interface DashboardSidebarProps {
   countries: string[];
   lastRun?: RunEntry;
   onViewHistory: () => void;
+  zones: Zone[];
 }
 
 const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
@@ -22,11 +23,19 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
   filterCountry, setFilterCountry,
   countries,
   lastRun,
-  onViewHistory
+  onViewHistory,
+  zones
 }) => {
   const { t } = useLanguage();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isLastRunOpen, setIsLastRunOpen] = useState(false);
+
+  // Resolve location names for last run if available
+  const lastRunLocation = lastRun 
+      ? (lastRun.involvedZones && lastRun.involvedZones.length > 0
+          ? lastRun.involvedZones.map(id => zones.find(z => z.id === id)?.name).filter(Boolean).join(', ')
+          : lastRun.location)
+      : '';
 
   return (
     <div className="absolute top-14 left-2 z-20 flex flex-col gap-2 items-start pointer-events-none">
@@ -88,7 +97,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
                           <span className="text-xs font-bold text-gray-300 uppercase tracking-wide">Latest Activity</span>
                       </div>
                       <div className="space-y-1 mb-3">
-                          <div className="text-sm font-bold text-white truncate">{lastRun.location}</div>
+                          <div className="text-sm font-bold text-white truncate" title={lastRunLocation}>{lastRunLocation}</div>
                           <div className="flex justify-between items-center text-xs">
                               <span className="text-gray-400">{new Date(lastRun.timestamp).toLocaleDateString()}</span>
                               <span className="text-emerald-400 font-mono font-bold">{lastRun.km.toFixed(1)} km</span>
