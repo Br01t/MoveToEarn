@@ -111,6 +111,9 @@ export const checkAchievement = (item: Mission | Badge, currentUser: User, curre
         case 95: return currentUser.completedMissionIds.length >= 20;
         case 96: return currentUser.earnedBadgeIds.length >= 20;
         case 97: return currentUser.earnedBadgeIds.length >= 50;
+
+        // --- ONBOARDING ---
+        case 999: return true; // Welcome Badge: Always returns true (hook filters duplicates)
         
         default: return false;
     }

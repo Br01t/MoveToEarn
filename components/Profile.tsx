@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { User, Zone, Mission, Badge, Rarity, LevelConfig, LeaderboardConfig, BugReport, Suggestion } from '../types';
-import { Award, History, Coins, BarChart3, Shield, Trophy, MapPin, ChevronUp, ChevronDown, Users, X, Medal } from 'lucide-react';
+import { Award, History, Coins, BarChart3, Shield, Trophy, MapPin, ChevronUp, ChevronDown, Users, X, Medal, Crown } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 import Pagination from './Pagination';
 import ZoneStatsModal from './profile/ZoneStatsModal';
@@ -112,33 +112,55 @@ const Profile: React.FC<ProfileProps> = ({
       return leaderboard.sort((a, b) => b.km - a.km).slice(0, 10);
   }, [selectedZone, allUsers, user]);
 
-  // --- ZONE RANK LOGIC (FOR TABLE) ---
-  const getZoneRank = (zoneName: string, myKm: number) => {
-      const leaderboard = Object.values(allUsers).map((u: any) => {
-          if (u.id === user.id) return { id: u.id, km: myKm };
-          const seed = (u.id.charCodeAt(u.id.length - 1) + zoneName.length) % 100;
-          const fakeKm = (u.totalKm * (seed / 100)) / 5;
-          return { id: u.id, km: fakeKm };
-      });
-      leaderboard.sort((a, b) => b.km - a.km);
-      return leaderboard.findIndex(u => u.id === user.id) + 1;
-  };
-
+  // --- ZONE STATS & RANK LOGIC ---
   const sortedZoneStats = useMemo(() => {
+      // 1. Aggregate Stats from Run History
       const stats: Record<string, { name: string; count: number; km: number }> = {};
       user.runHistory.forEach(run => {
           if (!stats[run.location]) stats[run.location] = { name: run.location, count: 0, km: 0 };
           stats[run.location].count += 1;
           stats[run.location].km += run.km;
       });
-      const dataWithRank = Object.values(stats).map(stat => ({ ...stat, rank: getZoneRank(stat.name, stat.km) }));
+
+      // 2. Determine Rank based on Ownership or Record Proximity
+      const dataWithRank = Object.values(stats).map(stat => {
+          const zoneObj = zones.find(z => z.name === stat.name);
+          let rank = 999; // Default unranked/low rank
+
+          if (zoneObj) {
+              if (zoneObj.ownerId === user.id) {
+                  // I am the owner -> Rank 1
+                  rank = 1; 
+              } else if (zoneObj.recordKm > 0) {
+                  // Not owner. Estimate rank based on how close my KM is to the record.
+                  // If myKm >= recordKm (but not owner), I am virtual #1 waiting to conquer.
+                  // Otherwise, estimate position. 
+                  const ratio = stat.km / zoneObj.recordKm;
+                  if (ratio >= 1) rank = 1;
+                  else if (ratio > 0.8) rank = 2;
+                  else if (ratio > 0.6) rank = 3;
+                  else if (ratio > 0.4) rank = 4;
+                  else rank = Math.floor((1 - ratio) * 10) + 5; 
+              } else {
+                  // No record exists yet, I'm effectively #1 if I ran here
+                  rank = 1;
+              }
+          } else {
+              // Zone might be unminted or external
+              rank = 1; 
+          }
+
+          return { ...stat, rank };
+      });
+
+      // 3. Sort Results
       return dataWithRank.sort((a, b) => {
           const modifier = sortConfig.direction === 'asc' ? 1 : -1;
           if (a[sortConfig.key] < b[sortConfig.key]) return -1 * modifier;
           if (a[sortConfig.key] > b[sortConfig.key]) return 1 * modifier;
           return 0;
       });
-  }, [user.runHistory, sortConfig, allUsers]);
+  }, [user.runHistory, sortConfig, zones, user.id]);
 
   const currentZoneStats = sortedZoneStats.slice((zonePage - 1) * ZONES_PER_PAGE, zonePage * ZONES_PER_PAGE);
   const currentRuns = user.runHistory.slice((runPage - 1) * RUNS_PER_PAGE, runPage * RUNS_PER_PAGE);
@@ -262,7 +284,6 @@ const Profile: React.FC<ProfileProps> = ({
               <h3 className="text-white font-bold mb-4 flex items-center gap-2">
                   <Trophy size={18} className="text-yellow-400"/> {t('profile.active_rankings')}
               </h3>
-              {/* Changed from flex gap-2 w-full overflow-hidden to responsive grid */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   {leaderboards.map(lb => {
                       const { rank, score } = getLeaderboardRank(lb);
@@ -305,22 +326,36 @@ const Profile: React.FC<ProfileProps> = ({
               <div>
                   <div className="rounded-lg overflow-hidden border border-gray-700 bg-gray-900 mb-4">
                       <div className="grid grid-cols-12 gap-2 p-3 bg-gray-950 text-[10px] font-bold text-gray-500 uppercase tracking-wider border-b border-gray-700">
-                          <button onClick={() => handleSort('rank')} className="col-span-1 text-center hover:text-white flex items-center justify-center gap-1"># {renderSortArrow('rank')}</button>
-                          <div className="col-span-7">{t('profile.location')}</div>
-                          <button onClick={() => handleSort('count')} className="col-span-2 text-right hover:text-white flex items-center justify-end gap-1">{renderSortArrow('count')} {t('profile.zone_runs')}</button>
-                          <button onClick={() => handleSort('km')} className="col-span-2 text-right hover:text-white flex items-center justify-end gap-1">{renderSortArrow('km')} {t('profile.zone_total')}</button>
+                          <button onClick={() => handleSort('rank')} className="col-span-2 md:col-span-1 text-center hover:text-white flex items-center justify-center gap-1">
+                              {t('profile.zone_rank')} {renderSortArrow('rank')}
+                          </button>
+                          <div className="col-span-6 md:col-span-7">{t('profile.location')}</div>
+                          <button onClick={() => handleSort('count')} className="col-span-2 text-right hover:text-white flex items-center justify-end gap-1">
+                              {renderSortArrow('count')} {t('profile.zone_runs')}
+                          </button>
+                          <button onClick={() => handleSort('km')} className="col-span-2 text-right hover:text-white flex items-center justify-end gap-1">
+                              {renderSortArrow('km')} {t('profile.zone_total')}
+                          </button>
                       </div>
                       <div className="divide-y divide-gray-800">
                           {currentZoneStats.map((stat, idx) => {
                               const rank = stat.rank; 
                               let rankColor = "text-gray-500";
-                              if (rank === 1) rankColor = "text-yellow-400";
+                              let rankIcon = null;
+                              
+                              if (rank === 1) {
+                                  rankColor = "text-yellow-400";
+                                  rankIcon = <Crown size={12} className="fill-yellow-400 inline mb-0.5 mr-1" />;
+                              }
                               else if (rank === 2) rankColor = "text-gray-300";
                               else if (rank === 3) rankColor = "text-amber-600";
+
                               return (
                                   <div key={idx} className="grid grid-cols-12 gap-2 p-3 items-center hover:bg-gray-800 transition-colors cursor-pointer group" onClick={() => setSelectedZoneDetail(stat.name)}>
-                                      <div className={`col-span-1 text-center font-black ${rankColor} text-sm`}>{rank}</div>
-                                      <div className="col-span-7 font-bold text-white text-xs truncate group-hover:text-emerald-400 transition-colors" title={stat.name}>{stat.name}</div>
+                                      <div className={`col-span-2 md:col-span-1 text-center font-black ${rankColor} text-sm flex items-center justify-center`}>
+                                          {rankIcon} #{rank}
+                                      </div>
+                                      <div className="col-span-6 md:col-span-7 font-bold text-white text-xs truncate group-hover:text-emerald-400 transition-colors" title={stat.name}>{stat.name}</div>
                                       <div className="col-span-2 text-right font-mono text-gray-300 text-xs">{stat.count}</div>
                                       <div className="col-span-2 text-right font-mono text-emerald-400 font-bold text-xs">{stat.km.toFixed(1)}</div>
                                   </div>

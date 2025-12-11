@@ -23,6 +23,7 @@ import ZoneDiscoveryModal from "./components/ZoneDiscoveryModal";
 import RunSummaryModal from "./components/RunSummaryModal";
 import SyncModal from "./components/dashboard/SyncModal";
 import LoginModal from "./components/auth/LoginModal";
+import GameToast, { ToastType } from "./components/GameToast"; // Import Toast
 import { ViewState } from "./types";
 import { Layers, CheckCircle, AlertTriangle, X, ShoppingBag } from "lucide-react";
 import { LanguageProvider, useLanguage } from "./LanguageContext";
@@ -39,6 +40,9 @@ const AppContent: React.FC = () => {
   const [showSyncModal, setShowSyncModal] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showInsufficientFundsModal, setShowInsufficientFundsModal] = useState(false);
+  
+  // Custom Toast State
+  const [gameToast, setGameToast] = useState<{ message: string; type: ToastType } | null>(null);
 
   // 1. GAME STATE (Virtual Database)
   const gameState = useGameState();
@@ -115,7 +119,7 @@ const AppContent: React.FC = () => {
       }
       if (window.confirm(t('alert.claim_confirm'))) {
           gameState.claimZone(zoneId);
-          alert(`${t('alert.zone_claimed')} +25 GOV.`);
+          setGameToast({ message: `${t('alert.zone_claimed')} +25 GOV`, type: 'SUCCESS' });
       }
   };
 
@@ -125,7 +129,7 @@ const AppContent: React.FC = () => {
       if (!item) { alert(t('alert.need_item') + " Boost."); return; }
       
       gameState.useItem(item, zoneId);
-      alert(`${t('alert.item_used')} ${item.name}`);
+      setGameToast({ message: `${t('alert.item_used')} ${item.name}`, type: 'BOOST' });
   };
 
   const handleDefendZone = (zoneId: string) => {
@@ -134,7 +138,7 @@ const AppContent: React.FC = () => {
       if (!item) { alert(t('alert.need_item') + " Defense."); return; }
       
       gameState.useItem(item, zoneId);
-      alert(`${t('alert.item_used')} ${item.name}`);
+      setGameToast({ message: `${t('alert.item_used')} ${item.name}`, type: 'DEFENSE' });
   };
 
   const handleLogout = () => {
@@ -163,6 +167,16 @@ const AppContent: React.FC = () => {
       {showNavbar && <Navbar currentView={currentView} onNavigate={setCurrentView} user={user} onLogout={handleLogout} />}
 
       <main className={`flex-1 bg-gray-900 relative flex flex-col ${showNavbar && !isDashboard ? "pb-16 md:pb-0" : ""}`}>
+        
+        {/* Render Custom Toast */}
+        {gameToast && (
+            <GameToast 
+                message={gameToast.message} 
+                type={gameToast.type} 
+                onClose={() => setGameToast(null)} 
+            />
+        )}
+
         <div className="flex-1 relative">
           {isLanding && <LandingPage onLogin={handleOpenLogin} onNavigate={setCurrentView} />}
 
