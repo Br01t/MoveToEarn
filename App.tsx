@@ -24,6 +24,7 @@ import RunSummaryModal from "./components/RunSummaryModal";
 import SyncModal from "./components/dashboard/SyncModal";
 import LoginModal from "./components/auth/LoginModal";
 import GameToast, { ToastType } from "./components/GameToast"; // Import Toast
+import PWAInstallPrompt from "./components/PWAInstallPrompt"; // Import PWA Prompt
 import { ViewState } from "./types";
 import { Layers, CheckCircle, AlertTriangle, X, ShoppingBag } from "lucide-react";
 import { LanguageProvider, useLanguage } from "./LanguageContext";
@@ -176,6 +177,9 @@ const AppContent: React.FC = () => {
                 onClose={() => setGameToast(null)} 
             />
         )}
+
+        {/* PWA Install Prompt - Visible on Mobile if not installed */}
+        <PWAInstallPrompt />
 
         <div className="flex-1 relative">
           {isLanding && <LandingPage onLogin={handleOpenLogin} onNavigate={setCurrentView} />}
