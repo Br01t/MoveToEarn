@@ -41,7 +41,7 @@ const AppContent: React.FC = () => {
 
   // 1. GAME STATE (Virtual Database)
   const gameState = useGameState();
-  const { user, zones, setUser, setZones, loading, transactions, logTransaction } = gameState;
+  const { user, zones, setUser, setZones, loading, transactions, logTransaction, recoveryMode } = gameState;
 
   // 2. WORKFLOWS (Business Logic)
   const runWorkflow = useRunWorkflow({ user, zones, setUser, setZones, logTransaction });
@@ -55,14 +55,19 @@ const AppContent: React.FC = () => {
 
   // --- AUTOMATIC REDIRECT & MODAL HANDLING ---
   useEffect(() => {
+    // Check if recovery mode triggered
+    if (recoveryMode) {
+        setShowLoginModal(true);
+    }
+
     // If user is authenticated
     if (user) {
         // If currently on landing page, move to dashboard
         if (currentView === "LANDING") {
             setCurrentView("DASHBOARD");
         }
-        // Force close login modal if it's open
-        if (showLoginModal) {
+        // Force close login modal if it's open and NOT in recovery mode
+        if (showLoginModal && !recoveryMode) {
             setShowLoginModal(false);
         }
         
@@ -79,7 +84,7 @@ const AppContent: React.FC = () => {
             setCurrentView("LANDING");
         }
     }
-  }, [user, loading, currentView, showLoginModal]);
+  }, [user, loading, currentView, showLoginModal, recoveryMode]);
 
   // --- UI Handlers Wrapper ---
   const handleZoneConfirm = (name: string) => {
@@ -268,9 +273,15 @@ const AppContent: React.FC = () => {
 
       {showLoginModal && (
           <LoginModal 
-              onClose={() => setShowLoginModal(false)}
+              onClose={() => {
+                  setShowLoginModal(false);
+                  gameState.setRecoveryMode(false);
+              }}
               onLogin={gameState.login}
               onRegister={gameState.register}
+              onResetPassword={gameState.resetPassword}
+              initialView={recoveryMode ? 'UPDATE_PASSWORD' : 'LOGIN'}
+              onUpdatePassword={gameState.updatePassword}
           />
       )}
 

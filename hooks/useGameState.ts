@@ -23,6 +23,7 @@ export const useGameState = () => {
   // --- CONFIG STATE ---
   const [govToRunRate, setGovToRunRate] = useState<number>(100);
   const [loading, setLoading] = useState(true);
+  const [recoveryMode, setRecoveryMode] = useState(false); // Track if user is in recovery flow
 
   // --- DATA FETCHING ---
   const fetchGameData = async () => {
@@ -267,7 +268,11 @@ export const useGameState = () => {
     };
     initSession();
     
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+          setRecoveryMode(true);
+      }
+      
       if (session) {
           fetchUserProfile(session.user.id);
           setTimeout(() => fetchGameData(), 500);
@@ -280,6 +285,20 @@ export const useGameState = () => {
   // --- ACTIONS ---
   const login = async (email: string, password: string) => await supabase.auth.signInWithPassword({ email, password });
   const loginWithGoogle = async () => await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } });
+  
+  const resetPassword = async (email: string) => {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: window.location.origin,
+      });
+      return { error };
+  };
+
+  const updatePassword = async (newPassword: string) => {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (!error) setRecoveryMode(false);
+      return { error };
+  };
+
   const register = async (email: string, password: string, username: string) => {
       const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { name: username } } });
       if (data.user && !error) {
@@ -318,7 +337,6 @@ export const useGameState = () => {
 
       if (error) {
           console.error("❌ [TRANSACTION LOG FAILED]", error.message);
-          // Optional: Revert optimistic update here if critical
       }
   };
 
@@ -896,9 +914,9 @@ export const useGameState = () => {
   };
 
   return {
-    user, zones, allUsers, marketItems, missions, badges, govToRunRate, bugReports, suggestions, leaderboards, levels, transactions, loading, 
-    setUser, setZones, setAllUsers, setMarketItems, setMissions, setBadges, setGovToRunRate, setBugReports, setLevels, setSuggestions, setTransactions,
-    login, loginWithGoogle, register, logout, updateUser, buyItem, useItem, swapGovToRun, buyFiatGov, claimZone, upgradePremium, reportBug, submitSuggestion,
+    user, zones, allUsers, marketItems, missions, badges, govToRunRate, bugReports, suggestions, leaderboards, levels, transactions, loading, recoveryMode,
+    setUser, setZones, setAllUsers, setMarketItems, setMissions, setBadges, setGovToRunRate, setBugReports, setLevels, setSuggestions, setTransactions, setRecoveryMode,
+    login, loginWithGoogle, register, logout, resetPassword, updatePassword, updateUser, buyItem, useItem, swapGovToRun, buyFiatGov, claimZone, upgradePremium, reportBug, submitSuggestion,
     logTransaction, // EXPORTED
     // Storage & Admin Actions
     uploadFile,
