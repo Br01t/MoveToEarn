@@ -1,7 +1,7 @@
 
 import React, { useState, useRef } from 'react';
-import { User, Badge } from '../../types';
-import { Crown, Save, Mail, Camera, CheckCircle, X, Flag, Award, Zap, Mountain, Globe, Home, Landmark, Swords, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users, FileText, Egg, Baby, Activity, MapPin, Smile, Wind, Compass, Navigation, TrendingUp, Move, Target, Watch, Droplets, Shield, Star, BatteryCharging, Flame, Truck, CloudLightning, Hexagon, FastForward, Trophy, Plane, Map, Layers, Briefcase, GraduationCap, Brain, Crosshair, Anchor, Heart, Lock, Disc, Feather, FlagTriangleRight, Globe2, Sparkles, Radio, BookOpen, Waves, Snowflake, CloudRain, ThermometerSnowflake, SunDim, MoonStar, Atom, Sword, Axe, Ghost, Ship, PlusSquare, Skull, ChevronsUp, Orbit, CloudFog, Circle, Infinity, Sparkle, ArrowUpCircle, Clock, Eye, Type, Delete, PenTool, Medal, UploadCloud, Loader2, Edit2 } from 'lucide-react';
+import { User, Badge, LevelConfig } from '../../types';
+import { Crown, Save, Mail, Camera, CheckCircle, X, Flag, Award, Zap, Mountain, Globe, Home, Landmark, Swords, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users, FileText, Egg, Baby, Activity, MapPin, Smile, Wind, Compass, Navigation, TrendingUp, Move, Target, Watch, Droplets, Shield, Star, BatteryCharging, Flame, Truck, CloudLightning, Hexagon, FastForward, Trophy, Plane, Map, Layers, Briefcase, GraduationCap, Brain, Crosshair, Anchor, Heart, Lock, Disc, Feather, FlagTriangleRight, Globe2, Sparkles, Radio, BookOpen, Waves, Snowflake, CloudRain, ThermometerSnowflake, SunDim, MoonStar, Atom, Sword, Axe, Ghost, Ship, PlusSquare, Skull, ChevronsUp, Orbit, CloudFog, Circle, Infinity, Sparkle, ArrowUpCircle, Clock, Eye, Type, Delete, PenTool, Medal, UploadCloud, Loader2, Edit2, Info, ChevronRight, Image } from 'lucide-react';
 import { useLanguage } from '../../LanguageContext';
 import { compressImage } from '../../utils/imageCompression';
 import { useGameState } from '../../hooks/useGameState';
@@ -13,6 +13,7 @@ interface ProfileHeaderProps {
   currentLevel: number;
   levelTitle?: string;
   levelIcon?: string;
+  levels?: LevelConfig[]; // Added levels to props
   progressToNextLevel: number;
   onUpdateUser: (updates: Partial<User>) => void;
   onUpgradePremium: () => void;
@@ -20,7 +21,7 @@ interface ProfileHeaderProps {
 }
 
 const ProfileHeader: React.FC<ProfileHeaderProps> = ({ 
-    user, favoriteBadge, nextLevelKm, currentLevel, levelTitle, levelIcon, progressToNextLevel, onUpdateUser, onUpgradePremium, onViewSubmissions 
+    user, favoriteBadge, nextLevelKm, currentLevel, levelTitle, levelIcon, levels = [], progressToNextLevel, onUpdateUser, onUpgradePremium, onViewSubmissions 
 }) => {
   const { t } = useLanguage();
   const { uploadFile } = useGameState();
@@ -29,6 +30,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   const [email, setEmail] = useState(user.email || '');
   const [avatar, setAvatar] = useState(user.avatar);
   const [isUploading, setIsUploading] = useState(false);
+  const [showLevelModal, setShowLevelModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleSave = () => {
@@ -188,6 +190,20 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
       }
   };
 
+  // Helper to get next few levels
+  const getNextLevels = () => {
+      // Assuming 'levels' prop is sorted by level, or sort it first
+      const sortedLevels = [...levels].sort((a, b) => a.level - b.level);
+      // Find current level index
+      const currentIndex = sortedLevels.findIndex(l => l.level === currentLevel);
+      
+      // Get the current one and the next 4
+      const startIndex = Math.max(0, currentIndex);
+      return sortedLevels.slice(startIndex, startIndex + 5);
+  };
+
+  const nextLevelsList = getNextLevels();
+
   return (
       <div className="bg-gray-800 rounded-2xl border border-gray-700 overflow-hidden shadow-xl">
           <div className="h-32 bg-gradient-to-r from-gray-900 via-emerald-950 to-gray-900 relative">
@@ -253,9 +269,11 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                         <div className="mt-4 max-w-lg">
                             {/* Level Title Display - Positioned above Progress */}
                             {levelTitle && (
-                                <div className="mb-2">
-                                    <span className="text-gray-500 text-[10px] font-bold uppercase tracking-wider block mb-0.5">Rank</span>
-                                    <h3 className="text-white font-bold text-lg flex items-center gap-2">
+                                <div className="mb-2 cursor-pointer group w-fit" onClick={() => setShowLevelModal(true)}>
+                                    <span className="text-gray-500 text-[10px] font-bold uppercase tracking-wider mb-0.5 flex items-center gap-1 group-hover:text-emerald-400 transition-colors">
+                                        Rank <Info size={10} className="opacity-70"/>
+                                    </span>
+                                    <h3 className="text-white font-bold text-lg flex items-center gap-2 group-hover:text-emerald-300 transition-colors">
                                         {levelIcon && renderLevelIcon(levelIcon, "w-5 h-5 text-emerald-400")}
                                         {levelTitle}
                                     </h3>
@@ -316,6 +334,40 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 </div>
              )}
           </div>
+
+          {/* LEVEL MODAL */}
+          {showLevelModal && (
+              <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in" onClick={() => setShowLevelModal(false)}>
+                  <div className="bg-gray-900 rounded-2xl border border-gray-700 w-full max-w-sm shadow-2xl relative overflow-hidden animate-slide-up" onClick={e => e.stopPropagation()}>
+                      <div className="p-4 border-b border-gray-700 flex justify-between items-center bg-gray-800/50">
+                          <h3 className="font-bold text-white flex items-center gap-2">
+                              <Trophy size={18} className="text-yellow-400"/> Rank Progression
+                          </h3>
+                          <button onClick={() => setShowLevelModal(false)} className="text-gray-400 hover:text-white"><X size={20}/></button>
+                      </div>
+                      <div className="p-4 space-y-2">
+                          {nextLevelsList.map((l, index) => {
+                              const isCurrent = l.level === currentLevel;
+                              return (
+                                  <div key={l.id} className={`flex items-center p-3 rounded-xl border ${isCurrent ? 'bg-emerald-900/20 border-emerald-500/50' : 'bg-gray-800/50 border-gray-700 opacity-80'}`}>
+                                      <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 border ${isCurrent ? 'bg-emerald-900/40 border-emerald-500 text-emerald-400' : 'bg-gray-700 border-gray-600 text-gray-400'}`}>
+                                          {l.icon ? renderLevelIcon(l.icon, "w-5 h-5") : <Image size={16}/>}
+                                      </div>
+                                      <div className="ml-3 flex-1">
+                                          <div className={`text-sm font-bold ${isCurrent ? 'text-white' : 'text-gray-300'}`}>{l.title || `Level ${l.level}`}</div>
+                                          <div className="text-[10px] text-gray-500 font-mono">Minimum distance: {l.minKm} KM</div>
+                                      </div>
+                                      {isCurrent && (
+                                          <div className="text-xs bg-emerald-500 text-black px-2 py-0.5 rounded font-bold uppercase">Current</div>
+                                      )}
+                                  </div>
+                              );
+                          })}
+                          {nextLevelsList.length === 0 && <p className="text-center text-gray-500 text-xs py-4">Max level reached!</p>}
+                      </div>
+                  </div>
+              </div>
+          )}
       </div>
   );
 };

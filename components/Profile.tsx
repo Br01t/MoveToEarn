@@ -197,6 +197,7 @@ const Profile: React.FC<ProfileProps> = ({
           currentLevel={currentLevel}
           levelTitle={currentLevelConfig?.title}
           levelIcon={currentLevelConfig?.icon}
+          levels={levels}
           progressToNextLevel={progressToNextLevel}
           onUpdateUser={onUpdateUser}
           onUpgradePremium={onUpgradePremium}
