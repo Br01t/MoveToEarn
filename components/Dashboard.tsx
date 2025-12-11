@@ -22,6 +22,7 @@ interface DashboardProps {
   onDefend: (zoneId: string) => void;
   onNavigate: (view: ViewState) => void;
   onOpenSync: () => void;
+  onGetZoneLeaderboard: (zoneId: string) => Promise<any[]>;
 }
 
 const HEX_SIZE = 100;
@@ -29,10 +30,12 @@ const RUNS_PER_PAGE = 5;
 
 const Dashboard: React.FC<DashboardProps> = ({ 
     user, zones, users, badges, 
-    onSyncRun, onClaim, onBoost, onDefend, onNavigate, onOpenSync 
+    onSyncRun, onClaim, onBoost, onDefend, onNavigate, onOpenSync,
+    onGetZoneLeaderboard
 }) => {
   const { t } = useLanguage();
   const [selectedZone, setSelectedZone] = useState<Zone | null>(null);
+  const [zoneLeaderboard, setZoneLeaderboard] = useState<any[]>([]);
   
   // Search & Filter State
   const [searchTerm, setSearchTerm] = useState('');
@@ -84,17 +87,17 @@ const Dashboard: React.FC<DashboardProps> = ({
       return { name: userData.name, avatar: userData.avatar, badge: badge };
   };
 
-  const getZoneLeaderboard = (zoneName: string) => {
-      const myRuns = user.runHistory.filter(r => r.location === zoneName);
-      const myTotalKm = myRuns.reduce((acc, r) => acc + r.km, 0);
-      const leaderboard = Object.values(users).map((u: any) => {
-          if (u.id === user.id) return { id: u.id, name: u.name, avatar: u.avatar, km: myTotalKm };
-          const seed = (u.id.charCodeAt(u.id.length - 1) + zoneName.length) % 100;
-          const fakeKm = (u.totalKm * (seed / 100)) / 5;
-          return { id: u.id, name: u.name, avatar: u.avatar, km: fakeKm };
-      });
-      return leaderboard.sort((a, b) => b.km - a.km).slice(0, 10);
-  };
+  // FETCH REAL DATA WHEN ZONE IS SELECTED
+  useEffect(() => {
+      if (selectedZone) {
+          // Pass ID instead of Name for accurate lookup
+          onGetZoneLeaderboard(selectedZone.id).then(data => {
+              setZoneLeaderboard(data);
+          });
+      } else {
+          setZoneLeaderboard([]);
+      }
+  }, [selectedZone]);
 
   // --- Effects ---
   useEffect(() => {
@@ -153,7 +156,6 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   // --- Prep Render Data ---
   const ownerDetails = selectedZone ? getOwnerDetails(selectedZone.ownerId) : null;
-  const zoneLeaderboard = selectedZone ? getZoneLeaderboard(selectedZone.name) : [];
 
   return (
     <div className="relative w-full h-[calc(100vh-56px)] md:h-[calc(100vh-64px)] overflow-hidden bg-gray-900 shadow-inner">

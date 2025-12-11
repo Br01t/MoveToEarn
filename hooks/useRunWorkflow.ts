@@ -11,9 +11,10 @@ interface RunWorkflowProps {
     setUser: React.Dispatch<React.SetStateAction<User | null>>;
     setZones: React.Dispatch<React.SetStateAction<Zone[]>>;
     logTransaction: (userId: string, type: 'IN' | 'OUT', token: 'RUN' | 'GOV', amount: number, description: string) => Promise<void>;
+    recordRun?: (userId: string, runData: RunEntry, updatedZones: Zone[]) => Promise<{ success: boolean; error?: string }>;
 }
 
-export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction }: RunWorkflowProps) => {
+export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction, recordRun }: RunWorkflowProps) => {
   // Queue for processing multiple runs
   const [pendingRunsQueue, setPendingRunsQueue] = useState<RunAnalysisData[]>([]);
   
@@ -118,17 +119,18 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction 
   };
 
   // --- LOGIC: Commit Run Data ---
-  const finalizeRun = (data: RunAnalysisData, currentUser: User, currentZones: Zone[]) => {
+  const finalizeRun = async (data: RunAnalysisData, currentUser: User, currentZones: Zone[]) => {
       // Merge global zones + session zones for accurate reward calculation
       const allZonesMap = new Map<string, Zone>();
       currentZones.forEach(z => allZonesMap.set(z.id, z));
       sessionCreatedZonesRef.current.forEach(z => allZonesMap.set(z.id, z));
       const fullZoneList = Array.from(allZonesMap.values());
 
+      // Result includes updated zones with new Interest Pool values and split rewards
       const result = processRunRewards(data, currentUser, fullZoneList);
 
       const newRun: RunEntry = {
-          id: `run_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          id: crypto.randomUUID(), // Use standard UUID for DB compatibility
           location: result.locationName,
           km: data.totalKm,
           timestamp: data.startTime, 
@@ -136,14 +138,13 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction 
           duration: data.durationMinutes,
           elevation: data.elevation,
           maxSpeed: data.maxSpeed,
-          avgSpeed: data.avgSpeed
+          avgSpeed: data.avgSpeed,
+          involvedZones: result.involvedZoneIds,
+          // CRITICAL: Include precise breakdown for DB saving
+          zoneBreakdown: result.zoneBreakdown 
       };
 
-      // LOG REWARD TRANSACTION
-      if (result.totalRunEarned > 0) {
-          logTransaction(currentUser.id, 'IN', 'RUN', result.totalRunEarned, `Run Reward: ${result.locationName}`);
-      }
-
+      // Optimistic Update for UI
       const finalUser = {
           ...currentUser,
           runHistory: [newRun, ...currentUser.runHistory],
@@ -151,12 +152,40 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction 
           totalKm: currentUser.totalKm + data.totalKm
       };
 
+      // Identify modified zones to update in DB
+      // IMPORTANT: We must include any zones created in this session (INSERT)
+      // AND any existing zones that were modified (UPDATE)
+      const modifiedZones = result.zoneUpdates.filter(u => {
+          // 1. Is it a new zone created just now?
+          const isNew = sessionCreatedZonesRef.current.some(nz => nz.id === u.id);
+          if (isNew) return true;
+
+          // 2. Is it an existing zone that changed?
+          const original = allZonesMap.get(u.id);
+          return original && (original.recordKm !== u.recordKm || original.interestPool !== u.interestPool);
+      });
+
+      // DB SAVE (Atomic) - CRITICAL FIX HERE
+      // We explicitly check result. If DB fails, we DO NOT update local state.
+      if (recordRun) {
+          const dbResult = await recordRun(currentUser.id, newRun, modifiedZones);
+          if (!dbResult.success) {
+              alert(`Sync Failed: ${dbResult.error || 'Database error'}. Local state not updated.`);
+              return; // STOP EXECUTION - Do not update setZones or setUser
+          }
+      } else if (result.totalRunEarned > 0) {
+          // Fallback legacy logging if recordRun not available
+          logTransaction(currentUser.id, 'IN', 'RUN', result.totalRunEarned, `Run Reward: ${result.locationName}`);
+      }
+
+      // Update State (Only happens if DB Sync was successful)
       setZones(result.zoneUpdates);
       setUser(finalUser);
       
       batchStatsRef.current.totalKm += data.totalKm;
       batchStatsRef.current.duration += data.durationMinutes;
       batchStatsRef.current.runEarned += result.totalRunEarned;
+      // Note: involvedZoneNames are still used for the UI Summary Modal
       batchStatsRef.current.involvedZoneNames.push(...result.involvedZoneNames);
       if (result.isReinforced) batchStatsRef.current.reinforcedCount++;
 
@@ -178,16 +207,12 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction 
       const hasCountryCode = / - [A-Z]{2}$/.test(customName);
       const finalName = hasCountryCode ? customName : `${customName} - XX`;
 
-      // Calculate Position
-      let referenceZone: Zone | null = null;
-      if (pendingZone.type === 'END' && sessionCreatedZonesRef.current.length > 0) {
-          referenceZone = sessionCreatedZonesRef.current[0];
-      }
+      // Calculate Position - Nearest Neighbor logic
       const currentAllZones = [...zones, ...sessionCreatedZonesRef.current];
-      const hexPos = calculateHexPosition(referenceZone, pendingZone.lat, pendingZone.lng, "XX", currentAllZones);
+      const hexPos = calculateHexPosition(null, pendingZone.lat, pendingZone.lng, "XX", currentAllZones);
 
       const newZone: Zone = {
-          id: `z_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          id: crypto.randomUUID(), // Standard UUID
           x: hexPos.x,
           y: hexPos.y,
           lat: pendingZone.lat,
@@ -195,11 +220,9 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction 
           ownerId: user.id,
           name: finalName,
           defenseLevel: 1,
-          // CRITICAL FIX: Initialize recordKm to 0. 
-          // The finalizeRun -> processRunRewards logic will add the split mileage to this zone shortly.
-          // If we set totalKm here, it would double count or incorrectly assign the full run to one zone.
           recordKm: 0, 
-          interestRate: 2.0
+          interestRate: 2.0,
+          interestPool: 0 
       };
 
       const updatedUser = { 

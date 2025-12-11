@@ -1,6 +1,7 @@
 
 import { User, Zone, RunEntry, Mission, Badge, RunAnalysisData } from '../types';
 import { getDistanceFromLatLonInKm } from './geo';
+import { RUN_RATE_BASE, RUN_RATE_BOOST, REWARD_SPLIT_USER, REWARD_SPLIT_POOL } from '../constants';
 
 // --- STREAK CALCULATION ---
 export const calculateStreak = (history: RunEntry[]): number => {
@@ -49,7 +50,6 @@ export const checkAchievement = (item: Mission | Badge, currentUser: User, curre
     // 2. NEW LOGIC SYSTEM
     if (!item.logicId) return false;
     const history = currentUser.runHistory;
-    const ownedZones = currentZones.filter(z => z.ownerId === currentUser.id);
     
     switch (item.logicId) {
         // --- DISTANCE ---
@@ -84,23 +84,12 @@ export const checkAchievement = (item: Mission | Badge, currentUser: User, curre
         case 24: return history.some(r => { const h = new Date(r.timestamp).getHours(); return h >= 18 && h < 20; });
         case 25: return history.some(r => { const h = new Date(r.timestamp).getHours(); return h >= 22 || h < 2; });
         case 26: return history.some(r => { const h = new Date(r.timestamp).getHours(); return h === 0; });
-        case 28: return history.some(r => { const h = new Date(r.timestamp).getHours(); return h < 6; });
-        case 30: return new Set(history.map(r => new Date(r.timestamp).getHours())).size >= 24;
-
+        
         // --- STREAK ---
         case 31: return calculateStreak(history) >= 3;
         case 32: return calculateStreak(history) >= 7;
         case 33: return calculateStreak(history) >= 14;
         case 34: return calculateStreak(history) >= 30;
-        case 37: return new Set(history.map(r => new Date(r.timestamp).toDateString())).size >= 200;
-        case 38: 
-           const currentMonthRuns = history.filter(r => {
-               const d = new Date(r.timestamp);
-               const now = new Date();
-               return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-           });
-           return currentMonthRuns.length >= 20;
-        case 39: return new Set(history.map(r => new Date(r.timestamp).toDateString())).size >= 50;
         case 40: return calculateStreak(history) >= 60;
 
         // --- ZONE / EXPLORATION ---
@@ -108,14 +97,12 @@ export const checkAchievement = (item: Mission | Badge, currentUser: User, curre
         case 42: return new Set(history.map(r => r.location)).size >= 25;
         case 43: return new Set(history.map(r => r.location)).size >= 50;
         case 44: return new Set(history.map(r => r.location)).size >= 100;
-        case 47: return ownedZones.length >= 1;
-        case 48: return ownedZones.length >= 5;
-        case 49: return ownedZones.length >= 10;
-        case 50: return ownedZones.length >= 25;
-        case 51: return history.some(r => r.govEarned && r.govEarned >= 10);
-        case 52: return history.filter(r => r.govEarned && r.govEarned >= 10).length >= 10;
-        case 53: return history.filter(r => r.govEarned && r.govEarned >= 10).length >= 25;
         
+        case 47: return currentZones.filter(z => z.ownerId === currentUser.id).length >= 1;
+        case 48: return currentZones.filter(z => z.ownerId === currentUser.id).length >= 5;
+        case 49: return currentZones.filter(z => z.ownerId === currentUser.id).length >= 10;
+        case 50: return currentZones.filter(z => z.ownerId === currentUser.id).length >= 25;
+
         // --- ENDURANCE ---
         case 69: return history.some(r => (r.duration || 0) >= 90);
         case 70: return history.some(r => (r.duration || 0) >= 120);
@@ -129,73 +116,141 @@ export const checkAchievement = (item: Mission | Badge, currentUser: User, curre
     }
 };
 
-export interface ProcessedRunResult {
-    totalRunEarned: number;
-    involvedZoneNames: string[];
-    isReinforced: boolean;
-    zoneUpdates: Zone[];
+// --- PROCESS RUN & REWARDS ---
+export const processRunRewards = (
+    data: RunAnalysisData, 
+    user: User, 
+    allZones: Zone[]
+): { 
+    totalRunEarned: number; 
+    zoneUpdates: Zone[]; 
     locationName: string;
-}
-
-export const processRunRewards = (data: RunAnalysisData, currentUser: User, fullZoneList: Zone[]): ProcessedRunResult => {
-    console.log("🏁 [REWARDS] Processing run rewards...");
-    const { totalKm, startPoint, endPoint } = data;
-
-    // 1. Identify Zones (using geospatial distance)
-    const startZone = fullZoneList.find(z => getDistanceFromLatLonInKm(startPoint.lat, startPoint.lng, z.lat, z.lng) < 1.0);
-    const endZone = fullZoneList.find(z => getDistanceFromLatLonInKm(endPoint.lat, endPoint.lng, z.lat, z.lng) < 1.0);
-
-    // 2. Determine involved zones for splitting
-    const involvedZones: Zone[] = [];
-    if (startZone) involvedZones.push(startZone);
-    if (endZone && (!startZone || endZone.id !== startZone.id)) involvedZones.push(endZone);
-
-    const zoneCount = involvedZones.length;
-    const kmPerZone = zoneCount > 0 ? totalKm / zoneCount : 0;
+    involvedZoneNames: string[];
+    involvedZoneIds: string[]; 
+    zoneBreakdown: Record<string, number>; // Even split KM per zone
+    isReinforced: boolean;
+} => {
     
-    let totalRunEarned = 0;
-    let isReinforced = false;
-    const involvedZoneNames: string[] = [];
+    // 1. Identify Involved Zones
+    // We detect ALL zones the user interacted with (using Nearest Neighbor logic on points).
+    const involvedZoneIds = new Set<string>();
+    const points = data.points;
 
-    // Create update list from fullZoneList to ensure we don't miss new zones
-    const zoneUpdates = fullZoneList.map(z => ({...z}));
+    if (points.length >= 2) {
+        for (const p of points) {
+            let closestZone: Zone | null = null;
+            let minDistance = Infinity;
 
-    if (zoneCount === 0) {
-        // Wilderness Run (No zones)
-        totalRunEarned = totalKm * 10;
-        involvedZoneNames.push("Wilderness Run");
-    } else {
-        // Split logic: Divide KM and Rewards among involved zones
-        involvedZones.forEach(invZone => {
-            involvedZoneNames.push(invZone.name);
-            
-            // Calculate Reward for this segment (10 RUN per km)
-            const segmentReward = kmPerZone * 10;
-            totalRunEarned += segmentReward;
-
-            // Find in update list and update recordKm
-            const idx = zoneUpdates.findIndex(z => z.id === invZone.id);
-            if (idx !== -1) {
-                const targetZone = zoneUpdates[idx];
-                // Update Record if Owner
-                if (targetZone.ownerId === currentUser.id) {
-                    zoneUpdates[idx] = {
-                        ...targetZone,
-                        recordKm: targetZone.recordKm + kmPerZone
-                    };
-                    isReinforced = true;
+            for (const z of allZones) {
+                const d = getDistanceFromLatLonInKm(p.lat, p.lng, z.lat, z.lng);
+                if (d < minDistance) {
+                    minDistance = d;
+                    closestZone = z;
                 }
             }
-        });
+
+            // Capture Radius: 10km (Generous radius to ensure zones are detected)
+            if (closestZone && minDistance < 10.0) {
+                involvedZoneIds.add(closestZone.id);
+            }
+        }
     }
 
-    const locationName = involvedZoneNames.length > 0 ? involvedZoneNames[0] : "Wilderness";
+    const involvedZonesList = Array.from(involvedZoneIds);
+    const zoneCount = involvedZonesList.length;
+    
+    const boostItem = user.inventory.find(i => i.type === 'BOOST');
+    const baseRate = boostItem ? RUN_RATE_BOOST : RUN_RATE_BASE;
+
+    let totalGrossRun = 0;
+    const zoneBreakdown: Record<string, number> = {};
+    const involvedZoneNames: string[] = [];
+    let isReinforced = false;
+    let updatedZones: Zone[] = [];
+
+    // 2. EVEN SPLIT LOGIC
+    // If multiple zones are involved, we split the total KM and rewards equally among them.
+    if (zoneCount > 0) {
+        const kmPerZone = data.totalKm / zoneCount;
+
+        // Populate Breakdown for DB
+        involvedZonesList.forEach(id => {
+            zoneBreakdown[id] = parseFloat(kmPerZone.toFixed(4));
+        });
+
+        updatedZones = allZones.map(z => {
+            if (involvedZoneIds.has(z.id)) {
+                involvedZoneNames.push(z.name);
+                
+                // Calculate earnings: Split KM * Rate * Interest
+                const zoneEarnings = kmPerZone * baseRate * (1 + (z.interestRate / 100));
+                totalGrossRun += zoneEarnings;
+
+                // Pool Contribution: 2% of earnings generated in this zone context
+                const poolContribution = zoneEarnings * REWARD_SPLIT_POOL;
+
+                let newZone = { ...z };
+                
+                // Update Pool
+                newZone.interestPool = (newZone.interestPool || 0) + poolContribution;
+
+                // Reinforce (Owner only) - Add Even Split KM to record
+                if (z.ownerId === user.id) {
+                    isReinforced = true;
+                    newZone.recordKm = (newZone.recordKm || 0) + kmPerZone;
+                    
+                    if (newZone.recordKm > 50 && newZone.defenseLevel < 2) newZone.defenseLevel = 2;
+                    if (newZone.recordKm > 150 && newZone.defenseLevel < 3) newZone.defenseLevel = 3;
+                    if (newZone.recordKm > 500 && newZone.defenseLevel < 4) newZone.defenseLevel = 4;
+                    if (newZone.recordKm > 1000 && newZone.defenseLevel < 5) newZone.defenseLevel = 5;
+
+                    if (newZone.interestRate < 5.0) {
+                        newZone.interestRate = parseFloat((newZone.interestRate + 0.05).toFixed(2));
+                    }
+                }
+                return newZone;
+            }
+            return z;
+        });
+    } else {
+        // Uncharted Territory (No zones within 10km)
+        totalGrossRun = data.totalKm * baseRate;
+        updatedZones = [...allZones]; // No updates to zones
+    }
+
+    // Determine primary location name for the run entry
+    let locationName = "Unknown Territory";
+    if (zoneCount > 0) {
+        // Find the zone closest to the start point to use as the primary name
+        const startP = data.startPoint;
+        const sortedByProx = involvedZonesList.sort((a,b) => {
+            const zA = allZones.find(z => z.id === a)!;
+            const zB = allZones.find(z => z.id === b)!;
+            const distA = getDistanceFromLatLonInKm(startP.lat, startP.lng, zA.lat, zA.lng);
+            const distB = getDistanceFromLatLonInKm(startP.lat, startP.lng, zB.lat, zB.lng);
+            return distA - distB;
+        });
+
+        const primaryZone = allZones.find(z => z.id === sortedByProx[0]);
+        if (primaryZone) {
+            locationName = primaryZone.name;
+            if (zoneCount > 1) {
+                locationName += ` (+${zoneCount - 1} others)`;
+            }
+        }
+    } else {
+        locationName = "Uncharted Area"; 
+    }
+
+    const totalUserRun = totalGrossRun * REWARD_SPLIT_USER;
 
     return {
-        totalRunEarned,
+        totalRunEarned: parseFloat(totalUserRun.toFixed(2)),
+        zoneUpdates: updatedZones,
+        locationName,
         involvedZoneNames,
-        isReinforced,
-        zoneUpdates,
-        locationName
+        involvedZoneIds: involvedZonesList,
+        zoneBreakdown,
+        isReinforced
     };
 };
