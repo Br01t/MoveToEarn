@@ -377,7 +377,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
 
   // Combine current user (full data) with all other users (profile data)
   // Ensure we don't duplicate the current user if they are in the allUsers list
-  const allUserList = Object.values(users);
+  const allUserList = Object.values(users) as Array<Omit<User, 'inventory'>>;
   // If currentUser is not in allUsers (e.g. strict separate state), add them. 
   // But usually useGameState updates allUsers. We'll dedup by ID just in case.
   const uniqueUsers = new Map<string, Omit<User, 'inventory'> | User>();

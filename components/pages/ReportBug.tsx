@@ -2,32 +2,39 @@
 import React, { useState } from 'react';
 import { Bug, Camera, Send, CheckCircle, AlertTriangle, Loader2 } from 'lucide-react';
 import { useLanguage } from '../../LanguageContext';
+import { compressImage } from '../../utils/imageCompression';
 
 interface ReportBugProps {
-  onReport: (description: string, screenshot?: string) => Promise<boolean>;
+  onReport: (description: string, screenshot?: File) => Promise<boolean>;
 }
 
 const ReportBug: React.FC<ReportBugProps> = ({ onReport }) => {
   const { t } = useLanguage();
   const [description, setDescription] = useState('');
-  const [screenshot, setScreenshot] = useState<string | null>(null);
+  const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      if (file.size > 2 * 1024 * 1024) { // 2MB limit
-          alert("File too large. Max 2MB.");
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit pre-compression check
+          alert("File too large. Max 5MB.");
           return;
       }
       
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setScreenshot(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      try {
+          // Compress immediately for preview and preparation
+          // Reduce to 800px width and 0.5 quality for storage optimization
+          const compressed = await compressImage(file, 800, 0.5);
+          setScreenshotFile(compressed);
+          setPreviewUrl(URL.createObjectURL(compressed));
+      } catch (err) {
+          console.error("Compression error:", err);
+          alert("Failed to process image.");
+      }
     }
   };
 
@@ -41,7 +48,7 @@ const ReportBug: React.FC<ReportBugProps> = ({ onReport }) => {
     setIsSending(true);
     setError(null);
     
-    const success = await onReport(description, screenshot || undefined);
+    const success = await onReport(description, screenshotFile || undefined);
     
     setIsSending(false);
     if (success) {
@@ -49,6 +56,14 @@ const ReportBug: React.FC<ReportBugProps> = ({ onReport }) => {
     } else {
         setError("Failed to send report. Please check your connection and try again.");
     }
+  };
+
+  const resetForm = () => {
+      setIsSubmitted(false);
+      setDescription('');
+      setScreenshotFile(null);
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
   };
 
   return (
@@ -67,7 +82,7 @@ const ReportBug: React.FC<ReportBugProps> = ({ onReport }) => {
               <h2 className="text-2xl font-bold text-white mb-2">{t('report.success_title')}</h2>
               <p className="text-gray-400">{t('report.success_desc')}</p>
               <button 
-                onClick={() => { setIsSubmitted(false); setDescription(''); setScreenshot(null); }}
+                onClick={resetForm}
                 className="mt-6 px-6 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg font-bold"
               >
                   Send Another
@@ -95,12 +110,12 @@ const ReportBug: React.FC<ReportBugProps> = ({ onReport }) => {
                           <span className="text-sm text-gray-300">Upload Image</span>
                           <input type="file" accept="image/*" onChange={handleFileChange} hidden disabled={isSending} />
                       </label>
-                      {screenshot && (
+                      {previewUrl && (
                           <div className="relative group">
-                              <img src={screenshot} alt="Preview" className="h-12 w-12 object-cover rounded border border-gray-600" />
+                              <img src={previewUrl} alt="Preview" className="h-12 w-12 object-cover rounded border border-gray-600" />
                               <button 
                                 type="button"
-                                onClick={() => setScreenshot(null)}
+                                onClick={() => { setScreenshotFile(null); URL.revokeObjectURL(previewUrl); setPreviewUrl(null); }}
                                 className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
                                 disabled={isSending}
                               >
@@ -109,6 +124,7 @@ const ReportBug: React.FC<ReportBugProps> = ({ onReport }) => {
                           </div>
                       )}
                   </div>
+                  <p className="text-[10px] text-gray-500 mt-2">Images are automatically compressed to save space.</p>
               </div>
 
               <button 
