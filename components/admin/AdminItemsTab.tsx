@@ -128,8 +128,13 @@ const AdminItemsTab: React.FC<AdminItemsTabProps> = ({ items, onAddItem, onUpdat
              <div><label className="text-xs text-gray-400">Quantity</label><input type="number" required value={formData.quantity} onChange={e => setFormData({...formData, quantity: e.target.value})} className="w-full bg-gray-900 border border-gray-600 rounded p-2 text-white" /></div>
           </div>
           <div className="grid grid-cols-2 gap-2">
-             <div><label className="text-xs text-gray-400">Type</label><select value={formData.type} onChange={e => setFormData({...formData, type: e.target.value as any})} className="w-full bg-gray-900 border border-gray-600 rounded p-2 text-white"><option value="DEFENSE">Defense</option><option value="BOOST">Boost</option><option value="CURRENCY">Currency</option></select></div>
-             <div><label className="text-xs text-gray-400">Effect</label><input type="number" required value={formData.effectValue} onChange={e => setFormData({...formData, effectValue: e.target.value})} className="w-full bg-gray-900 border border-gray-600 rounded p-2 text-white" /></div>
+             <div><label className="text-xs text-gray-400">Type</label><select value={formData.type} onChange={e => setFormData({...formData, type: e.target.value as any})} className="w-full bg-gray-900 border border-gray-600 rounded p-2 text-white"><option value="DEFENSE">Defense</option><option value="BOOST">Boost</option><option value="CURRENCY">Currency (Flash Drop)</option></select></div>
+             <div>
+               <label className={`text-xs ${formData.type === 'CURRENCY' ? 'text-cyan-400 font-bold' : 'text-gray-400'}`}>
+                 {formData.type === 'CURRENCY' ? 'GOV Amount' : 'Effect Power'}
+               </label>
+               <input type="number" required value={formData.effectValue} onChange={e => setFormData({...formData, effectValue: e.target.value})} className="w-full bg-gray-900 border border-gray-600 rounded p-2 text-white" />
+             </div>
           </div>
           <div className="flex gap-2">
               {editingId && <button type="button" onClick={cancelEdit} className="flex-1 py-2 bg-gray-700 text-white rounded-lg">Cancel</button>}
@@ -155,7 +160,16 @@ const AdminItemsTab: React.FC<AdminItemsTabProps> = ({ items, onAddItem, onUpdat
          
          {currentItems.map(item => (
             <div key={item.id} className="bg-gray-800 p-4 rounded-xl border border-gray-700 flex justify-between items-center group">
-               <div><h4 className="font-bold text-white">{item.name}</h4><p className="text-xs text-gray-400">{item.description}</p></div>
+               <div>
+                 <h4 className="font-bold text-white flex items-center gap-2">
+                   {item.name}
+                   {item.type === 'CURRENCY' && <span className="text-[10px] bg-cyan-900/50 text-cyan-400 px-1.5 py-0.5 rounded border border-cyan-500/30">GOV DROP</span>}
+                 </h4>
+                 <p className="text-xs text-gray-400">{item.description}</p>
+                 {item.type === 'CURRENCY' && (
+                   <p className="text-xs text-cyan-400 font-bold mt-1">Value: {item.effectValue} GOV</p>
+                 )}
+               </div>
                <div className="flex gap-2">
                     <button onClick={() => startEdit(item)} className="text-blue-400 hover:bg-blue-500/10 p-2 rounded"><Edit2 size={20}/></button>
                     <button onClick={() => handleDeleteClick(item)} className="text-red-500 hover:bg-red-500/10 p-2 rounded"><Trash2 size={20}/></button>
