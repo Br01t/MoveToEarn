@@ -1,7 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { User, Transaction } from '../types';
-import { Wallet as WalletIcon, CheckCircle, Link as LinkIcon, Activity, Crown, History, ArrowDownLeft, ArrowUpRight, Flame, X } from 'lucide-react';
+import { Wallet as WalletIcon, CheckCircle, Link as LinkIcon, Activity, Crown, History, ArrowDownLeft, ArrowUpRight, Flame, X, Search, Filter } from 'lucide-react';
 import Pagination from './Pagination';
 import { useLanguage } from '../LanguageContext';
 
@@ -26,16 +26,47 @@ const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuy
   // History Modal State
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [historyPage, setHistoryPage] = useState(1);
+  
+  // New Filter States
+  const [historySearch, setHistorySearch] = useState('');
+  const [historyFilter, setHistoryFilter] = useState<'ALL' | 'IN' | 'OUT'>('ALL');
 
-  // Filter Transactions for current user and sort (Double check)
-  const myTransactions = transactions.filter(t => t.userId === user.id).sort((a, b) => b.timestamp - a.timestamp);
+  // Filter Transactions for current user, apply search/filter, and sort
+  const myTransactions = useMemo(() => {
+      let filtered = transactions
+        .filter(t => t.userId === user.id)
+        .sort((a, b) => b.timestamp - a.timestamp);
 
-  // Pagination Logic
+      // Apply Search
+      if (historySearch) {
+          const lowerSearch = historySearch.toLowerCase();
+          filtered = filtered.filter(t => t.description.toLowerCase().includes(lowerSearch));
+      }
+
+      // Apply Type Filter
+      if (historyFilter !== 'ALL') {
+          filtered = filtered.filter(t => t.type === historyFilter);
+      }
+
+      return filtered;
+  }, [transactions, user.id, historySearch, historyFilter]);
+
+  // Pagination Logic (Based on filtered results)
   const totalHistoryPages = Math.ceil(myTransactions.length / TRANSACTIONS_PER_PAGE);
   const currentHistory = myTransactions.slice(
       (historyPage - 1) * TRANSACTIONS_PER_PAGE,
       (historyPage) * TRANSACTIONS_PER_PAGE
   );
+
+  const handleSearchChange = (val: string) => {
+      setHistorySearch(val);
+      setHistoryPage(1); // Reset to page 1 on search
+  };
+
+  const handleFilterChange = (type: 'ALL' | 'IN' | 'OUT') => {
+      setHistoryFilter(type);
+      setHistoryPage(1); // Reset to page 1 on filter change
+  };
 
   const formatDate = (ts: number) => {
       const d = new Date(ts);
@@ -111,7 +142,7 @@ const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuy
                 onSwapGovToRun={onSwapGovToRun}
             />
 
-            {/* RECENT TRANSACTIONS PREVIEW */}
+            {/* RECENT TRANSACTIONS PREVIEW (Non-filtered, just last 5) */}
             <div className="bg-gray-800 rounded-2xl border border-gray-700 p-6 flex-1 flex flex-col min-h-[300px]">
                 <div className="flex justify-between items-center mb-4">
                    <h3 className="font-bold text-white flex items-center gap-2 text-sm">
@@ -120,6 +151,8 @@ const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuy
                    <button 
                      onClick={() => {
                          setHistoryPage(1);
+                         setHistorySearch('');
+                         setHistoryFilter('ALL');
                          setShowHistoryModal(true);
                      }}
                      className="text-[10px] text-emerald-400 hover:underline"
@@ -128,10 +161,10 @@ const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuy
                    </button>
                 </div>
                 <div className="space-y-3 flex-1 overflow-y-auto max-h-[300px]">
-                    {myTransactions.length === 0 ? (
+                    {transactions.filter(t => t.userId === user.id).length === 0 ? (
                         <div className="text-center text-gray-500 py-8 text-xs">No transactions found.</div>
                     ) : (
-                        myTransactions.slice(0, 5).map((tx) => (
+                        transactions.filter(t => t.userId === user.id).sort((a,b) => b.timestamp - a.timestamp).slice(0, 5).map((tx) => (
                             <div key={tx.id} className="flex justify-between items-center bg-gray-900/50 p-3 rounded-lg border border-gray-700/50 hover:border-gray-600 transition-colors">
                                 <div className="flex items-center gap-3">
                                     <div className={`p-2 rounded-lg ${tx.type === 'IN' ? 'bg-emerald-900/20 text-emerald-400' : 'bg-gray-700/30 text-gray-400'}`}>
@@ -158,7 +191,7 @@ const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuy
 
         {/* --- RIGHT COL: CHARTS --- */}
         <div className="lg:col-span-2 space-y-6 h-full flex flex-col">
-            <WalletCharts />
+            <WalletCharts transactions={transactions} />
         </div>
       </div>
       
@@ -191,24 +224,64 @@ const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuy
           </div>
       </div>
 
-      {/* FULL HISTORY MODAL */}
+      {/* FULL HISTORY MODAL WITH FILTERS */}
       {showHistoryModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in">
            <div className="bg-gray-800 rounded-2xl border border-gray-700 w-full max-w-2xl shadow-2xl flex flex-col max-h-[85vh]">
-              {/* Header */}
-              <div className="p-6 border-b border-gray-700 flex justify-between items-center bg-gray-900 rounded-t-2xl">
-                 <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                     <History className="text-emerald-400" /> {t('wallet.trans_history')}
-                 </h3>
-                 <button onClick={() => setShowHistoryModal(false)} className="text-gray-400 hover:text-white transition-colors bg-gray-800 p-2 rounded-full hover:bg-gray-700">
-                    <X size={20}/>
-                 </button>
+              
+              {/* Header & Filters */}
+              <div className="p-6 border-b border-gray-700 bg-gray-900 rounded-t-2xl space-y-4">
+                 <div className="flex justify-between items-center">
+                     <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                         <History className="text-emerald-400" /> {t('wallet.trans_history')}
+                     </h3>
+                     <button onClick={() => setShowHistoryModal(false)} className="text-gray-400 hover:text-white transition-colors bg-gray-800 p-2 rounded-full hover:bg-gray-700">
+                        <X size={20}/>
+                     </button>
+                 </div>
+
+                 {/* Filters Row */}
+                 <div className="flex flex-col sm:flex-row gap-3">
+                     <div className="relative flex-1">
+                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
+                         <input 
+                            type="text" 
+                            placeholder="Search transactions..." 
+                            value={historySearch}
+                            onChange={(e) => handleSearchChange(e.target.value)}
+                            className="w-full bg-gray-800 border border-gray-600 rounded-lg pl-9 pr-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
+                         />
+                     </div>
+                     <div className="flex gap-2">
+                         <button 
+                            onClick={() => handleFilterChange('ALL')}
+                            className={`px-3 py-2 rounded-lg text-xs font-bold uppercase transition-colors ${historyFilter === 'ALL' ? 'bg-white text-black' : 'bg-gray-800 text-gray-400 border border-gray-600 hover:text-white'}`}
+                         >
+                             All
+                         </button>
+                         <button 
+                            onClick={() => handleFilterChange('IN')}
+                            className={`px-3 py-2 rounded-lg text-xs font-bold uppercase transition-colors flex items-center gap-1 ${historyFilter === 'IN' ? 'bg-emerald-600 text-white' : 'bg-gray-800 text-gray-400 border border-gray-600 hover:text-emerald-400'}`}
+                         >
+                             <ArrowDownLeft size={14} /> In
+                         </button>
+                         <button 
+                            onClick={() => handleFilterChange('OUT')}
+                            className={`px-3 py-2 rounded-lg text-xs font-bold uppercase transition-colors flex items-center gap-1 ${historyFilter === 'OUT' ? 'bg-gray-600 text-white' : 'bg-gray-800 text-gray-400 border border-gray-600 hover:text-gray-300'}`}
+                         >
+                             <ArrowUpRight size={14} /> Out
+                         </button>
+                     </div>
+                 </div>
               </div>
               
               {/* List */}
               <div className="flex-1 overflow-y-auto p-6 space-y-3">
                  {currentHistory.length === 0 ? (
-                     <div className="text-center text-gray-500 py-10">No history available.</div>
+                     <div className="text-center text-gray-500 py-10 flex flex-col items-center">
+                         <Filter size={32} className="mb-3 opacity-20"/>
+                         <p>No transactions found.</p>
+                     </div>
                  ) : (
                      currentHistory.map((tx) => (
                         <div key={tx.id} className="flex justify-between items-center bg-gray-900/50 p-4 rounded-xl border border-gray-700 hover:border-emerald-500/30 transition-colors">
