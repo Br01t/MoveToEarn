@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { User, Zone, Badge, Rarity, LeaderboardConfig, LeaderboardMetric, LevelConfig } from '../types';
-import { Trophy, Medal, Map as MapIcon, Award, Flag, Crown, Zap, Mountain, Globe, Home, Landmark, Swords, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users, Clock, Coins, Activity, X, Egg, Baby, MapPin, Smile, Wind, Compass, Navigation, TrendingUp, Move, Target, Watch, Droplets, Shield, Star, BatteryCharging, Flame, Truck, CloudLightning, Hexagon, FastForward, Plane, Layers, Briefcase, GraduationCap, Brain, Crosshair, Anchor, Heart, Lock, Disc, Feather, FlagTriangleRight, Globe2, Camera, Sparkles, Radio, BookOpen, Waves, Snowflake, CloudRain, ThermometerSnowflake, SunDim, MoonStar, Atom, Sword, Axe, Ghost, Ship, PlusSquare, Skull, ChevronsUp, Orbit, CloudFog, Circle, Infinity, Sparkle, ArrowUpCircle, Eye, Type, Delete, PenTool } from 'lucide-react';
+import { Trophy, Medal, Map as MapIcon, Award, Flag, Crown, Zap, Mountain, Globe, Home, Landmark, Swords, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users, Clock, Coins, Activity, X, Egg, Baby, MapPin, Smile, Wind, Compass, Navigation, TrendingUp, Move, Target, Watch, Droplets, Shield, Star, BatteryCharging, Flame, Truck, CloudLightning, Hexagon, FastForward, Plane, Layers, Briefcase, GraduationCap, Brain, Crosshair, Anchor, Heart, Lock, Disc, Feather, FlagTriangleRight, Globe2, Camera, Sparkles, Radio, BookOpen, Waves, Snowflake, CloudRain, ThermometerSnowflake, SunDim, MoonStar, Atom, Sword, Axe, Ghost, Ship, PlusSquare, Skull, ChevronsUp, Orbit, CloudFog, Circle, Infinity, Sparkle, ArrowUpCircle, Eye, Type, Delete, PenTool, Search } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 
 interface LeaderboardProps {
@@ -293,29 +293,25 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
   const { t } = useLanguage();
   const [activeBoardId, setActiveBoardId] = useState<string>(leaderboards[0]?.id || 'global_km');
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const activeBoard = leaderboards.find(b => b.id === activeBoardId) || leaderboards[0];
+
+  const handleBoardChange = (id: string) => {
+      setActiveBoardId(id);
+      setSearchQuery('');
+  };
 
   // --- SCORE CALCULATION LOGIC ---
   const getScore = (user: Omit<User, 'inventory'> | User, config: LeaderboardConfig): number => {
       // Metric logic now applies generally to all users based on available profile data
-      
-      // NOTE: For 'other' users, we might not have runHistory loaded in the frontend state 
-      // (to save bandwidth), so we fallback to aggregate fields in the profile table.
-      // Ideally, the backend would compute temporary leaderboard scores. 
-      // Here we approximate for the frontend view using available profile data.
-
       const isMe = user.id === currentUser.id;
       
       switch(config.metric) {
           case 'TOTAL_KM': 
-              // Profile.totalKm is lifetime. Good for permanent boards.
-              // For temporary, we'd need a backend view or store seasonal km in profile.
-              // Fallback: Show lifetime for now.
               return user.totalKm;
               
           case 'OWNED_ZONES': 
-              // We have all zones loaded in frontend state, so we can calculate this accurately.
               return zones.filter(z => z.ownerId === user.id).length;
               
           case 'RUN_BALANCE': 
@@ -325,8 +321,6 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
               return user.govBalance;
               
           case 'UNIQUE_ZONES': 
-              // Hard to calculate without full history for everyone.
-              // Approximation: totalKm / 5 (just for visual filler if history missing)
               if (isMe && currentUser.runHistory) {
                   return new Set(currentUser.runHistory.map(r => r.location)).size;
               }
@@ -376,22 +370,28 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
   }
 
   // Combine current user (full data) with all other users (profile data)
-  // Ensure we don't duplicate the current user if they are in the allUsers list
   const allUserList = Object.values(users) as Array<Omit<User, 'inventory'>>;
-  // If currentUser is not in allUsers (e.g. strict separate state), add them. 
-  // But usually useGameState updates allUsers. We'll dedup by ID just in case.
   const uniqueUsers = new Map<string, Omit<User, 'inventory'> | User>();
   
   allUserList.forEach(u => uniqueUsers.set(u.id, u));
-  uniqueUsers.set(currentUser.id, currentUser); // Ensure current user is latest
+  uniqueUsers.set(currentUser.id, currentUser);
 
-  const rankings = Array.from(uniqueUsers.values()).map((u) => {
+  // 1. Calculate All Scores & Sort (The "Truth")
+  const allRankings = Array.from(uniqueUsers.values()).map((u) => {
      return { 
          ...u, 
          score: getScore(u, activeBoard), 
          badgeId: u.favoriteBadgeId 
      };
   }).sort((a, b) => b.score - a.score);
+
+  // 2. Map to add 'rank' property, THEN filter by search query
+  const displayedRankings = allRankings.map((u, index) => ({
+      ...u,
+      rank: index + 1
+  })).filter(u => 
+      u.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const now = Date.now();
   const endTime = activeBoard.endTime || 0;
@@ -428,7 +428,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
                   {leaderboards.map(board => (
                       <button
                           key={board.id}
-                          onClick={() => setActiveBoardId(board.id)}
+                          onClick={() => handleBoardChange(board.id)}
                           className={`flex items-center justify-between p-3 rounded-xl border transition-all text-left group ${
                               activeBoardId === board.id 
                               ? 'bg-emerald-900/20 border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.2)]' 
@@ -490,6 +490,26 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
                   </div>
               </div>
 
+              {/* Search Bar */}
+              <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" size={16} />
+                  <input 
+                      type="text" 
+                      placeholder="Search runner..." 
+                      className="w-full bg-gray-800 border border-gray-700 rounded-xl pl-10 pr-10 py-3 text-white focus:border-emerald-500 focus:outline-none transition-colors"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                  {searchQuery && (
+                      <button 
+                          onClick={() => setSearchQuery('')}
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-white"
+                      >
+                          <X size={16} />
+                      </button>
+                  )}
+              </div>
+
               {/* Table */}
               <div className="bg-gray-800 border border-gray-700 rounded-xl overflow-hidden shadow-2xl">
                 <table className="w-full text-left">
@@ -506,12 +526,12 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-700">
-                    {rankings.map((user, index) => {
+                    {displayedRankings.map((user) => {
                       const isMe = user.id === currentUser.id;
                       let rankIcon = null;
-                      if (index === 0) rankIcon = <Medal className="text-yellow-400" size={24} />;
-                      else if (index === 1) rankIcon = <Medal className="text-gray-300" size={24} />;
-                      else if (index === 2) rankIcon = <Medal className="text-amber-600" size={24} />;
+                      if (user.rank === 1) rankIcon = <Medal className="text-yellow-400" size={24} />;
+                      else if (user.rank === 2) rankIcon = <Medal className="text-gray-300" size={24} />;
+                      else if (user.rank === 3) rankIcon = <Medal className="text-amber-600" size={24} />;
 
                       const userBadge = user.badgeId ? badges.find(b => b.id === user.badgeId) : null;
 
@@ -523,7 +543,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
                         >
                           <td className="px-4 md:px-6 py-4 font-bold text-white">
                             <div className="flex items-center gap-3">
-                              <span className="w-6 text-lg text-center">{index + 1}</span>
+                              <span className="w-6 text-lg text-center">{user.rank}</span>
                               {rankIcon}
                             </div>
                           </td>
@@ -531,7 +551,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
                             <div className="flex items-center gap-4">
                               <div className="relative">
                                   <img src={user.avatar} alt={user.name} className="w-10 h-10 rounded-full bg-gray-600 object-cover ring-2 ring-gray-700 group-hover:border-emerald-500 transition-colors" />
-                                  {index === 0 && <Crown size={14} className="absolute -top-2 -right-1 text-yellow-500 fill-yellow-500 animate-pulse" />}
+                                  {user.rank === 1 && <Crown size={14} className="absolute -top-2 -right-1 text-yellow-500 fill-yellow-500 animate-pulse" />}
                               </div>
                               <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-3">
                                   <span className={`font-bold text-lg ${isMe ? 'text-emerald-400' : 'text-white group-hover:text-emerald-300 transition-colors'}`}>
@@ -554,6 +574,13 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
                         </tr>
                       );
                     })}
+                    {displayedRankings.length === 0 && (
+                        <tr>
+                            <td colSpan={3} className="px-6 py-8 text-center text-gray-500">
+                                No runners found matching "{searchQuery}"
+                            </td>
+                        </tr>
+                    )}
                   </tbody>
                 </table>
               </div>

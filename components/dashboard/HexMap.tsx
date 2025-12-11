@@ -58,6 +58,24 @@ const HexMap = forwardRef<SVGSVGElement, HexMapProps>(({
     return '#f87171';
   };
 
+  const getBadgeColor = (zone: Zone, boosted: boolean, shielded: boolean) => {
+      if (zone.ownerId === user.id) {
+          if (boosted) return '#d97706'; // amber-600
+          if (shielded) return '#0891b2'; // cyan-600
+          return '#064e3b'; // emerald-900
+      }
+      return '#7f1d1d'; // red-900
+  };
+
+  const getBadgeStroke = (zone: Zone, boosted: boolean, shielded: boolean) => {
+      if (zone.ownerId === user.id) {
+          if (boosted) return '#fbbf24'; // amber-400
+          if (shielded) return '#06b6d4'; // cyan-400
+          return '#34d399'; // emerald-400
+      }
+      return '#ef4444'; // red-500
+  };
+
   return (
     <div 
         className="absolute inset-0 cursor-move bg-[radial-gradient(#1f2937_1px,transparent_1px)] [background-size:20px_20px] touch-none"
@@ -159,37 +177,59 @@ const HexMap = forwardRef<SVGSVGElement, HexMapProps>(({
                   
                   <polygon points={getHexPoints()} fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="1" transform="scale(0.85)" className="transition-all duration-300 opacity-50 group-hover:opacity-100 group-hover:stroke-white/40"/>
                   
-                  <foreignObject x={-HEX_SIZE} y={-HEX_SIZE} width={HEX_SIZE * 2} height={HEX_SIZE * 2} pointerEvents="none">
-                      <div className="w-full h-full flex flex-col items-center justify-center text-center p-2 leading-none pointer-events-none relative gap-2">
-                        <div className="flex items-center justify-center w-full">
-                           <span className="text-xs sm:text-sm font-black text-white tracking-wider drop-shadow-lg leading-tight whitespace-normal break-words max-w-[150px] transition-transform duration-300 group-hover:scale-105" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>
-                             {zone.name}
-                           </span>
-                        </div>
+                  {/* Replaced foreignObject with pure SVG elements for iOS support */}
+                  <g pointerEvents="none">
+                      {/* 1. Zone Name */}
+                      <text 
+                          x="0" 
+                          y="-20" 
+                          textAnchor="middle" 
+                          dominantBaseline="middle"
+                          fill="white"
+                          fontSize="12"
+                          fontWeight="900"
+                          style={{ textShadow: '0 2px 3px rgba(0,0,0,0.9)', letterSpacing: '0.05em' }}
+                      >
+                          {zone.name.length > 18 ? zone.name.substring(0, 16) + '..' : zone.name}
+                      </text>
 
-                        <div className="flex flex-col items-center justify-center w-full">
-                           <div className="flex justify-center w-full mb-2">
-                              <span className={`text-lg font-bold text-white drop-shadow-md px-2 py-0.5 rounded-full border border-white/20 transition-colors duration-300 ${zone.ownerId === user.id ? (boosted ? 'bg-amber-600/90 border-amber-400' : (shielded ? 'bg-cyan-800/90 border-cyan-500' : 'bg-emerald-900/80')) : 'bg-red-900/80'}`}>
-                                {zone.interestRate}%
-                              </span>
-                            </div>
-                            {(shielded || boosted) && (
-                                <div className="flex items-center justify-center gap-2 h-8">
-                                  {shielded && (
-                                      <div className="bg-cyan-950 p-1.5 rounded-full border border-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.8)] animate-pulse z-10">
-                                          <Shield size={24} className="text-cyan-100 fill-cyan-400/50" />
-                                      </div>
-                                  )}
-                                  {boosted && (
-                                      <div className="bg-amber-950 p-1.5 rounded-full border border-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.8)] animate-pulse z-10">
-                                          <Zap size={24} className="text-amber-100 fill-amber-400/50" />
-                                      </div>
-                                  )}
-                                </div>
-                            )}
-                        </div>
-                      </div>
-                  </foreignObject>
+                      {/* 2. Yield Badge */}
+                      <g transform="translate(-22, -5)">
+                          <rect 
+                              x="0" 
+                              y="0" 
+                              width="44" 
+                              height="20" 
+                              rx="6" 
+                              fill={getBadgeColor(zone, boosted, shielded)}
+                              fillOpacity="0.9"
+                              stroke={getBadgeStroke(zone, boosted, shielded)}
+                              strokeWidth="1"
+                          />
+                          <text 
+                              x="22" 
+                              y="14" 
+                              textAnchor="middle" 
+                              fill="white"
+                              fontSize="11"
+                              fontWeight="bold"
+                          >
+                              {zone.interestRate}%
+                          </text>
+                      </g>
+
+                      {/* 3. Status Icons */}
+                      {(shielded || boosted) && (
+                          <g transform="translate(-10, 22)">
+                              {shielded && !boosted && (
+                                  <Shield size={20} color="#67e8f9" fill="rgba(8, 145, 178, 0.5)" />
+                              )}
+                              {boosted && (
+                                  <Zap size={20} color="#fbbf24" fill="rgba(217, 119, 6, 0.5)" />
+                              )}
+                          </g>
+                      )}
+                  </g>
                 </g>
               );
             })}
