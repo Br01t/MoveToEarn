@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { User, Zone, RunAnalysisData, RunEntry } from '../types';
 import { getDistanceFromLatLonInKm, calculateHexPosition } from '../utils/geo';
@@ -9,9 +10,10 @@ interface RunWorkflowProps {
     zones: Zone[];
     setUser: React.Dispatch<React.SetStateAction<User | null>>;
     setZones: React.Dispatch<React.SetStateAction<Zone[]>>;
+    logTransaction: (userId: string, type: 'IN' | 'OUT', token: 'RUN' | 'GOV', amount: number, description: string) => Promise<void>;
 }
 
-export const useRunWorkflow = ({ user, zones, setUser, setZones }: RunWorkflowProps) => {
+export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction }: RunWorkflowProps) => {
   // Queue for processing multiple runs
   const [pendingRunsQueue, setPendingRunsQueue] = useState<RunAnalysisData[]>([]);
   
@@ -137,6 +139,11 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones }: RunWorkflowPr
           avgSpeed: data.avgSpeed
       };
 
+      // LOG REWARD TRANSACTION
+      if (result.totalRunEarned > 0) {
+          logTransaction(currentUser.id, 'IN', 'RUN', result.totalRunEarned, `Run Reward: ${result.locationName}`);
+      }
+
       const finalUser = {
           ...currentUser,
           runHistory: [newRun, ...currentUser.runHistory],
@@ -163,6 +170,10 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones }: RunWorkflowPr
       
       const pendingZone = zoneCreationQueue[0];
       if (user.runBalance < MINT_COST) return { success: false, msg: "Insufficient funds" };
+
+      // LOG TRANSACTIONS
+      logTransaction(user.id, 'OUT', 'RUN', MINT_COST, `Zone Mint Fee: ${customName}`);
+      logTransaction(user.id, 'IN', 'GOV', MINT_REWARD_GOV, `Zone Mint Reward: ${customName}`);
 
       const hasCountryCode = / - [A-Z]{2}$/.test(customName);
       const finalName = hasCountryCode ? customName : `${customName} - XX`;

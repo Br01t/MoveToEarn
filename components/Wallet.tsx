@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { User } from '../types';
+import { User, Transaction } from '../types';
 import { Wallet as WalletIcon, CheckCircle, Link as LinkIcon, Activity, Crown, History, ArrowDownLeft, ArrowUpRight, Flame, X } from 'lucide-react';
 import Pagination from './Pagination';
 import { useLanguage } from '../LanguageContext';
@@ -11,6 +11,7 @@ import WalletActions from './wallet/WalletActions';
 
 interface WalletProps {
   user: User;
+  transactions: Transaction[];
   govToRunRate: number;
   onBuyFiat: (amount: number) => void;
   onSwapGovToRun: (amount: number) => void;
@@ -18,28 +19,7 @@ interface WalletProps {
 
 const TRANSACTIONS_PER_PAGE = 7;
 
-// Expanded Mock Transactions
-const mockTransactions = [
-    { id: 1, type: 'IN', token: 'RUN', amount: '+55.00', label: 'Run Reward', date: '2h ago', status: 'Confirmed' },
-    { id: 2, type: 'OUT', token: 'RUN', amount: '-250.00', label: 'Market Purchase', date: '5h ago', status: 'Confirmed' },
-    { id: 3, type: 'IN', token: 'GOV', amount: '+10.00', label: 'Zone Conquest', date: '1d ago', status: 'Confirmed' },
-    { id: 4, type: 'OUT', token: 'RUN', amount: '-50.00', label: 'Mint Fee', date: '2d ago', status: 'Confirmed' },
-    { id: 5, type: 'IN', token: 'RUN', amount: '+12.50', label: 'Run Reward', date: '3d ago', status: 'Confirmed' },
-    { id: 6, type: 'OUT', token: 'GOV', amount: '-50.00', label: 'Premium Sub', date: '4d ago', status: 'Confirmed' },
-    { id: 7, type: 'IN', token: 'GOV', amount: '+500.00', label: 'Fiat Purchase', date: '5d ago', status: 'Confirmed' },
-    { id: 8, type: 'OUT', token: 'RUN', amount: '-500.00', label: 'Boost Item', date: '6d ago', status: 'Confirmed' },
-    { id: 9, type: 'IN', token: 'RUN', amount: '+8.20', label: 'Run Reward', date: '1w ago', status: 'Confirmed' },
-    { id: 10, type: 'IN', token: 'RUN', amount: '+15.00', label: 'Daily Yield', date: '1w ago', status: 'Confirmed' },
-    { id: 11, type: 'OUT', token: 'RUN', amount: '-50.00', label: 'Mint Fee', date: '1w ago', status: 'Confirmed' },
-    { id: 12, type: 'IN', token: 'GOV', amount: '+5.00', label: 'Mint Reward', date: '1w ago', status: 'Confirmed' },
-    { id: 13, type: 'IN', token: 'GOV', amount: '+25.00', label: 'Mission Reward', date: '2w ago', status: 'Confirmed' },
-    { id: 14, type: 'IN', token: 'RUN', amount: '+100.00', label: 'Welcome Bonus', date: '2w ago', status: 'Confirmed' },
-    { id: 15, type: 'OUT', token: 'RUN', amount: '-250.00', label: 'Shield Item', date: '2w ago', status: 'Confirmed' },
-    { id: 16, type: 'IN', token: 'RUN', amount: '+4.50', label: 'Run Reward', date: '3w ago', status: 'Confirmed' },
-    { id: 17, type: 'IN', token: 'RUN', amount: '+11.20', label: 'Daily Yield', date: '3w ago', status: 'Confirmed' },
-];
-
-const Wallet: React.FC<WalletProps> = ({ user, govToRunRate, onBuyFiat, onSwapGovToRun }) => {
+const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuyFiat, onSwapGovToRun }) => {
   const { t } = useLanguage();
   const [isWalletConnected, setIsWalletConnected] = useState(false);
   
@@ -47,12 +27,20 @@ const Wallet: React.FC<WalletProps> = ({ user, govToRunRate, onBuyFiat, onSwapGo
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [historyPage, setHistoryPage] = useState(1);
 
+  // Filter Transactions for current user and sort (Double check)
+  const myTransactions = transactions.filter(t => t.userId === user.id).sort((a, b) => b.timestamp - a.timestamp);
+
   // Pagination Logic
-  const totalHistoryPages = Math.ceil(mockTransactions.length / TRANSACTIONS_PER_PAGE);
-  const currentHistory = mockTransactions.slice(
+  const totalHistoryPages = Math.ceil(myTransactions.length / TRANSACTIONS_PER_PAGE);
+  const currentHistory = myTransactions.slice(
       (historyPage - 1) * TRANSACTIONS_PER_PAGE,
       (historyPage) * TRANSACTIONS_PER_PAGE
   );
+
+  const formatDate = (ts: number) => {
+      const d = new Date(ts);
+      return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+  };
 
   return (
     <div className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
@@ -139,26 +127,30 @@ const Wallet: React.FC<WalletProps> = ({ user, govToRunRate, onBuyFiat, onSwapGo
                        {t('wallet.view_all')}
                    </button>
                 </div>
-                <div className="space-y-3 flex-1">
-                    {mockTransactions.slice(0, 4).map((tx) => (
-                        <div key={tx.id} className="flex justify-between items-center bg-gray-900/50 p-3 rounded-lg border border-gray-700/50 hover:border-gray-600 transition-colors">
-                            <div className="flex items-center gap-3">
-                                <div className={`p-2 rounded-lg ${tx.type === 'IN' ? 'bg-emerald-900/20 text-emerald-400' : 'bg-gray-700/30 text-gray-400'}`}>
-                                    {tx.type === 'IN' ? <ArrowDownLeft size={16} /> : <ArrowUpRight size={16} />}
+                <div className="space-y-3 flex-1 overflow-y-auto max-h-[300px]">
+                    {myTransactions.length === 0 ? (
+                        <div className="text-center text-gray-500 py-8 text-xs">No transactions found.</div>
+                    ) : (
+                        myTransactions.slice(0, 5).map((tx) => (
+                            <div key={tx.id} className="flex justify-between items-center bg-gray-900/50 p-3 rounded-lg border border-gray-700/50 hover:border-gray-600 transition-colors">
+                                <div className="flex items-center gap-3">
+                                    <div className={`p-2 rounded-lg ${tx.type === 'IN' ? 'bg-emerald-900/20 text-emerald-400' : 'bg-gray-700/30 text-gray-400'}`}>
+                                        {tx.type === 'IN' ? <ArrowDownLeft size={16} /> : <ArrowUpRight size={16} />}
+                                    </div>
+                                    <div>
+                                        <div className="text-xs font-bold text-gray-200 line-clamp-1" title={tx.description}>{tx.description}</div>
+                                        <div className="text-[10px] text-gray-500">{formatDate(tx.timestamp)}</div>
+                                    </div>
                                 </div>
-                                <div>
-                                    <div className="text-xs font-bold text-gray-200">{tx.label}</div>
-                                    <div className="text-[10px] text-gray-500">{tx.date}</div>
+                                <div className="text-right">
+                                    <div className={`font-mono text-xs font-bold ${tx.token === 'GOV' ? 'text-cyan-400' : (tx.type === 'IN' ? 'text-emerald-400' : 'text-white')}`}>
+                                        {tx.type === 'IN' ? '+' : '-'}{tx.amount.toFixed(2)} {tx.token}
+                                    </div>
+                                    <div className="text-[10px] text-gray-500 uppercase">{tx.token}</div>
                                 </div>
                             </div>
-                            <div className="text-right">
-                                <div className={`font-mono text-xs font-bold ${tx.token === 'GOV' ? 'text-cyan-400' : (tx.type === 'IN' ? 'text-emerald-400' : 'text-white')}`}>
-                                    {tx.amount} {tx.token}
-                                </div>
-                                <div className="text-[10px] text-gray-500">{tx.status}</div>
-                            </div>
-                        </div>
-                    ))}
+                        ))
+                    )}
                 </div>
             </div>
 
@@ -215,28 +207,31 @@ const Wallet: React.FC<WalletProps> = ({ user, govToRunRate, onBuyFiat, onSwapGo
               
               {/* List */}
               <div className="flex-1 overflow-y-auto p-6 space-y-3">
-                 {currentHistory.map((tx) => (
-                    <div key={tx.id} className="flex justify-between items-center bg-gray-900/50 p-4 rounded-xl border border-gray-700 hover:border-emerald-500/30 transition-colors">
-                        <div className="flex items-center gap-4">
-                            <div className={`p-3 rounded-xl ${tx.type === 'IN' ? 'bg-emerald-900/20 text-emerald-400' : 'bg-gray-700/30 text-gray-400'}`}>
-                                {tx.type === 'IN' ? <ArrowDownLeft size={20} /> : <ArrowUpRight size={20} />}
+                 {currentHistory.length === 0 ? (
+                     <div className="text-center text-gray-500 py-10">No history available.</div>
+                 ) : (
+                     currentHistory.map((tx) => (
+                        <div key={tx.id} className="flex justify-between items-center bg-gray-900/50 p-4 rounded-xl border border-gray-700 hover:border-emerald-500/30 transition-colors">
+                            <div className="flex items-center gap-4">
+                                <div className={`p-3 rounded-xl ${tx.type === 'IN' ? 'bg-emerald-900/20 text-emerald-400' : 'bg-gray-700/30 text-gray-400'}`}>
+                                    {tx.type === 'IN' ? <ArrowDownLeft size={20} /> : <ArrowUpRight size={20} />}
+                                </div>
+                                <div>
+                                    <div className="font-bold text-white text-sm">{tx.description}</div>
+                                    <div className="text-xs text-gray-500 font-mono mt-0.5">{formatDate(tx.timestamp)}</div>
+                                </div>
                             </div>
-                            <div>
-                                <div className="font-bold text-white text-sm">{tx.label}</div>
-                                <div className="text-xs text-gray-500 font-mono mt-0.5">{tx.date}</div>
+                            <div className="text-right">
+                                <div className={`font-mono text-sm font-bold ${tx.token === 'GOV' ? 'text-cyan-400' : (tx.type === 'IN' ? 'text-emerald-400' : 'text-white')}`}>
+                                    {tx.type === 'IN' ? '+' : '-'}{tx.amount.toFixed(2)} {tx.token}
+                                </div>
+                                <div className="text-[10px] font-bold uppercase tracking-wider text-gray-600 flex items-center justify-end gap-1">
+                                    <CheckCircle size={10} className="text-emerald-500" /> Confirmed
+                                </div>
                             </div>
                         </div>
-                        <div className="text-right">
-                            <div className={`font-mono text-sm font-bold ${tx.token === 'GOV' ? 'text-cyan-400' : (tx.type === 'IN' ? 'text-emerald-400' : 'text-white')}`}>
-                                {tx.amount} {tx.token}
-                            </div>
-                            <div className="text-[10px] font-bold uppercase tracking-wider text-gray-600 flex items-center justify-end gap-1">
-                                {tx.status === 'Confirmed' && <CheckCircle size={10} className="text-emerald-500" />}
-                                {tx.status}
-                            </div>
-                        </div>
-                    </div>
-                 ))}
+                     ))
+                 )}
               </div>
 
               {/* Pagination */}
