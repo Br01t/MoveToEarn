@@ -1,25 +1,25 @@
-
 {
   "name": "ZoneRun",
   "short_name": "ZoneRun",
   "description": "Move-to-Earn Strategy Game",
-  "start_url": "/",
+  "start_url": "/MoveToEarn/",
+  "scope": "/MoveToEarn/",
   "display": "standalone",
   "background_color": "#111827",
   "theme_color": "#111827",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/pwa-icon-192.png",
+      "src": "/MoveToEarn/pwa-icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/pwa-icon-512.png",
+      "src": "/MoveToEarn/pwa-icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     }
-    ]
+  ]
 }
