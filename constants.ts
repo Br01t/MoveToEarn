@@ -12,6 +12,8 @@ export const PREMIUM_COST = 50; // Cost in GOV
 
 export const ITEM_DURATION_SEC = 86400; // 24 Hours in seconds
 
+export const DEFAULT_ZONE_INTEREST_RATE = 2.0; // Default Yield % for new zones
+
 // --- ECONOMY RATES ---
 export const RUN_RATE_BASE = 12; // RUN per KM
 export const RUN_RATE_BOOST = 24; // RUN per KM (Boost Active)

@@ -236,6 +236,7 @@ const AppContent: React.FC = () => {
                   onClaim={handleClaimZone}
                   onBoost={handleBoostZone}
                   onDefend={handleDefendZone}
+                  onGetZoneLeaderboard={gameState.fetchZoneLeaderboard}
                 />
               )}
               {currentView === "MISSIONS" && <Missions user={user} zones={zones} missions={gameState.missions} badges={gameState.badges} />}

@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { User, Zone, Mission, Badge, Rarity, LevelConfig, LeaderboardConfig, BugReport, Suggestion } from '../types';
 import { Award, History, Coins, BarChart3, Shield, Trophy, MapPin, ChevronUp, ChevronDown, Users, X, Medal, Crown } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
@@ -26,6 +26,7 @@ interface ProfileProps {
   onClaim: (zoneId: string) => void;
   onBoost: (zoneId: string) => void;
   onDefend: (zoneId: string) => void;
+  onGetZoneLeaderboard: (zoneId: string) => Promise<any[]>;
 }
 
 const RUNS_PER_PAGE = 8;
@@ -34,7 +35,7 @@ const ZONES_PER_PAGE = 5;
 const Profile: React.FC<ProfileProps> = ({ 
     user, zones, missions = [], badges = [], levels = [], leaderboards = [], 
     bugReports = [], suggestions = [], allUsers = {},
-    onUpdateUser, onUpgradePremium, onClaim, onBoost, onDefend
+    onUpdateUser, onUpgradePremium, onClaim, onBoost, onDefend, onGetZoneLeaderboard
 }) => {
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<'ACHIEVEMENTS' | 'HISTORY'>('ACHIEVEMENTS');
@@ -44,7 +45,8 @@ const Profile: React.FC<ProfileProps> = ({
   const [runPage, setRunPage] = useState(1);
   const [zonePage, setZonePage] = useState(1);
   const [sortConfig, setSortConfig] = useState<{ key: 'rank' | 'count' | 'km'; direction: 'asc' | 'desc' }>({ key: 'km', direction: 'desc' });
-  const [selectedZoneDetail, setSelectedZoneDetail] = useState<string | null>(null);
+  const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
+  const [zoneLeaderboard, setZoneLeaderboard] = useState<any[]>([]);
 
   // --- DERIVED STATS ---
   const myZones = zones.filter(z => z.ownerId === user.id);
@@ -58,7 +60,7 @@ const Profile: React.FC<ProfileProps> = ({
 
   // Stats
   const totalRuns = user.runHistory.length;
-  const avgDistance = totalRuns > 0 ? (user.totalKm / totalRuns).toFixed(2) : '0.00';
+  // const avgDistance = totalRuns > 0 ? (user.totalKm / totalRuns).toFixed(2) : '0.00'; // Removed as requested
   const maxDistance = totalRuns > 0 ? Math.max(...user.runHistory.map(r => r.km)).toFixed(2) : '0.00';
 
   // --- LEVEL LOGIC ---
@@ -87,7 +89,14 @@ const Profile: React.FC<ProfileProps> = ({
   }
 
   // --- ZONE DATA LOOKUP FOR MODAL ---
-  const selectedZone = useMemo(() => zones.find(z => z.name === selectedZoneDetail), [zones, selectedZoneDetail]);
+  const selectedZone = useMemo(() => zones.find(z => z.id === selectedZoneId), [zones, selectedZoneId]);
+
+  useEffect(() => {
+      if (selectedZone) {
+          setZoneLeaderboard([]); // Clear while loading
+          onGetZoneLeaderboard(selectedZone.id).then(setZoneLeaderboard);
+      }
+  }, [selectedZone, onGetZoneLeaderboard]);
 
   const ownerDetails = useMemo(() => {
       if (!selectedZone) return null;
@@ -98,43 +107,45 @@ const Profile: React.FC<ProfileProps> = ({
       return { name: userData.name, avatar: userData.avatar, badge: userBadge };
   }, [selectedZone, allUsers, user, badges]);
 
-  const zoneLeaderboard = useMemo(() => {
-      if (!selectedZone) return [];
-      const zoneName = selectedZone.name;
-      const myRuns = user.runHistory.filter(r => r.location === zoneName);
-      const myTotalKm = myRuns.reduce((acc, r) => acc + r.km, 0);
-      const leaderboard = Object.values(allUsers).map((u: any) => {
-          if (u.id === user.id) return { id: u.id, name: u.name, avatar: u.avatar, km: myTotalKm };
-          const seed = (u.id.charCodeAt(u.id.length - 1) + zoneName.length) % 100;
-          const fakeKm = (u.totalKm * (seed / 100)) / 5;
-          return { id: u.id, name: u.name, avatar: u.avatar, km: fakeKm };
-      });
-      return leaderboard.sort((a, b) => b.km - a.km).slice(0, 10);
-  }, [selectedZone, allUsers, user]);
-
   // --- ZONE STATS & RANK LOGIC ---
   const sortedZoneStats = useMemo(() => {
-      // 1. Aggregate Stats from Run History
-      const stats: Record<string, { name: string; count: number; km: number }> = {};
+      // 1. Aggregate Stats from Run History using precise zoneBreakdown
+      const statsMap = new Map<string, { id: string; name: string; count: number; km: number }>();
+
       user.runHistory.forEach(run => {
-          if (!stats[run.location]) stats[run.location] = { name: run.location, count: 0, km: 0 };
-          stats[run.location].count += 1;
-          stats[run.location].km += run.km;
+          // A: Use precise breakdown if available
+          if (run.zoneBreakdown && Object.keys(run.zoneBreakdown).length > 0) {
+              Object.entries(run.zoneBreakdown).forEach(([zoneId, km]) => {
+                  const zoneDef = zones.find(z => z.id === zoneId);
+                  if (zoneDef) {
+                      const entry = statsMap.get(zoneId) || { id: zoneId, name: zoneDef.name, count: 0, km: 0 };
+                      entry.count += 1;
+                      entry.km += Number(km);
+                      statsMap.set(zoneId, entry);
+                  }
+              });
+          } 
+          // B: Fallback for legacy runs (aggregate by Location Name)
+          else {
+              const zoneDef = zones.find(z => z.name === run.location);
+              if (zoneDef) {
+                  const entry = statsMap.get(zoneDef.id) || { id: zoneDef.id, name: zoneDef.name, count: 0, km: 0 };
+                  entry.count += 1;
+                  entry.km += run.km;
+                  statsMap.set(zoneDef.id, entry);
+              }
+          }
       });
 
       // 2. Determine Rank based on Ownership or Record Proximity
-      const dataWithRank = Object.values(stats).map(stat => {
-          const zoneObj = zones.find(z => z.name === stat.name);
-          let rank = 999; // Default unranked/low rank
+      const dataWithRank = Array.from(statsMap.values()).map(stat => {
+          const zoneObj = zones.find(z => z.id === stat.id);
+          let rank = 999; 
 
           if (zoneObj) {
               if (zoneObj.ownerId === user.id) {
-                  // I am the owner -> Rank 1
                   rank = 1; 
               } else if (zoneObj.recordKm > 0) {
-                  // Not owner. Estimate rank based on how close my KM is to the record.
-                  // If myKm >= recordKm (but not owner), I am virtual #1 waiting to conquer.
-                  // Otherwise, estimate position. 
                   const ratio = stat.km / zoneObj.recordKm;
                   if (ratio >= 1) rank = 1;
                   else if (ratio > 0.8) rank = 2;
@@ -142,14 +153,9 @@ const Profile: React.FC<ProfileProps> = ({
                   else if (ratio > 0.4) rank = 4;
                   else rank = Math.floor((1 - ratio) * 10) + 5; 
               } else {
-                  // No record exists yet, I'm effectively #1 if I ran here
                   rank = 1;
               }
-          } else {
-              // Zone might be unminted or external
-              rank = 1; 
           }
-
           return { ...stat, rank };
       });
 
@@ -255,8 +261,12 @@ const Profile: React.FC<ProfileProps> = ({
                       <span className="text-white font-mono font-bold">{maxDistance} km</span>
                   </div>
                   <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-400">{t('profile.avg_dist')}</span>
-                      <span className="text-white font-mono font-bold">{avgDistance} km</span>
+                      <span className="text-sm text-gray-400">{t('profile.total_dist')}</span>
+                      <span className="text-white font-mono font-bold">{user.totalKm.toFixed(2)} km</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-400">{t('profile.total_runs')}</span>
+                      <span className="text-white font-mono font-bold">{totalRuns}</span>
                   </div>
               </div>
           </div>
@@ -351,7 +361,7 @@ const Profile: React.FC<ProfileProps> = ({
                               else if (rank === 3) rankColor = "text-amber-600";
 
                               return (
-                                  <div key={idx} className="grid grid-cols-12 gap-2 p-3 items-center hover:bg-gray-800 transition-colors cursor-pointer group" onClick={() => setSelectedZoneDetail(stat.name)}>
+                                  <div key={idx} className="grid grid-cols-12 gap-2 p-3 items-center hover:bg-gray-800 transition-colors cursor-pointer group" onClick={() => setSelectedZoneId(stat.id)}>
                                       <div className={`col-span-2 md:col-span-1 text-center font-black ${rankColor} text-sm flex items-center justify-center`}>
                                           {rankIcon} #{rank}
                                       </div>
@@ -426,7 +436,7 @@ const Profile: React.FC<ProfileProps> = ({
           <ZoneStatsModal 
               zone={selectedZone}
               user={user}
-              onClose={() => setSelectedZoneDetail(null)}
+              onClose={() => setSelectedZoneId(null)}
               ownerDetails={ownerDetails}
               zoneLeaderboard={zoneLeaderboard}
           />
