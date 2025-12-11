@@ -37,9 +37,13 @@ const AdminZonesTab: React.FC<AdminZonesTabProps> = ({ zones, onUpdateZone, onDe
 
   const handleSave = async () => {
     if (editingId && tempName) {
+      // Normalize number (replace comma with dot for locales)
+      const normalizedInterest = tempInterest.replace(',', '.');
+      const rateValue = parseFloat(normalizedInterest);
+
       const result = await onUpdateZone(editingId, {
           name: tempName,
-          interestRate: parseFloat(tempInterest) || 0
+          interestRate: isNaN(rateValue) ? 0 : rateValue
       });
       
       if (result.success) {
@@ -114,7 +118,9 @@ const AdminZonesTab: React.FC<AdminZonesTabProps> = ({ zones, onUpdateZone, onDe
                              placeholder="Zone Name"
                            />
                            <input 
-                             type="number" 
+                             type="number"
+                             step="0.01"
+                             min="0" 
                              value={tempInterest} 
                              onChange={(e) => setTempInterest(e.target.value)}
                              className="w-24 bg-gray-800 border border-emerald-500 rounded p-1 text-white text-sm"

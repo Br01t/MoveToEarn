@@ -575,13 +575,6 @@ export const useGameState = () => {
       await logTransaction(user.id, 'OUT', 'RUN', item.priceRun, `Market: ${item.name}`);
       await supabase.from('profiles').update({ run_balance: updatedUser.runBalance }).eq('id', user.id);
       
-      // Update inventory table (Not implemented in this MVP, assumed stored in profile or separate table? 
-      // Current schema implies inventory is client-side derived or simple. 
-      // We will assume items table manages stock, user inventory is not persisted in DB for MVP unless we add an 'inventory' table.
-      // Wait, MOCK data has inventory. Real DB needs 'inventory' table linking user_id and item_id.
-      // For this MVP, let's assume local state is enough or we add a simple JSON column to profiles?
-      // Actually, let's not break the app. We'll just update stock.)
-      
       const newQty = item.quantity - 1;
       await supabase.from('items').update({ quantity: newQty }).eq('id', item.id);
       setMarketItems(prev => prev.map(i => i.id === item.id ? { ...i, quantity: newQty } : i));
@@ -722,12 +715,36 @@ export const useGameState = () => {
   };
 
   const updateZone = async (id: string, updates: Partial<Zone>) => {
-      const { error } = await supabase.from('zones').update({
-          name: updates.name,
-          interest_rate: updates.interestRate
-      }).eq('id', id);
-      if (!error) await fetchGameData();
-      return { error: error?.message, success: !error };
+      // 1. Optimistic Update (Immediate Feedback)
+      setZones(prev => prev.map(z => z.id === id ? { ...z, ...updates } : z));
+
+      const dbUpdates: any = {};
+      if (updates.name !== undefined) dbUpdates.name = updates.name;
+      // Map interestRate from frontend to interest_rate in backend
+      if (updates.interestRate !== undefined) dbUpdates.interest_rate = updates.interestRate;
+
+      console.log(`🛠️ [UPDATE ZONE] ID: ${id}`, dbUpdates);
+
+      // 2. Perform DB Update and SELECT to verify
+      const { data, error } = await supabase.from('zones').update(dbUpdates).eq('id', id).select();
+      
+      if (error) {
+          console.error("❌ Zone update error:", error);
+          // Revert or refresh on error
+          await fetchGameData();
+          return { error: error.message, success: false };
+      }
+
+      if (data && data.length > 0) {
+          console.log("✅ Zone updated successfully:", data[0]);
+          return { success: true };
+      } else {
+          console.warn("⚠️ Zone update returned no data. Possible RLS issue.");
+          // If no data returned, it likely failed silently (RLS), so we refresh to revert local state
+          await fetchGameData();
+          // Explicitly return an error that the frontend can display
+          return { error: "Permission Denied (RLS policy blocks update)", success: false };
+      }
   };
 
   const deleteZone = async (id: string) => {
