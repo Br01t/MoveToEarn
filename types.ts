@@ -7,6 +7,16 @@ export type Rarity = 'COMMON' | 'RARE' | 'EPIC' | 'LEGENDARY';
 export type AchievementCategory = 'Distance' | 'Speed' | 'Technical' | 'TimeOfDay' | 'Zone' | 'Streak' | 'Exploration' | 'Social' | 'Meta' | 'Special' | 'Event' | 'Training' | 'Performance' | 'Endurance' | 'Economy' | 'Onboarding';
 export type Difficulty = 'Easy' | 'Medium' | 'Hard' | 'Expert' | 'Special';
 
+export interface Transaction {
+  id: string;
+  userId: string;
+  type: 'IN' | 'OUT';
+  token: 'RUN' | 'GOV';
+  amount: number;
+  description: string;
+  timestamp: number;
+}
+
 export interface Mission {
   id: string;
   title: string;

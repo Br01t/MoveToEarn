@@ -9,9 +9,10 @@ interface AchievementProps {
     missions: Mission[];
     badges: Badge[];
     setUser: React.Dispatch<React.SetStateAction<User | null>>;
+    logTransaction: (userId: string, type: 'IN' | 'OUT', token: 'RUN' | 'GOV', amount: number, description: string) => Promise<void>;
 }
 
-export const useAchievements = ({ user, zones, missions, badges, setUser }: AchievementProps) => {
+export const useAchievements = ({ user, zones, missions, badges, setUser, logTransaction }: AchievementProps) => {
   const [achievementQueue, setAchievementQueue] = useState<{ type: 'MISSION' | 'BADGE'; item: Mission | Badge }[]>([]);
   const [claimSummary, setClaimSummary] = useState<{ count: number; totalRun: number; totalGov: number } | null>(null);
 
@@ -35,6 +36,10 @@ export const useAchievements = ({ user, zones, missions, badges, setUser }: Achi
            if (m.rewardGov) additionalGov += m.rewardGov;
            hasChanges = true;
            newUnlockQueue.push({ type: 'MISSION', item: m });
+           
+           // LOG
+           if (m.rewardRun > 0) logTransaction(user.id, 'IN', 'RUN', m.rewardRun, `Mission Reward: ${m.title}`);
+           if (m.rewardGov && m.rewardGov > 0) logTransaction(user.id, 'IN', 'GOV', m.rewardGov, `Mission Reward: ${m.title}`);
         }
       }
     });
@@ -44,10 +49,18 @@ export const useAchievements = ({ user, zones, missions, badges, setUser }: Achi
       if (!newEarnedBadges.includes(b.id)) {
         if (checkAchievement(b, user, zones)) {
            newEarnedBadges.push(b.id);
-           additionalRun += (b.rewardRun || 0); 
-           if (b.rewardGov) additionalGov += b.rewardGov;
+           
+           const rRun = b.rewardRun || 0;
+           const rGov = b.rewardGov || 0;
+           
+           additionalRun += rRun; 
+           if (rGov) additionalGov += rGov;
            hasChanges = true;
            newUnlockQueue.push({ type: 'BADGE', item: b });
+
+           // LOG
+           if (rRun > 0) logTransaction(user.id, 'IN', 'RUN', rRun, `Badge Reward: ${b.name}`);
+           if (rGov > 0) logTransaction(user.id, 'IN', 'GOV', rGov, `Badge Reward: ${b.name}`);
         }
       }
     });

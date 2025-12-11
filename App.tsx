@@ -41,15 +41,16 @@ const AppContent: React.FC = () => {
 
   // 1. GAME STATE (Virtual Database)
   const gameState = useGameState();
-  const { user, zones, setUser, setZones, loading } = gameState;
+  const { user, zones, setUser, setZones, loading, transactions, logTransaction } = gameState;
 
   // 2. WORKFLOWS (Business Logic)
-  const runWorkflow = useRunWorkflow({ user, zones, setUser, setZones });
+  const runWorkflow = useRunWorkflow({ user, zones, setUser, setZones, logTransaction });
   const achievementSystem = useAchievements({ 
       user, zones, 
       missions: gameState.missions, 
       badges: gameState.badges, 
-      setUser 
+      setUser,
+      logTransaction 
   });
 
   // --- AUTOMATIC REDIRECT & MODAL HANDLING ---
@@ -168,7 +169,8 @@ const AppContent: React.FC = () => {
               {currentView === "MARKETPLACE" && <Marketplace user={user} items={gameState.marketItems} onBuy={gameState.buyItem} />}
               {currentView === "WALLET" && (
                   <Wallet 
-                      user={user} 
+                      user={user}
+                      transactions={transactions}
                       onBuyFiat={gameState.buyFiatGov} 
                       govToRunRate={gameState.govToRunRate}
                       onSwapGovToRun={gameState.swapGovToRun}
