@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
-import { User, Zone, Mission, Badge } from '../types';
+import { User, Zone, Mission, Badge, AchievementLog } from '../types';
 import { checkAchievement } from '../utils/rewards';
+import { supabase } from '../supabaseClient';
 
 interface AchievementProps {
     user: User | null;
@@ -19,19 +20,24 @@ export const useAchievements = ({ user, zones, missions, badges, setUser, logTra
   useEffect(() => {
     if (!user) return;
     
-    let newCompletedMissions = [...user.completedMissionIds];
-    let newEarnedBadges = [...user.earnedBadgeIds];
+    // Work with Logs instead of raw IDs for checking
+    let newMissionLog = [...user.missionLog];
+    let newBadgeLog = [...user.badgeLog];
+    
     let additionalRun = 0; 
     let additionalGov = 0;
     let hasChanges = false;
     
     const newUnlockQueue: { type: 'MISSION' | 'BADGE'; item: Mission | Badge }[] = [];
+    const timestamp = Date.now();
 
     // Check Missions
     missions.forEach((m) => {
-      if (!newCompletedMissions.includes(m.id)) {
+      // Check if already in log
+      if (!newMissionLog.some(log => log.id === m.id)) {
         if (checkAchievement(m, user, zones)) {
-           newCompletedMissions.push(m.id);
+           newMissionLog.push({ id: m.id, claimedAt: timestamp });
+           
            additionalRun += m.rewardRun;
            if (m.rewardGov) additionalGov += m.rewardGov;
            hasChanges = true;
@@ -46,9 +52,10 @@ export const useAchievements = ({ user, zones, missions, badges, setUser, logTra
 
     // Check Badges
     badges.forEach((b) => {
-      if (!newEarnedBadges.includes(b.id)) {
+      // Check if already in log
+      if (!newBadgeLog.some(log => log.id === b.id)) {
         if (checkAchievement(b, user, zones)) {
-           newEarnedBadges.push(b.id);
+           newBadgeLog.push({ id: b.id, claimedAt: timestamp });
            
            const rRun = b.rewardRun || 0;
            const rGov = b.rewardGov || 0;
@@ -66,17 +73,40 @@ export const useAchievements = ({ user, zones, missions, badges, setUser, logTra
     });
 
     if (hasChanges) {
+      const newRunBalance = user.runBalance + additionalRun;
+      const newGovBalance = user.govBalance + additionalGov;
+
+      // 1. Optimistic Update (Immediate UI Feedback)
       setUser((prev) =>
         prev
           ? {
               ...prev,
-              completedMissionIds: newCompletedMissions,
-              earnedBadgeIds: newEarnedBadges,
-              runBalance: prev.runBalance + additionalRun,
-              govBalance: prev.govBalance + additionalGov,
+              missionLog: newMissionLog,
+              badgeLog: newBadgeLog,
+              // Update helper arrays for compatibility
+              completedMissionIds: newMissionLog.map(x => x.id),
+              earnedBadgeIds: newBadgeLog.map(x => x.id),
+              runBalance: newRunBalance,
+              govBalance: newGovBalance,
             }
           : null
       );
+      
+      // 2. Persist to Supabase (Fire and Forget)
+      // We update the JSONB logs and the balances ONLY (Legacy columns removed)
+      const updateDb = async () => {
+          const { error } = await supabase.from('profiles').update({
+              mission_log: newMissionLog,
+              badge_log: newBadgeLog,
+              run_balance: newRunBalance,
+              gov_balance: newGovBalance
+          }).eq('id', user.id);
+
+          if (error) {
+              console.error("❌ Failed to save achievements to DB:", error);
+          }
+      };
+      updateDb();
       
       if (newUnlockQueue.length > 0) {
           setAchievementQueue(prev => [...prev, ...newUnlockQueue]);

@@ -24,7 +24,7 @@ import RunSummaryModal from "./components/RunSummaryModal";
 import SyncModal from "./components/dashboard/SyncModal";
 import LoginModal from "./components/auth/LoginModal";
 import { ViewState } from "./types";
-import { Layers, CheckCircle } from "lucide-react";
+import { Layers, CheckCircle, AlertTriangle, X, ShoppingBag } from "lucide-react";
 import { LanguageProvider, useLanguage } from "./LanguageContext";
 import { MINT_COST, MINT_REWARD_GOV } from "./constants";
 
@@ -38,13 +38,20 @@ const AppContent: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewState>("LANDING");
   const [showSyncModal, setShowSyncModal] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showInsufficientFundsModal, setShowInsufficientFundsModal] = useState(false);
 
   // 1. GAME STATE (Virtual Database)
   const gameState = useGameState();
   const { user, zones, setUser, setZones, loading, transactions, logTransaction, recoveryMode } = gameState;
 
   // 2. WORKFLOWS (Business Logic)
-  const runWorkflow = useRunWorkflow({ user, zones, setUser, setZones, logTransaction });
+  // Passed recordRun to ensure atomic DB updates
+  const runWorkflow = useRunWorkflow({ 
+      user, zones, setUser, setZones, 
+      logTransaction, 
+      recordRun: gameState.recordRun 
+  });
+  
   const achievementSystem = useAchievements({ 
       user, zones, 
       missions: gameState.missions, 
@@ -89,7 +96,9 @@ const AppContent: React.FC = () => {
   // --- UI Handlers Wrapper ---
   const handleZoneConfirm = (name: string) => {
       const result = runWorkflow.confirmZoneCreation(name);
-      if (!result.success) alert(t('alert.insufficient_run')); 
+      if (!result.success) {
+          setShowInsufficientFundsModal(true);
+      }
   };
 
   const handleClaimZone = (zoneId: string) => {
@@ -99,13 +108,14 @@ const AppContent: React.FC = () => {
           alert(t('alert.zone_shielded'));
           return;
       }
-      if (user.runBalance < 50) {
-          alert(t('alert.insufficient_run'));
+      // Conquest Cost Check
+      if (user.runBalance < 350) {
+          setShowInsufficientFundsModal(true);
           return;
       }
       if (window.confirm(t('alert.claim_confirm'))) {
           gameState.claimZone(zoneId);
-          alert(`${t('alert.zone_claimed')} +10 GOV.`);
+          alert(`${t('alert.zone_claimed')} +25 GOV.`);
       }
   };
 
@@ -143,6 +153,7 @@ const AppContent: React.FC = () => {
   const isAnyModalOpen = 
       showSyncModal || 
       showLoginModal ||
+      showInsufficientFundsModal ||
       runWorkflow.zoneCreationQueue.length > 0 || 
       !!runWorkflow.runSummary || 
       achievementSystem.achievementQueue.length > 0;
@@ -169,6 +180,7 @@ const AppContent: React.FC = () => {
                   onDefend={handleDefendZone}
                   onNavigate={setCurrentView}
                   onOpenSync={() => setShowSyncModal(true)}
+                  onGetZoneLeaderboard={gameState.fetchZoneLeaderboard}
                 />
               )}
               {currentView === "MARKETPLACE" && <Marketplace user={user} items={gameState.marketItems} onBuy={gameState.buyItem} />}
@@ -225,7 +237,7 @@ const AppContent: React.FC = () => {
                   suggestions={gameState.suggestions} 
                   leaderboards={gameState.leaderboards}
                   levels={gameState.levels}
-                  allUsers={gameState.allUsers} // <--- THE FIX
+                  allUsers={gameState.allUsers} 
                   onAddItem={gameState.addItem}
                   onUpdateItem={gameState.updateItem}
                   onRemoveItem={gameState.removeItem}
@@ -238,7 +250,7 @@ const AppContent: React.FC = () => {
                   onUpdateZone={gameState.updateZone}
                   onDeleteZone={gameState.deleteZone}
                   onTriggerBurn={() => alert("Burn Executed")}
-                  onDistributeRewards={() => alert("Rewards Distributed")}
+                  onDistributeRewards={gameState.distributeZoneRewards}
                   onResetSeason={() => { if(confirm("Reset?")) gameState.setAllUsers({}); }}
                   onUpdateExchangeRate={gameState.setGovToRunRate}
                   onAddLeaderboard={gameState.addLeaderboard}
@@ -270,6 +282,32 @@ const AppContent: React.FC = () => {
       </main>
 
       {/* --- GLOBAL MODALS --- */}
+
+      {/* Insufficient Funds Modal */}
+      {showInsufficientFundsModal && (
+          <div className="fixed inset-0 z-[250] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 animate-fade-in">
+              <div className="bg-gray-900 border-2 border-red-500 rounded-2xl w-full max-w-sm shadow-[0_0_50px_rgba(239,68,68,0.3)] overflow-hidden relative animate-slide-up">
+                  <div className="absolute top-0 right-0 p-4">
+                      <button onClick={() => setShowInsufficientFundsModal(false)} className="text-gray-500 hover:text-white"><X size={24}/></button>
+                  </div>
+                  <div className="p-8 text-center flex flex-col items-center">
+                      <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mb-4 animate-bounce">
+                          <AlertTriangle size={32} className="text-red-500" />
+                      </div>
+                      <h3 className="text-2xl font-black text-white uppercase tracking-tight mb-2">Insufficient RUN</h3>
+                      <p className="text-gray-400 text-sm mb-6">
+                          You don't have enough RUN tokens to perform this action. Run more to earn or visit the market.
+                      </p>
+                      <button 
+                          onClick={() => { setShowInsufficientFundsModal(false); setCurrentView("MARKETPLACE"); }}
+                          className="w-full py-3 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
+                      >
+                          <ShoppingBag size={18} /> Go to Market
+                      </button>
+                  </div>
+              </div>
+          </div>
+      )}
 
       {showLoginModal && (
           <LoginModal 

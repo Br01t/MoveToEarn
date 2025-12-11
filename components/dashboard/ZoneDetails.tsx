@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { Zone, User, Badge, Rarity } from '../../types';
-import { X, Crown, Clock, Shield, Medal, Lock, Zap, Swords, Flag, Award, Mountain, Globe, Home, Landmark, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users, AlertTriangle, CheckCircle } from 'lucide-react';
+import { X, Crown, Clock, Shield, Medal, Lock, Zap, Swords, Flag, Award, Mountain, Globe, Home, Landmark, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users, AlertTriangle, CheckCircle, Coins } from 'lucide-react';
 import { useLanguage } from '../../LanguageContext';
+import { CONQUEST_COST } from '../../constants';
 
 interface ZoneDetailsProps {
   zone: Zone;
@@ -171,6 +172,16 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
                 </div>
             </div>
 
+            {/* Interest Pool Display */}
+            <div className="bg-emerald-900/20 p-2 rounded-lg border border-emerald-500/20 text-center flex items-center justify-center gap-3">
+                <div className="text-left">
+                    <div className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Interest Pool</div>
+                    <div className="font-mono text-emerald-400 font-bold text-sm flex items-center gap-1">
+                        <Coins size={12} /> {(zone.interestPool || 0).toFixed(4)} RUN
+                    </div>
+                </div>
+            </div>
+
             {isBoostActive && zone.boostExpiresAt && (
              <div className="flex items-center justify-between text-sm bg-amber-500/10 p-2 rounded-lg border border-amber-500/30">
                <span className="text-amber-400 flex items-center gap-1 text-xs"><Clock size={12}/> {t('zone.boosted')}</span>
@@ -249,7 +260,7 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
                          onClick={() => onClaim(zone.id)}
                          className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-[0_0_15px_rgba(16,185,129,0.3)] animate-pulse"
                      >
-                         <Swords size={18} /> {t('zone.action.claim')} (50 RUN)
+                         <Swords size={18} /> {t('zone.action.claim')} ({CONQUEST_COST} RUN)
                      </button>
                  ) : (
                      <div className="bg-red-900/20 border border-red-500/30 p-3 rounded-lg text-center">

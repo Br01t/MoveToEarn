@@ -67,6 +67,14 @@ export interface RunEntry {
   elevation?: number; // meters
   maxSpeed?: number; // km/h
   avgSpeed?: number; // km/h
+  involvedZones?: string[];
+  // NEW: Exact breakdown of KM per zone ID { "zone-uuid": 5.2, "zone-uuid-2": 1.1 }
+  zoneBreakdown?: Record<string, number>; 
+}
+
+export interface AchievementLog {
+  id: string;
+  claimedAt: number;
 }
 
 export interface User {
@@ -81,8 +89,15 @@ export interface User {
   isAdmin: boolean; // Added Admin Flag
   inventory: InventoryItem[];
   runHistory: RunEntry[];
+  
+  // New Logging System
+  missionLog: AchievementLog[];
+  badgeLog: AchievementLog[];
+  
+  // Derived helper arrays for backward compatibility with UI components
   completedMissionIds: string[];
   earnedBadgeIds: string[];
+  
   favoriteBadgeId?: string;
 }
 
@@ -97,6 +112,8 @@ export interface Zone {
   defenseLevel: number;
   recordKm: number;
   interestRate: number;
+  interestPool: number; // Interest Pool for the zone (accumulates 2% of RUN)
+  lastDistributionTime?: number; // Track when rewards were last distributed
   boostExpiresAt?: number;
   shieldExpiresAt?: number;
 }
