@@ -306,7 +306,7 @@ export const useGameState = () => {
       setTransactions(prev => [newTx, ...prev]);
 
       // DB Insert
-      await supabase.from('transactions').insert({
+      const { error } = await supabase.from('transactions').insert({
           id: newTx.id,
           user_id: userId,
           type: type,
@@ -315,6 +315,11 @@ export const useGameState = () => {
           description: description,
           timestamp: newTx.timestamp
       });
+
+      if (error) {
+          console.error("❌ [TRANSACTION LOG FAILED]", error.message);
+          // Optional: Revert optimistic update here if critical
+      }
   };
 
   // --- STORAGE HELPERS ---
@@ -363,7 +368,7 @@ export const useGameState = () => {
       const newBalance = user.runBalance - item.priceRun;
       
       // 1. Log Transaction
-      logTransaction(user.id, 'OUT', 'RUN', item.priceRun, `Market Purchase: ${item.name}`);
+      await logTransaction(user.id, 'OUT', 'RUN', item.priceRun, `Market Purchase: ${item.name}`);
 
       // 2. Update User State
       const existingItem = user.inventory.find(i => i.id === item.id);
@@ -394,8 +399,8 @@ export const useGameState = () => {
       const runReceived = govAmount * govToRunRate;
       
       // Log Transactions
-      logTransaction(user.id, 'OUT', 'GOV', govAmount, 'Liquidity Swap (Out)');
-      logTransaction(user.id, 'IN', 'RUN', runReceived, 'Liquidity Swap (In)');
+      await logTransaction(user.id, 'OUT', 'GOV', govAmount, 'Liquidity Swap (Out)');
+      await logTransaction(user.id, 'IN', 'RUN', runReceived, 'Liquidity Swap (In)');
 
       const newUser = {
           ...user,
@@ -414,7 +419,7 @@ export const useGameState = () => {
       if (!user) return;
       const govAmount = amountUSD * 10; // Rate example
       
-      logTransaction(user.id, 'IN', 'GOV', govAmount, `Fiat Purchase (€${amountUSD})`);
+      await logTransaction(user.id, 'IN', 'GOV', govAmount, `Fiat Purchase (€${amountUSD})`);
 
       const newUser = { ...user, govBalance: user.govBalance + govAmount };
       setUser(newUser);
@@ -429,8 +434,8 @@ export const useGameState = () => {
       const targetZone = zones.find(z => z.id === zoneId);
       if (!targetZone) return;
 
-      logTransaction(user.id, 'OUT', 'RUN', 50, `Zone Conquest Fee: ${targetZone.name}`);
-      logTransaction(user.id, 'IN', 'GOV', CONQUEST_REWARD_GOV, `Zone Conquest Reward: ${targetZone.name}`);
+      await logTransaction(user.id, 'OUT', 'RUN', 50, `Zone Conquest Fee: ${targetZone.name}`);
+      await logTransaction(user.id, 'IN', 'GOV', CONQUEST_REWARD_GOV, `Zone Conquest Reward: ${targetZone.name}`);
 
       const newUser = {
           ...user,
@@ -586,16 +591,26 @@ export const useGameState = () => {
       const newRun = (profile.run_balance || 0) + runChange;
       const newGov = (profile.gov_balance || 0) + govChange;
 
+      // UPDATE PROFILE
       const { error: updateError } = await supabase.from('profiles').update({ run_balance: newRun, gov_balance: newGov }).eq('id', userId);
-      if (updateError) return { error: updateError.message };
+      
+      if (updateError) {
+          console.error("❌ Admin Balance Update Failed:", updateError.message);
+          return { error: updateError.message };
+      }
 
+      // UPDATE LOCAL STATE
       if (allUsers[userId]) {
           setAllUsers(prev => ({ ...prev, [userId]: { ...prev[userId], runBalance: newRun, govBalance: newGov } }));
           if (user && user.id === userId) setUser(prev => prev ? ({ ...prev, runBalance: newRun, govBalance: newGov }) : null);
       }
       
-      if (runChange !== 0) logTransaction(userId, runChange > 0 ? 'IN' : 'OUT', 'RUN', Math.abs(runChange), 'Admin Adjustment');
-      if (govChange !== 0) logTransaction(userId, govChange > 0 ? 'IN' : 'OUT', 'GOV', Math.abs(govChange), 'Admin Adjustment');
+      // LOG TRANSACTIONS (Awaited to ensure completion)
+      const promises = [];
+      if (runChange !== 0) promises.push(logTransaction(userId, runChange > 0 ? 'IN' : 'OUT', 'RUN', Math.abs(runChange), 'Admin Adjustment'));
+      if (govChange !== 0) promises.push(logTransaction(userId, govChange > 0 ? 'IN' : 'OUT', 'GOV', Math.abs(govChange), 'Admin Adjustment'));
+      
+      await Promise.all(promises);
 
       return { success: true };
   };
