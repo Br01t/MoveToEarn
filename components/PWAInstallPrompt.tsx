@@ -4,40 +4,26 @@ import { Download, X, Share, PlusSquare } from "lucide-react";
 
 interface PWAInstallPromptProps {
   isAuthenticated: boolean;
+  deferredPrompt: any;
+  isIOS: boolean;
+  isStandalone: boolean;
+  onInstall: () => void;
+  forceShow?: boolean;
+  onCloseForce?: () => void;
 }
 
-const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ isAuthenticated }) => {
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ 
+    isAuthenticated, deferredPrompt, isIOS, isStandalone, onInstall, forceShow, onCloseForce 
+}) => {
   const [showPrompt, setShowPrompt] = useState(false);
-  const [isIOS, setIsIOS] = useState(false);
-  const [isStandalone, setIsStandalone] = useState(false);
 
-  // 1. Capture the install event whenever it happens (even before login)
+  // Logic to Show/Hide Prompt based on Auth Status
   useEffect(() => {
-    // Check Standalone Status (Installed)
-    const isStandaloneMode = window.matchMedia("(display-mode: standalone)").matches || (window.navigator as any).standalone;
-    setIsStandalone(isStandaloneMode);
+    if (forceShow) {
+        setShowPrompt(true);
+        return;
+    }
 
-    // Detect iOS
-    const userAgent = window.navigator.userAgent.toLowerCase();
-    const isIosDevice = /iphone|ipad|ipod/.test(userAgent);
-    setIsIOS(isIosDevice);
-
-    // Listen for PWA Prompt Event (Android/Desktop)
-    const handleBeforeInstallPrompt = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-    };
-
-    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
-
-    return () => {
-      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
-    };
-  }, []);
-
-  // 2. Logic to Show/Hide Prompt based on Auth Status
-  useEffect(() => {
     // If already installed or not logged in, hide.
     if (isStandalone || !isAuthenticated) {
         setShowPrompt(false);
@@ -53,18 +39,11 @@ const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ isAuthenticated }) 
     }, 3000); // 3s delay for smoother UX
 
     return () => clearTimeout(timer);
-  }, [isAuthenticated, isStandalone, deferredPrompt, isIOS]);
+  }, [isAuthenticated, isStandalone, deferredPrompt, isIOS, forceShow]);
 
-  const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
-
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-
-    if (outcome === "accepted") {
-      setDeferredPrompt(null);
+  const handleClose = () => {
       setShowPrompt(false);
-    }
+      if (onCloseForce) onCloseForce();
   };
 
   if (!showPrompt) return null;
@@ -75,7 +54,7 @@ const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ isAuthenticated }) 
         {/* Background Glow */}
         <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/20 rounded-full blur-[50px] -mr-10 -mt-10 pointer-events-none"></div>
 
-        <button onClick={() => setShowPrompt(false)} className="absolute top-3 right-3 text-gray-400 hover:text-white p-1 bg-black/20 rounded-full">
+        <button onClick={handleClose} className="absolute top-3 right-3 text-gray-400 hover:text-white p-1 bg-black/20 rounded-full">
           <X size={18} />
         </button>
 
@@ -107,7 +86,7 @@ const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ isAuthenticated }) 
             </div>
           ) : (
             <button
-              onClick={handleInstallClick}
+              onClick={onInstall}
               className="w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-900/20"
             >
               <Download size={18} /> Install App
