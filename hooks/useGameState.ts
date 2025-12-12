@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { User, Zone, Item, Mission, Badge, InventoryItem, BugReport, LeaderboardConfig, LevelConfig, Suggestion, Transaction, RunEntry, AchievementLog } from '../types';
 import { MOCK_USERS, PREMIUM_COST, CONQUEST_REWARD_GOV, CONQUEST_COST } from '../constants';
@@ -24,6 +23,7 @@ export const useGameState = () => {
   const [govToRunRate, setGovToRunRate] = useState<number>(3000); // 1 GOV = 3000 RUN
   const [loading, setLoading] = useState(true);
   const [recoveryMode, setRecoveryMode] = useState(false); // Track if user is in recovery flow
+  const [lastBurnTimestamp, setLastBurnTimestamp] = useState<number>(0);
 
   // --- DATA FETCHING ---
   const fetchGameData = async () => {
@@ -38,7 +38,8 @@ export const useGameState = () => {
               levelsRes,
               reportsRes,
               suggestionsRes,
-              transactionsRes
+              // transactionsRes removed from global fetch to ensure privacy
+              lastBurnRes
           ] = await Promise.all([
               supabase.from('profiles').select('*'),
               supabase.from('missions').select('*'),
@@ -49,7 +50,8 @@ export const useGameState = () => {
               supabase.from('levels').select('*').order('level', { ascending: true }),
               supabase.from('bug_reports').select('*').order('timestamp', { ascending: false }),
               supabase.from('suggestions').select('*').order('timestamp', { ascending: false }),
-              supabase.from('transactions').select('*').order('timestamp', { ascending: false }).limit(200) // Limit global fetch
+              // Check cooldown based on System Transaction
+              supabase.from('transactions').select('timestamp').eq('description', 'Global Burn: SYSTEM TOTAL').order('timestamp', { ascending: false }).limit(1).maybeSingle()
           ]);
 
           // --- 1. PROFILES (USERS) ---
@@ -175,18 +177,6 @@ export const useGameState = () => {
               })));
           }
 
-          if (transactionsRes.data) {
-              setTransactions(transactionsRes.data.map((t: any) => ({
-                  id: t.id,
-                  userId: t.user_id,
-                  type: t.type,
-                  token: t.token,
-                  amount: t.amount,
-                  description: t.description,
-                  timestamp: t.timestamp
-              })));
-          }
-
           if (reportsRes.data) {
               setBugReports(reportsRes.data.map((r: any) => ({
                   id: r.id,
@@ -208,6 +198,12 @@ export const useGameState = () => {
                   description: s.description,
                   timestamp: s.timestamp
               })));
+          }
+
+          if (lastBurnRes.data) {
+              setLastBurnTimestamp(lastBurnRes.data.timestamp);
+          } else {
+              setLastBurnTimestamp(0); // Explicitly 0 if no record found
           }
 
       } catch (err) {
@@ -234,6 +230,30 @@ export const useGameState = () => {
             .eq('user_id', userId)
             .order('timestamp', { ascending: false })
             .limit(50);
+
+        // 3. Get Transactions (Specific to User)
+        const { data: txData } = await supabase
+            .from('transactions')
+            .select('*')
+            .eq('user_id', userId)
+            .order('timestamp', { ascending: false })
+            .limit(100);
+
+        // Map Transactions
+        if (txData) {
+            const myTxs = txData
+                .filter((t: any) => t.description !== 'Global Burn: SYSTEM TOTAL') // HIDE SYSTEM LOG FROM UI
+                .map((t: any) => ({
+                    id: t.id,
+                    userId: t.user_id,
+                    type: t.type,
+                    token: t.token,
+                    amount: t.amount,
+                    description: t.description,
+                    timestamp: t.timestamp
+                }));
+            setTransactions(myTxs);
+        }
 
         // Map DB runs to frontend RunEntry using User's Schema
         const mappedRuns: RunEntry[] = (runsData || []).map((r: any) => ({
@@ -496,8 +516,8 @@ export const useGameState = () => {
                       interest_rate: z.interestRate,
                       interest_pool: z.interestPool,
                       last_distribution_time: z.lastDistributionTime || null,
-                      boost_expires_at: z.boostExpiresAt || null,
-                      shield_expires_at: z.shieldExpiresAt || null
+                      boost_expires_at: z.boostExpiresAt,
+                      shield_expires_at: z.shieldExpiresAt
                   }))
               );
               
@@ -645,6 +665,46 @@ export const useGameState = () => {
           run_balance: updatedUser.runBalance, 
           gov_balance: updatedUser.govBalance 
       }).eq('id', user.id);
+  };
+
+  // --- GLOBAL BURN ACTION ---
+  const triggerGlobalBurn = async () => {
+      if (!user || !user.isAdmin) return { success: false, message: "Unauthorized" };
+      
+      const now = Date.now();
+      const DAYS_30 = 30 * 24 * 60 * 60 * 1000;
+      
+      if (lastBurnTimestamp > 0 && (now - lastBurnTimestamp < DAYS_30)) {
+          console.warn("Burn Protocol Cooldown Active.");
+          return { success: false, message: "Cooldown Active: 30 days not passed." };
+      }
+
+      console.log("🔥 Initiating Global Burn Protocol via RPC...");
+      
+      // CALL RPC FUNCTION (Pass admin UUID to avoid UUID syntax errors)
+      const { data, error } = await supabase.rpc('trigger_global_burn', { 
+          admin_uuid: user.id 
+      });
+
+      if (error) {
+          console.error("Burn RPC Error:", error);
+          if (error.message?.includes('does not exist')) {
+              return { success: false, message: "Database Error: RPC 'trigger_global_burn' signature mismatch. Run the update script." };
+          }
+          return { success: false, message: `Database Error: ${error.message}` };
+      }
+
+      // Success
+      setLastBurnTimestamp(Date.now());
+      // Refresh profile to see transaction and updated balance
+      await fetchUserProfile(user.id);
+      await fetchGameData();
+      
+      return { 
+          success: true, 
+          totalBurned: data?.total_burned || 0, 
+          count: data?.users_affected || 0 
+      };
   };
 
   // --- ADMIN ACTIONS ---
@@ -861,6 +921,32 @@ export const useGameState = () => {
   // --- PROFILE UPDATE ---
   const updateUser = async (updates: Partial<User>) => {
       if (!user) return;
+
+      // CLEANUP: Delete old avatar from storage if a new one is being set
+      if (updates.avatar && user.avatar && updates.avatar !== user.avatar) {
+          // Check if it's a Supabase storage URL (and not a default DiceBear URL)
+          // We assume our bucket structure is /images/
+          if (user.avatar.includes('/storage/v1/object/public/images/')) {
+              try {
+                  // Extract path relative to bucket: .../images/avatars/filename.jpg -> avatars/filename.jpg
+                  const path = user.avatar.split('/images/')[1];
+                  if (path) {
+                      const { error: deleteError } = await supabase.storage
+                          .from('images')
+                          .remove([decodeURIComponent(path)]);
+                      
+                      if (deleteError) {
+                          console.warn("Failed to delete old avatar:", deleteError);
+                      } else {
+                          console.log("Deleted old avatar:", path);
+                      }
+                  }
+              } catch (cleanupErr) {
+                  console.error("Error cleaning up old avatar:", cleanupErr);
+              }
+          }
+      }
+
       const dbUpdates: any = {};
       if (updates.name) dbUpdates.name = updates.name;
       if (updates.email) dbUpdates.email = updates.email;
@@ -1039,11 +1125,11 @@ export const useGameState = () => {
   return {
     user, zones, allUsers, 
     missions, badges, marketItems, leaderboards, levels, bugReports, suggestions, transactions,
-    govToRunRate, loading, recoveryMode, setRecoveryMode,
+    govToRunRate, loading, recoveryMode, setRecoveryMode, lastBurnTimestamp,
     login, register, logout, resetPassword, updatePassword,
     setUser, setZones, setAllUsers, setGovToRunRate,
     logTransaction, recordRun,
-    claimZone, buyItem, useItem, buyFiatGov, swapGovToRun,
+    claimZone, buyItem, useItem, buyFiatGov, swapGovToRun, triggerGlobalBurn,
     addItem, updateItem, removeItem,
     addMission, updateMission, removeMission,
     addBadge, updateBadge, removeBadge,
