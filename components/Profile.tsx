@@ -58,10 +58,18 @@ const Profile: React.FC<ProfileProps> = ({
   const myBugReports = useMemo(() => bugReports.filter(b => b.userId === user.id), [bugReports, user.id]);
   const mySuggestions = useMemo(() => suggestions.filter(s => s.userId === user.id), [suggestions, user.id]);
 
-  // Stats
-  const totalRuns = user.runHistory.length;
-  // const avgDistance = totalRuns > 0 ? (user.totalKm / totalRuns).toFixed(2) : '0.00'; // Removed as requested
-  const maxDistance = totalRuns > 0 ? Math.max(...user.runHistory.map(r => r.km)).toFixed(2) : '0.00';
+  // --- PERFORMANCE METRICS CALCULATION ---
+  // Ensure runHistory exists and calculate metrics robustly
+  const validHistory = user.runHistory || [];
+  const totalRuns = validHistory.length;
+  
+  // Calculate max distance
+  const maxDistance = totalRuns > 0 
+      ? Math.max(...validHistory.map(r => Number(r.km))).toFixed(2) 
+      : '0.00';
+
+  // Calculate total distance dynamically from history to ensure consistency
+  const calculatedTotalKm = validHistory.reduce((acc, curr) => acc + Number(curr.km), 0).toFixed(2);
 
   // Territory Stats Calculations
   const now = Date.now();
@@ -75,23 +83,26 @@ const Profile: React.FC<ProfileProps> = ({
   let progressToNextLevel = 0;
   let currentLevelConfig: LevelConfig | undefined;
 
+  // Use calculatedTotalKm for levels too, to be consistent
+  const currentTotalKmVal = parseFloat(calculatedTotalKm);
+
   if (levels && levels.length > 0) {
-      currentLevelConfig = levels.slice().reverse().find(l => user.totalKm >= l.minKm) || levels[0];
+      currentLevelConfig = levels.slice().reverse().find(l => currentTotalKmVal >= l.minKm) || levels[0];
       currentLevel = currentLevelConfig.level;
       const nextLevelConfig = levels.find(l => l.level === currentLevel + 1);
       
       if (nextLevelConfig) {
           nextLevelKm = nextLevelConfig.minKm;
           const range = nextLevelConfig.minKm - currentLevelConfig.minKm;
-          progressToNextLevel = Math.min(100, Math.max(0, ((user.totalKm - currentLevelConfig.minKm) / range) * 100));
+          progressToNextLevel = Math.min(100, Math.max(0, ((currentTotalKmVal - currentLevelConfig.minKm) / range) * 100));
       } else {
-          nextLevelKm = user.totalKm;
+          nextLevelKm = currentTotalKmVal;
           progressToNextLevel = 100;
       }
   } else {
-      currentLevel = Math.floor(user.totalKm / 50) + 1;
+      currentLevel = Math.floor(currentTotalKmVal / 50) + 1;
       nextLevelKm = currentLevel * 50;
-      progressToNextLevel = ((user.totalKm - ((currentLevel - 1) * 50)) / 50) * 100;
+      progressToNextLevel = ((currentTotalKmVal - ((currentLevel - 1) * 50)) / 50) * 100;
   }
 
   // --- ZONE DATA LOOKUP FOR MODAL ---
@@ -115,35 +126,88 @@ const Profile: React.FC<ProfileProps> = ({
 
   // --- ZONE STATS & RANK LOGIC ---
   const sortedZoneStats = useMemo(() => {
-      // 1. Aggregate Stats from Run History using precise zoneBreakdown
-      const statsMap = new Map<string, { id: string; name: string; count: number; km: number }>();
+      // 1. Initialize statsMap with OWNED ZONES
+      // IMPORTANT: Use z.recordKm as the source of truth for owned zones.
+      const statsMap = new Map<string, { id: string; name: string; count: number; km: number; isOwned: boolean }>();
+      
+      myZones.forEach(z => {
+          statsMap.set(z.id, { 
+              id: z.id, 
+              name: z.name, 
+              count: 0, // Will be incremented by run history loop
+              km: z.recordKm, // <--- Fixed Source of Truth for Owned
+              isOwned: true 
+          });
+      });
 
-      user.runHistory.forEach(run => {
-          // A: Use precise breakdown if available
-          if (run.zoneBreakdown && Object.keys(run.zoneBreakdown).length > 0) {
-              Object.entries(run.zoneBreakdown).forEach(([zoneId, km]) => {
-                  const zoneDef = zones.find(z => z.id === zoneId);
-                  if (zoneDef) {
-                      const entry = statsMap.get(zoneId) || { id: zoneId, name: zoneDef.name, count: 0, km: 0 };
-                      entry.count += 1;
-                      entry.km += Number(km);
-                      statsMap.set(zoneId, entry);
-                  }
-              });
-          } 
-          // B: Fallback for legacy runs (aggregate by Location Name)
-          else {
-              const zoneDef = zones.find(z => z.name === run.location);
-              if (zoneDef) {
-                  const entry = statsMap.get(zoneDef.id) || { id: zoneDef.id, name: zoneDef.name, count: 0, km: 0 };
-                  entry.count += 1;
-                  entry.km += run.km;
-                  statsMap.set(zoneDef.id, entry);
+      // Helper to add stats to map
+      const updateEntry = (zoneId: string, zoneName: string, kmToAdd: number) => {
+          const entry = statsMap.get(zoneId);
+          
+          if (entry) {
+              entry.count += 1;
+              // If NOT owned, we sum up the history.
+              // If OWNED, we rely on the z.recordKm set above (don't add to it to avoid double counting).
+              if (!entry.isOwned) {
+                  entry.km += kmToAdd;
               }
+          } else {
+              // Not owned, not in map yet. Initialize.
+              statsMap.set(zoneId, { 
+                  id: zoneId, 
+                  name: zoneName, 
+                  count: 1, 
+                  km: kmToAdd, 
+                  isOwned: false 
+              });
+          }
+      };
+
+      // 2. Aggregate Stats from Run History
+      validHistory.forEach(run => {
+          const involvedIds = new Set<string>();
+
+          // A: Gather all unique Zone IDs involved in this run
+          if (run.involvedZones && run.involvedZones.length > 0) {
+              run.involvedZones.forEach(id => involvedIds.add(id));
+          }
+          
+          // B: Fallback for legacy runs (aggregate by Location Name string match if no IDs)
+          if (involvedIds.size === 0 && run.location) {
+              const cleanLoc = run.location.trim().toLowerCase();
+              // Try to find a matching zone in the global list
+              const match = zones.find(z => {
+                  const zName = z.name.trim().toLowerCase();
+                  return zName === cleanLoc || zName.startsWith(cleanLoc) || cleanLoc.startsWith(zName);
+              });
+              if (match) involvedIds.add(match.id);
+          }
+
+          // C: Distribute Data to Map
+          const idsArray = Array.from(involvedIds);
+          if (idsArray.length > 0) {
+              idsArray.forEach(zoneId => {
+                  const zoneDef = zones.find(z => z.id === zoneId);
+                  const zoneName = zoneDef ? zoneDef.name : "Unknown Zone";
+                  
+                  // Calculate KM for this specific zone in this run
+                  let runKmForZone = 0;
+                  
+                  // Priority 1: Exact Breakdown
+                  if (run.zoneBreakdown && run.zoneBreakdown[zoneId]) {
+                      runKmForZone = Number(run.zoneBreakdown[zoneId]);
+                  } 
+                  // Priority 2: Even Split
+                  else {
+                      runKmForZone = run.km / idsArray.length;
+                  }
+
+                  updateEntry(zoneId, zoneName, runKmForZone);
+              });
           }
       });
 
-      // 2. Determine Rank based on Ownership or Record Proximity
+      // 3. Determine Rank based on Ownership or Record Proximity
       const dataWithRank = Array.from(statsMap.values()).map(stat => {
           const zoneObj = zones.find(z => z.id === stat.id);
           let rank = 999; 
@@ -165,17 +229,17 @@ const Profile: React.FC<ProfileProps> = ({
           return { ...stat, rank };
       });
 
-      // 3. Sort Results
+      // 4. Sort Results
       return dataWithRank.sort((a, b) => {
           const modifier = sortConfig.direction === 'asc' ? 1 : -1;
           if (a[sortConfig.key] < b[sortConfig.key]) return -1 * modifier;
           if (a[sortConfig.key] > b[sortConfig.key]) return 1 * modifier;
           return 0;
       });
-  }, [user.runHistory, sortConfig, zones, user.id]);
+  }, [validHistory, sortConfig, zones, user.id, myZones]);
 
   const currentZoneStats = sortedZoneStats.slice((zonePage - 1) * ZONES_PER_PAGE, zonePage * ZONES_PER_PAGE);
-  const currentRuns = user.runHistory.slice((runPage - 1) * RUNS_PER_PAGE, runPage * RUNS_PER_PAGE);
+  const currentRuns = validHistory.slice((runPage - 1) * RUNS_PER_PAGE, runPage * RUNS_PER_PAGE);
 
   // --- LEADERBOARD LOGIC ---
   const getLeaderboardRank = (board: LeaderboardConfig) => {
@@ -183,7 +247,7 @@ const Profile: React.FC<ProfileProps> = ({
           const timeFilter = board.lastResetTimestamp || board.startTime || 0;
           const endTimeFilter = board.endTime || Infinity;
           if (isCurrentUser) {
-              const validRuns = u.runHistory.filter((r: any) => r.timestamp >= timeFilter && r.timestamp <= endTimeFilter);
+              const validRuns = (u.runHistory || []).filter((r: any) => r.timestamp >= timeFilter && r.timestamp <= endTimeFilter);
               switch(board.metric) {
                   case 'TOTAL_KM': return validRuns.reduce((acc: number, r: any) => acc + r.km, 0);
                   case 'OWNED_ZONES': return zones.filter(z => z.ownerId === u.id).length;
@@ -225,7 +289,7 @@ const Profile: React.FC<ProfileProps> = ({
       
       {/* HEADER */}
       <ProfileHeader 
-          user={user} 
+          user={{...user, totalKm: currentTotalKmVal}} 
           favoriteBadge={favoriteBadge} 
           nextLevelKm={nextLevelKm} 
           currentLevel={currentLevel}
@@ -268,7 +332,7 @@ const Profile: React.FC<ProfileProps> = ({
                   </div>
                   <div className="flex justify-between items-center">
                       <span className="text-sm text-gray-400">{t('profile.total_dist')}</span>
-                      <span className="text-white font-mono font-bold">{user.totalKm.toFixed(2)} km</span>
+                      <span className="text-white font-mono font-bold">{calculatedTotalKm} km</span>
                   </div>
                   <div className="flex justify-between items-center">
                       <span className="text-sm text-gray-400">{t('profile.total_runs')}</span>
@@ -390,7 +454,7 @@ const Profile: React.FC<ProfileProps> = ({
                                           {rankIcon} #{rank}
                                       </div>
                                       <div className="col-span-6 md:col-span-7 font-bold text-white text-xs truncate group-hover:text-emerald-400 transition-colors" title={stat.name}>{stat.name}</div>
-                                      <div className="col-span-2 text-right font-mono text-gray-300 text-xs">{stat.count}</div>
+                                      <div className="col-span-2 text-right font-mono text-white font-bold text-xs">{stat.count}</div>
                                       <div className="col-span-2 text-right font-mono text-emerald-400 font-bold text-xs">{stat.km.toFixed(1)}</div>
                                   </div>
                               );
@@ -425,7 +489,7 @@ const Profile: React.FC<ProfileProps> = ({
                   )}
                   {activeTab === 'HISTORY' && (
                       <div className="space-y-4">
-                          {user.runHistory.length === 0 ? (
+                          {validHistory.length === 0 ? (
                               <div className="text-center py-20 text-gray-500"><History size={48} className="mx-auto mb-4 opacity-20" /><p>{t('profile.no_runs')}</p></div>
                           ) : (
                               <>
@@ -452,7 +516,7 @@ const Profile: React.FC<ProfileProps> = ({
                                         </tbody>
                                     </table>
                                 </div>
-                                <Pagination currentPage={runPage} totalPages={Math.ceil(user.runHistory.length / RUNS_PER_PAGE)} onPageChange={setRunPage} />
+                                <Pagination currentPage={runPage} totalPages={Math.ceil(validHistory.length / RUNS_PER_PAGE)} onPageChange={setRunPage} />
                               </>
                           )}
                       </div>

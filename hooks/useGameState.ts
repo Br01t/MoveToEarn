@@ -1,6 +1,7 @@
+
 import { useState, useEffect } from 'react';
 import { User, Zone, Item, Mission, Badge, InventoryItem, BugReport, LeaderboardConfig, LevelConfig, Suggestion, Transaction, RunEntry, AchievementLog } from '../types';
-import { MOCK_USERS, PREMIUM_COST, CONQUEST_REWARD_GOV, CONQUEST_COST } from '../constants';
+import { MOCK_USERS, PREMIUM_COST, CONQUEST_REWARD_GOV, CONQUEST_COST, ITEM_DURATION_SEC } from '../constants';
 import { supabase } from '../supabaseClient';
 
 export const useGameState = () => {
@@ -226,100 +227,121 @@ export const useGameState = () => {
       }
   };
 
-  const fetchUserProfile = async (userId: string) => {
-    try {
-        setLoading(true);
-        // 1. Get Profile
-        const { data: profile, error } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', userId)
-            .single();
+ const fetchUserProfile = async (userId: string) => {
+      // 1. Fetch Profile Basics
+      const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
+      
+      if (data) {
+          // 2. Fetch Inventory
+          const { data: invRows } = await supabase.from('inventory').select('*').eq('user_id', userId);
+          const { data: itemDefs } = await supabase.from('items').select('*');
 
-        if (error) throw error;
+          let builtInventory: InventoryItem[] = [];
+          if (invRows && itemDefs) {
+              builtInventory = invRows.map((row: any) => {
+                  const def = itemDefs.find((i: any) => i.id === row.item_id);
+                  if (!def) return null;
+                  return { ...def, quantity: row.quantity };
+              }).filter((i): i is InventoryItem => i !== null && i !== undefined);
+          }
 
-        // 2. Get Runs (Limit 50 most recent for performance)
-        const { data: runsData } = await supabase
-            .from('runs')
-            .select('*')
-            .eq('user_id', userId)
-            .order('timestamp', { ascending: false })
-            .limit(50);
+          // 3. Fetch Transactions History
+          const { data: txRows } = await supabase
+              .from('transactions')
+              .select('*')
+              .eq('user_id', userId)
+              .order('timestamp', { ascending: false })
+              .limit(100);
 
-        // 3. Get Transactions (Specific to User)
-        const { data: txData } = await supabase
-            .from('transactions')
-            .select('*')
-            .eq('user_id', userId)
-            .order('timestamp', { ascending: false })
-            .limit(100);
+          if (txRows) {
+              const mappedTxs: Transaction[] = txRows.map((t: any) => ({
+                  id: t.id,
+                  userId: t.user_id,
+                  type: t.type,
+                  token: t.token,
+                  amount: t.amount,
+                  description: t.description,
+                  timestamp: typeof t.timestamp === 'string' ? new Date(t.timestamp).getTime() : t.timestamp
+              }));
+              setTransactions(mappedTxs);
+          }
 
-        // Map Transactions
-        if (txData) {
-            const myTxs = txData
-                .filter((t: any) => t.description !== 'Global Burn: SYSTEM TOTAL') // HIDE SYSTEM LOG FROM UI
-                .map((t: any) => ({
-                    id: t.id,
-                    userId: t.user_id,
-                    type: t.type,
-                    token: t.token,
-                    amount: t.amount,
-                    description: t.description,
-                    timestamp: t.timestamp
-                }));
-            setTransactions(myTxs);
-        }
+          // 4. FETCH RUN HISTORY (Critical Fix)
+          // Fetch from 'runs' table, as 'profiles.run_history' is deprecated
+          const { data: runRows } = await supabase
+              .from('runs')
+              .select('*')
+              .eq('user_id', userId)
+              .order('timestamp', { ascending: false });
 
-        // Map DB runs to frontend RunEntry using User's Schema
-        const mappedRuns: RunEntry[] = (runsData || []).map((r: any) => ({
-            id: r.id,
-            location: r.location_name || 'Unknown',
-            km: r.km, 
-            timestamp: r.timestamp,
-            runEarned: r.run_earned,
-            govEarned: r.gov_earned,
-            duration: r.duration, 
-            avgSpeed: r.avg_speed,
-            maxSpeed: r.max_speed,
-            elevation: r.elevation, 
-            involvedZones: r.involved_zones || [],
-            // Fetch proper zone breakdown from the dedicated column
-            zoneBreakdown: r.zone_breakdown || {}
-        }));
+          let runHistory: RunEntry[] = [];
+          if (runRows) {
+              runHistory = runRows.map((r: any) => {
+                  // Robust parsing for involved_zones
+                  let involvedZones: string[] = [];
+                  if (Array.isArray(r.involved_zones)) {
+                      involvedZones = r.involved_zones;
+                  } else if (typeof r.involved_zones === 'string') {
+                      try {
+                          const parsed = JSON.parse(r.involved_zones);
+                          if (Array.isArray(parsed)) involvedZones = parsed;
+                      } catch (e) { 
+                          console.warn("Failed to parse involved_zones", r.id); 
+                      }
+                  }
 
-        if (profile) {
-            const mLog = (profile.mission_log || []) as AchievementLog[];
-            const bLog = (profile.badge_log || []) as AchievementLog[];
+                  // Robust parsing for zone_breakdown
+                  let zoneBreakdown: Record<string, number> = {};
+                  if (typeof r.zone_breakdown === 'object' && r.zone_breakdown !== null) {
+                      zoneBreakdown = r.zone_breakdown;
+                  } else if (typeof r.zone_breakdown === 'string') {
+                      try {
+                          zoneBreakdown = JSON.parse(r.zone_breakdown);
+                      } catch (e) { 
+                          console.warn("Failed to parse zone_breakdown", r.id); 
+                      }
+                  }
 
-            const realUser: User = {
-                id: profile.id,
-                name: profile.name || 'Runner',
-                email: profile.email,
-                avatar: profile.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.id}`,
-                runBalance: profile.run_balance || 0,
-                govBalance: profile.gov_balance || 0,
-                totalKm: profile.total_km || 0,
-                isPremium: profile.is_premium || false,
-                isAdmin: profile.is_admin || false,
-                inventory: [], 
-                runHistory: mappedRuns, 
-                missionLog: mLog,
-                badgeLog: bLog,
-                // Derive for backward compatibility
-                completedMissionIds: mLog.map(x => x.id), 
-                earnedBadgeIds: bLog.map(x => x.id), 
-                favoriteBadgeId: profile.favorite_badge_id
-            };
-            setUser(realUser);
-        }
-    } catch (err) {
-        console.error("Error loading user profile:", err);
-        setUser(null);
-    } finally {
-        setLoading(false);
-    }
+                  return {
+                      id: r.id,
+                      location: r.location_name || 'Unknown',
+                      km: Number(r.km),
+                      timestamp: typeof r.timestamp === 'string' ? new Date(r.timestamp).getTime() : r.timestamp,
+                      runEarned: Number(r.run_earned),
+                      govEarned: Number(r.gov_earned || 0),
+                      duration: Number(r.duration || 0),
+                      elevation: Number(r.elevation || 0),
+                      maxSpeed: Number(r.max_speed || 0),
+                      avgSpeed: Number(r.avg_speed || 0),
+                      involvedZones: involvedZones,
+                      zoneBreakdown: zoneBreakdown
+                  };
+              });
+          }
+
+          // Calculate precise total KM from history
+          const dynamicTotalKm = runHistory.reduce((acc, curr) => acc + (Number(curr.km) || 0), 0);
+
+          setUser({
+              id: data.id,
+              name: data.username || data.name || 'Runner',
+              email: data.email,
+              avatar: data.avatar_url || data.avatar || 'https://via.placeholder.com/150',
+              runBalance: data.run_balance || 0,
+              govBalance: data.gov_balance || 0,
+              totalKm: dynamicTotalKm, // Use calculated KM instead of potentially stale DB value
+              isPremium: data.is_premium || false,
+              isAdmin: data.is_admin || false,
+              inventory: builtInventory,
+              runHistory: runHistory, // Use fetched runs
+              missionLog: data.mission_log || [],
+              badgeLog: data.badge_log || [],
+              completedMissionIds: (data.mission_log || []).map((l: any) => l.id),
+              earnedBadgeIds: (data.badge_log || []).map((l: any) => l.id),
+              favoriteBadgeId: data.favorite_badge_id
+          });
+      }
   };
-
   // --- FETCH ZONE LEADERBOARD (REAL DATA) ---
   const fetchZoneLeaderboard = async (zoneId: string) => {
       try {
@@ -340,13 +362,20 @@ export const useGameState = () => {
               let kmForThisZone = 0;
               
               // 1. Try Precise Breakdown
-              const breakdown = run.zone_breakdown || {};
+              let breakdown = run.zone_breakdown || {};
+              if (typeof breakdown === 'string') {
+                  try { breakdown = JSON.parse(breakdown); } catch {}
+              }
+
               if (breakdown && breakdown[zoneId]) {
                   kmForThisZone = Number(breakdown[zoneId]);
               }
               // 2. Fallback to Even Split if breakdown missing/invalid
               else {
-                  const zoneCount = run.involved_zones ? run.involved_zones.length : 1;
+                  let zones = run.involved_zones;
+                  if (typeof zones === 'string') try { zones = JSON.parse(zones); } catch {}
+                  
+                  const zoneCount = Array.isArray(zones) ? zones.length : 1;
                   kmForThisZone = run.km / (zoneCount > 0 ? zoneCount : 1);
               }
               
@@ -445,7 +474,7 @@ export const useGameState = () => {
   };
   const logout = async () => { await supabase.auth.signOut(); setUser(null); };
 
-  const logTransaction = async (userId: string, type: 'IN' | 'OUT', token: 'RUN' | 'GOV', amount: number, description: string) => {
+  const logTransaction = async (userId: string, type: 'IN' | 'OUT', token: 'RUN' | 'GOV' | 'ITEM', amount: number, description: string) => {
       if (amount <= 0) return;
       const newTx: Transaction = {
           id: crypto.randomUUID(),
@@ -502,13 +531,17 @@ export const useGameState = () => {
 
           if (runError) throw runError;
 
-          // 2. Update Profile Stats
-          const { data: currentProfile } = await supabase.from('profiles').select('total_km, run_balance').eq('id', userId).single();
+          // 2. Update Profile Stats (RECALCULATE TOTAL KM FROM SOURCE OF TRUTH)
+          const { data: currentProfile } = await supabase.from('profiles').select('run_balance').eq('id', userId).single();
           
+          // Re-fetch ALL runs to ensure total_km is mathematically correct and not drifting
+          const { data: userRuns } = await supabase.from('runs').select('km').eq('user_id', userId);
+          const exactTotalKm = userRuns ? userRuns.reduce((sum, r) => sum + (Number(r.km) || 0), 0) : 0;
+
           if (currentProfile) {
               await supabase.from('profiles').update({
-                  total_km: currentProfile.total_km + runData.km,
-                  run_balance: currentProfile.run_balance + runData.runEarned
+                  total_km: exactTotalKm, // Update with the true sum
+                  run_balance: currentProfile.run_balance + runData.runEarned // Balance is harder to sum history without full ledger, keep incremental
               }).eq('id', userId);
           }
 
@@ -531,8 +564,8 @@ export const useGameState = () => {
                       interest_rate: z.interestRate,
                       interest_pool: z.interestPool,
                       last_distribution_time: z.lastDistributionTime || null,
-                      boost_expires_at: z.boostExpiresAt,
-                      shield_expires_at: z.shieldExpiresAt
+                      boost_expires_at: z.boostExpiresAt || null,
+                      shield_expires_at: z.shieldExpiresAt || null
                   }))
               );
               
@@ -577,80 +610,200 @@ export const useGameState = () => {
       await supabase.from('zones').update({ owner_id: user.id }).eq('id', zoneId);
   };
 
-  const buyItem = async (item: Item) => {
-      if (!user || user.runBalance < item.priceRun) return;
+ const buyItem = async (item: Item) => {
+      if (!user) return;
+      if (user.runBalance < item.priceRun) {
+          alert("Insufficient funds");
+          return;
+      }
 
-      // Special Case: Currency/Flash Drop (Immediate Use)
+      // Snapshot for Rollback
+      const previousUser = { ...user };
+
+      // 1. Calculate new balance
+      const newRunBalance = parseFloat((user.runBalance - item.priceRun).toFixed(2));
+
+      // 2. Handle Currency (Flash Drop)
       if (item.type === 'CURRENCY') {
-          const updatedUser = { 
-              ...user, 
-              runBalance: user.runBalance - item.priceRun,
-              govBalance: user.govBalance + item.effectValue
-          };
-          setUser(updatedUser);
+          const newGovBalance = parseFloat((user.govBalance + item.effectValue).toFixed(2));
+          
+          setUser({ ...user, runBalance: newRunBalance, govBalance: newGovBalance });
           
           await logTransaction(user.id, 'OUT', 'RUN', item.priceRun, `Market: ${item.name}`);
           await logTransaction(user.id, 'IN', 'GOV', item.effectValue, `Opened: ${item.name}`);
           
-          await supabase.from('profiles').update({ 
-              run_balance: updatedUser.runBalance, 
-              gov_balance: updatedUser.govBalance 
+          const { error } = await supabase.from('profiles').update({ 
+              run_balance: newRunBalance, 
+              gov_balance: newGovBalance 
           }).eq('id', user.id);
+
+          if (error) {
+              console.error("Currency Purchase Failed:", error);
+              alert("Transaction failed. Rolling back.");
+              setUser(previousUser);
+              return;
+          }
           
-          // Update item stock (global)
+          // Update Stock
           const newQty = item.quantity - 1;
           await supabase.from('items').update({ quantity: newQty }).eq('id', item.id);
           setMarketItems(prev => prev.map(i => i.id === item.id ? { ...i, quantity: newQty } : i));
           return;
       }
 
-      // Standard Item
-      const existingItem = user.inventory.find(i => i.id === item.id);
-      let newInventory: InventoryItem[];
+      // 3. Handle Standard Item (Inventory Table)
+      const currentInventory = user.inventory || [];
+      const existingItemIndex = currentInventory.findIndex(i => i.id === item.id);
       
-      if (existingItem) {
-          newInventory = user.inventory.map(i => i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i);
+      let newInventory: InventoryItem[];
+
+      if (existingItemIndex >= 0) {
+          newInventory = currentInventory.map((invItem, idx) => {
+              if (idx === existingItemIndex) {
+                  return { ...invItem, quantity: (invItem.quantity || 0) + 1 };
+              }
+              return invItem;
+          });
       } else {
-          newInventory = [...user.inventory, { ...item, quantity: 1 }];
+          const newItem: InventoryItem = {
+              id: item.id,
+              name: item.name,
+              description: item.description || '',
+              priceRun: Number(item.priceRun),
+              type: item.type,
+              effectValue: Number(item.effectValue),
+              icon: item.icon || 'Box',
+              quantity: 1
+          };
+          newInventory = [...currentInventory, newItem];
       }
 
-      const updatedUser = { ...user, runBalance: user.runBalance - item.priceRun, inventory: newInventory };
-      setUser(updatedUser);
+      // Optimistic Update
+      setUser({ ...user, runBalance: newRunBalance, inventory: newInventory });
 
       await logTransaction(user.id, 'OUT', 'RUN', item.priceRun, `Market: ${item.name}`);
-      await supabase.from('profiles').update({ run_balance: updatedUser.runBalance }).eq('id', user.id);
       
+      // DB UPDATE 1: Profile Balance
+      const { error: profileError } = await supabase.from('profiles').update({ 
+          run_balance: newRunBalance
+      }).eq('id', user.id);
+
+      if (profileError) {
+          console.error("Critical: Balance save failed", profileError);
+          alert(`Purchase failed: ${profileError.message}. Rolling back.`);
+          setUser(previousUser);
+          return;
+      }
+
+      // DB UPDATE 2: Inventory Table (Upsert)
+      const { data: existingRows } = await supabase.from('inventory').select('*').eq('user_id', user.id).eq('item_id', item.id);
+      const existingRow = existingRows?.[0];
+
+      let invError;
+      if (existingRow) {
+          const { error } = await supabase.from('inventory').update({ quantity: existingRow.quantity + 1 }).eq('id', existingRow.id);
+          invError = error;
+      } else {
+          const { error } = await supabase.from('inventory').insert({ user_id: user.id, item_id: item.id, quantity: 1 });
+          invError = error;
+      }
+
+      if (invError) {
+          console.error("Critical: Inventory save failed", invError);
+          alert(`Error saving item: ${invError.message}. Rolling back funds.`);
+          
+          // ROLLBACK FUNDS (Refund the RUN spent)
+          await supabase.from('profiles').update({ 
+              run_balance: user.runBalance // Restore original balance (from closure snapshot before update)
+          }).eq('id', user.id);
+          
+          setUser(previousUser); // Reset local state
+          return;
+      }
+      
+      // Update Global Stock
       const newQty = item.quantity - 1;
-      await supabase.from('items').update({ quantity: newQty }).eq('id', item.id);
+      supabase.from('items').update({ quantity: newQty }).eq('id', item.id);
       setMarketItems(prev => prev.map(i => i.id === item.id ? { ...i, quantity: newQty } : i));
   };
 
   const useItem = async (item: InventoryItem, targetZoneId: string) => {
       if (!user) return;
-      const zoneIndex = zones.findIndex(z => z.id === targetZoneId);
-      if (zoneIndex === -1) return;
+      const zone = zones.find(z => z.id === targetZoneId);
+      if (!zone) return;
 
-      const updatedZones = [...zones];
-      const zone = updatedZones[zoneIndex];
+      const duration = ITEM_DURATION_SEC * 1000;
       const now = Date.now();
 
-      if (item.type === 'BOOST') {
-          zone.interestRate = parseFloat((zone.interestRate + item.effectValue).toFixed(2));
-          zone.boostExpiresAt = now + 86400000; 
-      } else if (item.type === 'DEFENSE') {
-          zone.shieldExpiresAt = now + 86400000;
-      }
+      // Snapshot for Rollback
+      const previousInventory = [...user.inventory];
+      const previousZones = [...zones];
 
-      const newInventory = user.inventory.map(i => i.id === item.id ? { ...i, quantity: i.quantity - 1 } : i).filter(i => i.quantity > 0);
-      
-      setUser({ ...user, inventory: newInventory });
+      // 1. Optimistic Update (UI)
+      const updatedZones = zones.map(z => {
+          if (z.id === targetZoneId) {
+              if (item.type === 'BOOST') return { ...z, boostExpiresAt: now + duration };
+              else if (item.type === 'DEFENSE') return { ...z, shieldExpiresAt: now + duration };
+          }
+          return z;
+      });
+
+      const updatedInventory = user.inventory.map(i => 
+          i.id === item.id ? { ...i, quantity: i.quantity - 1 } : i
+      ).filter(i => i.quantity > 0);
+
+      setUser({ ...user, inventory: updatedInventory });
       setZones(updatedZones);
 
-      await supabase.from('zones').update({ 
-          interest_rate: zone.interestRate,
-          boost_expires_at: zone.boostExpiresAt,
-          shield_expires_at: zone.shieldExpiresAt
-      }).eq('id', zone.id);
+      await logTransaction(user.id, 'OUT', 'ITEM', 1, `Used ${item.name} on ${zone.name}`);
+      
+      // 2. DB Update: Inventory (Decrease Quantity)
+      const { data: existingRows } = await supabase.from('inventory').select('*').eq('user_id', user.id).eq('item_id', item.id);
+      const existingRow = existingRows?.[0];
+
+      if (existingRow) {
+          if (existingRow.quantity > 1) {
+              await supabase.from('inventory').update({ quantity: existingRow.quantity - 1 }).eq('id', existingRow.id);
+          } else {
+              await supabase.from('inventory').delete().eq('id', existingRow.id);
+          }
+      } else {
+          console.warn("Item not found in DB inventory, sync issue?");
+          setUser({ ...user, inventory: previousInventory }); // Revert
+          return;
+      }
+      
+      // 3. DB Update: Zone (Apply Effect)
+      // IMPORTANT: Sending Numeric timestamp (BigInt) as per DB schema, NOT string.
+      let zoneUpdateError = null;
+      try {
+          if (item.type === 'BOOST') {
+              const { error } = await supabase.from('zones').update({ boost_expires_at: now + duration }).eq('id', zone.id);
+              zoneUpdateError = error;
+          } else if (item.type === 'DEFENSE') {
+              const { error } = await supabase.from('zones').update({ shield_expires_at: now + duration }).eq('id', zone.id);
+              zoneUpdateError = error;
+          }
+      } catch (err: any) {
+          zoneUpdateError = err;
+      }
+
+      // 4. Rollback if Zone Update Failed
+      if (zoneUpdateError) {
+          console.error("Zone Update Failed (likely schema mismatch):", zoneUpdateError);
+          alert(`Failed to apply item effect. Error: ${zoneUpdateError.message || 'Unknown DB Error'}. Refunded item.`);
+          
+          // Revert Inventory in DB (Add +1 back)
+          if (existingRow) {
+               await supabase.from('inventory').update({ quantity: existingRow.quantity }).eq('id', existingRow.id);
+          } else {
+               await supabase.from('inventory').insert({ user_id: user.id, item_id: item.id, quantity: 1 });
+          }
+
+          // Revert Local State
+          setUser({ ...user, inventory: previousInventory });
+          setZones(previousZones);
+      }
   };
 
   const buyFiatGov = async (amount: number) => {

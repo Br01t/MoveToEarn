@@ -11,7 +11,7 @@ export interface Transaction {
   id: string;
   userId: string;
   type: 'IN' | 'OUT';
-  token: 'RUN' | 'GOV';
+  token: 'RUN' | 'GOV' | 'ITEM';
   amount: number;
   description: string;
   timestamp: number;
