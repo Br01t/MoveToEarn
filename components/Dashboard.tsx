@@ -103,8 +103,12 @@ const Dashboard: React.FC<DashboardProps> = ({
         const pos = getHexPixelPosition(newZone.x, newZone.y, HEX_SIZE);
         const newX = window.innerWidth / 2 - pos.x * view.scale;
         const newY = window.innerHeight / 2 - pos.y * view.scale;
-        setView(v => ({ ...v, x: newX, y: newY }));
-        setSelectedZone(newZone);
+        
+        // Only center map on new zones if it's a runtime update (minting), not initial load
+        if (prevZonesLengthRef.current > 0) {
+            setView(v => ({ ...v, x: newX, y: newY }));
+            // Note: We do NOT auto-select the zone here anymore to keep details closed by default
+        }
     }
     prevZonesLengthRef.current = zones.length;
   }, [zones, view.scale]);

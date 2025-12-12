@@ -54,10 +54,14 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLogin, onRegister, o
           if (!email || !password || !username) return;
           const { error } = await onRegister(email, password, username);
           if (error) throw error;
+          
+          // Show success message briefly inside modal before App.tsx closes it (due to auth state change)
+          setSuccessMsg("Identity Verified. Entering the grid...");
       } else {
           if (!email || !password) return;
           const { error } = await onLogin(email, password);
           if (error) throw error;
+          setSuccessMsg("Authenticating...");
       }
     } catch (err: any) {
       setErrorMsg(err.message || t('auth.error'));
@@ -108,10 +112,10 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLogin, onRegister, o
           <div className="space-y-6">
             {/* Form */}
             {successMsg ? (
-                <div className="bg-emerald-500/10 border border-emerald-500/50 p-6 rounded-xl flex flex-col items-center gap-4 text-center">
-                    <CheckCircle size={48} className="text-emerald-400" />
+                <div className="bg-emerald-500/10 border border-emerald-500/50 p-6 rounded-xl flex flex-col items-center gap-4 text-center animate-fade-in">
+                    <CheckCircle size={48} className="text-emerald-400 animate-bounce" />
                     <p className="text-emerald-300 text-sm font-bold">{successMsg}</p>
-                    {viewState !== 'UPDATE_PASSWORD' && (
+                    {viewState === 'RESET' && (
                         <button 
                             onClick={() => handleSwitchView('LOGIN')}
                             className="text-white bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-wider"
@@ -237,7 +241,11 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLogin, onRegister, o
                         </p>
                         <button 
                             type="button"
-                            onClick={() => handleSwitchView(viewState === 'SIGNUP' ? 'LOGIN' : 'SIGNUP')}
+                            onClick={() => {
+                                handleSwitchView(viewState === 'SIGNUP' ? 'LOGIN' : 'SIGNUP');
+                                setErrorMsg(null);
+                                setSuccessMsg(null);
+                            }}
                             className="text-emerald-400 font-bold hover:text-emerald-300 uppercase tracking-wider text-xs"
                         >
                             {viewState === 'SIGNUP' ? "Switch to Login" : "Create Account"}

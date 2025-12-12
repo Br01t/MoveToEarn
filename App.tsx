@@ -98,6 +98,28 @@ const AppContent: React.FC = () => {
     }
   }, [user, loading, currentView, showLoginModal, recoveryMode]);
 
+  // --- WRAPPERS FOR AUTH TO SHOW TOASTS ---
+  const handleLogin = async (email: string, password: string) => {
+      const result = await gameState.login(email, password);
+      if (!result.error) {
+          setGameToast({ message: "Login Successful. Welcome back.", type: 'SUCCESS' });
+      }
+      return result;
+  };
+
+  const handleRegister = async (email: string, password: string, username: string) => {
+      const result = await gameState.register(email, password, username);
+      if (!result.error) {
+          // If session exists, auto-login happened. If not, email confirmation might be needed.
+          if (result.data?.session) {
+              setGameToast({ message: "Registration Complete. Logging in...", type: 'SUCCESS' });
+          } else {
+              setGameToast({ message: "Registration Complete. Check email.", type: 'SUCCESS' });
+          }
+      }
+      return result;
+  };
+
   // --- UI Handlers Wrapper ---
   const handleZoneConfirm = (name: string) => {
       const result = runWorkflow.confirmZoneCreation(name);
@@ -178,8 +200,8 @@ const AppContent: React.FC = () => {
             />
         )}
 
-        {/* PWA Install Prompt - Visible on Mobile if not installed */}
-        <PWAInstallPrompt />
+        {/* PWA Install Prompt - Visible ONLY if authenticated */}
+        <PWAInstallPrompt isAuthenticated={!!user} />
 
         <div className="flex-1 relative">
           {isLanding && <LandingPage onLogin={handleOpenLogin} onNavigate={setCurrentView} />}
@@ -334,8 +356,8 @@ const AppContent: React.FC = () => {
                   setShowLoginModal(false);
                   gameState.setRecoveryMode(false);
               }}
-              onLogin={gameState.login}
-              onRegister={gameState.register}
+              onLogin={handleLogin}
+              onRegister={handleRegister}
               onResetPassword={gameState.resetPassword}
               initialView={recoveryMode ? 'UPDATE_PASSWORD' : 'LOGIN'}
               onUpdatePassword={gameState.updatePassword}

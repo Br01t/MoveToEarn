@@ -1,37 +1,32 @@
+
 import React, { useState, useEffect } from "react";
 import { Download, X, Share, PlusSquare } from "lucide-react";
 
-const PWAInstallPrompt: React.FC = () => {
+interface PWAInstallPromptProps {
+  isAuthenticated: boolean;
+}
+
+const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ isAuthenticated }) => {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showPrompt, setShowPrompt] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
 
+  // 1. Capture the install event whenever it happens (even before login)
   useEffect(() => {
-    // Detect if already installed (standalone mode)
+    // Check Standalone Status (Installed)
     const isStandaloneMode = window.matchMedia("(display-mode: standalone)").matches || (window.navigator as any).standalone;
     setIsStandalone(isStandaloneMode);
-
-    if (isStandaloneMode) return;
 
     // Detect iOS
     const userAgent = window.navigator.userAgent.toLowerCase();
     const isIosDevice = /iphone|ipad|ipod/.test(userAgent);
     setIsIOS(isIosDevice);
 
-    // If iOS and not installed, show prompt after a delay
-    if (isIosDevice) {
-      const timer = setTimeout(() => setShowPrompt(true), 3000); // Show after 3s on iOS
-      return () => clearTimeout(timer);
-    }
-
-    // Detect Android/Desktop PWA support
+    // Listen for PWA Prompt Event (Android/Desktop)
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      // Show prompt automatically or wait for user interaction?
-      // Let's show it automatically for visibility as requested
-      setTimeout(() => setShowPrompt(true), 3000);
     };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
@@ -40,6 +35,25 @@ const PWAInstallPrompt: React.FC = () => {
       window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
     };
   }, []);
+
+  // 2. Logic to Show/Hide Prompt based on Auth Status
+  useEffect(() => {
+    // If already installed or not logged in, hide.
+    if (isStandalone || !isAuthenticated) {
+        setShowPrompt(false);
+        return;
+    }
+
+    // If logged in AND not installed:
+    const timer = setTimeout(() => {
+        // Show if we have a prompt event (Android/PC) OR if it's iOS (manual instructions)
+        if (deferredPrompt || isIOS) {
+            setShowPrompt(true);
+        }
+    }, 3000); // 3s delay for smoother UX
+
+    return () => clearTimeout(timer);
+  }, [isAuthenticated, isStandalone, deferredPrompt, isIOS]);
 
   const handleInstallClick = async () => {
     if (!deferredPrompt) return;
@@ -53,7 +67,7 @@ const PWAInstallPrompt: React.FC = () => {
     }
   };
 
-  if (isStandalone || !showPrompt) return null;
+  if (!showPrompt) return null;
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-[200] p-4 animate-slide-up">
@@ -76,7 +90,7 @@ const PWAInstallPrompt: React.FC = () => {
           <div className="flex-1">
             <h3 className="font-bold text-white text-lg leading-tight mb-1">Install ZoneRun</h3>
             <p className="text-gray-400 text-xs leading-relaxed">
-              Install the app if you haven’t already for the full-screen experience and faster access and add it to your Home screen.
+              Install the app for the full-screen experience, better performance, and home screen access.
             </p>
           </div>
         </div>

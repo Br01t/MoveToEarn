@@ -1,7 +1,6 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { ViewState } from '../types';
-import { ChevronUp, ChevronDown, Info } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 
 interface FooterProps {
@@ -13,65 +12,16 @@ interface FooterProps {
 
 const Footer: React.FC<FooterProps> = ({ onNavigate, currentView, isAuthenticated, isHidden }) => {
   const { t } = useLanguage();
-  const [isExpanded, setIsExpanded] = useState(false);
 
-  // DASHBOARD MODE: Floating / Collapsible Footer
+  // 1. DASHBOARD MODE: No Footer
+  // The map takes up the full screen, and we removed the floating widget as requested.
   if (currentView === 'DASHBOARD') {
-      return (
-          <div className="fixed bottom-0 left-0 right-0 z-50 pointer-events-none flex flex-col items-center">
-              {/* Sliding Panel */}
-              <div 
-                className={`pointer-events-auto transition-transform duration-300 ease-in-out bg-gray-950/95 backdrop-blur-xl border-t border-gray-700 w-full md:w-auto md:min-w-[400px] md:rounded-t-xl overflow-hidden shadow-[0_-5px_20px_rgba(0,0,0,0.5)] flex flex-col ${isExpanded ? 'translate-y-[calc(0%-144px)] md:translate-y-0' : 'translate-y-[100%]'}`}
-              >
-                  {/* Close Toggle (Visible only when expanded) */}
-                  <button 
-                    onClick={() => setIsExpanded(false)}
-                    className="w-full h-8 bg-gray-900 hover:bg-gray-800 text-gray-400 hover:text-white transition-colors flex items-center justify-center border-b border-gray-800"
-                  >
-                      <ChevronDown size={20} />
-                  </button>
-                  
-                  {/* Content */}
-                  <div className="p-6 flex flex-col md:flex-row items-center justify-center gap-6 text-xs text-gray-500">
-                     <span className="text-gray-400 font-bold font-mono uppercase tracking-wider">&copy; {t('footer.rights')}</span>
-                     <div className="flex flex-wrap justify-center gap-6 font-medium">
-                        <button onClick={() => onNavigate('RULES')} className="hover:text-emerald-400 transition-colors">{t('footer.rules')}</button>
-                        <button onClick={() => onNavigate('PRIVACY')} className="hover:text-emerald-400 transition-colors">{t('footer.privacy')}</button>
-                        <button onClick={() => onNavigate('TERMS')} className="hover:text-emerald-400 transition-colors">{t('footer.terms')}</button>
-                        <button onClick={() => onNavigate('COMMUNITY')} className="hover:text-emerald-400 transition-colors">{t('footer.community')}</button>
-                        <button onClick={() => onNavigate('REPORT_BUG')} className="hover:text-red-400 transition-colors">{t('footer.report_bug')}</button>
-                        <button onClick={() => onNavigate('SUGGESTION')} className="hover:text-yellow-400 transition-colors">{t('footer.suggestion')}</button>
-                     </div>
-                  </div>
-              </div>
-
-              {/* Triggers (Visible only when collapsed) */}
-              {/* Mobile: Moved to bottom-right and raised to ~144px to clear 2-row navbar. Desktop: Centered bottom. */}
-              <div className={`pointer-events-auto absolute bottom-[114px] md:bottom-0 md:right-auto transition-opacity duration-300 ${isExpanded || isHidden ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
-                  
-                  {/* Mobile Trigger: Round Icon */}
-                  <button 
-                     onClick={() => setIsExpanded(true)}
-                     className="md:hidden bg-gray-800/90 backdrop-blur p-2.5 rounded-full border border-gray-700 shadow-lg text-gray-400 hover:text-white"
-                  >
-                     <Info size={20} />
-                  </button>
-                  
-                  {/* Desktop Trigger: Tab at bottom */}
-                  <button 
-                     onClick={() => setIsExpanded(true)}
-                     className="hidden md:flex bg-gray-900 border border-gray-700 border-b-0 rounded-t-lg px-6 py-1.5 text-xs font-bold text-gray-400 hover:text-emerald-400 items-center gap-2 shadow-lg"
-                  >
-                     <Info size={14} /> {t('footer.legal_info')}
-                  </button>
-              </div>
-          </div>
-      );
+      return null;
   }
 
-  // STANDARD MODE: Static Footer (Landing Page, Rules, Profile, etc.)
+  // 2. STANDARD MODE: Static Footer (Landing Page, Rules, Profile, Market, etc.)
   return (
-    <footer className="bg-gray-950 border-t border-gray-800 py-10 relative z-30 mt-auto">
+    <footer className={`bg-gray-950 border-t border-gray-800 py-10 relative z-30 mt-auto ${isHidden ? 'hidden' : ''}`}>
       <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center text-sm text-gray-500 gap-4">
         <div className="flex items-center gap-3">
           <span className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-500 cursor-pointer" onClick={() => onNavigate('DASHBOARD')}>ZoneRun</span> 
@@ -83,6 +33,14 @@ const Footer: React.FC<FooterProps> = ({ onNavigate, currentView, isAuthenticate
            <button onClick={() => onNavigate('PRIVACY')} className="hover:text-emerald-400 transition-colors">{t('footer.privacy')}</button>
            <button onClick={() => onNavigate('TERMS')} className="hover:text-emerald-400 transition-colors">{t('footer.terms')}</button>
            <button onClick={() => onNavigate('COMMUNITY')} className="hover:text-emerald-400 transition-colors">{t('footer.community')}</button>
+           
+           {/* Added these links here since they were previously only in the dashboard sliding panel */}
+           {isAuthenticated && (
+               <>
+                   <button onClick={() => onNavigate('REPORT_BUG')} className="hover:text-red-400 transition-colors">{t('footer.report_bug')}</button>
+                   <button onClick={() => onNavigate('SUGGESTION')} className="hover:text-yellow-400 transition-colors">{t('footer.suggestion')}</button>
+               </>
+           )}
         </div>
         <div className="text-xs text-gray-600 font-mono">
            &copy; {new Date().getFullYear()} ZoneRun Protocol
