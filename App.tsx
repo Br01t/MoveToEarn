@@ -312,7 +312,7 @@ const AppContent: React.FC = () => {
                   onRemoveBadge={gameState.removeBadge}
                   onUpdateZone={gameState.updateZone}
                   onDeleteZone={gameState.deleteZone}
-                  onTriggerBurn={() => alert("Burn Executed")}
+                  onTriggerBurn={gameState.triggerGlobalBurn}
                   onDistributeRewards={gameState.distributeZoneRewards}
                   onResetSeason={() => { if(confirm("Reset?")) gameState.setAllUsers({}); }}
                   onUpdateExchangeRate={gameState.setGovToRunRate}

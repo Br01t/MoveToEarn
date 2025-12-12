@@ -26,6 +26,7 @@ interface AdminProps {
   leaderboards?: LeaderboardConfig[];
   levels?: LevelConfig[];
   allUsers?: Record<string, Omit<User, 'inventory'>>;
+  lastBurnTimestamp?: number;
   // CRUD Actions
   onAddItem: (item: Item) => Promise<{ error?: string; success?: boolean }>;
   onUpdateItem: (item: Item) => Promise<{ error?: string; success?: boolean }>;
@@ -39,7 +40,7 @@ interface AdminProps {
   onUpdateZone: (id: string, updates: Partial<Zone>) => Promise<{ error?: string; success?: boolean }>;
   onDeleteZone: (id: string) => Promise<{ error?: string; success?: boolean }>;
   // Config Actions
-  onTriggerBurn: () => void;
+  onTriggerBurn: () => Promise<any>;
   onDistributeRewards: () => void;
   onResetSeason: () => void;
   onUpdateExchangeRate: (rate: number) => void;
@@ -62,7 +63,7 @@ interface AdminProps {
 }
 
 const Admin: React.FC<AdminProps> = ({ 
-  marketItems, missions, badges, zones, govToRunRate, bugReports = [], suggestions = [], leaderboards = [], levels = [], allUsers = {},
+  marketItems, missions, badges, zones, govToRunRate, bugReports = [], suggestions = [], leaderboards = [], levels = [], allUsers = {}, lastBurnTimestamp = 0,
   onAddItem, onUpdateItem, onRemoveItem,
   onAddMission, onUpdateMission, onRemoveMission,
   onAddBadge, onUpdateBadge, onRemoveBadge,
@@ -77,9 +78,6 @@ const Admin: React.FC<AdminProps> = ({
   const [activeTab, setActiveTab] = useState<'ITEMS' | 'ECONOMY' | 'MISSIONS' | 'ZONES' | 'LEADERBOARD' | 'REPORTS' | 'IDEAS' | 'LEVELS' | 'USERS'>('ITEMS');
 
   // Trigger data refresh when Admin component mounts.
-  // This ensures that if the app was loaded as a guest (where RLS blocks profile fetching),
-  // entering the Admin panel (which implies authentication) will force a re-fetch of all data,
-  // including users, reports, and suggestions that might have been skipped initially.
   useEffect(() => {
       if (onRefreshData) {
           onRefreshData();
@@ -147,6 +145,7 @@ const Admin: React.FC<AdminProps> = ({
       {activeTab === 'ECONOMY' && (
           <AdminEconomyTab 
               govToRunRate={govToRunRate} 
+              lastBurnTimestamp={lastBurnTimestamp}
               onUpdateExchangeRate={onUpdateExchangeRate} 
               onTriggerBurn={onTriggerBurn} 
               onDistributeRewards={onDistributeRewards} 
