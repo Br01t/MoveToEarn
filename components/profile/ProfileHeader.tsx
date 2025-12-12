@@ -1,7 +1,7 @@
 
 import React, { useState, useRef } from 'react';
 import { User, Badge, LevelConfig } from '../../types';
-import { Crown, Save, Mail, Camera, CheckCircle, X, Flag, Award, Zap, Mountain, Globe, Home, Landmark, Swords, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users, FileText, Egg, Baby, Activity, MapPin, Smile, Wind, Compass, Navigation, TrendingUp, Move, Target, Watch, Droplets, Shield, Star, BatteryCharging, Flame, Truck, CloudLightning, Hexagon, FastForward, Trophy, Plane, Map, Layers, Briefcase, GraduationCap, Brain, Crosshair, Anchor, Heart, Lock, Disc, Feather, FlagTriangleRight, Globe2, Sparkles, Radio, BookOpen, Waves, Snowflake, CloudRain, ThermometerSnowflake, SunDim, MoonStar, Atom, Sword, Axe, Ghost, Ship, PlusSquare, Skull, ChevronsUp, Orbit, CloudFog, Circle, Infinity, Sparkle, ArrowUpCircle, Clock, Eye, Type, Delete, PenTool, Medal, UploadCloud, Loader2, Edit2, Info, ChevronRight, Image } from 'lucide-react';
+import { Crown, Save, Mail, Camera, CheckCircle, X, Flag, Award, Zap, Mountain, Globe, Home, Landmark, Swords, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users, FileText, Egg, Baby, Activity, MapPin, Smile, Wind, Compass, Navigation, TrendingUp, Move, Target, Watch, Droplets, Shield, Star, BatteryCharging, Flame, Truck, CloudLightning, Hexagon, FastForward, Trophy, Plane, Map, Layers, Briefcase, GraduationCap, Brain, Crosshair, Anchor, Heart, Lock, Disc, Feather, FlagTriangleRight, Globe2, Sparkles, Radio, BookOpen, Waves, Snowflake, CloudRain, ThermometerSnowflake, SunDim, MoonStar, Atom, Sword, Axe, Ghost, Ship, PlusSquare, Skull, ChevronsUp, Orbit, CloudFog, Circle, Infinity, Sparkle, ArrowUpCircle, Clock, Eye, Type, Delete, PenTool, Medal, UploadCloud, Loader2, Edit2, Info, ChevronRight, Image, FileImage } from 'lucide-react';
 import { useLanguage } from '../../LanguageContext';
 import { compressImage } from '../../utils/imageCompression';
 import { useGameState } from '../../hooks/useGameState';
@@ -225,15 +225,13 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                     LVL {currentLevel}
                  </div>
                  
+                 {/* Reverted style: Just the icon, no text, but keeping the accept='image/*' fix below */}
                  {isEditing && (
                      <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center rounded-2xl border-4 border-emerald-500 z-10 transition-opacity hover:bg-black/70 animate-pulse">
                          {isUploading ? (
                              <Loader2 className="text-emerald-400 animate-spin" />
                          ) : (
-                             <>
-                                 <Camera size={24} className="text-white mb-1" />
-                                 <span className="text-[10px] font-bold text-white uppercase text-center leading-tight px-2">Click to Upload</span>
-                             </>
+                             <Camera size={32} className="text-white" />
                          )}
                      </div>
                  )}
@@ -303,7 +301,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                         </div>
                         
                         <div className="text-[10px] text-emerald-400 italic flex items-center gap-1">
-                            <CheckCircle size={10} /> Click on the avatar image to upload a new photo.
+                            <CheckCircle size={10} /> Tap on the avatar image to upload a new photo.
                         </div>
 
                         <div className="flex gap-2 mt-2">

@@ -52,10 +52,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   const prevZonesLengthRef = useRef(zones.length);
 
-  // Derived Values
-  const earningRate = zones
-    .filter(z => z.ownerId === user.id)
-    .reduce((acc, z) => acc + (0.5 * z.interestRate), 0) * 6;
+  // Derived Values - earningRate logic removed
 
   const boostItem: InventoryItem | undefined = user.inventory.find(i => i.type === 'BOOST');
   const defenseItem: InventoryItem | undefined = user.inventory.find(i => i.type === 'DEFENSE');
@@ -163,7 +160,6 @@ const Dashboard: React.FC<DashboardProps> = ({
       <DashboardHUD 
           runBalance={user.runBalance} 
           govBalance={user.govBalance} 
-          earningRate={earningRate} 
       />
 
       <DashboardSidebar
