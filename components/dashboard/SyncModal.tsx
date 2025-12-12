@@ -153,7 +153,10 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
             </h3>
             <div className="flex items-center gap-2">
                 <button 
-                    onClick={() => onNavigate('HOW_TO_PLAY')}
+                    onClick={() => {
+                        onClose(); // Close the modal first
+                        onNavigate('HOW_TO_PLAY'); // Then navigate to the guide
+                    }}
                     className="text-gray-400 hover:text-emerald-400 text-xs flex items-center gap-1 mr-2"
                     title="Guide"
                 >

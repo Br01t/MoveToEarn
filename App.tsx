@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import Navbar from "./components/Navbar";
 import LandingPage from "./components/LandingPage";
@@ -10,7 +11,8 @@ import Profile from "./components/Profile";
 import Admin from "./components/Admin";
 import Footer from "./components/Footer";
 import Missions from "./components/Missions";
-import GameRules from "./components/pages/GameRules";
+import { GameRules } from "./components/pages/GameRules";
+import { Whitepaper } from "./components/pages/Whitepaper";
 import HowToPlay from "./components/pages/HowToPlay";
 import Privacy from "./components/pages/Privacy";
 import Terms from "./components/pages/Terms";
@@ -114,7 +116,7 @@ const AppContent: React.FC = () => {
     } else if (!loading && !user && currentView !== "LANDING") {
         // If logged out and loading finished, return to landing
         // But allow rules/privacy pages to be viewed without login
-        const publicPages: ViewState[] = ["RULES", "HOW_TO_PLAY", "PRIVACY", "TERMS", "COMMUNITY"];
+        const publicPages: ViewState[] = ["RULES", "WHITEPAPER", "HOW_TO_PLAY", "PRIVACY", "TERMS", "COMMUNITY"];
         if (!publicPages.includes(currentView)) {
             setCurrentView("LANDING");
         }
@@ -360,6 +362,7 @@ const AppContent: React.FC = () => {
           )}
 
           {currentView === "RULES" && <GameRules onBack={() => setCurrentView(user ? "DASHBOARD" : "LANDING")} onNavigate={setCurrentView} />}
+          {currentView === "WHITEPAPER" && <Whitepaper onBack={() => setCurrentView(user ? "DASHBOARD" : "LANDING")} onNavigate={setCurrentView} />}
           {currentView === "HOW_TO_PLAY" && <HowToPlay onBack={() => setCurrentView(user ? "DASHBOARD" : "LANDING")} />}
           {currentView === "PRIVACY" && <Privacy />}
           {currentView === "TERMS" && <Terms />}

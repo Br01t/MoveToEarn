@@ -28,18 +28,32 @@ export const translations = {
     "auth.error": "Connection Failed",
 
     // Landing
-    "landing.title_suffix": "Govern.",
-    "landing.subtitle": "The ultimate strategy Move-to-Earn. Earn RUN by moving, spend it to conquer real-world zones, and collect GOV to rule the map.",
+    "landing.title_suffix": "Dominion.",
+    "landing.subtitle": "The ultimate strategy Move-to-Earn. Earn RUN by moving, spend it to conquer real-world zones, and collect GOV to accumulate Value.",
     "landing.start_btn": "Start Running",
-    "landing.rules_btn": "Game Protocol",
+    "landing.rules_btn": "Whitepaper",
+    "landing.game_guide_btn": "Game Rules",
+    
+    // Feature Cards
     "landing.card.earn_run": "Earn RUN",
-    "landing.card.earn_run_desc": "1 KM = 12 RUN. Track your runs and earn utility tokens instantly to your wallet.",
-    "landing.card.earn_gov": "Earn GOV",
-    "landing.card.earn_gov_desc": "Mint zones (+15), conquer enemies (+25), or complete Missions to earn Governance power.",
+    "landing.card.earn_run_desc": "1 KM = 12 RUN. Generate utility tokens with every step.",
+    "landing.card.earn_gov": "Earn Value",
+    "landing.card.earn_gov_desc": "Mint zones and conquer rivals to build your net worth.",
     "landing.card.spend": "Spend to Win",
-    "landing.card.spend_desc": "Use RUN in the market to buy Shields, Yield Boosts, or convert earnings into GOV Packs.",
+    "landing.card.spend_desc": "Buy Shields, Boosts, and upgrades in the Black Market.",
     "landing.card.burn": "The Burn",
-    "landing.card.burn_desc": "Weekly RUN burns reduce supply. Survivors get GOV rewards based on Rank & Land.",
+    "landing.card.burn_desc": "Weekly burns ensure scarcity. Survival of the fittest.",
+
+    // Landing Modals
+    "landing.modal.earn_run_title": "Utility Token Protocol",
+    "landing.modal.earn_run_body": "RUN is the fuel of the ecosystem. Generated purely through physical proof-of-work (GPS validated movement). Use it to pay for minting fees, claiming new territories, and purchasing tactical items. The more you move, the more you influence the map.",
+    "landing.modal.earn_gov_title": "Value Accumulation",
+    "landing.modal.earn_gov_body": "GOV represents pure value within the ZoneRun network. Unlike RUN, it cannot be farmed easily. It is awarded only for strategic triumphs: creating new Zones on the world map, successfully conquering territory from other players, or completing high-tier achievements.",
+    "landing.modal.spend_title": "Tactical Economy",
+    "landing.modal.spend_body": "The Black Market allows you to convert your physical effort into digital advantages. Buy 'Zone Shields' to protect your territory from attacks while you sleep, or 'Yield Boosts' to increase the passive income generation of your lands.",
+    "landing.modal.burn_title": "Deflationary Mechanics",
+    "landing.modal.burn_body": "To prevent hyperinflation, the protocol executes a 'Global Burn' every week. A percentage of circulating RUN is destroyed. Players who hold territory during a burn event receive GOV airdrops, rewarding long-term strategic holding over short-term farming.",
+    "landing.close": "Close",
 
     // Dashboard HUD & Map
     "dash.yield": "Yield",
@@ -99,8 +113,6 @@ export const translations = {
     "sync.error.no_data_desc": "No valid GPS data found in the files. Please check the file format.",
     "sync.retry_btn": "Try Again",
     "sync.alert.no_file": "Please select at least one GPX file.",
-    
-    // Specific Failure Details
     "sync.error.speed": "Speed Limit Exceeded. Are you using a vehicle?",
     "sync.error.duration": "Activity too short. Runs must be > 1 minute.",
     "sync.error.distance": "Distance is 0km. No movement detected.",
@@ -216,7 +228,7 @@ export const translations = {
     "admin.leader.save": "Save Changes",
     "admin.leader.cancel": "Cancel",
 
-    // Admin Levels
+    // Admin Levels & Suggestions
     "admin.levels.title": "Level System",
     "admin.levels.add_btn": "Add Level",
     "admin.levels.edit": "Edit Level",
@@ -224,8 +236,6 @@ export const translations = {
     "admin.levels.min_km": "Min Distance (KM)",
     "admin.levels.level_title": "Title (Optional)",
     "admin.levels.delete_confirm": "Delete this level?",
-    
-    // Admin Suggestions
     "admin.ideas.title": "Player Suggestions",
     "admin.ideas.no_ideas": "No suggestions received yet.",
 
@@ -269,8 +279,8 @@ export const translations = {
     "profile.score": "Score",
     "profile.zone_stats": "Zone Performance",
     "profile.zone_rank": "Local Rank",
-    "profile.zone_runs": "Corse",
-    "profile.zone_total": "Totale",
+    "profile.zone_runs": "Runs",
+    "profile.zone_total": "Total",
 
     // Missions
     "miss.title": "Operations",
@@ -289,16 +299,12 @@ export const translations = {
     "miss.gallery": "Badge Gallery",
     "miss.search_badges": "Search badges...",
     "miss.locked": "LOCKED",
-
-    // Mission & Badge Translations
     "mission.1.title": "First 10K",
     "mission.1.desc": "Reach 10 km total.",
     "mission.2.title": "First 50K",
     "mission.2.desc": "Reach 50 km total.",
     "badge.1.name": "First 10K",
     "badge.1.desc": "Reach 10 km total.",
-    
-    // Achievement Modal
     "ach.mission_complete": "Mission Complete",
     "ach.badge_unlocked": "Badge Unlocked",
     "ach.reward_claimed": "Reward Claimed",
@@ -341,8 +347,6 @@ export const translations = {
     "wallet.run_burned": "RUN Burned",
     "wallet.tax_rate": "Tax Rate",
     "wallet.trans_history": "Transaction History",
-    
-    // Swap Specific
     "wallet.swap.title": "Liquidity Swap",
     "wallet.swap.desc": "Convert Governance to Utility tokens.",
     "wallet.swap.info_tooltip": "Swap GOV for RUN to immediately get liquid tokens for minting zones, buying items, or attacking. Useful if you are low on RUN but rich in GOV.",
@@ -369,7 +373,7 @@ export const translations = {
     "admin.report.status": "Status",
     "admin.report.no_reports": "No bug reports submitted yet.",
 
-    // Report Bug Page
+    // Forms & Alerts
     "report.title": "Report Bug",
     "report.subtitle": "Found a glitch in the matrix? Let us know.",
     "report.desc_label": "Description",
@@ -379,8 +383,6 @@ export const translations = {
     "report.success_title": "Report Sent",
     "report.success_desc": "Thank you for helping us improve ZoneRun.",
     "report.error_desc": "Please provide a description.",
-
-    // Suggestion Page
     "suggest.title": "Suggest Idea",
     "suggest.subtitle": "Have an idea to make ZoneRun better? We're listening.",
     "suggest.title_label": "Idea Title",
@@ -391,8 +393,6 @@ export const translations = {
     "suggest.success_title": "Idea Submitted",
     "suggest.success_desc": "Thanks for your feedback! The community will review it.",
     "suggest.error_desc": "Please provide both title and description.",
-
-    // Alerts
     "alert.insufficient_run": "Insufficient RUN balance!",
     "alert.insufficient_gov": "Insufficient GOV balance!",
     "alert.zone_shielded": "This zone is Shielded! Cannot attack.",
@@ -410,9 +410,11 @@ export const translations = {
     "alert.swap_success": "Swap Successful!",
     "alert.confirm_swap": "Swap",
 
-    // Pages (Rules, etc.)
+    // Static Pages
     "footer.rights": "All Rights Reserved",
-    "footer.rules": "Game Rules",
+    "footer.rules": "Game Guide",
+    "footer.whitepaper": "Whitepaper",
+    "footer.export_guide": "Export Guide",
     "footer.privacy": "Privacy Policy",
     "footer.terms": "Terms of Service",
     "footer.community": "Community",
@@ -420,24 +422,6 @@ export const translations = {
     "footer.suggestion": "Suggest Idea",
     "footer.legal_info": "Legal & Info",
     "footer.subtitle": "Run. Conquer. Govern.",
-
-    "htp.back": "Back",
-    "htp.title": "How to Play",
-    "htp.subtitle": "Start your journey from a rookie runner to a zone emperor.",
-    "htp.step1": "Run & Record",
-    "htp.step1_desc": "Use your favorite fitness app (Strava, Garmin, Apple Health) to record your outdoor activity.",
-    "htp.step1_req": "Ensure your GPS is enabled and the activity type is 'Run' or 'Walk'.",
-    "htp.export_title": "Exporting Data",
-    "htp.step2": "Sync Data",
-    "htp.step2_desc": "Upload the activity file to ZoneRun to validate your effort.",
-    "htp.step2_free": "Manual Upload (Free)",
-    "htp.step2_premium": "Auto-Sync (Premium)",
-    "htp.step3": "Conquer the Map",
-    "htp.step3_desc": "Your route is overlaid on the Hex Grid. Your real-world steps determine your digital power.",
-    "htp.mint": "Mint Zones",
-    "htp.conquer": "Conquer Zones",
-    "htp.reinforce": "Reinforce",
-
     "page.privacy.title": "Privacy Policy",
     "page.terms.title": "Terms of Service",
     "page.comm.title": "Community",
@@ -445,92 +429,203 @@ export const translations = {
     "page.comm.twitter": "Twitter / X",
     "page.comm.dao": "Governance DAO",
 
-    // GAME RULES TRANSLATIONS (REWRITTEN)
+    // Rules
     "rules.back": "Back",
-    "rules.title": "Game Protocol",
-    "rules.subtitle": "ZoneRun Move-to-Earn Mechanics",
-    "rules.version": "Protocol v1.4",
-
-    // 1. Concept
-    "rules.sec1.title": "Project Overview",
-    "rules.sec1.desc": "ZoneRun is a gamified decentralized ecosystem that rewards physical movement. We use GPS data to map your real-world runs into a dynamic, sustainable digital economy. It combines physical activity, territorial exploration ('Social Cartography'), and light PvP (Zone Conquest).",
-
-    // 2. Tokenomics
-    "rules.sec2.title": "Dual Token Economy",
-    "rules.sec2.run": "RUN (Utility)",
-    "rules.sec2.run_desc": "Inflationary. Earned by running. Used for all operational costs (Minting, Items, Attacks).",
-    "rules.sec2.gov": "GOV (Governance)",
-    "rules.sec2.gov_desc": "Deflationary/Scarce. Earned only via strategic achievements (Minting new land, Conquering rivals, Missions).",
-
-    // 3. Zone Mechanics
-    "rules.sec3.title": "Zones & Territory",
-    "rules.sec3.desc": "Zones are the central asset. They generate RUN pools and are the focus of conflict.",
-    "rules.sec3.pool": "Interest Pool Generation",
-    "rules.sec3.pool_text": "Each zone accumulates an internal RUN pool based on the activity (KM run) by ALL players within it. This pool is the loot.",
-    "rules.sec3.dist": "Distribution Cycle (24h)",
-    "rules.sec3.pvp": "PvP Conquest",
-    "rules.sec3.pvp_text": "If Conquered: 100% of the pool goes to the Conqueror immediately. This incentivizes PvP.",
-    "rules.sec3.passive": "Passive Reward",
-    "rules.sec3.passive_text": "If NOT Conquered: 50% to Owner, 50% distributed to Top 10 Runners proportional to their KM.",
-
-    // 4. Strategic Actions
-    "rules.sec4.title": "Strategic Actions & Costs",
-    "rules.sec4.action": "Action",
-    "rules.sec4.cost": "Cost (RUN)",
-    "rules.sec4.reward": "Reward (GOV)",
-    "rules.sec4.mint": "Mint Zone",
-    "rules.sec4.conquer": "Conquer Zone",
-    "rules.sec4.shield": "Shield Item",
-    "rules.sec4.boost": "Boost Item",
-    "rules.sec4.mint_desc": "Creates a new zone. Includes Auto-Shield (24h).",
-    "rules.sec4.conq_desc": "Attack owned zone. Must run > Record KM.",
-    "rules.sec4.shield_desc": "Protects zone from 1 attack for 24h.",
-    "rules.sec4.boost_desc": "Doubles earnings (24 RUN/KM) for 24h.",
-
-    // 5. Macro Economy
-    "rules.sec5.title": "Macro Economy & Sustainability",
-    "rules.sec5.earn": "Earning Rates",
-    "rules.sec5.earn_base": "12 RUN / KM (Base)",
-    "rules.sec5.earn_boost": "24 RUN / KM (With Boost Item)",
-    "rules.sec5.swap": "The Swap (Inflation Control)",
-    "rules.sec5.swap_text": "Primary mechanism to convert inflationary RUN into fixed-supply GOV. High rate ensures GOV scarcity.",
-    "rules.sec5.swap_rate": "3,000 RUN → 1 GOV",
-    "rules.sec5.burn": "The Burn (Deflation)",
-    "rules.sec5.burn_text": "2% of all held RUN is burned periodically. Users receive GOV rewards proportional to their burned amount.",
-
-    // 6. Progression - REWRITTEN GENERIC
-    "rules.sec6.title": "Missions & Badges",
-    "rules.sec6.desc": "Track your career progress and earn rewards.",
-    "rules.sec6.content": "Missions act as your career milestones, guiding you from a novice runner to a seasoned pro. Badges are prestigious honors awarded for specific feats of endurance, speed, or exploration.",
-    "rules.sec6.rewards": "Completing standard tasks grants **RUN** tokens. Achieving high-difficulty milestones and unlocking rare badges rewards you with **GOV** tokens, increasing your governance power.",
-
-    // 7. Navigation Guide (New Section)
-    "rules.nav.title": "Terminal Guide",
-    "rules.nav.desc": "Interface navigation manual for field agents.",
-    
+    "rules.title": "Terminal Guide",
+    "rules.subtitle": "Interface Navigation Manual",
+    "rules.whitepaper_link": "Looking for Tokenomics? Read the Whitepaper",
+    "rules.export_guide_link": "Need help syncing? Read the Export Guide",
+    "rules.intro.title": "The Gamification of Running",
+    "rules.intro.body": "Users create entertainment and sharing with little effort and no cost by simply running and uploading their data, giving value to simple proof-of-run metrics. You will be rewarded in RUN based on validated kilometers and how much you expand the virtual map. The earlier you start, the easier it is to accumulate. However, the true value of the ecosystem is GOV, the second token, which can be obtained by playing and performing strategic actions.",
+    "rules.gameplay.title": "Game Mechanics",
+    "rules.mech.move_title": "1. Move & Sync",
+    "rules.mech.move_desc": "Go for a run or walk IRL. Record with Strava or any GPS app. Export the GPX and upload it here. The game verifies your speed and location.",
+    "rules.mech.mint_title": "2. Explore & Mint",
+    "rules.mech.mint_desc": "If you run in an unclaimed area, you can pay RUN to Mint a new Zone. You become the owner and earn GOV immediately.",
+    "rules.mech.conquer_title": "3. Conquer Rivals",
+    "rules.mech.conquer_desc": "Found a zone owned by someone else? Challenge them! Run more KM in that specific zone than their record to steal ownership.",
+    "rules.mech.earn_title": "4. Earn Rewards",
+    "rules.mech.earn_desc": "Running earns RUN tokens. Holding zones generates passive Yield. Completing Missions awards rare Badges and GOV.",
+    "rules.nav.title": "Interface Guide",
+    "rules.nav.desc": "Navigation manual for field agents.",
     "rules.nav.dash": "Map Dashboard",
     "rules.nav.dash_desc": "The command center. View the Hex Grid, filter territories (Mine/Enemy), and use the Sync button to upload GPX files.",
-    
     "rules.nav.market": "Black Market",
     "rules.nav.market_desc": "Purchase gameplay items like Shields and Boosts using RUN. Watch for limited-time GOV Flash Drops.",
-    
     "rules.nav.inv": "Inventory",
     "rules.nav.inv_desc": "View your purchased items. Click an item to 'Inspect' it, then select a target Zone to apply the effect.",
-    
     "rules.nav.miss": "Missions",
     "rules.nav.miss_desc": "Track objectives. Monitor your progress towards badges and view the requirements to claim rewards.",
-    
     "rules.nav.rank": "Leaderboard",
     "rules.nav.rank_desc": "Global standings. Compare your performance against other runners in various metrics (KM, Zones, Balance).",
-    
     "rules.nav.wallet": "Wallet",
     "rules.nav.wallet_desc": "Financial hub. View transaction history, Swap GOV for liquid RUN, and check the current Exchange Rate.",
-    
     "rules.nav.profile": "Profile",
     "rules.nav.profile_desc": "Agent dossier. View your level progress, detailed stats, run history, and manage your avatar/settings.",
+
+    // WHITEPAPER (Full Structure)
+    "wp.nav.intro": "0. Introduction",
+    "wp.nav.overview": "1. Overview",
+    "wp.nav.goals": "2. Goals",
+    "wp.nav.tokenomics": "3. Tokenomics",
+    "wp.nav.economy": "4. Economy RUN/GOV",
+    "wp.nav.gameplay": "5. Rewards & Gameplay",
+    "wp.nav.zones": "6. Zone System",
+    "wp.nav.swap": "7. Swap & Deflation",
+    "wp.nav.missions": "8. Missions",
+    "wp.nav.rebuy": "9. Re-Buy & Treasury",
+    "wp.intro.title": "0. Introduction",
+    "wp.intro.body": "MoveToEarn is a gamified ecosystem based on real-world user movement. It rewards those who run, create new zones, conquer territories, and contribute to the ecosystem's growth. The system uses two currencies: RUN (infinite internal currency) and GOV (limited crypto token).",
+    "wp.overview.title": "1. Project Overview",
+    "wp.overview.body": "ZoneRun combines territorial exploration mechanics ('Social Cartography'), light PvP dynamics, and rewards based on physical activity. It is not just a fitness tracker, it is a dynamic map game that evolves thanks to users.",
+    "wp.overview.move": "Move",
+    "wp.overview.expand": "Expand",
+    "wp.overview.conquer": "Conquer",
+    "wp.overview.govern": "Govern",
+    "wp.goals.title": "2. Goals",
+    "wp.goals.short": "Short Term",
+    "wp.goals.short_desc": "Immediate engagement, map creation, PvP competition, Pump.fun presale, and value growth via re-buy.",
+    "wp.goals.mid": "Mid Term",
+    "wp.goals.mid_desc": "Partnerships with fitness brands, seasonal events, global leaderboards, and international expansion.",
+    "wp.goals.long": "Long Term",
+    "wp.goals.long_desc": "Real geographic metaverse, full decentralized DAO, and advanced AR gamification.",
+    "wp.tokenomics.title": "3. Tokenomics",
+    "wp.tokenomics.supply": "Total Supply",
+    "wp.tokenomics.col_area": "Area",
+    "wp.tokenomics.col_alloc": "Allocation",
+    "wp.tokenomics.col_desc": "Description",
+    "wp.tokenomics.row1": "Pump.fun Presale",
+    "wp.tokenomics.row1_desc": "Initial fundraising and liquidity.",
+    "wp.tokenomics.row2": "Dev Fund",
+    "wp.tokenomics.row2_desc": "36-month vesting. Development and Team.",
+    "wp.tokenomics.row3": "Game Rewards",
+    "wp.tokenomics.row3_desc": "Treasury for gameplay, conquests, staking.",
+    "wp.tokenomics.row4": "Liquidity Ops",
+    "wp.tokenomics.row4_desc": "Market making and stability.",
+    "wp.economy.title": "4. Economy RUN ↔ GOV",
+    "wp.economy.run": "RUN (Internal Currency)",
+    "wp.economy.run_desc": "Generated by running. Inflationary and unlimited. Used for operational actions: Minting zones, Attacks, Shields, Boosts. Completely centralized in the game database.",
+    "wp.economy.gov": "GOV (Crypto Token)",
+    "wp.economy.gov_desc": "Fixed quantity (Hard Cap). Obtainable only via strategic achievements: Conquests, Rare Missions, Swap. Tradable on blockchain and in the future for governance.",
+    "wp.gameplay.title": "5. Rewards & Gameplay",
+    "wp.gameplay.desc": "The core loop is simple: Running → RUN. RUN generation depends on distance (km), weekly frequency, and consecutive bonuses.",
+    "wp.zones.title": "6. Zone System",
+    "wp.zones.subtitle": "Zones are the central asset. Each zone generates interest, can be upgraded, and change owners.",
+    "wp.zones.gen_title": "6.1 Map Genesis (Geolocation)",
+    "wp.zones.gen_body": "Real World vs Virtual: The game uses a geospatial hexagonal grid (H3 index). Each zone corresponds to fixed real-world GPS coordinates. Dynamic Creation: The map is not pre-generated. Initially, it is a 'Fog of War'. When a user runs and syncs an activity in a real area where no zone exists yet, the system identifies that hexagon as Unknown Land. Only then does it become possible to pay RUN to mint it. The map is built step by step by the players themselves.",
+    "wp.zones.pool_title": "6.2 Interest System (RUN Pool)",
+    "wp.zones.pool_desc": "Each zone accumulates an internal 'Pool' of RUN based on the activity (km traveled) of ALL runners within it. This pool is the loot. It is distributed every 24h.",
+    "wp.zones.case_a": "Case A: Conquest (PvP)",
+    "wp.zones.case_a_desc": "If a rival beats the owner's record before the 24h are up, they take 100% of the accumulated pool immediately. Incentivizes attack and active defense.",
+    "wp.zones.case_b": "Case B: No Conquest",
+    "wp.zones.case_b_desc": "If the zone survives 24h, the pool empties: 50% to the Owner (Passive Income), 50% divided among the Top 10 Local Runners (proportional to km).",
+    "wp.zones.costs_title": "6.3 Costs and Actions",
+    "wp.zones.col_action": "Action",
+    "wp.zones.col_cost": "Cost",
+    "wp.zones.col_reward": "Reward",
+    "wp.zones.col_effect": "Effect",
+    "wp.zones.act_mint": "Mint Zone",
+    "wp.zones.eff_mint": "Create new zone, defense lvl 1.",
+    "wp.zones.act_conq": "Conquest",
+    "wp.zones.eff_conq": "Steal ownership and accumulated Pool.",
+    "wp.zones.act_boost": "Boost Item",
+    "wp.zones.eff_boost": "+50% zone interest for 24h.",
+    "wp.swap.title": "7. RUN → GOV Swap",
+    "wp.swap.desc": "A controlled system to ensure the sustainability of the GOV token price.",
+    "wp.swap.freq": "Every 30 Days",
+    "wp.swap.window": "24h Window",
+    "wp.swap.rate": "600 RUN = 1 GOV",
+    "wp.swap.pool": "Max Pool: 40k GOV",
+    "wp.missions.title": "8. Missions & Badges",
+    "wp.missions.first_zone": "First Zone Created",
+    "wp.missions.first_conq": "First Conquest",
+    "wp.missions.badge_carto": "Badge: Cartographer (10 Zones)",
+    "wp.rebuy.title": "9. Automatic Re-Buy",
+    "wp.rebuy.desc": "Fees generated from internal operations (Marketplace, Upgrades, etc.) are reused to support the ecosystem.",
+    "wp.rebuy.treasury": "Treasury",
+    "wp.rebuy.buy_gov": "Re-Buy GOV",
+    "wp.rebuy.burn": "Burn RUN",
+    "wp.rebuy.lp": "Liquidity",
+
+    // --- HOW TO PLAY / DATA EXPORT GUIDE ---
+    "htp.back": "Back",
+    "htp.title": "User Guide: Download Run Files",
+    "htp.subtitle": "How to export GPX or FIT files from your running app to upload them into ZoneRun.",
+    "htp.intro": "This guide shows you how to download single run files (.GPX, .FIT) or your full activity archive from major running platforms.",
+    
+    "htp.table.func": "Feature",
+    "htp.table.device": "Recommended Device",
+    "htp.table.format": "File Format",
+    "htp.table.notes": "Export Notes",
+    "htp.single_run": "Single Run",
+    "htp.full_history": "Full History (Bulk)",
+    "htp.pc_mobile_web": "PC or Mobile (Web)",
+    "htp.pc_mobile_desk": "PC or Mobile (Desktop View)",
+    "htp.mobile_app": "Mobile App",
+    "htp.email_req": "Request via Email",
+    "htp.direct_download": "Direct Download",
+    
+    // Strava
+    "htp.strava.title": "1. Strava",
+    "htp.strava.desc": "Strava allows downloading data for both single activities and your full account history.",
+    "htp.strava.single_note": "Downloadable directly from the activity page.",
+    "htp.strava.bulk_note": "Request sent via email; downloads all activities.",
+    "htp.strava.single_step_title": "Step-by-Step: Single Run (.GPX)",
+    "htp.strava.single_step_1": "Log in to the Strava website (strava.com) from your browser.",
+    "htp.strava.single_step_2": "Go to 'My Activities' and click on the desired run.",
+    "htp.strava.single_step_3": "On the activity page, click the three horizontal dots icon (...) on the left of the map.",
+    "htp.strava.single_step_4": "Select 'Export GPX' to download the file.",
+    "htp.strava.bulk_step_title": "Step-by-Step: Full History Download",
+    "htp.strava.bulk_step_1": "Log in to the Strava website and go to 'Settings' (hover over your avatar in the top right).",
+    "htp.strava.bulk_step_2": "In the side menu, select 'My Account'.",
+    "htp.strava.bulk_step_3": "Scroll down to 'Download or Delete Your Account' and click 'Get Started'.",
+    "htp.strava.bulk_step_4": "Select 'Request Your Archive'. You will receive an email with a link to download the zip file containing all your activities.",
+
+    // Garmin
+    "htp.garmin.title": "2. Garmin Connect",
+    "htp.garmin.desc": "Garmin Connect allows exporting in various formats for single activities and offers the option to request the entire data archive.",
+    "htp.garmin.single_note": "Accessible via the gear icon on the activity page.",
+    "htp.garmin.bulk_note": "Request sent via email from the Data Management Portal.",
+    "htp.garmin.single_step_title": "Step-by-Step: Single Run (.GPX or .FIT)",
+    "htp.garmin.single_step_1": "Log in to the Garmin Connect website (connect.garmin.com).",
+    "htp.garmin.single_step_2": "From the navigation menu, go to 'Activities' > 'All Activities' and click on the run you are interested in.",
+    "htp.garmin.single_step_3": "On the activity page, click the gear icon in the top right.",
+    "htp.garmin.single_step_4": "Select 'Export to GPX' for GPS track or 'Export Original' for .FIT format (most complete).",
+    "htp.garmin.bulk_step_title": "Step-by-Step: Full History Download",
+    "htp.garmin.bulk_step_1": "Access the Garmin Data Management Portal: garmin.com/account/datamanagement/.",
+    "htp.garmin.bulk_step_2": "Log in and select the option 'Export Your Data' or 'Request Data Export'.",
+    "htp.garmin.bulk_step_3": "Send the request and wait for the email from Garmin with the download link for the full archive.",
+
+    // Adidas
+    "htp.adidas.title": "3. Adidas Running (Runtastic)",
+    "htp.adidas.desc": "Adidas Running provides the full archive of your account data, useful for migration and analysis.",
+    "htp.adidas.single_note": "N/A (Sync Recommended). Use Partner Sync (e.g., Strava or Garmin) to get GPX export from there.",
+    "htp.adidas.bulk_note": "Contains all raw activity data in text format.",
+    "htp.adidas.bulk_step_title": "Step-by-Step: Full History Download (.JSON)",
+    "htp.adidas.bulk_step_1": "Log in to the Adidas Running website.",
+    "htp.adidas.bulk_step_2": "Go to account settings, section 'Account & Data'.",
+    "htp.adidas.bulk_step_3": "Click on the 'Export Data' button.",
+    "htp.adidas.bulk_step_4": "Wait for the email containing the link to download the archive with .JSON files.",
+
+    // Apple
+    "htp.apple.title": "4. Apple Fitness (Via 3rd Party Apps)",
+    "htp.apple.desc": "The Apple Health ecosystem requires the use of external tools to extract your run data in the required format.",
+    "htp.apple.single_note": "iPhone / App Store.",
+    "htp.apple.bulk_note": "Use specialized apps (e.g., HealthFit or GPX Workout).",
+    "htp.apple.step_title": "Step-by-Step: Data Extraction via 3rd Party App (Example)",
+    "htp.apple.step_1": "Search the App Store for a reliable Apple Health data export application (e.g., HealthFit).",
+    "htp.apple.step_2": "Install and authorize the app to access Health (Workout/Fitness) data.",
+    "htp.apple.step_3": "Inside the app, select the activity or history you wish to export.",
+    "htp.apple.step_4": "Choose the .GPX export format and save it.",
+
+    // Upload
+    "htp.upload.title": "Upload & Integrity Guarantee",
+    "htp.upload.desc": "Once you have obtained the .zip file (full archive) or the single run file, upload it to our service.",
+    "htp.upload.guarantee_title": "Non-Duplication Guarantee",
+    "htp.upload.guarantee_desc": "Our system is able to recognize and automatically ignore runs you have already uploaded. You can upload the full history multiple times without creating duplicates, ensuring your data is always up to date."
   },
   it: {
-    // ... (existing nav/auth/dashboard translations remain unchanged)
+    // ... (existing translations)
     "nav.map": "Mappa",
     "nav.market": "Mercato",
     "nav.inventory": "Zaino",
@@ -540,8 +635,6 @@ export const translations = {
     "nav.profile": "Profilo",
     "nav.admin": "Admin",
     "nav.logout": "Esci",
-
-    // Auth
     "auth.title": "Identificazione Runner",
     "auth.subtitle": "Entra nella griglia. Sincronizza biometria.",
     "auth.email_label": "Email Neuro-Link",
@@ -555,22 +648,28 @@ export const translations = {
     "auth.check_email_desc": "Un link di accesso sicuro è stato inviato. Cliccalo per entrare nel protocollo.",
     "auth.back": "Torna al Login",
     "auth.error": "Connessione Fallita",
-
-    // Landing
-    "landing.title_suffix": "Governa.",
-    "landing.subtitle": "Il Move-to-Earn strategico definitivo. Guadagna RUN muovendoti, spendili per conquistare zone reali e raccogli GOV per dominare la mappa.",
+    "landing.title_suffix": "Dominio.",
+    "landing.subtitle": "Il Move-to-Earn strategico definitivo. Guadagna RUN muovendoti, spendili per conquistare zone reali e raccogli GOV per accumulare Valore.",
     "landing.start_btn": "Inizia a Correre",
-    "landing.rules_btn": "Protocollo di Gioco",
+    "landing.rules_btn": "Whitepaper",
+    "landing.game_guide_btn": "Guida Gioco",
     "landing.card.earn_run": "Guadagna RUN",
-    "landing.card.earn_run_desc": "1 KM = 12 RUN. Traccia le tue corse e guadagna token utility istantaneamente nel tuo wallet.",
-    "landing.card.earn_gov": "Guadagna GOV",
-    "landing.card.earn_gov_desc": "Conia zone (+15), conquista nemici (+25) o completa Missioni per guadagnare potere di Governance.",
+    "landing.card.earn_run_desc": "1 KM = 12 RUN. Genera token utility ad ogni passo.",
+    "landing.card.earn_gov": "Guadagna Valore",
+    "landing.card.earn_gov_desc": "Conia zone, conquista nemici o completa Missioni per accumulare Valore nel network.",
     "landing.card.spend": "Spendi per Vincere",
-    "landing.card.spend_desc": "Usa i RUN nel mercato per comprare Scudi, Boost di Rendimento o converti i guadagni in Pacchetti GOV.",
+    "landing.card.spend_desc": "Acquista Scudi, Boost e potenziamenti nel Mercato Nero.",
     "landing.card.burn": "Il Burn",
-    "landing.card.burn_desc": "I burn settimanali di RUN riducono l'offerta. I sopravvissuti ottengono ricompense in GOV basate su Rango e Territorio.",
-
-    // Dashboard HUD & Map
+    "landing.card.burn_desc": "I burn settimanali garantiscono la scarsità. Sopravvive solo il più forte.",
+    "landing.modal.earn_run_title": "Protocollo Utility Token",
+    "landing.modal.earn_run_body": "RUN è il carburante dell'ecosistema. Generato puramente tramite proof-of-work fisico (movimento validato GPS). Usalo per pagare le tasse di conio, reclamare nuovi territori e acquistare oggetti tattici. Più ti muovi, più influenzi la mappa.",
+    "landing.modal.earn_gov_title": "Accumulo di Valore",
+    "landing.modal.earn_gov_body": "GOV rappresenta il valore puro all'interno del network ZoneRun. A differenza di RUN, non può essere farmato facilmente. Viene assegnato solo per trionfi strategici: creare nuove Zone sulla mappa mondiale, conquistare con successo territorio da altri giocatori o completare obiettivi di alto livello.",
+    "landing.modal.spend_title": "Economia Tattica",
+    "landing.modal.spend_body": "Il Mercato Nero ti permette di convertire il tuo sforzo fisico in vantaggi digitali. Acquista 'Scudi Zona' per proteggere il tuo territorio dagli attacchi mentre dormi, o 'Boost di Rendimento' per aumentare la generazione di reddito passivo delle tue terre.",
+    "landing.modal.burn_title": "Meccaniche Deflazionistiche",
+    "landing.modal.burn_body": "Per prevenire l'iperinflazione, il protocollo esegue un 'Burn Globale' ogni settimana. Una percentuale dei RUN in circolazione viene distrutta. I giocatori che detengono territorio durante un evento di burn ricevono airdrop di GOV, premiando il mantenimento strategico a lungo termine rispetto al farming a breve termine.",
+    "landing.close": "Chiudi",
     "dash.yield": "Rendita",
     "dash.search_placeholder": "Cerca zona...",
     "dash.filter.all": "TUTTI",
@@ -582,8 +681,6 @@ export const translations = {
     "dash.legend.shielded": "Protetta",
     "dash.sync_btn_sub": "Sincronizza",
     "dash.sync_btn_main": "Attività",
-
-    // Zone Details
     "zone.owner_info": "Controllore Zona",
     "zone.you": "(Tu)",
     "zone.status": "Stato",
@@ -605,8 +702,6 @@ export const translations = {
     "zone.modal.shield_desc": "Questo consumerà 1 Scudo Zona per prevenire qualsiasi tentativo di conquista per 24h.",
     "zone.modal.confirm": "Conferma",
     "zone.modal.cancel": "Annulla",
-
-    // Sync Modal
     "sync.title": "Sincronizza Attività",
     "sync.manual": "Caricamento Manuale",
     "sync.auto": "Auto-Sync",
@@ -628,15 +723,11 @@ export const translations = {
     "sync.error.no_data_desc": "Nessun dato GPS valido trovato nei file. Controlla il formato del file o i limiti di velocità.",
     "sync.retry_btn": "Riprova",
     "sync.alert.no_file": "Per favore seleziona almeno un file GPX.",
-
-    // Specific Failure Details
     "sync.error.speed": "Limite di velocità superato. Stai usando un veicolo?",
     "sync.error.duration": "Attività troppo breve. La corsa deve durare > 1 minuto.",
     "sync.error.distance": "Distanza 0km. Nessun movimento rilevato.",
     "sync.error.timestamp": "Dati temporali mancanti nel file GPX.",
     "sync.error.points": "Punti GPS insufficienti nella traccia.",
-
-    // Zone Discovery Modal
     "discovery.title": "Nuova Zona Scoperta!",
     "discovery.subtitle": "Sei il primo a correre qui. Reclama questa terra per espandere il tuo impero.",
     "discovery.coords": "Coordinate",
@@ -647,8 +738,6 @@ export const translations = {
     "discovery.mint_btn": "Conia Zona",
     "discovery.discard_btn": "Scarta",
     "discovery.naming_tip": "Consiglio: Usa punti di riferimento riconoscibili + Codice città (es. 'Hyde Park - LDN')",
-
-    // Run Summary Modal
     "run_summary.title": "Corsa Completata",
     "run_summary.subtitle": "Attività processata con successo.",
     "run_summary.location": "Luogo",
@@ -661,8 +750,6 @@ export const translations = {
     "run_summary.reinforced_desc": "Hai corso nel tuo territorio. Difesa e Rendita aumentate.",
     "run_summary.rewards": "Premi Guadagnati",
     "run_summary.collect_btn": "Riscatta Premi",
-
-    // Marketplace
     "market.title": "Mercato Nero",
     "market.subtitle": "Acquista potenziamenti, sistemi di difesa e risorse.",
     "market.flash_active": "Drop Rapido Attivo",
@@ -683,8 +770,6 @@ export const translations = {
     "market.receive_immediate": "Riceverai",
     "market.cancel": "Annulla",
     "market.confirm": "Conferma",
-
-    // Inventory
     "inv.title": "Zaino",
     "inv.empty_title": "Il tuo inventario è vuoto",
     "inv.empty_desc": "Visita il Mercato per acquistare oggetti per difesa e potenziamento.",
@@ -700,8 +785,6 @@ export const translations = {
     "inv.apply": "Applica",
     "inv.consume_warn": "L'oggetto verrà consumato all'uso.",
     "inv.stack_warn": "Non applicabile se l'effetto è già attivo.",
-
-    // Leaderboard
     "leader.title": "Classifica Globale",
     "leader.rank": "Rango",
     "leader.runner": "Runner",
@@ -724,8 +807,6 @@ export const translations = {
     "leader.profile.owned_zones": "Territori",
     "leader.profile.fav_badge": "Badge Distintivo",
     "leader.profile.total_km": "Distanza Carriera",
-
-    // Admin Leaderboard
     "admin.leader.title": "Gestione Classifiche",
     "admin.leader.add_btn": "Crea Classifica",
     "admin.leader.name": "Titolo",
@@ -744,8 +825,6 @@ export const translations = {
     "admin.leader.reset_confirm": "Resettare la classifica? I punteggi ripartiranno da zero, ma i dati utente sono salvi.",
     "admin.leader.save": "Salva Modifiche",
     "admin.leader.cancel": "Annulla",
-
-    // Admin Levels
     "admin.levels.title": "Sistema Livelli",
     "admin.levels.add_btn": "Aggiungi Livello",
     "admin.levels.edit": "Modifica Livello",
@@ -753,12 +832,8 @@ export const translations = {
     "admin.levels.min_km": "Distanza Min (KM)",
     "admin.levels.level_title": "Titolo (Opzionale)",
     "admin.levels.delete_confirm": "Eliminare questo livello?",
-
-    // Admin Suggestions
     "admin.ideas.title": "Suggerimenti Giocatori",
     "admin.ideas.no_ideas": "Nessun suggerimento ricevuto.",
-
-    // Profile
     "profile.premium_agent": "Agente Premium",
     "profile.no_email": "Nessuna email collegata",
     "profile.xp_progress": "Progresso Livello",
@@ -800,8 +875,6 @@ export const translations = {
     "profile.zone_rank": "Rango Locale",
     "profile.zone_runs": "Corse",
     "profile.zone_total": "Totale",
-
-    // Missions
     "miss.title": "Operazioni",
     "miss.subtitle": "Completa obiettivi per guadagnare RUN e sbloccare Badge.",
     "miss.log": "Missioni Attive",
@@ -818,16 +891,12 @@ export const translations = {
     "miss.gallery": "Galleria Badge",
     "miss.search_badges": "Cerca badge...",
     "miss.locked": "BLOCCATO",
-
-    // Mission & Badge Translations (Samples for Localization)
     "mission.1.title": "Primi 10K",
     "mission.1.desc": "Raggiungi 10 km totali.",
     "mission.2.title": "Primi 50K",
     "mission.2.desc": "Raggiungi 50 km totali.",
     "badge.1.name": "Primi 10K",
     "badge.1.desc": "Raggiungi 10 km totali.",
-
-    // Achievement Modal
     "ach.mission_complete": "Missione Completata",
     "ach.badge_unlocked": "Badge Sbloccato",
     "ach.reward_claimed": "Premio Riscosso",
@@ -839,8 +908,6 @@ export const translations = {
     "ach.pending": "in attesa",
     "ach.batch_claimed": "Riscatto Multiplo",
     "ach.unlocked": "Sbloccato",
-
-    // Wallet & Swap
     "wallet.title": "Asset",
     "wallet.subtitle": "Gestisci i tuoi token e lo storico transazioni.",
     "wallet.available_run": "RUN Liquidi",
@@ -870,8 +937,6 @@ export const translations = {
     "wallet.run_burned": "RUN Bruciati",
     "wallet.tax_rate": "Tasso Tassa",
     "wallet.trans_history": "Storico Transazioni",
-    
-    // Swap Specific
     "wallet.swap.title": "Liquidity Swap",
     "wallet.swap.desc": "Converti token Governance in Utility.",
     "wallet.swap.info_tooltip": "Scambia GOV in RUN per ottenere subito token liquidi per coniare zone, comprare oggetti o attaccare. Utile se sei a corto di RUN ma ricco di GOV.",
@@ -885,8 +950,6 @@ export const translations = {
     "wallet.swap.success_title": "Scambio Riuscito",
     "wallet.swap.success_msg": "I token RUN sono stati aggiunti al tuo saldo.",
     "wallet.swap.close_btn": "Fatto",
-    
-    // Admin Economy
     "admin.eco.swap_config": "Configurazione Swap",
     "admin.eco.rate_label": "RUN per 1 GOV",
     "admin.eco.rate_help": "Controlla l'output della funzione Swap nel Wallet.",
@@ -897,8 +960,6 @@ export const translations = {
     "admin.report.screenshot": "Screenshot",
     "admin.report.status": "Stato",
     "admin.report.no_reports": "Nessuna segnalazione ricevuta.",
-
-    // Report Bug Page
     "report.title": "Segnala Bug",
     "report.subtitle": "Trovato un errore nel sistema? Facci sapere.",
     "report.desc_label": "Descrizione",
@@ -908,8 +969,6 @@ export const translations = {
     "report.success_title": "Segnalazione Inviata",
     "report.success_desc": "Grazie per aiutarci a migliorare ZoneRun.",
     "report.error_desc": "Per favore fornisci una descrizione.",
-
-    // Suggestion Page
     "suggest.title": "Suggerisci Idea",
     "suggest.subtitle": "Hai un'idea per migliorare ZoneRun? Ti ascoltiamo.",
     "suggest.title_label": "Titolo Idea",
@@ -920,8 +979,6 @@ export const translations = {
     "suggest.success_title": "Idea Inviata",
     "suggest.success_desc": "Grazie per il feedback! La community lo valuterà.",
     "suggest.error_desc": "Per favore fornisci titolo e descrizione.",
-
-    // Alerts
     "alert.insufficient_run": "Saldo RUN insufficiente!",
     "alert.insufficient_gov": "Saldo GOV insufficiente!",
     "alert.zone_shielded": "Questa zona è Protetta! Impossibile attaccare.",
@@ -938,10 +995,10 @@ export const translations = {
     "alert.season_reset": "Reset Stagione Completato.",
     "alert.swap_success": "Scambio Riuscito!",
     "alert.confirm_swap": "Scambia",
-
-    // Pages (Rules, etc.)
     "footer.rights": "Tutti i diritti riservati",
-    "footer.rules": "Regole del Gioco",
+    "footer.rules": "Guida Gioco",
+    "footer.whitepaper": "Whitepaper",
+    "footer.export_guide": "Guida Export",
     "footer.privacy": "Privacy Policy",
     "footer.terms": "Termini di Servizio",
     "footer.community": "Community",
@@ -949,113 +1006,202 @@ export const translations = {
     "footer.suggestion": "Suggerisci Idea",
     "footer.legal_info": "Info Legali",
     "footer.subtitle": "Run. Conquer. Govern.",
-
-    "htp.back": "Indietro",
-    "htp.title": "Come Giocare",
-    "htp.subtitle": "Inizia il tuo viaggio da runner novizio a imperatore delle zone.",
-    "htp.step1": "Corri & Registra",
-    "htp.step1_desc": "Usa la tua app di fitness preferita (Strava, Garmin, Apple Health) per registrare la tua attività all'aperto.",
-    "htp.step1_req": "Assicurati che il GPS sia attivo e il tipo di attività sia 'Corsa' o 'Camminata'.",
-    "htp.export_title": "Esportazione Dati",
-    "htp.step2": "Sincronizza Dati",
-    "htp.step2_desc": "Carica il file dell'attività su ZoneRun per validare il tuo sforzo.",
-    "htp.step2_free": "Caricamento Manuale (Gratis)",
-    "htp.step2_premium": "Auto-Sync (Premium)",
-    "htp.step3": "Conquista la Mappa",
-    "htp.step3_desc": "Il tuo percorso viene sovrapposto alla Griglia Esagonale. I tuoi passi nel mondo reale determinano il tuo potere digitale.",
-    "htp.mint": "Conia Zone",
-    "htp.conquer": "Conquista Zone",
-    "htp.reinforce": "Rinforza",
-
     "page.privacy.title": "Privacy Policy",
     "page.terms.title": "Termini di Servizio",
     "page.comm.title": "Community",
     "page.comm.discord": "Server Discord",
     "page.comm.twitter": "Twitter / X",
     "page.comm.dao": "DAO Governance",
-
-    // GAME RULES TRANSLATIONS (REWRITTEN ITALIAN)
     "rules.back": "Indietro",
-    "rules.title": "Protocollo di Gioco",
-    "rules.subtitle": "Meccaniche Move-to-Earn di ZoneRun",
-    "rules.version": "Protocollo v1.4",
-
-    // 1. Concept
-    "rules.sec1.title": "Panoramica del Progetto",
-    "rules.sec1.desc": "ZoneRun è un ecosistema gamificato e decentralizzato che premia il movimento fisico. Usiamo i dati GPS delle tue corse per mappare l'attività reale in un'economia digitale dinamica e sostenibile. Unisce attività fisica, esplorazione territoriale ('Cartografia Sociale') e PvP leggero (Conquista delle Zone).",
-
-    // 2. Tokenomics
-    "rules.sec2.title": "Economia Dual Token",
-    "rules.sec2.run": "RUN (Utility)",
-    "rules.sec2.run_desc": "Inflazionario. Guadagnato correndo. Usato per tutti i costi operativi (Conio, Oggetti, Attacchi).",
-    "rules.sec2.gov": "GOV (Governance)",
-    "rules.sec2.gov_desc": "Deflazionario/Scarso. Guadagnato solo tramite azioni strategiche (Conio nuove terre, Conquista rivali, Missioni).",
-
-    // 3. Zone Mechanics
-    "rules.sec3.title": "Zone & Territorio",
-    "rules.sec3.desc": "Le Zone sono l'asset centrale. Generano pool di RUN e sono il fulcro del conflitto.",
-    "rules.sec3.pool": "Generazione Pool Interessi",
-    "rules.sec3.pool_text": "Ogni zona accumula una pool interna di RUN basata sull'attività (km percorsi) di TUTTI i runner al suo interno. Questa pool è il bottino.",
-    "rules.sec3.dist": "Ciclo Distribuzione (24h)",
-    "rules.sec3.pvp": "Conquista PvP",
-    "rules.sec3.pvp_text": "Se Conquistata: 100% della pool va subito al Conquistatore. Incentiva il PvP.",
-    "rules.sec3.passive": "Reward Passiva",
-    "rules.sec3.passive_text": "Se NON Conquistata: 50% al Proprietario, 50% ai Top 10 Runner (proporzionale ai km).",
-
-    // 4. Strategic Actions
-    "rules.sec4.title": "Azioni Strategiche & Costi",
-    "rules.sec4.action": "Azione",
-    "rules.sec4.cost": "Costo (RUN)",
-    "rules.sec4.reward": "Premio (GOV)",
-    "rules.sec4.mint": "Conia Zona",
-    "rules.sec4.conquer": "Conquista Zona",
-    "rules.sec4.shield": "Oggetto Scudo",
-    "rules.sec4.boost": "Oggetto Boost",
-    "rules.sec4.mint_desc": "Crea nuova zona. Include Auto-Scudo (24h).",
-    "rules.sec4.conq_desc": "Attacca zona altrui. Serve correre > Record KM.",
-    "rules.sec4.shield_desc": "Protegge la zona da 1 attacco per 24h.",
-    "rules.sec4.boost_desc": "Raddoppia i guadagni (24 RUN/KM) per 24h.",
-
-    // 5. Macro Economy
-    "rules.sec5.title": "Macro Economia & Sostenibilità",
-    "rules.sec5.earn": "Tassi di Guadagno",
-    "rules.sec5.earn_base": "12 RUN / KM (Base)",
-    "rules.sec5.earn_boost": "24 RUN / KM (Con Oggetto Boost)",
-    "rules.sec5.swap": "Lo Swap (Controllo Inflazione)",
-    "rules.sec5.swap_text": "Meccanismo primario per convertire RUN inflazionistico in GOV a offerta fissa. Il tasso alto garantisce la scarsità di GOV.",
-    "rules.sec5.swap_rate": "3.000 RUN → 1 GOV",
-    "rules.sec5.burn": "Il Burn (Deflazione)",
-    "rules.sec5.burn_text": "Il 2% di tutti i RUN posseduti viene bruciato periodicamente. Gli utenti ricevono GOV in proporzione a quanto bruciato.",
-
-    // 6. Progression - REWRITTEN GENERIC
-    "rules.sec6.title": "Missioni e Badge",
-    "rules.sec6.desc": "Traccia i tuoi progressi e guadagna ricompense.",
-    "rules.sec6.content": "Le missioni fungono da pietre miliari della tua carriera, guidandoti da runner novizio a professionista esperto. I badge sono onorificenze prestigiose assegnate per specifiche imprese di resistenza, velocità o esplorazione.",
-    "rules.sec6.rewards": "Il completamento di compiti standard garantisce token **RUN**. Raggiungere traguardi ad alta difficoltà e sbloccare badge rari ti premia con token **GOV**, aumentando il tuo potere di governance.",
-
-    // 7. Navigation Guide (New Section)
-    "rules.nav.title": "Guida al Terminale",
+    "rules.title": "Guida Terminale",
+    "rules.subtitle": "Manuale Navigazione Interfaccia",
+    "rules.whitepaper_link": "Cerchi la Tokenomics? Leggi il Whitepaper",
+    "rules.export_guide_link": "Serve aiuto col sync? Leggi la Guida Export",
+    "rules.intro.title": "La Gamification della Corsa",
+    "rules.intro.body": "Gli utenti creano intrattenimento e condivisione con poco impegno e nessun costo semplicemente correndo e caricando i loro dati, dando valore a dei semplici dati proof-of-run. Verrai premiato in RUN in base ai km validati e a quanto espandi la mappa virtuale. Prima inizi più è facile accumulare. Tuttavia, il vero valore dell'ecosistema è il GOV, il secondo token, che potrà essere ottenuto giocando e compiendo azioni strategiche.",
+    "rules.gameplay.title": "Meccaniche di Gioco",
+    "rules.mech.move_title": "1. Muoviti & Sincronizza",
+    "rules.mech.move_desc": "Vai a correre o camminare nella realtà. Registra con Strava o qualsiasi app GPS. Esporta il GPX e caricalo qui. Il gioco verifica velocità e posizione.",
+    "rules.mech.mint_title": "2. Esplora & Conia",
+    "rules.mech.mint_desc": "Se corri in un'area non reclamata, puoi pagare RUN per coniare una nuova Zona. Diventi il proprietario e guadagni subito GOV.",
+    "rules.mech.conquer_title": "3. Conquista Rivali",
+    "rules.mech.conquer_desc": "Hai trovato una zona di qualcun altro? Sfidalo! Corri più KM in quella specifica zona rispetto al loro record per rubare la proprietà.",
+    "rules.mech.earn_title": "4. Guadagna Ricompense",
+    "rules.mech.earn_desc": "Correre genera token RUN. Possedere zone genera Rendita passiva. Completare Missioni premia con Badge rari e GOV.",
+    "rules.nav.title": "Guida Interfaccia",
     "rules.nav.desc": "Manuale di navigazione dell'interfaccia per agenti sul campo.",
-    
     "rules.nav.dash": "Mappa Dashboard",
     "rules.nav.dash_desc": "Il centro di comando. Visualizza la Griglia Esagonale, filtra i territori (Miei/Nemici) e usa il pulsante Sincronizza per caricare file GPX.",
-    
     "rules.nav.market": "Mercato Nero",
     "rules.nav.market_desc": "Acquista oggetti di gioco come Scudi e Boost usando RUN. Cerca i Drop Flash di GOV a tempo limitato.",
-    
     "rules.nav.inv": "Zaino",
     "rules.nav.inv_desc": "Visualizza gli oggetti acquistati. Clicca su un oggetto per 'Ispezionarlo', quindi seleziona una Zona bersaglio per applicare l'effetto.",
-    
     "rules.nav.miss": "Missioni",
     "rules.nav.miss_desc": "Traccia obiettivi. Monitora i tuoi progressi verso i badge e visualizza i requisiti per riscuotere le ricompense.",
-    
     "rules.nav.rank": "Classifica",
     "rules.nav.rank_desc": "Classifiche globali. Confronta le tue prestazioni con altri runner in varie metriche (KM, Zone, Saldo).",
-    
     "rules.nav.wallet": "Portafoglio",
     "rules.nav.wallet_desc": "Hub finanziario. Visualizza la cronologia transazioni, scambia GOV in RUN liquido e controlla il Tasso di Cambio attuale.",
-    
     "rules.nav.profile": "Profilo",
     "rules.nav.profile_desc": "Dossier agente. Visualizza il progresso livello, statistiche dettagliate, storico corse e gestisci il tuo avatar/impostazioni.",
+    "wp.nav.intro": "0. Introduzione",
+    "wp.nav.overview": "1. Panoramica",
+    "wp.nav.goals": "2. Obiettivi",
+    "wp.nav.tokenomics": "3. Tokenomics",
+    "wp.nav.economy": "4. Economia RUN/GOV",
+    "wp.nav.gameplay": "5. Reward e Gameplay",
+    "wp.nav.zones": "6. Sistema Zone",
+    "wp.nav.swap": "7. Swap & Deflazione",
+    "wp.nav.missions": "8. Missioni",
+    "wp.nav.rebuy": "9. Re-Buy & Treasury",
+    "wp.intro.title": "0. Introduzione",
+    "wp.intro.body": "MoveToEarn è un ecosistema gamificato basato sul movimento reale dell’utente. Premia chi corre, crea nuove zone, conquista territori e contribuisce alla crescita dell'ecosistema. Il sistema utilizza due valute: RUN (valuta interna infinita) e GOV (token crypto limitato).",
+    "wp.overview.title": "1. Panoramica del Progetto",
+    "wp.overview.body": "ZoneRun combina meccaniche di esplorazione territoriale ('Cartografia Sociale'), dinamiche PvP leggere e ricompense basate sull'attività fisica. Non è solo un fitness tracker, è un gioco a mappa dinamica che evolve grazie agli utenti.",
+    "wp.overview.move": "Muoviti",
+    "wp.overview.expand": "Espandi",
+    "wp.overview.conquer": "Conquista",
+    "wp.overview.govern": "Governa",
+    "wp.goals.title": "2. Obiettivi",
+    "wp.goals.short": "Breve Termine",
+    "wp.goals.short_desc": "Engagement immediato, creazione della mappa, competizione PvP, presale Pump.fun e crescita del valore tramite re-buy.",
+    "wp.goals.mid": "Medio Termine",
+    "wp.goals.mid_desc": "Partnership con brand fitness, eventi stagionali, leaderboard globali ed espansione internazionale.",
+    "wp.goals.long": "Lungo Termine",
+    "wp.goals.long_desc": "Metaverso geografico reale, DAO decentralizzata completa e gamification AR avanzata.",
+    "wp.tokenomics.title": "3. Tokenomics",
+    "wp.tokenomics.supply": "Supply Totale",
+    "wp.tokenomics.col_area": "Area",
+    "wp.tokenomics.col_alloc": "Allocazione",
+    "wp.tokenomics.col_desc": "Descrizione",
+    "wp.tokenomics.row1": "Pump.fun Presale",
+    "wp.tokenomics.row1_desc": "Raccolta fondi iniziale e liquidità.",
+    "wp.tokenomics.row2": "Dev Fund",
+    "wp.tokenomics.row2_desc": "Vesting 36 mesi. Sviluppo e Team.",
+    "wp.tokenomics.row3": "Game Rewards",
+    "wp.tokenomics.row3_desc": "Treasury per gameplay, conquiste, staking.",
+    "wp.tokenomics.row4": "Liquidity Ops",
+    "wp.tokenomics.row4_desc": "Market making e stabilità.",
+    "wp.economy.title": "4. Economia RUN ↔ GOV",
+    "wp.economy.run": "RUN (Valuta Interna)",
+    "wp.economy.run_desc": "Generato correndo. Inflazionario e illimitato. Usato per azioni operative: Minting zone, Attacchi, Shield, Boost. Completamente centralizzato nel database di gioco.",
+    "wp.economy.gov": "GOV (Crypto Token)",
+    "wp.economy.gov_desc": "Quantità fissa (Hard Cap). Ottenibile solo tramite achievement strategici: Conquiste, Missioni rare, Swap. Scambiabile su blockchain e in futuro per governance.",
+    "wp.gameplay.title": "5. Reward e Gameplay",
+    "wp.gameplay.desc": "Il core loop è semplice: Running → RUN. La generazione di RUN dipende dalla distanza (km), dalla frequenza settimanale e dai bonus consecutivi.",
+    "wp.zones.title": "6. Sistema Zone",
+    "wp.zones.subtitle": "Le Zone sono l'asset centrale. Ogni zona genera interessi, può essere potenziata e cambiare proprietario.",
+    "wp.zones.gen_title": "6.1 Genesi della Mappa (Geolocalizzazione)",
+    "wp.zones.gen_body": "Mondo Reale vs Virtuale: Il gioco utilizza una griglia esagonale geospaziale (H3 index). Ogni zona corrisponde a coordinate GPS reali fisse. Creazione Dinamica: La mappa non è pre-generata. Inizialmente è una 'Fog of War'. Quando un utente corre e sincronizza un'attività in un'area reale dove non esiste ancora una zona, il sistema identifica quell'esagono come Terra Incognita. Solo in quel momento diventa possibile pagare RUN per mintarla. La mappa viene costruita passo dopo passo dai giocatori stessi.",
+    "wp.zones.pool_title": "6.2 Sistema Interessi (Pool RUN)",
+    "wp.zones.pool_desc": "Ogni zona accumula una 'Pool' interna di RUN basata sull'attività (km percorsi) di TUTTI i runner al suo interno. Questa pool è il bottino. Viene distribuita ogni 24h.",
+    "wp.zones.case_a": "Caso A: Conquista (PvP)",
+    "wp.zones.case_a_desc": "Se un rivale supera il record del proprietario prima delle 24h, prende il 100% della pool accumulata immediatamente. Incentiva l'attacco e la difesa attiva.",
+    "wp.zones.case_b": "Caso B: Nessuna Conquista",
+    "wp.zones.case_b_desc": "Se la zona resiste 24h, la pool si svuota: 50% al Proprietario (Rendita Passiva), 50% diviso tra i Top 10 Runner locali (in proporzione ai km).",
+    "wp.zones.costs_title": "6.3 Costi e Azioni",
+    "wp.zones.col_action": "Azione",
+    "wp.zones.col_cost": "Costo",
+    "wp.zones.col_reward": "Reward",
+    "wp.zones.col_effect": "Effetto",
+    "wp.zones.act_mint": "Mint Zona",
+    "wp.zones.eff_mint": "Crea nuova zona, difesa lvl 1.",
+    "wp.zones.act_conq": "Conquista",
+    "wp.zones.eff_conq": "Ruba proprietà e Pool accumulata.",
+    "wp.zones.act_boost": "Boost Item",
+    "wp.zones.eff_boost": "+50% interessi zona per 24h.",
+    "wp.swap.title": "7. Swap RUN → GOV",
+    "wp.swap.desc": "Un sistema controllato per garantire la sostenibilità del prezzo del token GOV.",
+    "wp.swap.freq": "Ogni 30 Giorni",
+    "wp.swap.window": "Finestra 24h",
+    "wp.swap.rate": "600 RUN = 1 GOV",
+    "wp.swap.pool": "Pool Max: 40k GOV",
+    "wp.missions.title": "8. Missioni & Badge",
+    "wp.missions.first_zone": "Prima Zona Creata",
+    "wp.missions.first_conq": "Prima Conquista",
+    "wp.missions.badge_carto": "Badge: Cartographer (10 Zone)",
+    "wp.rebuy.title": "9. Re-Buy Automatico",
+    "wp.rebuy.desc": "Le fee generate dalle operazioni interne (Marketplace, Upgrade, ecc.) vengono riutilizzate per sostenere l'ecosistema.",
+    "wp.rebuy.treasury": "Treasury",
+    "wp.rebuy.buy_gov": "Re-Buy GOV",
+    "wp.rebuy.burn": "Burn RUN",
+    "wp.rebuy.lp": "Liquidity",
+
+    // --- HOW TO PLAY / DATA EXPORT GUIDE ---
+    "htp.back": "Indietro",
+    "htp.title": "Guida Utente: Scaricare i Tuoi File Corsa per il Caricamento",
+    "htp.subtitle": "Come esportare i file .GPX o .FIT dalla tua app di corsa per caricarli su ZoneRun.",
+    "htp.intro": "Questa guida ti mostra come scaricare il file della singola corsa (.GPX, .FIT) o l'archivio completo delle tue attività dalle principali piattaforme di corsa.",
+    
+    "htp.table.func": "Funzionalità",
+    "htp.table.device": "Dispositivo Consigliato",
+    "htp.table.format": "Formato File",
+    "htp.table.notes": "Note sull'Esportazione",
+    "htp.single_run": "Singola Corsa",
+    "htp.full_history": "Storico Completo (Bulk)",
+    "htp.pc_mobile_web": "PC o Mobile (Web)",
+    "htp.pc_mobile_desk": "PC o Mobile (Visualizzazione Desktop)",
+    "htp.mobile_app": "Mobile App",
+    "htp.email_req": "Richiesta inviata via email",
+    "htp.direct_download": "Scaricabile direttamente",
+    
+    // Strava
+    "htp.strava.title": "1. Strava",
+    "htp.strava.desc": "Strava consente di scaricare i dati sia per la singola attività che per lo storico completo del tuo account.",
+    "htp.strava.single_note": "Scaricabile direttamente dalla pagina dell'attività.",
+    "htp.strava.bulk_note": "Richiesta inviata via email; scarica tutte le attività.",
+    "htp.strava.single_step_title": "Passo-Passo: Scaricare una Singola Corsa (.GPX)",
+    "htp.strava.single_step_1": "Accedi al sito web di Strava (strava.com) dal tuo browser.",
+    "htp.strava.single_step_2": "Vai su 'Le mie attività' e clicca sulla corsa desiderata.",
+    "htp.strava.single_step_3": "Nella pagina dell'attività, clicca sull'icona con i tre puntini orizzontali (...) a sinistra della mappa.",
+    "htp.strava.single_step_4": "Seleziona 'Esporta GPX' per scaricare il file.",
+    "htp.strava.bulk_step_title": "Passo-Passo: Scaricare lo Storico Completo di Tutte le Corse",
+    "htp.strava.bulk_step_1": "Accedi al sito web di Strava e vai su 'Impostazioni' (passando il mouse sul tuo avatar in alto a destra).",
+    "htp.strava.bulk_step_2": "Nel menu laterale, seleziona 'Il mio account'.",
+    "htp.strava.bulk_step_3": "Scorri fino a 'Scarica o elimina il tuo account' e clicca su 'Per iniziare'.",
+    "htp.strava.bulk_step_4": "Seleziona 'Richiedi l'archivio'. Riceverai un'email con il link per scaricare il file compresso contenente tutte le tue attività.",
+
+    // Garmin
+    "htp.garmin.title": "2. Garmin Connect",
+    "htp.garmin.desc": "Garmin Connect permette l'esportazione in diversi formati per l'attività singola e offre la possibilità di richiedere l'intero archivio dati.",
+    "htp.garmin.single_note": "Accessibile tramite l'icona delle impostazioni della corsa.",
+    "htp.garmin.bulk_note": "Richiesta inviata via email dal Portale Gestione Dati.",
+    "htp.garmin.single_step_title": "Passo-Passo: Scaricare una Singola Corsa (.GPX o .FIT)",
+    "htp.garmin.single_step_1": "Accedi al sito web di Garmin Connect (connect.garmin.com).",
+    "htp.garmin.single_step_2": "Dal menu di navigazione, vai su 'Attività' > 'Tutte le attività' e clicca sulla corsa che ti interessa.",
+    "htp.garmin.single_step_3": "Nella pagina dell'attività, clicca sull'icona a forma di ingranaggio in alto a destra.",
+    "htp.garmin.single_step_4": "Seleziona 'Esporta in GPX' per il tracciato GPS o 'Esporta file originale' per il formato .FIT (più completo).",
+    "htp.garmin.bulk_step_title": "Passo-Passo: Scaricare lo Storico Completo di Tutte le Corse",
+    "htp.garmin.bulk_step_1": "Accedi al Portale Gestione Dati di Garmin: garmin.com/account/datamanagement/.",
+    "htp.garmin.bulk_step_2": "Effettua il login e seleziona l'opzione 'Esporta i tuoi dati' o 'Richiedi esportazione dati'.",
+    "htp.garmin.bulk_step_3": "Invia la richiesta e attendi l'email di Garmin con il link di download per l'archivio completo.",
+
+    // Adidas
+    "htp.adidas.title": "3. Adidas Running (Runtastic)",
+    "htp.adidas.desc": "Adidas Running ti fornisce l'archivio completo dei dati del tuo account, utili per la migrazione e l'analisi.",
+    "htp.adidas.single_note": "N/A (Consigliata Sincronizzazione). Usa la funzione di Sincronizzazione Partner (es. Strava o Garmin) per ottenere l'esportazione GPX da lì.",
+    "htp.adidas.bulk_note": "Contiene tutti i dati grezzi delle attività in formato testuale.",
+    "htp.adidas.bulk_step_title": "Passo-Passo: Scaricare lo Storico Completo dei Dati (.JSON)",
+    "htp.adidas.bulk_step_1": "Accedi al sito web di Adidas Running.",
+    "htp.adidas.bulk_step_2": "Vai alle impostazioni dell'account, sezione 'Account & Data'.",
+    "htp.adidas.bulk_step_3": "Clicca sul pulsante 'Export Data' (Esporta Dati).",
+    "htp.adidas.bulk_step_4": "Attendi l'email contenente il link per scaricare l'archivio con i file .JSON.",
+
+    // Apple
+    "htp.apple.title": "4. Apple Fitness (Tramite App Terze Parti)",
+    "htp.apple.desc": "L'ecosistema Apple Health richiede l'uso di strumenti esterni per estrarre i dati delle tue corse nel formato richiesto.",
+    "htp.apple.single_note": "iPhone / App Store.",
+    "htp.apple.bulk_note": "Utilizza app specializzate (es. HealthFit o GPX Workout).",
+    "htp.apple.step_title": "Passo-Passo: Estrazione Dati tramite App di Terze Parti (Esempio)",
+    "htp.apple.step_1": "Cerca nell'App Store un'applicazione affidabile per l'esportazione dati di Apple Health (es. HealthFit).",
+    "htp.apple.step_2": "Installa e autorizza l'app ad accedere ai dati dell'app Salute (Workout/Fitness).",
+    "htp.apple.step_3": "All'interno dell'app, seleziona l'attività o lo storico che desideri esportare.",
+    "htp.apple.step_4": "Scegli il formato di esportazione .GPX e salvalo.",
+
+    // Upload
+    "htp.upload.title": "Caricamento e Garanzia di Integrità",
+    "htp.upload.desc": "Una volta ottenuto il file .zip (archivio completo) o il file della singola corsa, caricalo nel nostro servizio.",
+    "htp.upload.guarantee_title": "Garanzia di Non Duplicazione",
+    "htp.upload.guarantee_desc": "Il nostro sistema è in grado di riconoscere e ignorare automaticamente le corse che hai già caricato. Puoi caricare lo storico completo anche più volte senza creare duplicati, assicurando così che tutti i tuoi dati siano sempre aggiornati."
   }
 };

@@ -33,7 +33,9 @@ const Footer: React.FC<FooterProps> = ({ onNavigate, currentView, isAuthenticate
         </div>
         
         <div className="flex flex-wrap justify-center gap-6 font-medium items-center">
+           <button onClick={() => onNavigate('WHITEPAPER')} className="hover:text-cyan-400 transition-colors">{t('footer.whitepaper')}</button>
            <button onClick={() => onNavigate('RULES')} className="hover:text-emerald-400 transition-colors">{t('footer.rules')}</button>
+           <button onClick={() => onNavigate('HOW_TO_PLAY')} className="hover:text-emerald-400 transition-colors">{t('footer.export_guide')}</button>
            <button onClick={() => onNavigate('PRIVACY')} className="hover:text-emerald-400 transition-colors">{t('footer.privacy')}</button>
            <button onClick={() => onNavigate('TERMS')} className="hover:text-emerald-400 transition-colors">{t('footer.terms')}</button>
            <button onClick={() => onNavigate('COMMUNITY')} className="hover:text-emerald-400 transition-colors">{t('footer.community')}</button>
