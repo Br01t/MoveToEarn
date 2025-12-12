@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import Navbar from "./components/Navbar";
 import LandingPage from "./components/LandingPage";
@@ -51,8 +50,27 @@ const AppContent: React.FC = () => {
   const [gameToast, setGameToast] = useState<{ message: string; type: ToastType } | null>(null);
 
   // 1. GAME STATE (Virtual Database)
-  const gameState = useGameState();
-  const { user, zones, setUser, setZones, loading, transactions, logTransaction, recoveryMode } = gameState;
+  // ***************************************************************
+  // * CORREZIONE: Destrutturiamo tutte le proprietà di stato per  *
+  // * garantire che React tracci i cambiamenti e forzi il re-render *
+  // * per i componenti che dipendono da esse (come Admin).        *
+  // ***************************************************************
+  const { 
+    user, zones, setUser, setZones, loading, transactions, logTransaction, recoveryMode,
+    // Variabili Globali necessarie per il re-render di AppContent/Admin
+    lastBurnTimestamp,
+    govToRunRate,
+    marketItems,
+    missions,
+    badges,
+    bugReports,
+    suggestions,
+    leaderboards,
+    levels,
+    allUsers,
+    // Manteniamo il resto dell'oggetto con spread operator per le funzioni di mutazione
+    ...gameState
+  } = useGameState();
 
   // 2. WORKFLOWS (Business Logic)
   // Passed recordRun to ensure atomic DB updates
@@ -64,8 +82,8 @@ const AppContent: React.FC = () => {
   
   const achievementSystem = useAchievements({ 
       user, zones, 
-      missions: gameState.missions, 
-      badges: gameState.badges, 
+      missions: missions, // Usiamo la variabile destrutturata
+      badges: badges,     // Usiamo la variabile destrutturata
       setUser,
       logTransaction 
   });
@@ -101,7 +119,7 @@ const AppContent: React.FC = () => {
             setCurrentView("LANDING");
         }
     }
-  }, [user, loading, currentView, showLoginModal, recoveryMode]);
+  }, [user, loading, currentView, showLoginModal, recoveryMode]); // Manteniamo le dipendenze essenziali
 
   // --- WRAPPERS FOR AUTH TO SHOW TOASTS ---
   const handleLogin = async (email: string, password: string) => {
@@ -234,8 +252,8 @@ const AppContent: React.FC = () => {
                 <Dashboard
                   user={user}
                   zones={zones}
-                  badges={gameState.badges}
-                  users={gameState.allUsers}
+                  badges={badges} // Variabile destrutturata
+                  users={allUsers} // Variabile destrutturata
                   onSyncRun={runWorkflow.startSync}
                   onClaim={handleClaimZone}
                   onBoost={handleBoostZone}
@@ -245,13 +263,13 @@ const AppContent: React.FC = () => {
                   onGetZoneLeaderboard={gameState.fetchZoneLeaderboard}
                 />
               )}
-              {currentView === "MARKETPLACE" && <Marketplace user={user} items={gameState.marketItems} onBuy={gameState.buyItem} />}
+              {currentView === "MARKETPLACE" && <Marketplace user={user} items={marketItems} onBuy={gameState.buyItem} />}
               {currentView === "WALLET" && (
                   <Wallet 
                       user={user}
                       transactions={transactions}
                       onBuyFiat={gameState.buyFiatGov} 
-                      govToRunRate={gameState.govToRunRate}
+                      govToRunRate={govToRunRate} // Variabile destrutturata
                       onSwapGovToRun={gameState.swapGovToRun}
                   />
               )}
@@ -259,12 +277,12 @@ const AppContent: React.FC = () => {
               
               {currentView === "LEADERBOARD" && (
                   <Leaderboard 
-                      users={gameState.allUsers} 
+                      users={allUsers} // Variabile destrutturata
                       currentUser={user} 
                       zones={zones} 
-                      badges={gameState.badges}
-                      leaderboards={gameState.leaderboards}
-                      levels={gameState.levels}
+                      badges={badges} // Variabile destrutturata
+                      leaderboards={leaderboards} // Variabile destrutturata
+                      levels={levels} // Variabile destrutturata
                   />
               )}
               
@@ -272,13 +290,13 @@ const AppContent: React.FC = () => {
                 <Profile
                   user={user}
                   zones={zones}
-                  missions={gameState.missions}
-                  badges={gameState.badges}
-                  levels={gameState.levels}
-                  leaderboards={gameState.leaderboards}
-                  bugReports={gameState.bugReports}
-                  suggestions={gameState.suggestions}
-                  allUsers={gameState.allUsers}
+                  missions={missions} // Variabile destrutturata
+                  badges={badges} // Variabile destrutturata
+                  levels={levels} // Variabile destrutturata
+                  leaderboards={leaderboards} // Variabile destrutturata
+                  bugReports={bugReports} // Variabile destrutturata
+                  suggestions={suggestions} // Variabile destrutturata
+                  allUsers={allUsers} // Variabile destrutturata
                   onUpdateUser={gameState.updateUser}
                   onUpgradePremium={gameState.upgradePremium}
                   onClaim={handleClaimZone}
@@ -287,20 +305,25 @@ const AppContent: React.FC = () => {
                   onGetZoneLeaderboard={gameState.fetchZoneLeaderboard}
                 />
               )}
-              {currentView === "MISSIONS" && <Missions user={user} zones={zones} missions={gameState.missions} badges={gameState.badges} />}
+              {currentView === "MISSIONS" && <Missions user={user} zones={zones} missions={missions} badges={badges} />}
               
               {currentView === "ADMIN" && user.isAdmin && (
                 <Admin
-                  marketItems={gameState.marketItems}
-                  missions={gameState.missions}
-                  badges={gameState.badges}
+                  marketItems={marketItems}
+                  missions={missions}
+                  badges={badges}
                   zones={zones}
-                  govToRunRate={gameState.govToRunRate}
-                  bugReports={gameState.bugReports}
-                  suggestions={gameState.suggestions} 
-                  leaderboards={gameState.leaderboards}
-                  levels={gameState.levels}
-                  allUsers={gameState.allUsers} 
+                  govToRunRate={govToRunRate}
+                  bugReports={bugReports}
+                  suggestions={suggestions} 
+                  leaderboards={leaderboards}
+                  levels={levels}
+                  allUsers={allUsers} 
+                  // ***************************************************************
+                  // * QUI PASSAMO lastBurnTimestamp, ORA CORRETTAMENTE TRACCIATO  *
+                  // ***************************************************************
+                  lastBurnTimestamp={lastBurnTimestamp} 
+                  
                   onAddItem={gameState.addItem}
                   onUpdateItem={gameState.updateItem}
                   onRemoveItem={gameState.removeItem}

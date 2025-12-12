@@ -51,7 +51,7 @@ export const useGameState = () => {
               supabase.from('bug_reports').select('*').order('timestamp', { ascending: false }),
               supabase.from('suggestions').select('*').order('timestamp', { ascending: false }),
               // Check cooldown based on System Transaction
-              supabase.from('transactions').select('timestamp').eq('description', 'Global Burn: SYSTEM TOTAL').order('timestamp', { ascending: false }).limit(1).maybeSingle()
+              supabase.from('transactions').select('timestamp').eq('description', 'Global Burn Protocol (System)').order('timestamp', { ascending: false }).limit(1).maybeSingle()
           ]);
 
           // --- 1. PROFILES (USERS) ---
@@ -200,11 +200,26 @@ export const useGameState = () => {
               })));
           }
 
-          if (lastBurnRes.data) {
-              setLastBurnTimestamp(lastBurnRes.data.timestamp);
-          } else {
-              setLastBurnTimestamp(0); // Explicitly 0 if no record found
+         let timestampValue = 0;
+          if (lastBurnRes.data && lastBurnRes.data.timestamp) {
+              const dbValue = lastBurnRes.data.timestamp;
+              
+              if (typeof dbValue === 'string') {
+                  // Caso più probabile: Timestamp salvato come stringa ISO (TIMESTAMPTZ)
+                  const ms = new Date(dbValue).getTime();
+                  // Controllo di validità post-conversione
+                  if (!isNaN(ms) && ms > 1000000000000) {
+                      timestampValue = ms;
+                  }
+              } else if (typeof dbValue === 'number' && dbValue > 1000000000000) {
+                  // Caso in cui il DB ha salvato i millisecondi (numero grande)
+                  timestampValue = dbValue;
+              }
           }
+          
+          setLastBurnTimestamp(timestampValue);
+          console.log(`[DEBUG LOG] lastBurnTimestamp aggiornato: ${timestampValue}`);
+          // --- FINE SEZIONE CRITICA ---
 
       } catch (err) {
           console.error("❌ [GAME STATE] Critical error fetching data:", err);
