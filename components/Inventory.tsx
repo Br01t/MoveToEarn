@@ -1,7 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { InventoryItem, User, Zone } from '../types';
-import { Shield, Zap, Package, MapPin, X, Info } from 'lucide-react';
+import { Shield, Zap, Package, MapPin, X, Info, Clock, AlertTriangle } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 
 interface InventoryProps {
@@ -13,6 +13,13 @@ interface InventoryProps {
 const Inventory: React.FC<InventoryProps> = ({ user, zones, onUseItem }) => {
   const { t } = useLanguage();
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
+  const [now, setNow] = useState(Date.now());
+
+  // Update timer every minute to keep countdowns relatively fresh without heavy rendering
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const myZones = zones.filter(z => z.ownerId === user.id);
 
@@ -25,6 +32,18 @@ const Inventory: React.FC<InventoryProps> = ({ user, zones, onUseItem }) => {
       onUseItem(selectedItem, zoneId);
       setSelectedItem(null);
     }
+  };
+
+  const getRemainingTime = (expiry: number | undefined) => {
+      if (!expiry || expiry < now) return null;
+      const diff = expiry - now;
+      const h = Math.floor(diff / (1000 * 60 * 60));
+      const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const s = Math.floor((diff % (1000 * 60)) / 1000);
+      
+      if (h > 0) return `${h}h ${m}m`;
+      if (m > 0) return `${m}m ${s}s`;
+      return `${s}s`;
   };
 
   return (
@@ -108,9 +127,15 @@ const Inventory: React.FC<InventoryProps> = ({ user, zones, onUseItem }) => {
             {/* Full Description Section */}
             <div className="p-6 bg-gray-800/50 border-b border-gray-700">
                 <h4 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-2">{t('inv.item_desc')}</h4>
-                <p className="text-gray-300 text-sm leading-relaxed">
+                <p className="text-gray-300 text-sm leading-relaxed mb-3">
                     {selectedItem.description}
                 </p>
+                
+                <p className="text-xs text-orange-400/80 italic flex items-start gap-1.5">
+                   <AlertTriangle size={14} className="mt-0.5 shrink-0" />
+                   {t('inv.stack_warn')}
+                </p>
+
                 <div className="mt-4 p-3 bg-gray-900/50 rounded-lg border border-gray-700/50 flex items-center gap-2 text-sm text-gray-400">
                     <Info size={16} className="text-emerald-500" />
                     <span>{t('inv.effect_power')}: <strong>{selectedItem.effectValue}</strong></span>
@@ -130,27 +155,59 @@ const Inventory: React.FC<InventoryProps> = ({ user, zones, onUseItem }) => {
                  </div>
                ) : (
                  <div className="grid grid-cols-1 gap-2">
-                  {myZones.map(zone => (
-                    <button 
-                      key={zone.id}
-                      onClick={() => handleZoneSelect(zone.id)}
-                      className="flex justify-between items-center p-4 rounded-xl bg-gray-900 border border-gray-700 hover:bg-gray-800 hover:border-emerald-500 transition-all group text-left"
-                    >
-                      <div>
-                        <div className="flex items-center gap-2">
-                            <MapPin size={16} className="text-emerald-500" />
-                            <span className="font-bold text-white">{zone.name}</span>
+                  {myZones.map(zone => {
+                    const boostTime = getRemainingTime(zone.boostExpiresAt);
+                    const shieldTime = getRemainingTime(zone.shieldExpiresAt);
+                    
+                    // Logic to check if we can apply the item
+                    // Can only apply if the specific effect isn't already active
+                    const canApply = 
+                        (selectedItem.type === 'BOOST' && !boostTime) ||
+                        (selectedItem.type === 'DEFENSE' && !shieldTime);
+
+                    return (
+                      <button 
+                        key={zone.id}
+                        onClick={() => canApply && handleZoneSelect(zone.id)}
+                        disabled={!canApply}
+                        className={`flex justify-between items-center p-4 rounded-xl border border-gray-700 transition-all group text-left ${canApply ? 'bg-gray-900 hover:bg-gray-800 hover:border-emerald-500 cursor-pointer' : 'bg-gray-900/50 opacity-60 cursor-not-allowed'}`}
+                      >
+                        <div className="min-w-0 flex-1 pr-4">
+                          <div className="flex items-center gap-2 mb-1">
+                              <MapPin size={16} className="text-emerald-500 shrink-0" />
+                              <span className="font-bold text-white truncate">{zone.name}</span>
+                          </div>
+                          
+                          <div className="text-xs text-gray-400 flex flex-wrap gap-3">
+                            <span>{t('inv.yield')}: {zone.interestRate}%</span>
+                            <span>{t('inv.defense')}: Lvl {zone.defenseLevel}</span>
+                          </div>
+
+                          {/* Active Effects Display */}
+                          {(boostTime || shieldTime) && (
+                              <div className="flex flex-wrap gap-2 mt-2">
+                                  {boostTime && (
+                                      <span className="flex items-center gap-1 text-[10px] font-bold bg-amber-900/40 text-amber-400 px-2 py-0.5 rounded border border-amber-500/30">
+                                          <Zap size={10} className="fill-amber-400" /> {boostTime}
+                                      </span>
+                                  )}
+                                  {shieldTime && (
+                                      <span className="flex items-center gap-1 text-[10px] font-bold bg-cyan-900/40 text-cyan-400 px-2 py-0.5 rounded border border-cyan-500/30">
+                                          <Shield size={10} className="fill-cyan-400" /> {shieldTime}
+                                      </span>
+                                  )}
+                              </div>
+                          )}
                         </div>
-                        <div className="text-xs text-gray-400 mt-1 flex gap-3">
-                          <span>{t('inv.yield')}: {zone.interestRate}%</span>
-                          <span>{t('inv.defense')}: Lvl {zone.defenseLevel}</span>
-                        </div>
-                      </div>
-                      <div className="px-3 py-1 bg-gray-800 rounded text-xs font-bold text-emerald-400 group-hover:bg-emerald-500 group-hover:text-black transition-colors">
-                          {t('inv.apply')}
-                      </div>
-                    </button>
-                  ))}
+                        
+                        {canApply && (
+                            <div className="px-3 py-1 bg-gray-800 rounded text-xs font-bold text-emerald-400 group-hover:bg-emerald-500 group-hover:text-black transition-colors shrink-0">
+                                {t('inv.apply')}
+                            </div>
+                        )}
+                      </button>
+                    );
+                  })}
                  </div>
                )}
             </div>

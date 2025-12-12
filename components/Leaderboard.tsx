@@ -305,10 +305,14 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
   // --- SCORE CALCULATION LOGIC ---
   const getScore = (user: Omit<User, 'inventory'> | User, config: LeaderboardConfig): number => {
       // Metric logic now applies generally to all users based on available profile data
-      const isMe = user.id === currentUser.id;
       
       switch(config.metric) {
           case 'TOTAL_KM': 
+              // Prioritize runHistory calculation if available (usually for currentUser) to ensure consistency
+              if ('runHistory' in user && user.runHistory && user.runHistory.length > 0) {
+                  return user.runHistory.reduce((acc, r) => acc + Number(r.km), 0);
+              }
+              // Fallback to totalKm property (calculated in hook or stored in DB)
               return user.totalKm;
               
           case 'OWNED_ZONES': 
@@ -321,8 +325,8 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
               return user.govBalance;
               
           case 'UNIQUE_ZONES': 
-              if (isMe && currentUser.runHistory) {
-                  return new Set(currentUser.runHistory.map(r => r.location)).size;
+              if ('runHistory' in user && user.runHistory) {
+                  return new Set(user.runHistory.map(r => r.location)).size;
               }
               return Math.floor(user.totalKm / 5) + 1; // Fallback estimate
               

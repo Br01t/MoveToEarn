@@ -170,6 +170,7 @@ export const translations = {
     "inv.defense": "Defense",
     "inv.apply": "Apply",
     "inv.consume_warn": "Item will be consumed upon use.",
+    "inv.stack_warn": "Cannot apply if effect is already active.",
 
     // Leaderboard
     "leader.title": "Global Rankings",
@@ -698,6 +699,7 @@ export const translations = {
     "inv.defense": "Difesa",
     "inv.apply": "Applica",
     "inv.consume_warn": "L'oggetto verrà consumato all'uso.",
+    "inv.stack_warn": "Non applicabile se l'effetto è già attivo.",
 
     // Leaderboard
     "leader.title": "Classifica Globale",
