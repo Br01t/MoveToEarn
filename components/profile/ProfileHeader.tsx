@@ -56,14 +56,16 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           setIsUploading(true);
           try {
               const originalFile = e.target.files[0];
-              // Compress aggressively: max 250px width (plenty for avatar), 0.5 quality WebP
-              const compressedFile = await compressImage(originalFile, 250, 0.5);
+              // Compress aggressively: max 250px width (plenty for avatar), 0.6 quality JPEG
+              const compressedFile = await compressImage(originalFile, 250, 0.6);
+              
+              // Upload with fallback to Base64 if storage fails
               const publicUrl = await uploadFile(compressedFile, 'avatars');
               
               if (publicUrl) {
                   setAvatar(publicUrl);
               } else {
-                  alert("Upload failed. Please check your connection.");
+                  alert("Failed to process image. Please try a different file.");
               }
           } catch (error) {
               console.error("Error processing image:", error);

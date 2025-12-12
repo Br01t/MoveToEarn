@@ -1,9 +1,15 @@
 
-export const compressImage = async (file: File, maxWidth: number, quality: number = 0.5): Promise<File> => {
+export const compressImage = async (file: File, maxWidth: number, quality: number = 0.7): Promise<File> => {
     return new Promise((resolve, reject) => {
         const image = new Image();
-        image.src = URL.createObjectURL(file);
+        // Create Object URL for the file
+        const objectUrl = URL.createObjectURL(file);
+        image.src = objectUrl;
+
         image.onload = () => {
+            // Clean up the URL object to free memory immediately
+            URL.revokeObjectURL(objectUrl);
+
             const canvas = document.createElement('canvas');
             let width = image.width;
             let height = image.height;
@@ -26,20 +32,26 @@ export const compressImage = async (file: File, maxWidth: number, quality: numbe
             // Draw image on canvas
             ctx.drawImage(image, 0, 0, width, height);
 
-            // Convert to WebP with aggressive compression
+            // Convert to JPEG with compression (JPEG is safer than WebP for mobile uploads)
             canvas.toBlob((blob) => {
                 if (!blob) {
                     reject(new Error("Compression failed"));
                     return;
                 }
-                // Force .webp extension
-                const compressedFile = new File([blob], file.name.split('.')[0] + ".webp", {
-                    type: "image/webp",
+                // Force .jpg extension for compatibility
+                const newName = file.name.split('.')[0].replace(/[^a-z0-9]/gi, '_') + ".jpg";
+                
+                const compressedFile = new File([blob], newName, {
+                    type: "image/jpeg",
                     lastModified: Date.now(),
                 });
                 resolve(compressedFile);
-            }, 'image/webp', quality);
+            }, 'image/jpeg', quality);
         };
-        image.onerror = (err) => reject(err);
+        
+        image.onerror = (err) => {
+            URL.revokeObjectURL(objectUrl);
+            reject(err);
+        };
     });
 };

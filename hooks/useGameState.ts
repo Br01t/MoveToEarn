@@ -381,10 +381,6 @@ export const useGameState = () => {
   const login = async (email: string, password: string) => await supabase.auth.signInWithPassword({ email, password });
   
   const resetPassword = async (email: string) => {
-      // Determines the redirect URL: 
-      // 1. Production Env Variable (VITE_SITE_URL) if explicitly set
-      // 2. Fallback to current window origin (works for localhost AND basic production deployments)
-      // NOTE: You must also whitelist this URL in Supabase Dashboard > Authentication > URL Configuration
       const productionUrl = (import.meta as any).env.VITE_SITE_URL;
       const redirectTo = productionUrl || window.location.origin;
       
@@ -534,8 +530,7 @@ export const useGameState = () => {
 
       // Optimistic
       const updatedUser = { ...user, runBalance: user.runBalance - CONQUEST_COST, govBalance: user.govBalance + CONQUEST_REWARD_GOV };
-      const updatedZones = zones.map(z => z.id === zoneId ? { ...z, ownerId: user.id, recordKm: 0, defenseLevel: 1 } : z); // Reset record on conquer? Or keep it high? Typically keep high to make re-conquest hard. Let's keep recordKm for now but switch owner.
-      // Actually, if I conquer, I usually have to beat the record. So the record stays.
+      const updatedZones = zones.map(z => z.id === zoneId ? { ...z, ownerId: user.id, recordKm: 0, defenseLevel: 1 } : z); 
       
       setUser(updatedUser);
       setZones(updatedZones);
@@ -678,7 +673,6 @@ export const useGameState = () => {
       return { error: error?.message, success: !error };
   };
 
-  // ... (Missions/Badges CRUD follow same pattern, mapped to DB columns)
   const addMission = async (m: Mission) => {
       const { error } = await supabase.from('missions').insert({
           title: m.title, description: m.description, reward_run: m.rewardRun, reward_gov: m.rewardGov,
@@ -735,29 +729,20 @@ export const useGameState = () => {
 
       const dbUpdates: any = {};
       if (updates.name !== undefined) dbUpdates.name = updates.name;
-      // Map interestRate from frontend to interest_rate in backend
       if (updates.interestRate !== undefined) dbUpdates.interest_rate = updates.interestRate;
 
-      console.log(`🛠️ [UPDATE ZONE] ID: ${id}`, dbUpdates);
-
-      // 2. Perform DB Update and SELECT to verify
       const { data, error } = await supabase.from('zones').update(dbUpdates).eq('id', id).select();
       
       if (error) {
           console.error("❌ Zone update error:", error);
-          // Revert or refresh on error
           await fetchGameData();
           return { error: error.message, success: false };
       }
 
       if (data && data.length > 0) {
-          console.log("✅ Zone updated successfully:", data[0]);
           return { success: true };
       } else {
-          console.warn("⚠️ Zone update returned no data. Possible RLS issue.");
-          // If no data returned, it likely failed silently (RLS), so we refresh to revert local state
           await fetchGameData();
-          // Explicitly return an error that the frontend can display
           return { error: "Permission Denied (RLS policy blocks update)", success: false };
       }
   };
@@ -769,7 +754,6 @@ export const useGameState = () => {
   };
 
   const distributeZoneRewards = async () => {
-      // Calls a Postgres RPC function (stored procedure) for atomic distribution
       const { error } = await supabase.rpc('distribute_zone_rewards');
       if (error) {
           console.error("Distribution failed:", error);
@@ -780,23 +764,38 @@ export const useGameState = () => {
       }
   };
 
-  // Helper: Upload file to Supabase Storage
-  const uploadFile = async (file: File, bucket: string): Promise<string | null> => {
+  // Helper: Upload file to Supabase Storage - STRICTLY BUCKET 'images'
+  const uploadFile = async (file: File, context: string): Promise<string | null> => {
       try {
           const fileExt = file.name.split('.').pop();
-          const fileName = `${Math.random()}.${fileExt}`;
-          const filePath = `${fileName}`;
+          const cleanExt = fileExt ? fileExt.replace(/[^a-z0-9]/gi, '') : 'jpg';
+          // Add timestamp for uniqueness
+          const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${cleanExt}`;
+          
+          // MAP CONTEXT TO FOLDER
+          // User Requirement: Bucket 'images' -> folders 'avatars' & 'bugs'
+          const bucketName = 'images'; 
+          let folder = '';
+          
+          if (context === 'avatars') folder = 'avatars';
+          else if (context === 'reports') folder = 'bugs'; // Map 'reports' logic to 'bugs' folder
+          else folder = context; // Fallback
+
+          const filePath = `${folder}/${fileName}`;
 
           const { error: uploadError } = await supabase.storage
-              .from(bucket)
-              .upload(filePath, file);
+              .from(bucketName)
+              .upload(filePath, file, { upsert: false });
 
-          if (uploadError) throw uploadError;
+          if (uploadError) {
+              console.error(`Supabase Storage Error (${bucketName}/${filePath}):`, uploadError);
+              throw uploadError;
+          }
 
-          const { data } = supabase.storage.from(bucket).getPublicUrl(filePath);
+          const { data } = supabase.storage.from(bucketName).getPublicUrl(filePath);
           return data.publicUrl;
       } catch (error) {
-          console.error('Upload error:', error);
+          console.error("Upload failed:", error);
           return null;
       }
   };
@@ -807,6 +806,9 @@ export const useGameState = () => {
       
       if (screenshot) {
           screenshotUrl = await uploadFile(screenshot, 'reports');
+          // If screenshot fails but text exists, report is still valid?
+          // For now, if upload returns null, we might log it but proceed
+          if (!screenshotUrl) console.warn("Screenshot upload failed, sending report without image.");
       }
 
       const { error } = await supabase.from('bug_reports').insert({
