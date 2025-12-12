@@ -21,7 +21,7 @@ const Footer: React.FC<FooterProps> = ({ onNavigate, currentView, isAuthenticate
           <div className="fixed bottom-0 left-0 right-0 z-50 pointer-events-none flex flex-col items-center">
               {/* Sliding Panel */}
               <div 
-                className={`pointer-events-auto transition-transform duration-300 ease-in-out bg-gray-950/95 backdrop-blur-xl border-t border-gray-700 w-full md:w-auto md:min-w-[400px] md:rounded-t-xl overflow-hidden shadow-[0_-5px_20px_rgba(0,0,0,0.5)] flex flex-col ${isExpanded ? 'translate-y-[calc(0%-56px)] md:translate-y-0' : 'translate-y-[100%]'}`}
+                className={`pointer-events-auto transition-transform duration-300 ease-in-out bg-gray-950/95 backdrop-blur-xl border-t border-gray-700 w-full md:w-auto md:min-w-[400px] md:rounded-t-xl overflow-hidden shadow-[0_-5px_20px_rgba(0,0,0,0.5)] flex flex-col ${isExpanded ? 'translate-y-[calc(0%-144px)] md:translate-y-0' : 'translate-y-[100%]'}`}
               >
                   {/* Close Toggle (Visible only when expanded) */}
                   <button 
@@ -46,9 +46,10 @@ const Footer: React.FC<FooterProps> = ({ onNavigate, currentView, isAuthenticate
               </div>
 
               {/* Triggers (Visible only when collapsed) */}
-              <div className={`pointer-events-auto absolute bottom-[66px] md:bottom-0 transition-opacity duration-300 ${isExpanded || isHidden ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+              {/* Mobile: Moved to bottom-right and raised to ~144px to clear 2-row navbar. Desktop: Centered bottom. */}
+              <div className={`pointer-events-auto absolute bottom-[114px] md:bottom-0 md:right-auto transition-opacity duration-300 ${isExpanded || isHidden ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
                   
-                  {/* Mobile Trigger: Round Icon above Bottom Nav */}
+                  {/* Mobile Trigger: Round Icon */}
                   <button 
                      onClick={() => setIsExpanded(true)}
                      className="md:hidden bg-gray-800/90 backdrop-blur p-2.5 rounded-full border border-gray-700 shadow-lg text-gray-400 hover:text-white"
@@ -75,19 +76,16 @@ const Footer: React.FC<FooterProps> = ({ onNavigate, currentView, isAuthenticate
         <div className="flex items-center gap-3">
           <span className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-500 cursor-pointer" onClick={() => onNavigate('DASHBOARD')}>ZoneRun</span> 
           <span className="text-gray-700">|</span>
-          <span>&copy; {t('footer.subtitle')}</span>
+          <span className="font-mono text-xs">{t('footer.subtitle')}</span>
         </div>
-        <div className="flex flex-wrap justify-center gap-8 font-medium">
-          <button onClick={() => onNavigate('RULES')} className="hover:text-emerald-400 transition-colors">{t('footer.rules')}</button>
-          <button onClick={() => onNavigate('PRIVACY')} className="hover:text-emerald-400 transition-colors">{t('footer.privacy')}</button>
-          <button onClick={() => onNavigate('TERMS')} className="hover:text-emerald-400 transition-colors">{t('footer.terms')}</button>
-          <button onClick={() => onNavigate('COMMUNITY')} className="hover:text-emerald-400 transition-colors">{t('footer.community')}</button>
-          {isAuthenticated && (
-            <>
-                <button onClick={() => onNavigate('REPORT_BUG')} className="hover:text-red-400 transition-colors">{t('footer.report_bug')}</button>
-                <button onClick={() => onNavigate('SUGGESTION')} className="hover:text-yellow-400 transition-colors">{t('footer.suggestion')}</button>
-            </>
-          )}
+        <div className="flex flex-wrap justify-center gap-6 font-medium">
+           <button onClick={() => onNavigate('RULES')} className="hover:text-emerald-400 transition-colors">{t('footer.rules')}</button>
+           <button onClick={() => onNavigate('PRIVACY')} className="hover:text-emerald-400 transition-colors">{t('footer.privacy')}</button>
+           <button onClick={() => onNavigate('TERMS')} className="hover:text-emerald-400 transition-colors">{t('footer.terms')}</button>
+           <button onClick={() => onNavigate('COMMUNITY')} className="hover:text-emerald-400 transition-colors">{t('footer.community')}</button>
+        </div>
+        <div className="text-xs text-gray-600 font-mono">
+           &copy; {new Date().getFullYear()} ZoneRun Protocol
         </div>
       </div>
     </footer>
