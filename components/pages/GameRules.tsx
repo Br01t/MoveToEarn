@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Scroll, Map, Shield, Coins, TrendingUp, Zap, Footprints, ArrowLeft, ShoppingBag, Route, Upload, Globe, Crown, Lock, FileText, CheckCircle, HelpCircle, AlertTriangle, Target, Calculator, Database, Siren, Flame, Gift, Clock, Trophy, Star, Medal } from 'lucide-react';
+import { Scroll, ArrowLeft, Target, Coins, Shield, Zap, Map as MapIcon, RefreshCw, Flame, Trophy, Activity, Globe, Scale, Users, Award, Sword, Crown, ShoppingBag, Package, Wallet, User as UserIcon } from 'lucide-react';
 import { ViewState } from '../../types';
 import { useLanguage } from '../../LanguageContext';
 
@@ -12,373 +12,323 @@ interface GameRulesProps {
 const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate }) => {
   const { t } = useLanguage();
 
+  const SectionHeader = ({ icon: Icon, title }: { icon: any, title: string }) => (
+      <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 flex items-center gap-3 border-b border-gray-700 pb-4 mt-12 first:mt-0">
+          <Icon className="text-emerald-400" size={32} /> {title}
+      </h2>
+  );
+
   return (
-    <div className="min-h-screen bg-gray-900 relative overflow-hidden pb-20">
+    <div className="min-h-screen bg-gray-900 relative overflow-hidden pb-24">
       
       {/* Background Decor */}
-      <div className="absolute top-0 left-0 w-full h-[500px] bg-gradient-to-b from-emerald-900/20 to-transparent pointer-events-none"></div>
-      <div className="absolute -top-24 -right-24 w-96 h-96 bg-cyan-500/10 rounded-full blur-[100px] pointer-events-none"></div>
-      <div className="absolute top-40 left-[-100px] w-64 h-64 bg-purple-500/10 rounded-full blur-[80px] pointer-events-none"></div>
-
-      <div className="max-w-6xl mx-auto p-6 md:p-8 relative z-10">
+      <div className="absolute top-0 left-0 w-full h-[600px] bg-gradient-to-b from-emerald-900/20 to-transparent pointer-events-none"></div>
+      
+      <div className="max-w-5xl mx-auto p-6 md:p-8 relative z-10">
         
-        {/* Navigation Header */}
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-12 gap-4">
+        {/* Nav */}
+        <div className="mb-12">
             {onBack && (
               <button 
                 onClick={onBack}
-                className="group flex items-center gap-2 text-gray-400 hover:text-white transition-colors bg-gray-800/50 px-4 py-2 rounded-lg border border-gray-700 hover:border-gray-500"
+                className="group flex items-center gap-2 text-gray-400 hover:text-white transition-colors bg-gray-800/50 px-4 py-2 rounded-lg border border-gray-700 hover:border-gray-500 backdrop-blur-sm"
               >
                 <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" /> 
                 <span className="font-bold text-sm">{t('rules.back')}</span>
               </button>
             )}
-            {onNavigate && (
-              <button 
-                  onClick={() => onNavigate('HOW_TO_PLAY' as any)}
-                  className="flex items-center gap-2 bg-emerald-500/10 text-emerald-400 px-5 py-2.5 rounded-lg hover:bg-emerald-500 hover:text-black transition-all border border-emerald-500/30 hover:shadow-[0_0_20px_rgba(16,185,129,0.4)]"
-              >
-                  <HelpCircle size={18} /> 
-                  <span className="font-bold text-sm">{t('rules.guide')}</span>
-              </button>
-            )}
         </div>
 
-        {/* Title Section */}
-        <div className="text-center mb-20 space-y-6">
-            <div className="inline-flex items-center justify-center p-4 bg-gray-800/50 rounded-full border border-gray-700 mb-2 shadow-2xl">
-                <Scroll className="text-emerald-400" size={40} />
+        {/* Title */}
+        <div className="text-center mb-20">
+            <div className="inline-flex p-4 bg-gray-800/80 rounded-full border border-gray-700 mb-6 shadow-2xl backdrop-blur-md">
+                <Scroll className="text-emerald-400" size={48} />
             </div>
-            <h1 className="text-5xl md:text-7xl font-black text-white tracking-tighter uppercase">
+            <h1 className="text-5xl md:text-7xl font-black text-white tracking-tighter uppercase mb-2">
               {t('rules.title')}
             </h1>
-            <p className="text-xl text-gray-400 max-w-3xl mx-auto leading-relaxed">
-              {t('rules.subtitle')}
-              <br/>
-              <span className="text-sm font-mono text-gray-500 mt-2 block">{t('rules.version')}</span>
-            </p>
+            <p className="text-xl text-gray-400 font-light">{t('rules.subtitle')}</p>
+            <span className="inline-block mt-4 text-xs font-mono text-emerald-500/60 border border-emerald-500/20 px-3 py-1 rounded-full">
+                {t('rules.version')}
+            </span>
         </div>
 
-        <div className="space-y-24">
+        <div className="space-y-16">
 
-          {/* SECTION: TOKENOMICS */}
-          <section>
-             <h2 className="text-3xl font-bold text-white mb-8 flex items-center gap-3 border-b border-gray-800 pb-4">
-                <Coins className="text-emerald-400" /> {t('rules.tokenomics.title')}
-             </h2>
-             
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {/* RUN TOKEN */}
-                <div className="bg-gray-800/40 backdrop-blur-md rounded-2xl border border-gray-700 p-8 hover:border-emerald-500/30 transition-colors">
-                    <div className="flex items-center justify-between mb-6">
-                        <div className="flex items-center gap-3">
-                            <div className="p-3 bg-emerald-500/20 rounded-lg text-emerald-400"><Footprints size={24}/></div>
-                            <div>
-                                <h3 className="text-2xl font-bold text-white">{t('rules.tokenomics.run.title')}</h3>
-                                <span className="text-xs text-emerald-500 font-mono">{t('rules.tokenomics.run.subtitle')}</span>
+            {/* 1. CONCEPT */}
+            <section className="bg-gray-800/30 p-8 rounded-3xl border border-gray-700/50 backdrop-blur-sm">
+                <SectionHeader icon={Globe} title={t('rules.sec1.title')} />
+                <p className="text-lg text-gray-300 leading-relaxed max-w-4xl">
+                    {t('rules.sec1.desc')}
+                </p>
+            </section>
+
+            {/* 2. TOKENOMICS */}
+            <section>
+                <SectionHeader icon={Scale} title={t('rules.sec2.title')} />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="bg-gray-800/80 p-6 rounded-2xl border-l-4 border-emerald-500 shadow-lg">
+                        <div className="flex items-center gap-3 mb-3">
+                            <Activity className="text-emerald-400" size={24} />
+                            <h3 className="text-xl font-bold text-white">{t('rules.sec2.run')}</h3>
+                        </div>
+                        <p className="text-gray-400 text-sm leading-relaxed">{t('rules.sec2.run_desc')}</p>
+                    </div>
+                    <div className="bg-gray-800/80 p-6 rounded-2xl border-l-4 border-cyan-500 shadow-lg">
+                        <div className="flex items-center gap-3 mb-3">
+                            <Crown className="text-cyan-400" size={24} />
+                            <h3 className="text-xl font-bold text-white">{t('rules.sec2.gov')}</h3>
+                        </div>
+                        <p className="text-gray-400 text-sm leading-relaxed">{t('rules.sec2.gov_desc')}</p>
+                    </div>
+                </div>
+            </section>
+
+            {/* 3. ZONES */}
+            <section>
+                <SectionHeader icon={MapIcon} title={t('rules.sec3.title')} />
+                <p className="text-gray-300 mb-8 max-w-3xl">{t('rules.sec3.desc')}</p>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    {/* Pool Logic */}
+                    <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-6 rounded-2xl border border-gray-700">
+                        <h4 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                            <Coins size={20} className="text-yellow-400"/> {t('rules.sec3.pool')}
+                        </h4>
+                        <p className="text-sm text-gray-400 leading-relaxed">
+                            {t('rules.sec3.pool_text')}
+                        </p>
+                        <div className="mt-4 p-3 bg-black/30 rounded-lg border border-gray-700/50 text-center">
+                            <code className="text-emerald-400 font-bold text-sm">Pool Growth = Σ(Runner KM)</code>
+                        </div>
+                    </div>
+
+                    {/* Distribution Logic */}
+                    <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-6 rounded-2xl border border-gray-700">
+                        <h4 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                            <RefreshCw size={20} className="text-blue-400"/> {t('rules.sec3.dist')}
+                        </h4>
+                        <div className="space-y-4">
+                            <div className="flex gap-4 items-start">
+                                <div className="p-2 bg-red-900/30 rounded text-red-400 shrink-0"><Sword size={18}/></div>
+                                <div>
+                                    <strong className="text-white text-sm block mb-1">{t('rules.sec3.pvp')}</strong>
+                                    <p className="text-xs text-gray-400">{t('rules.sec3.pvp_text')}</p>
+                                </div>
+                            </div>
+                            <div className="flex gap-4 items-start">
+                                <div className="p-2 bg-emerald-900/30 rounded text-emerald-400 shrink-0"><Users size={18}/></div>
+                                <div>
+                                    <strong className="text-white text-sm block mb-1">{t('rules.sec3.passive')}</strong>
+                                    <p className="text-xs text-gray-400">{t('rules.sec3.passive_text')}</p>
+                                </div>
                             </div>
                         </div>
-                        <div className="text-right">
-                           <span className="block text-xs text-gray-500 uppercase">Supply</span>
-                           <span className="font-mono text-white">{t('rules.tokenomics.run.supply')}</span>
-                        </div>
-                    </div>
-                    <p className="text-gray-400 text-sm leading-relaxed mb-6">
-                        {t('rules.tokenomics.run.desc')}
-                    </p>
-                    <div className="space-y-3">
-                        <div className="flex items-center gap-3 text-sm text-gray-300">
-                           <span className="w-16 text-xs font-bold text-gray-500 uppercase">{t('rules.tokenomics.run.source_label')}</span>
-                           <span>{t('rules.tokenomics.run.source')}</span>
-                        </div>
-                        <div className="flex items-center gap-3 text-sm text-gray-300">
-                           <span className="w-16 text-xs font-bold text-gray-500 uppercase">{t('rules.tokenomics.run.sink_label')}</span>
-                           <span>{t('rules.tokenomics.run.sink')}</span>
-                        </div>
                     </div>
                 </div>
+            </section>
 
-                {/* GOV TOKEN */}
-                <div className="bg-gray-800/40 backdrop-blur-md rounded-2xl border border-gray-700 p-8 hover:border-cyan-500/30 transition-colors">
-                    <div className="flex items-center justify-between mb-6">
-                        <div className="flex items-center gap-3">
-                            <div className="p-3 bg-cyan-500/20 rounded-lg text-cyan-400"><Crown size={24}/></div>
-                            <div>
-                                <h3 className="text-2xl font-bold text-white">{t('rules.tokenomics.gov.title')}</h3>
-                                <span className="text-xs text-cyan-500 font-mono">{t('rules.tokenomics.gov.subtitle')}</span>
-                            </div>
-                        </div>
-                        <div className="text-right">
-                           <span className="block text-xs text-gray-500 uppercase">Supply</span>
-                           <span className="font-mono text-white">{t('rules.tokenomics.gov.supply')}</span>
-                        </div>
-                    </div>
-                    <p className="text-gray-400 text-sm leading-relaxed mb-6">
-                        {t('rules.tokenomics.gov.desc')}
-                    </p>
-                    <div className="space-y-3">
-                        <div className="flex items-center gap-3 text-sm text-gray-300">
-                           <span className="w-16 text-xs font-bold text-gray-500 uppercase">{t('rules.tokenomics.gov.source_label')}</span>
-                           <span>{t('rules.tokenomics.gov.source')}</span>
-                        </div>
-                        <div className="flex items-center gap-3 text-sm text-gray-300">
-                           <span className="w-16 text-xs font-bold text-gray-500 uppercase">{t('rules.tokenomics.gov.sink_label')}</span>
-                           <span>{t('rules.tokenomics.gov.sink')}</span>
-                        </div>
-                    </div>
-                </div>
-             </div>
-          </section>
-
-          {/* SECTION: ACHIEVEMENTS & PROGRESSION */}
-          <section>
-             <h2 className="text-3xl font-bold text-white mb-8 flex items-center gap-3 border-b border-gray-800 pb-4">
-                <Trophy className="text-yellow-400" /> {t('rules.ach.title')}
-             </h2>
-             
-             <div className="space-y-6">
-                 <p className="text-gray-400 text-sm leading-relaxed max-w-4xl">
-                     {t('rules.ach.intro')}
-                 </p>
-
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                     {/* Missions Logic */}
-                     <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
-                         <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                             <Target className="text-emerald-400" size={20} /> {t('rules.missions.title')}
-                         </h3>
-                         <p className="text-sm text-gray-400 mb-4">
-                             {t('rules.missions.desc')}
-                         </p>
-                         <div className="space-y-3">
-                             <div className="bg-gray-900 p-3 rounded-lg border border-gray-600 flex justify-between items-center">
-                                 <span className="text-xs text-gray-300 font-bold uppercase">{t('rules.tier.common')}</span>
-                                 <span className="text-xs font-mono text-emerald-400">+100-200 RUN</span>
-                             </div>
-                             <div className="bg-cyan-900/20 p-3 rounded-lg border border-cyan-500/30 flex justify-between items-center">
-                                 <span className="text-xs text-cyan-300 font-bold uppercase">{t('rules.tier.rare')}</span>
-                                 <span className="text-xs font-mono text-cyan-400">+300-500 RUN</span>
-                             </div>
-                             <div className="bg-purple-900/20 p-3 rounded-lg border border-purple-500/30 flex justify-between items-center">
-                                 <span className="text-xs text-purple-300 font-bold uppercase">{t('rules.tier.epic')}</span>
-                                 <span className="text-xs font-mono text-purple-400">+600 RUN + GOV Bonus</span>
-                             </div>
-                             <div className="bg-yellow-900/20 p-3 rounded-lg border border-yellow-500/30 flex justify-between items-center">
-                                 <span className="text-xs text-yellow-300 font-bold uppercase">{t('rules.tier.legendary')}</span>
-                                 <span className="text-xs font-mono text-yellow-400">+1500 RUN + High GOV</span>
-                             </div>
-                         </div>
-                     </div>
-
-                     {/* Badges Logic */}
-                     <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
-                         <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                             <Medal className="text-yellow-400" size={20} /> {t('rules.badges.title')}
-                         </h3>
-                         <p className="text-sm text-gray-400 mb-4">
-                             {t('rules.badges.desc')}
-                         </p>
-                         <ul className="space-y-3 text-sm text-gray-400">
-                             <li className="flex gap-2">
-                                 <Star size={16} className="text-yellow-400 mt-0.5" />
-                                 <span><strong>{t('rules.badges.visual')}</strong> {t('rules.badges.visual_desc')}</span>
-                             </li>
-                             <li className="flex gap-2">
-                                 <Target size={16} className="text-emerald-400 mt-0.5" />
-                                 <span><strong>{t('rules.badges.meta')}</strong> {t('rules.badges.meta_desc')}</span>
-                             </li>
-                         </ul>
-                     </div>
-                 </div>
-             </div>
-          </section>
-
-          {/* SECTION: BURN & REWARDS */}
-          <section>
-             <h2 className="text-3xl font-bold text-white mb-8 flex items-center gap-3 border-b border-gray-800 pb-4">
-                <Flame className="text-red-500" /> {t('rules.burn.title')}
-             </h2>
-             
-             <div className="bg-gray-800/60 rounded-xl border border-gray-700 p-8 relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-8 opacity-10">
-                   <Gift size={200} className="text-cyan-500" />
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 relative z-10">
-                    <div>
-                        <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                           <Flame className="text-red-400"/> {t('rules.burn.proto_title')}
-                        </h3>
-                        <p className="text-gray-400 text-sm leading-relaxed mb-6">
-                           {t('rules.burn.proto_desc')}
-                        </p>
-                        <div className="bg-red-900/20 border border-red-500/30 p-4 rounded-lg">
-                           <p className="text-red-200 text-xs font-mono">{t('rules.burn.effect')}</p>
-                        </div>
-                    </div>
-
-                    <div>
-                        <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                           <TrendingUp className="text-cyan-400"/> {t('rules.burn.airdrop_title')}
-                        </h3>
-                        <p className="text-gray-400 text-sm leading-relaxed mb-4">
-                           {t('rules.burn.airdrop_desc')}
-                        </p>
-                        <div className="bg-gray-900 p-4 rounded-lg border border-gray-600 font-mono text-xs text-cyan-300 mb-2">
-                           {t('rules.burn.formula')}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                           {t('rules.burn.calc')}
-                        </div>
-                    </div>
-                </div>
-             </div>
-          </section>
-
-          {/* SECTION: MATH & FORMULAS */}
-          <section>
-             <h2 className="text-3xl font-bold text-white mb-8 flex items-center gap-3 border-b border-gray-800 pb-4">
-                <Calculator className="text-blue-400" /> {t('rules.math.title')}
-             </h2>
-             
-             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                 <div className="lg:col-span-2 bg-gray-900 border border-gray-700 rounded-xl p-6 relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-4 opacity-5"><Target size={120}/></div>
-                    <h3 className="text-xl font-bold text-white mb-4">{t('rules.math.yield_title')}</h3>
-                    <div className="font-mono text-sm bg-black/50 p-4 rounded-lg border border-gray-700 mb-4 text-green-400">
-                        {t('rules.math.yield_formula')}
-                    </div>
-                    <p className="text-sm text-gray-400">
-                        {t('rules.math.yield_desc')}
-                    </p>
-                 </div>
-
-                 <div className="bg-gray-900 border border-gray-700 rounded-xl p-6">
-                    <h3 className="text-xl font-bold text-white mb-4">{t('rules.math.conquest_title')}</h3>
-                    <ul className="space-y-4 text-sm text-gray-300">
-                        <li className="flex gap-2">
-                            <span className="font-bold text-red-400">{t('rules.math.req')}</span>
-                            <span>{t('rules.math.req_desc')}</span>
-                        </li>
-                        <li className="flex gap-2">
-                            <span className="font-bold text-red-400">{t('rules.math.cost')}</span>
-                            <span>{t('rules.math.cost_desc')}</span>
-                        </li>
-                        <li className="flex gap-2">
-                            <span className="font-bold text-emerald-400">{t('rules.math.reward')}</span>
-                            <span>{t('rules.math.reward_desc')}</span>
-                        </li>
-                    </ul>
-                 </div>
-             </div>
-          </section>
-
-          {/* SECTION: ITEM DATABASE */}
-          <section>
-             <h2 className="text-3xl font-bold text-white mb-8 flex items-center gap-3 border-b border-gray-800 pb-4">
-                <Database className="text-yellow-400" /> {t('rules.items.title')}
-             </h2>
-             
-             <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden mb-6">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm">
-                        <thead className="bg-gray-900 text-gray-400 uppercase font-bold text-xs">
+            {/* 4. COSTS TABLE */}
+            <section>
+                <SectionHeader icon={Target} title={t('rules.sec4.title')} />
+                
+                <div className="overflow-hidden rounded-2xl border border-gray-700 shadow-xl">
+                    <table className="w-full text-left bg-gray-800">
+                        <thead className="bg-gray-900 text-xs font-bold text-gray-400 uppercase tracking-wider">
                             <tr>
-                                <th className="px-6 py-4">{t('rules.items.col_name')}</th>
-                                <th className="px-6 py-4">{t('rules.items.col_type')}</th>
-                                <th className="px-6 py-4">{t('rules.items.col_cost')}</th>
-                                <th className="px-6 py-4">{t('rules.items.col_effect')}</th>
-                                <th className="px-6 py-4">{t('rules.items.col_duration')}</th>
+                                <th className="px-6 py-4">{t('rules.sec4.action')}</th>
+                                <th className="px-6 py-4">{t('rules.sec4.cost')}</th>
+                                <th className="px-6 py-4">{t('rules.sec4.reward')}</th>
+                                <th className="px-6 py-4 hidden md:table-cell">Details</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-700">
-                            <tr className="hover:bg-gray-750">
-                                <td className="px-6 py-4 font-bold text-white flex items-center gap-2">
-                                    <Shield size={16} className="text-blue-400"/> {t('rules.items.shield')}
+                        <tbody className="divide-y divide-gray-700 text-sm">
+                            {/* Mint */}
+                            <tr className="hover:bg-gray-750/50 transition-colors">
+                                <td className="px-6 py-4 font-bold text-white flex items-center gap-3">
+                                    <MapIcon className="text-emerald-400" size={18}/> {t('rules.sec4.mint')}
                                 </td>
-                                <td className="px-6 py-4"><span className="bg-blue-900/30 text-blue-400 px-2 py-1 rounded text-xs">DEFENSE</span></td>
-                                <td className="px-6 py-4 font-mono">250</td>
-                                <td className="px-6 py-4 text-gray-300">{t('rules.items.shield_desc')}</td>
-                                <td className="px-6 py-4 text-gray-400">{t('rules.items.shield_dur')}</td>
+                                <td className="px-6 py-4 font-mono text-red-300">150</td>
+                                <td className="px-6 py-4 font-mono text-cyan-400 font-bold">+15</td>
+                                <td className="px-6 py-4 text-gray-400 text-xs hidden md:table-cell">{t('rules.sec4.mint_desc')}</td>
                             </tr>
-                            <tr className="hover:bg-gray-750">
-                                <td className="px-6 py-4 font-bold text-white flex items-center gap-2">
-                                    <Zap size={16} className="text-amber-400"/> {t('rules.items.shoes')}
+                            {/* Conquer */}
+                            <tr className="hover:bg-gray-750/50 transition-colors">
+                                <td className="px-6 py-4 font-bold text-white flex items-center gap-3">
+                                    <Sword className="text-red-400" size={18}/> {t('rules.sec4.conquer')}
                                 </td>
-                                <td className="px-6 py-4"><span className="bg-amber-900/30 text-amber-400 px-2 py-1 rounded text-xs">BOOST</span></td>
-                                <td className="px-6 py-4 font-mono">500</td>
-                                <td className="px-6 py-4 text-gray-300">{t('rules.items.shoes_desc')}</td>
-                                <td className="px-6 py-4 text-gray-400">{t('rules.items.shoes_dur')}</td>
+                                <td className="px-6 py-4 font-mono text-red-300">350</td>
+                                <td className="px-6 py-4 font-mono text-cyan-400 font-bold">+25</td>
+                                <td className="px-6 py-4 text-gray-400 text-xs hidden md:table-cell">{t('rules.sec4.conq_desc')}</td>
                             </tr>
-                            <tr className="hover:bg-gray-750">
-                                <td className="px-6 py-4 font-bold text-white flex items-center gap-2">
-                                    <ShoppingBag size={16} className="text-cyan-400"/> {t('rules.items.crate')}
+                            {/* Shield */}
+                            <tr className="hover:bg-gray-750/50 transition-colors">
+                                <td className="px-6 py-4 font-bold text-white flex items-center gap-3">
+                                    <Shield className="text-blue-400" size={18}/> {t('rules.sec4.shield')}
                                 </td>
-                                <td className="px-6 py-4"><span className="bg-cyan-950 text-cyan-400 px-2 py-1 rounded text-xs border border-cyan-500/20 font-bold tracking-wide">{t('rules.items.crate_tag')}</span></td>
-                                <td className="px-6 py-4 font-mono">1000</td>
-                                <td className="px-6 py-4 text-gray-300">{t('rules.items.crate_desc')}</td>
-                                <td className="px-6 py-4 text-gray-400">{t('rules.items.crate_dur')}</td>
+                                <td className="px-6 py-4 font-mono text-red-300">500</td>
+                                <td className="px-6 py-4 text-gray-500">-</td>
+                                <td className="px-6 py-4 text-gray-400 text-xs hidden md:table-cell">{t('rules.sec4.shield_desc')}</td>
+                            </tr>
+                            {/* Boost */}
+                            <tr className="hover:bg-gray-750/50 transition-colors">
+                                <td className="px-6 py-4 font-bold text-white flex items-center gap-3">
+                                    <Zap className="text-yellow-400" size={18}/> {t('rules.sec4.boost')}
+                                </td>
+                                <td className="px-6 py-4 font-mono text-red-300">300</td>
+                                <td className="px-6 py-4 text-gray-500">-</td>
+                                <td className="px-6 py-4 text-gray-400 text-xs hidden md:table-cell">{t('rules.sec4.boost_desc')}</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
-             </div>
+            </section>
 
-             {/* MARKET SUPPLY EXPLANATION */}
-             <div className="bg-gradient-to-r from-yellow-900/20 to-transparent border-l-4 border-yellow-500 p-6 rounded-r-xl flex items-start gap-4">
-                 <div className="bg-yellow-900/30 p-3 rounded-lg text-yellow-400 shrink-0">
-                     <Clock size={24} />
-                 </div>
-                 <div>
-                     <h4 className="font-bold text-white text-lg mb-1 flex items-center gap-2">
-                         {t('rules.market.flash_title')}
-                     </h4>
-                     <p className="text-gray-400 text-sm leading-relaxed">
-                         {t('rules.market.flash_desc')}
-                     </p>
-                 </div>
-             </div>
-          </section>
-
-          {/* SECTION: FAIR PLAY */}
-          <section>
-             <h2 className="text-3xl font-bold text-white mb-8 flex items-center gap-3 border-b border-gray-800 pb-4">
-                <Siren className="text-red-400" /> {t('rules.fair.title')}
-             </h2>
-             
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                 <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
-                    <h3 className="font-bold text-white mb-4">{t('rules.fair.speed_title')}</h3>
-                    <p className="text-gray-400 text-sm mb-4">
-                        {t('rules.fair.speed_desc')}
-                    </p>
-                    <div className="flex gap-4">
-                        <div className="bg-gray-900 p-3 rounded-lg border border-gray-600 text-center flex-1">
-                            <span className="block text-2xl font-bold text-white">3</span>
-                            <span className="text-[10px] uppercase text-gray-500">{t('rules.fair.min_km')}</span>
+            {/* 5. MACRO ECONOMY */}
+            <section>
+                <SectionHeader icon={RefreshCw} title={t('rules.sec5.title')} />
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* Earning Rates */}
+                    <div className="bg-gray-800 p-6 rounded-xl border border-gray-700 flex flex-col h-full">
+                        <div className="mb-4 bg-emerald-900/30 w-12 h-12 rounded-full flex items-center justify-center border border-emerald-500/30">
+                            <Activity className="text-emerald-400" size={24} />
                         </div>
-                        <div className="bg-gray-900 p-3 rounded-lg border border-gray-600 text-center flex-1">
-                            <span className="block text-2xl font-bold text-red-400">20</span>
-                            <span className="text-[10px] uppercase text-gray-500">{t('rules.fair.max_km')}</span>
+                        <h4 className="font-bold text-white mb-3">{t('rules.sec5.earn')}</h4>
+                        <ul className="space-y-3 text-sm text-gray-400">
+                            <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-gray-500 rounded-full"></div> {t('rules.sec5.earn_base')}</li>
+                            <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-yellow-500 rounded-full"></div> {t('rules.sec5.earn_boost')}</li>
+                        </ul>
+                    </div>
+
+                    {/* Swap */}
+                    <div className="bg-gray-800 p-6 rounded-xl border border-gray-700 flex flex-col h-full">
+                        <div className="mb-4 bg-cyan-900/30 w-12 h-12 rounded-full flex items-center justify-center border border-cyan-500/30">
+                            <RefreshCw className="text-cyan-400" size={24} />
+                        </div>
+                        <h4 className="font-bold text-white mb-2">{t('rules.sec5.swap')}</h4>
+                        <p className="text-xs text-gray-400 mb-4 flex-1">{t('rules.sec5.swap_text')}</p>
+                        <div className="bg-black/30 text-cyan-400 font-mono font-bold text-center py-2 rounded border border-cyan-500/30 text-sm">
+                            {t('rules.sec5.swap_rate')}
                         </div>
                     </div>
-                 </div>
 
-                 <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
-                    <h3 className="font-bold text-white mb-4">{t('rules.fair.valid_title')}</h3>
-                    <ul className="space-y-3 text-sm text-gray-400">
-                        <li className="flex gap-3 items-start">
-                            <CheckCircle size={16} className="text-emerald-400 mt-0.5 shrink-0" />
-                            <span><strong>{t('rules.fair.valid_std')}</strong> {t('rules.fair.valid_std_desc')}</span>
-                        </li>
-                        <li className="flex gap-3 items-start">
-                            <CheckCircle size={16} className="text-amber-400 mt-0.5 shrink-0" />
-                            <span><strong>{t('rules.fair.valid_pro')}</strong> {t('rules.fair.valid_pro_desc')}</span>
-                        </li>
-                    </ul>
-                 </div>
-             </div>
-          </section>
+                    {/* Burn */}
+                    <div className="bg-gray-800 p-6 rounded-xl border border-gray-700 flex flex-col h-full">
+                        <div className="mb-4 bg-red-900/30 w-12 h-12 rounded-full flex items-center justify-center border border-red-500/30">
+                            <Flame className="text-red-500" size={24} />
+                        </div>
+                        <h4 className="font-bold text-white mb-2">{t('rules.sec5.burn')}</h4>
+                        <p className="text-xs text-gray-400 flex-1">{t('rules.sec5.burn_text')}</p>
+                    </div>
+                </div>
+            </section>
+
+            {/* 6. PROGRESSION - REWRITTEN GENERIC */}
+            <section>
+                <SectionHeader icon={Trophy} title={t('rules.sec6.title')} />
+                
+                <div className="bg-gray-800 p-8 rounded-2xl border border-gray-700">
+                    <p className="text-lg text-gray-300 leading-relaxed mb-6">
+                        {t('rules.sec6.content')}
+                    </p>
+                    <div className="p-6 bg-gray-900 rounded-xl border border-gray-700 flex flex-col md:flex-row gap-6 items-center">
+                        <div className="flex-1">
+                            <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-2 flex items-center gap-2">
+                                <Award className="text-yellow-400" size={16}/> Reward Logic
+                            </h4>
+                            <p className="text-sm text-gray-400">
+                                <span dangerouslySetInnerHTML={{ __html: t('rules.sec6.rewards').replace(/\*\*(.*?)\*\*/g, '<span class="text-white font-bold">$1</span>') }} />
+                            </p>
+                        </div>
+                        <div className="flex gap-4 shrink-0">
+                            <div className="flex flex-col items-center gap-1 bg-gray-800 p-3 rounded-lg border border-emerald-500/20">
+                                <Target className="text-emerald-400" size={24} />
+                                <span className="text-[10px] font-bold text-gray-500 uppercase">Mission</span>
+                                <span className="text-xs font-mono font-bold text-emerald-400">+ RUN</span>
+                            </div>
+                            <div className="flex flex-col items-center gap-1 bg-gray-800 p-3 rounded-lg border border-cyan-500/20">
+                                <Trophy className="text-cyan-400" size={24} />
+                                <span className="text-[10px] font-bold text-gray-500 uppercase">Rare</span>
+                                <span className="text-xs font-mono font-bold text-cyan-400">+ GOV</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* 7. NAVIGATION GUIDE (NEW SECTION) */}
+            <section>
+                <SectionHeader icon={Globe} title={t('rules.nav.title')} />
+                <p className="text-gray-400 mb-8">{t('rules.nav.desc')}</p>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    
+                    {/* Dashboard */}
+                    <div className="bg-gray-800/60 p-5 rounded-xl border border-gray-700 hover:border-emerald-500/30 transition-colors">
+                        <div className="flex items-center gap-3 mb-3">
+                            <div className="p-2 bg-emerald-500/20 rounded-lg text-emerald-400"><MapIcon size={20}/></div>
+                            <h4 className="font-bold text-white text-sm">{t('rules.nav.dash')}</h4>
+                        </div>
+                        <p className="text-xs text-gray-400 leading-relaxed">{t('rules.nav.dash_desc')}</p>
+                    </div>
+
+                    {/* Market */}
+                    <div className="bg-gray-800/60 p-5 rounded-xl border border-gray-700 hover:border-emerald-500/30 transition-colors">
+                        <div className="flex items-center gap-3 mb-3">
+                            <div className="p-2 bg-emerald-500/20 rounded-lg text-emerald-400"><ShoppingBag size={20}/></div>
+                            <h4 className="font-bold text-white text-sm">{t('rules.nav.market')}</h4>
+                        </div>
+                        <p className="text-xs text-gray-400 leading-relaxed">{t('rules.nav.market_desc')}</p>
+                    </div>
+
+                    {/* Inventory */}
+                    <div className="bg-gray-800/60 p-5 rounded-xl border border-gray-700 hover:border-emerald-500/30 transition-colors">
+                        <div className="flex items-center gap-3 mb-3">
+                            <div className="p-2 bg-emerald-500/20 rounded-lg text-emerald-400"><Package size={20}/></div>
+                            <h4 className="font-bold text-white text-sm">{t('rules.nav.inv')}</h4>
+                        </div>
+                        <p className="text-xs text-gray-400 leading-relaxed">{t('rules.nav.inv_desc')}</p>
+                    </div>
+
+                    {/* Missions */}
+                    <div className="bg-gray-800/60 p-5 rounded-xl border border-gray-700 hover:border-emerald-500/30 transition-colors">
+                        <div className="flex items-center gap-3 mb-3">
+                            <div className="p-2 bg-emerald-500/20 rounded-lg text-emerald-400"><Target size={20}/></div>
+                            <h4 className="font-bold text-white text-sm">{t('rules.nav.miss')}</h4>
+                        </div>
+                        <p className="text-xs text-gray-400 leading-relaxed">{t('rules.nav.miss_desc')}</p>
+                    </div>
+
+                    {/* Leaderboard */}
+                    <div className="bg-gray-800/60 p-5 rounded-xl border border-gray-700 hover:border-emerald-500/30 transition-colors">
+                        <div className="flex items-center gap-3 mb-3">
+                            <div className="p-2 bg-emerald-500/20 rounded-lg text-emerald-400"><Trophy size={20}/></div>
+                            <h4 className="font-bold text-white text-sm">{t('rules.nav.rank')}</h4>
+                        </div>
+                        <p className="text-xs text-gray-400 leading-relaxed">{t('rules.nav.rank_desc')}</p>
+                    </div>
+
+                    {/* Wallet */}
+                    <div className="bg-gray-800/60 p-5 rounded-xl border border-gray-700 hover:border-emerald-500/30 transition-colors">
+                        <div className="flex items-center gap-3 mb-3">
+                            <div className="p-2 bg-emerald-500/20 rounded-lg text-emerald-400"><Wallet size={20}/></div>
+                            <h4 className="font-bold text-white text-sm">{t('rules.nav.wallet')}</h4>
+                        </div>
+                        <p className="text-xs text-gray-400 leading-relaxed">{t('rules.nav.wallet_desc')}</p>
+                    </div>
+
+                    {/* Profile */}
+                    <div className="bg-gray-800/60 p-5 rounded-xl border border-gray-700 hover:border-emerald-500/30 transition-colors md:col-span-2 lg:col-span-3">
+                        <div className="flex items-center gap-3 mb-3">
+                            <div className="p-2 bg-emerald-500/20 rounded-lg text-emerald-400"><UserIcon size={20}/></div>
+                            <h4 className="font-bold text-white text-sm">{t('rules.nav.profile')}</h4>
+                        </div>
+                        <p className="text-xs text-gray-400 leading-relaxed">{t('rules.nav.profile_desc')}</p>
+                    </div>
+
+                </div>
+            </section>
 
         </div>
 
