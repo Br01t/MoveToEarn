@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Scroll, ArrowLeft, Target, Coins, Shield, Zap, Map as MapIcon, RefreshCw, Flame, Trophy, Activity, Globe, Scale, Users, Award, Sword, Crown, ShoppingBag, Package, Wallet, User as UserIcon } from 'lucide-react';
+import { ArrowLeft, Terminal, Map as MapIcon, ShoppingBag, Package, Target, Trophy, Wallet, User as UserIcon, BookOpen, Activity, Swords, Zap, Coins, Download } from 'lucide-react';
 import { ViewState } from '../../types';
 import { useLanguage } from '../../LanguageContext';
 
@@ -9,20 +9,48 @@ interface GameRulesProps {
   onNavigate?: (view: ViewState) => void;
 }
 
-const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate }) => {
+export const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate }) => {
   const { t } = useLanguage();
 
   const SectionHeader = ({ icon: Icon, title }: { icon: any, title: string }) => (
-      <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 flex items-center gap-3 border-b border-gray-700 pb-4 mt-12 first:mt-0">
+      <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 flex items-center gap-3 border-b border-gray-700/50 pb-4 mt-16 first:mt-0">
           <Icon className="text-emerald-400" size={32} /> {title}
       </h2>
   );
 
+  // Helper for the clean interface cards
+  const InterfaceCard = ({ icon: Icon, title, desc, className = "" }: { icon: any, title: string, desc: string, className?: string }) => (
+    <div className={`bg-gray-900/80 backdrop-blur-md rounded-2xl p-6 border border-gray-700/50 hover:border-emerald-500/50 transition-all duration-300 group shadow-lg hover:shadow-emerald-900/20 ${className}`}>
+        <div className="flex items-center gap-4 mb-3">
+            <div className="w-10 h-10 rounded-lg bg-gray-800/50 flex items-center justify-center text-emerald-400 group-hover:bg-emerald-500 group-hover:text-white transition-colors duration-300">
+                <Icon size={20} />
+            </div>
+            <h4 className="font-bold text-white text-base">{title}</h4>
+        </div>
+        <p className="text-sm text-gray-400 leading-relaxed pl-1">{desc}</p>
+    </div>
+  );
+
   return (
-    <div className="min-h-screen bg-gray-900 relative overflow-hidden pb-24">
+    <div className="min-h-screen bg-gray-950 relative overflow-hidden pb-24 font-sans selection:bg-emerald-500 selection:text-black">
       
-      {/* Background Decor */}
-      <div className="absolute top-0 left-0 w-full h-[600px] bg-gradient-to-b from-emerald-900/20 to-transparent pointer-events-none"></div>
+      {/* --- BACKGROUND LAYER (MATCHING LANDING) --- */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-gray-900 via-gray-950 to-black z-0" />
+      
+      {/* High Contrast Hexagonal Grid */}
+      <div 
+        className="absolute inset-0 z-0 opacity-40 pointer-events-none"
+        style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='98' viewBox='0 0 56 98'%3E%3Cpath d='M28 66L0 50L0 16L28 0L56 16L56 50L28 66L28 100' fill='none' stroke='%2310b981' stroke-width='2' stroke-opacity='0.5'/%3E%3C/svg%3E")`,
+            backgroundSize: '56px 98px'
+        }}
+      />
+      {/* Vignette Overlay */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,#000000_100%)] opacity-60 pointer-events-none z-0"></div>
+      
+      {/* Static Orbs */}
+      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-emerald-500/10 rounded-full blur-[100px] opacity-30 pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-cyan-600/10 rounded-full blur-[100px] opacity-30 pointer-events-none" />
       
       <div className="max-w-5xl mx-auto p-6 md:p-8 relative z-10">
         
@@ -31,7 +59,7 @@ const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate }) => {
             {onBack && (
               <button 
                 onClick={onBack}
-                className="group flex items-center gap-2 text-gray-400 hover:text-white transition-colors bg-gray-800/50 px-4 py-2 rounded-lg border border-gray-700 hover:border-gray-500 backdrop-blur-sm"
+                className="group flex items-center gap-2 text-gray-400 hover:text-white transition-colors bg-gray-900/80 px-4 py-2 rounded-lg border border-gray-700 hover:border-emerald-500 backdrop-blur-sm"
               >
                 <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" /> 
                 <span className="font-bold text-sm">{t('rules.back')}</span>
@@ -40,305 +68,160 @@ const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate }) => {
         </div>
 
         {/* Title */}
-        <div className="text-center mb-20">
-            <div className="inline-flex p-4 bg-gray-800/80 rounded-full border border-gray-700 mb-6 shadow-2xl backdrop-blur-md">
-                <Scroll className="text-emerald-400" size={48} />
+        <div className="text-center mb-16">
+            <div className="inline-flex p-4 bg-gray-900/80 rounded-full border border-gray-700/50 mb-6 shadow-2xl backdrop-blur-md relative overflow-hidden group">
+                <div className="absolute inset-0 bg-emerald-500/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <Terminal className="text-emerald-400 relative z-10" size={48} />
             </div>
-            <h1 className="text-5xl md:text-7xl font-black text-white tracking-tighter uppercase mb-2">
+            <h1 className="text-5xl md:text-7xl font-black text-white tracking-tighter uppercase mb-2 drop-shadow-2xl">
               {t('rules.title')}
             </h1>
             <p className="text-xl text-gray-400 font-light">{t('rules.subtitle')}</p>
-            <span className="inline-block mt-4 text-xs font-mono text-emerald-500/60 border border-emerald-500/20 px-3 py-1 rounded-full">
-                {t('rules.version')}
-            </span>
+            
+            {/* New Gamification Intro */}
+            <div className="mt-12 text-left bg-gray-900/60 backdrop-blur-md border border-white/10 p-8 rounded-2xl relative overflow-hidden shadow-2xl">
+                <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-emerald-500 to-cyan-500"></div>
+                <h3 className="text-2xl font-bold text-white mb-4">{t('rules.intro.title')}</h3>
+                <p className="text-gray-300 text-lg leading-relaxed">{t('rules.intro.body')}</p>
+            </div>
+
+            {/* Links Block */}
+            {onNavigate && (
+                <div className="flex flex-col md:flex-row items-center justify-center gap-4 mt-8">
+                    <button 
+                        onClick={() => onNavigate('WHITEPAPER')}
+                        className="inline-flex items-center gap-2 px-6 py-3 bg-gray-900/80 hover:bg-gray-800 border border-gray-600 rounded-xl transition-all group backdrop-blur-sm"
+                    >
+                        <BookOpen size={18} className="text-cyan-400" />
+                        <span className="text-sm font-bold text-gray-200 group-hover:text-white">{t('rules.whitepaper_link')}</span>
+                    </button>
+                    
+                    <button 
+                        onClick={() => onNavigate('HOW_TO_PLAY')}
+                        className="inline-flex items-center gap-2 px-6 py-3 bg-gray-900/80 hover:bg-gray-800 border border-gray-600 hover:border-emerald-500 rounded-xl transition-all group backdrop-blur-sm"
+                    >
+                        <Download size={18} className="text-emerald-400" />
+                        <span className="text-sm font-bold text-gray-200 group-hover:text-white">{t('rules.export_guide_link')}</span>
+                    </button>
+                </div>
+            )}
         </div>
 
         <div className="space-y-16">
 
-            {/* 1. CONCEPT */}
-            <section className="bg-gray-800/30 p-8 rounded-3xl border border-gray-700/50 backdrop-blur-sm">
-                <SectionHeader icon={Globe} title={t('rules.sec1.title')} />
-                <p className="text-lg text-gray-300 leading-relaxed max-w-4xl">
-                    {t('rules.sec1.desc')}
-                </p>
-            </section>
-
-            {/* 2. TOKENOMICS */}
+            {/* GAME MECHANICS - STYLE A (Action Oriented) */}
             <section>
-                <SectionHeader icon={Scale} title={t('rules.sec2.title')} />
+                <SectionHeader icon={Activity} title={t('rules.gameplay.title')} />
+                
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="bg-gray-800/80 p-6 rounded-2xl border-l-4 border-emerald-500 shadow-lg">
-                        <div className="flex items-center gap-3 mb-3">
-                            <Activity className="text-emerald-400" size={24} />
-                            <h3 className="text-xl font-bold text-white">{t('rules.sec2.run')}</h3>
+                    {/* 1. MOVE */}
+                    <div className="group relative bg-gray-900/80 backdrop-blur-sm border-l-4 border-emerald-500 p-6 rounded-r-xl shadow-lg hover:-translate-y-1 transition-transform border-y border-r border-gray-700/50">
+                        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-r-xl pointer-events-none"></div>
+                        <div className="flex justify-between items-start mb-4">
+                            <h3 className="text-2xl font-black text-white italic">{t('rules.mech.move_title')}</h3>
+                            <Activity size={32} className="text-emerald-500" />
                         </div>
-                        <p className="text-gray-400 text-sm leading-relaxed">{t('rules.sec2.run_desc')}</p>
-                    </div>
-                    <div className="bg-gray-800/80 p-6 rounded-2xl border-l-4 border-cyan-500 shadow-lg">
-                        <div className="flex items-center gap-3 mb-3">
-                            <Crown className="text-cyan-400" size={24} />
-                            <h3 className="text-xl font-bold text-white">{t('rules.sec2.gov')}</h3>
-                        </div>
-                        <p className="text-gray-400 text-sm leading-relaxed">{t('rules.sec2.gov_desc')}</p>
-                    </div>
-                </div>
-            </section>
-
-            {/* 3. ZONES */}
-            <section>
-                <SectionHeader icon={MapIcon} title={t('rules.sec3.title')} />
-                <p className="text-gray-300 mb-8 max-w-3xl">{t('rules.sec3.desc')}</p>
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    {/* Pool Logic */}
-                    <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-6 rounded-2xl border border-gray-700">
-                        <h4 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                            <Coins size={20} className="text-yellow-400"/> {t('rules.sec3.pool')}
-                        </h4>
-                        <p className="text-sm text-gray-400 leading-relaxed">
-                            {t('rules.sec3.pool_text')}
-                        </p>
-                        <div className="mt-4 p-3 bg-black/30 rounded-lg border border-gray-700/50 text-center">
-                            <code className="text-emerald-400 font-bold text-sm">Pool Growth = Σ(Runner KM)</code>
-                        </div>
+                        <p className="text-gray-300 leading-relaxed font-medium">{t('rules.mech.move_desc')}</p>
                     </div>
 
-                    {/* Distribution Logic */}
-                    <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-6 rounded-2xl border border-gray-700">
-                        <h4 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                            <RefreshCw size={20} className="text-blue-400"/> {t('rules.sec3.dist')}
-                        </h4>
-                        <div className="space-y-4">
-                            <div className="flex gap-4 items-start">
-                                <div className="p-2 bg-red-900/30 rounded text-red-400 shrink-0"><Sword size={18}/></div>
-                                <div>
-                                    <strong className="text-white text-sm block mb-1">{t('rules.sec3.pvp')}</strong>
-                                    <p className="text-xs text-gray-400">{t('rules.sec3.pvp_text')}</p>
-                                </div>
-                            </div>
-                            <div className="flex gap-4 items-start">
-                                <div className="p-2 bg-emerald-900/30 rounded text-emerald-400 shrink-0"><Users size={18}/></div>
-                                <div>
-                                    <strong className="text-white text-sm block mb-1">{t('rules.sec3.passive')}</strong>
-                                    <p className="text-xs text-gray-400">{t('rules.sec3.passive_text')}</p>
-                                </div>
-                            </div>
+                    {/* 2. MINT */}
+                    <div className="group relative bg-gray-900/80 backdrop-blur-sm border-l-4 border-purple-500 p-6 rounded-r-xl shadow-lg hover:-translate-y-1 transition-transform border-y border-r border-gray-700/50">
+                        <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-r-xl pointer-events-none"></div>
+                        <div className="flex justify-between items-start mb-4">
+                            <h3 className="text-2xl font-black text-white italic">{t('rules.mech.mint_title')}</h3>
+                            <MapIcon size={32} className="text-purple-500" />
                         </div>
+                        <p className="text-gray-300 leading-relaxed font-medium">{t('rules.mech.mint_desc')}</p>
+                    </div>
+
+                    {/* 3. CONQUER */}
+                    <div className="group relative bg-gray-900/80 backdrop-blur-sm border-l-4 border-red-500 p-6 rounded-r-xl shadow-lg hover:-translate-y-1 transition-transform border-y border-r border-gray-700/50">
+                        <div className="absolute inset-0 bg-gradient-to-r from-red-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-r-xl pointer-events-none"></div>
+                        <div className="flex justify-between items-start mb-4">
+                            <h3 className="text-2xl font-black text-white italic">{t('rules.mech.conquer_title')}</h3>
+                            <Swords size={32} className="text-red-500" />
+                        </div>
+                        <p className="text-gray-300 leading-relaxed font-medium">{t('rules.mech.conquer_desc')}</p>
+                    </div>
+
+                    {/* 4. EARN */}
+                    <div className="group relative bg-gray-900/80 backdrop-blur-sm border-l-4 border-yellow-500 p-6 rounded-r-xl shadow-lg hover:-translate-y-1 transition-transform border-y border-r border-gray-700/50">
+                        <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-r-xl pointer-events-none"></div>
+                        <div className="flex justify-between items-start mb-4">
+                            <h3 className="text-2xl font-black text-white italic">{t('rules.mech.earn_title')}</h3>
+                            <Coins size={32} className="text-yellow-500" />
+                        </div>
+                        <p className="text-gray-300 leading-relaxed font-medium">{t('rules.mech.earn_desc')}</p>
                     </div>
                 </div>
             </section>
 
-            {/* 4. COSTS TABLE */}
+            {/* INTERFACE GUIDE - STYLE B (Modern / Clean / Professional) */}
             <section>
-                <SectionHeader icon={Target} title={t('rules.sec4.title')} />
-                
-                <div className="overflow-hidden rounded-2xl border border-gray-700 shadow-xl">
-                    <table className="w-full text-left bg-gray-800">
-                        <thead className="bg-gray-900 text-xs font-bold text-gray-400 uppercase tracking-wider">
-                            <tr>
-                                <th className="px-6 py-4">{t('rules.sec4.action')}</th>
-                                <th className="px-6 py-4">{t('rules.sec4.cost')}</th>
-                                <th className="px-6 py-4">{t('rules.sec4.reward')}</th>
-                                <th className="px-6 py-4 hidden md:table-cell">Details</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-700 text-sm">
-                            {/* Mint */}
-                            <tr className="hover:bg-gray-750/50 transition-colors">
-                                <td className="px-6 py-4 font-bold text-white flex items-center gap-3">
-                                    <MapIcon className="text-emerald-400" size={18}/> {t('rules.sec4.mint')}
-                                </td>
-                                <td className="px-6 py-4 font-mono text-red-300">150</td>
-                                <td className="px-6 py-4 font-mono text-cyan-400 font-bold">+15</td>
-                                <td className="px-6 py-4 text-gray-400 text-xs hidden md:table-cell">{t('rules.sec4.mint_desc')}</td>
-                            </tr>
-                            {/* Conquer */}
-                            <tr className="hover:bg-gray-750/50 transition-colors">
-                                <td className="px-6 py-4 font-bold text-white flex items-center gap-3">
-                                    <Sword className="text-red-400" size={18}/> {t('rules.sec4.conquer')}
-                                </td>
-                                <td className="px-6 py-4 font-mono text-red-300">350</td>
-                                <td className="px-6 py-4 font-mono text-cyan-400 font-bold">+25</td>
-                                <td className="px-6 py-4 text-gray-400 text-xs hidden md:table-cell">{t('rules.sec4.conq_desc')}</td>
-                            </tr>
-                            {/* Shield */}
-                            <tr className="hover:bg-gray-750/50 transition-colors">
-                                <td className="px-6 py-4 font-bold text-white flex items-center gap-3">
-                                    <Shield className="text-blue-400" size={18}/> {t('rules.sec4.shield')}
-                                </td>
-                                <td className="px-6 py-4 font-mono text-red-300">500</td>
-                                <td className="px-6 py-4 text-gray-500">-</td>
-                                <td className="px-6 py-4 text-gray-400 text-xs hidden md:table-cell">{t('rules.sec4.shield_desc')}</td>
-                            </tr>
-                            {/* Boost */}
-                            <tr className="hover:bg-gray-750/50 transition-colors">
-                                <td className="px-6 py-4 font-bold text-white flex items-center gap-3">
-                                    <Zap className="text-yellow-400" size={18}/> {t('rules.sec4.boost')}
-                                </td>
-                                <td className="px-6 py-4 font-mono text-red-300">300</td>
-                                <td className="px-6 py-4 text-gray-500">-</td>
-                                <td className="px-6 py-4 text-gray-400 text-xs hidden md:table-cell">{t('rules.sec4.boost_desc')}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
+                <SectionHeader icon={Terminal} title={t('rules.nav.title')} />
+                <p className="text-gray-400 mb-8 text-sm max-w-2xl bg-gray-900/50 p-4 rounded-xl border border-gray-800 backdrop-blur-sm">{t('rules.nav.desc')}</p>
 
-            {/* 5. MACRO ECONOMY */}
-            <section>
-                <SectionHeader icon={RefreshCw} title={t('rules.sec5.title')} />
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {/* Earning Rates */}
-                    <div className="bg-gray-800 p-6 rounded-xl border border-gray-700 flex flex-col h-full">
-                        <div className="mb-4 bg-emerald-900/30 w-12 h-12 rounded-full flex items-center justify-center border border-emerald-500/30">
-                            <Activity className="text-emerald-400" size={24} />
-                        </div>
-                        <h4 className="font-bold text-white mb-3">{t('rules.sec5.earn')}</h4>
-                        <ul className="space-y-3 text-sm text-gray-400">
-                            <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-gray-500 rounded-full"></div> {t('rules.sec5.earn_base')}</li>
-                            <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-yellow-500 rounded-full"></div> {t('rules.sec5.earn_boost')}</li>
-                        </ul>
-                    </div>
+                {/* 
+                   GRID LOGIC: 
+                   - lg:grid-cols-12 allows granular control.
+                   - Row 1: 4 items (lg:col-span-3 each) = 12 columns
+                   - Row 2: 3 items (lg:col-span-4 each) = 12 columns
+                   - This ensures the bottom 3 items expand to fill the full width.
+                */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6">
+                    {/* ROW 1: 4 Items (25% width each on LG) */}
+                    <InterfaceCard 
+                        icon={MapIcon} 
+                        title={t('rules.nav.dash')} 
+                        desc={t('rules.nav.dash_desc')}
+                        className="lg:col-span-3"
+                    />
+                    <InterfaceCard 
+                        icon={ShoppingBag} 
+                        title={t('rules.nav.market')} 
+                        desc={t('rules.nav.market_desc')}
+                        className="lg:col-span-3"
+                    />
+                    <InterfaceCard 
+                        icon={Package} 
+                        title={t('rules.nav.inv')} 
+                        desc={t('rules.nav.inv_desc')}
+                        className="lg:col-span-3"
+                    />
+                    <InterfaceCard 
+                        icon={Target} 
+                        title={t('rules.nav.miss')} 
+                        desc={t('rules.nav.miss_desc')}
+                        className="lg:col-span-3"
+                    />
 
-                    {/* Swap */}
-                    <div className="bg-gray-800 p-6 rounded-xl border border-gray-700 flex flex-col h-full">
-                        <div className="mb-4 bg-cyan-900/30 w-12 h-12 rounded-full flex items-center justify-center border border-cyan-500/30">
-                            <RefreshCw className="text-cyan-400" size={24} />
-                        </div>
-                        <h4 className="font-bold text-white mb-2">{t('rules.sec5.swap')}</h4>
-                        <p className="text-xs text-gray-400 mb-4 flex-1">{t('rules.sec5.swap_text')}</p>
-                        <div className="bg-black/30 text-cyan-400 font-mono font-bold text-center py-2 rounded border border-cyan-500/30 text-sm">
-                            {t('rules.sec5.swap_rate')}
-                        </div>
-                    </div>
-
-                    {/* Burn */}
-                    <div className="bg-gray-800 p-6 rounded-xl border border-gray-700 flex flex-col h-full">
-                        <div className="mb-4 bg-red-900/30 w-12 h-12 rounded-full flex items-center justify-center border border-red-500/30">
-                            <Flame className="text-red-500" size={24} />
-                        </div>
-                        <h4 className="font-bold text-white mb-2">{t('rules.sec5.burn')}</h4>
-                        <p className="text-xs text-gray-400 flex-1">{t('rules.sec5.burn_text')}</p>
-                    </div>
-                </div>
-            </section>
-
-            {/* 6. PROGRESSION - REWRITTEN GENERIC */}
-            <section>
-                <SectionHeader icon={Trophy} title={t('rules.sec6.title')} />
-                
-                <div className="bg-gray-800 p-8 rounded-2xl border border-gray-700">
-                    <p className="text-lg text-gray-300 leading-relaxed mb-6">
-                        {t('rules.sec6.content')}
-                    </p>
-                    <div className="p-6 bg-gray-900 rounded-xl border border-gray-700 flex flex-col md:flex-row gap-6 items-center">
-                        <div className="flex-1">
-                            <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-2 flex items-center gap-2">
-                                <Award className="text-yellow-400" size={16}/> Reward Logic
-                            </h4>
-                            <p className="text-sm text-gray-400">
-                                <span dangerouslySetInnerHTML={{ __html: t('rules.sec6.rewards').replace(/\*\*(.*?)\*\*/g, '<span class="text-white font-bold">$1</span>') }} />
-                            </p>
-                        </div>
-                        <div className="flex gap-4 shrink-0">
-                            <div className="flex flex-col items-center gap-1 bg-gray-800 p-3 rounded-lg border border-emerald-500/20">
-                                <Target className="text-emerald-400" size={24} />
-                                <span className="text-[10px] font-bold text-gray-500 uppercase">Mission</span>
-                                <span className="text-xs font-mono font-bold text-emerald-400">+ RUN</span>
-                            </div>
-                            <div className="flex flex-col items-center gap-1 bg-gray-800 p-3 rounded-lg border border-cyan-500/20">
-                                <Trophy className="text-cyan-400" size={24} />
-                                <span className="text-[10px] font-bold text-gray-500 uppercase">Rare</span>
-                                <span className="text-xs font-mono font-bold text-cyan-400">+ GOV</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            {/* 7. NAVIGATION GUIDE (NEW SECTION) */}
-            <section>
-                <SectionHeader icon={Globe} title={t('rules.nav.title')} />
-                <p className="text-gray-400 mb-8">{t('rules.nav.desc')}</p>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {/* ROW 2: 3 Items (33.3% width each on LG) */}
+                    <InterfaceCard 
+                        icon={Trophy} 
+                        title={t('rules.nav.rank')} 
+                        desc={t('rules.nav.rank_desc')}
+                        className="lg:col-span-4"
+                    />
+                    <InterfaceCard 
+                        icon={Wallet} 
+                        title={t('rules.nav.wallet')} 
+                        desc={t('rules.nav.wallet_desc')}
+                        className="lg:col-span-4"
+                    />
                     
-                    {/* Dashboard */}
-                    <div className="bg-gray-800/60 p-5 rounded-xl border border-gray-700 hover:border-emerald-500/30 transition-colors">
-                        <div className="flex items-center gap-3 mb-3">
-                            <div className="p-2 bg-emerald-500/20 rounded-lg text-emerald-400"><MapIcon size={20}/></div>
-                            <h4 className="font-bold text-white text-sm">{t('rules.nav.dash')}</h4>
-                        </div>
-                        <p className="text-xs text-gray-400 leading-relaxed">{t('rules.nav.dash_desc')}</p>
-                    </div>
-
-                    {/* Market */}
-                    <div className="bg-gray-800/60 p-5 rounded-xl border border-gray-700 hover:border-emerald-500/30 transition-colors">
-                        <div className="flex items-center gap-3 mb-3">
-                            <div className="p-2 bg-emerald-500/20 rounded-lg text-emerald-400"><ShoppingBag size={20}/></div>
-                            <h4 className="font-bold text-white text-sm">{t('rules.nav.market')}</h4>
-                        </div>
-                        <p className="text-xs text-gray-400 leading-relaxed">{t('rules.nav.market_desc')}</p>
-                    </div>
-
-                    {/* Inventory */}
-                    <div className="bg-gray-800/60 p-5 rounded-xl border border-gray-700 hover:border-emerald-500/30 transition-colors">
-                        <div className="flex items-center gap-3 mb-3">
-                            <div className="p-2 bg-emerald-500/20 rounded-lg text-emerald-400"><Package size={20}/></div>
-                            <h4 className="font-bold text-white text-sm">{t('rules.nav.inv')}</h4>
-                        </div>
-                        <p className="text-xs text-gray-400 leading-relaxed">{t('rules.nav.inv_desc')}</p>
-                    </div>
-
-                    {/* Missions */}
-                    <div className="bg-gray-800/60 p-5 rounded-xl border border-gray-700 hover:border-emerald-500/30 transition-colors">
-                        <div className="flex items-center gap-3 mb-3">
-                            <div className="p-2 bg-emerald-500/20 rounded-lg text-emerald-400"><Target size={20}/></div>
-                            <h4 className="font-bold text-white text-sm">{t('rules.nav.miss')}</h4>
-                        </div>
-                        <p className="text-xs text-gray-400 leading-relaxed">{t('rules.nav.miss_desc')}</p>
-                    </div>
-
-                    {/* Leaderboard */}
-                    <div className="bg-gray-800/60 p-5 rounded-xl border border-gray-700 hover:border-emerald-500/30 transition-colors">
-                        <div className="flex items-center gap-3 mb-3">
-                            <div className="p-2 bg-emerald-500/20 rounded-lg text-emerald-400"><Trophy size={20}/></div>
-                            <h4 className="font-bold text-white text-sm">{t('rules.nav.rank')}</h4>
-                        </div>
-                        <p className="text-xs text-gray-400 leading-relaxed">{t('rules.nav.rank_desc')}</p>
-                    </div>
-
-                    {/* Wallet */}
-                    <div className="bg-gray-800/60 p-5 rounded-xl border border-gray-700 hover:border-emerald-500/30 transition-colors">
-                        <div className="flex items-center gap-3 mb-3">
-                            <div className="p-2 bg-emerald-500/20 rounded-lg text-emerald-400"><Wallet size={20}/></div>
-                            <h4 className="font-bold text-white text-sm">{t('rules.nav.wallet')}</h4>
-                        </div>
-                        <p className="text-xs text-gray-400 leading-relaxed">{t('rules.nav.wallet_desc')}</p>
-                    </div>
-
-                    {/* Profile */}
-                    <div className="bg-gray-800/60 p-5 rounded-xl border border-gray-700 hover:border-emerald-500/30 transition-colors md:col-span-2 lg:col-span-3">
-                        <div className="flex items-center gap-3 mb-3">
-                            <div className="p-2 bg-emerald-500/20 rounded-lg text-emerald-400"><UserIcon size={20}/></div>
-                            <h4 className="font-bold text-white text-sm">{t('rules.nav.profile')}</h4>
-                        </div>
-                        <p className="text-xs text-gray-400 leading-relaxed">{t('rules.nav.profile_desc')}</p>
-                    </div>
-
+                    {/* Last Item: Full width on tablet (md:col-span-2) to avoid gap, 1/3 width on desktop */}
+                    <InterfaceCard 
+                        icon={UserIcon} 
+                        title={t('rules.nav.profile')} 
+                        desc={t('rules.nav.profile_desc')}
+                        className="md:col-span-2 lg:col-span-4" 
+                    />
                 </div>
             </section>
 
-        </div>
-
-        <div className="text-center mt-24 pt-8 border-t border-gray-800 text-gray-600 text-xs font-mono">
-            {t('rules.footer_text')}
         </div>
 
       </div>
     </div>
   );
 };
-
-export default GameRules;
