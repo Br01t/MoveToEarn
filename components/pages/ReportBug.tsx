@@ -20,15 +20,16 @@ const ReportBug: React.FC<ReportBugProps> = ({ onReport }) => {
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit pre-compression check
-          alert("File too large. Max 5MB.");
+      // Increased limit to 20MB for high-res mobile photos (compression will reduce this significantly later)
+      if (file.size > 20 * 1024 * 1024) { 
+          alert("File too large. Max 20MB.");
           return;
       }
       
       try {
           // Compress immediately for preview and preparation
-          // Reduce to 800px width and 0.5 quality for storage optimization
-          const compressed = await compressImage(file, 800, 0.5);
+          // Reduce to 1024px width and 0.6 quality for better readability of bug reports
+          const compressed = await compressImage(file, 1024, 0.6);
           setScreenshotFile(compressed);
           setPreviewUrl(URL.createObjectURL(compressed));
       } catch (err) {
