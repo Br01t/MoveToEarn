@@ -34,6 +34,7 @@ import { MINT_COST, MINT_REWARD_GOV } from "./constants";
 import { useGameState } from "./hooks/useGameState";
 import { useRunWorkflow } from "./hooks/useRunWorkflow";
 import { useAchievements } from "./hooks/useAchievements";
+import { usePWA } from "./hooks/usePWA";
 
 const AppContent: React.FC = () => {
   const { t } = useLanguage();
@@ -42,6 +43,10 @@ const AppContent: React.FC = () => {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showInsufficientFundsModal, setShowInsufficientFundsModal] = useState(false);
   
+  // PWA State
+  const { deferredPrompt, isIOS, isStandalone, installPWA } = usePWA();
+  const [forceShowPWA, setForceShowPWA] = useState(false);
+
   // Custom Toast State
   const [gameToast, setGameToast] = useState<{ message: string; type: ToastType } | null>(null);
 
@@ -172,6 +177,15 @@ const AppContent: React.FC = () => {
   // Auth Handlers
   const handleOpenLogin = () => setShowLoginModal(true);
   
+  // Install Handler for Footer
+  const handleFooterInstall = () => {
+      if (deferredPrompt) {
+          installPWA();
+      } else if (isIOS) {
+          setForceShowPWA(true);
+      }
+  };
+  
   const isLanding = currentView === "LANDING";
   const showNavbar = !isLanding && user;
   const isDashboard = currentView === "DASHBOARD";
@@ -200,8 +214,16 @@ const AppContent: React.FC = () => {
             />
         )}
 
-        {/* PWA Install Prompt - Visible ONLY if authenticated */}
-        <PWAInstallPrompt isAuthenticated={!!user} />
+        {/* PWA Install Prompt */}
+        <PWAInstallPrompt 
+            isAuthenticated={!!user} 
+            deferredPrompt={deferredPrompt}
+            isIOS={isIOS}
+            isStandalone={isStandalone}
+            onInstall={installPWA}
+            forceShow={forceShowPWA}
+            onCloseForce={() => setForceShowPWA(false)}
+        />
 
         <div className="flex-1 relative">
           {isLanding && <LandingPage onLogin={handleOpenLogin} onNavigate={setCurrentView} />}
@@ -432,7 +454,15 @@ const AppContent: React.FC = () => {
         </div>
       )}
 
-      <Footer onNavigate={setCurrentView} currentView={currentView} isAuthenticated={!!user} isHidden={isAnyModalOpen} />
+      <Footer 
+          onNavigate={setCurrentView} 
+          currentView={currentView} 
+          isAuthenticated={!!user} 
+          isHidden={isAnyModalOpen} 
+          onInstall={handleFooterInstall}
+          isInstallable={!!deferredPrompt || isIOS}
+          isStandalone={isStandalone}
+      />
     </div>
   );
 };
