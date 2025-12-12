@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Item, Mission, Badge, Zone, BugReport, LeaderboardConfig, LevelConfig, Suggestion, User } from '../types';
 import { Settings } from 'lucide-react';
@@ -26,8 +25,8 @@ interface AdminProps {
   leaderboards?: LeaderboardConfig[];
   levels?: LevelConfig[];
   allUsers?: Record<string, Omit<User, 'inventory'>>;
-  lastBurnTimestamp?: number;
-  // CRUD Actions
+  lastBurnTimestamp?: number; // <--- POTREBBE ESSERE UNDEFINED
+  // ... (Azioni CRUD e Configurazione) ...
   onAddItem: (item: Item) => Promise<{ error?: string; success?: boolean }>;
   onUpdateItem: (item: Item) => Promise<{ error?: string; success?: boolean }>;
   onRemoveItem: (id: string) => Promise<{ error?: string; success?: boolean }>;
@@ -44,7 +43,7 @@ interface AdminProps {
   onDistributeRewards: () => void;
   onResetSeason: () => void;
   onUpdateExchangeRate: (rate: number) => void;
-  // Leaderboard & Levels
+  // ... (Azioni Leaderboard & Levels, Bugs & Suggestions, Users) ...
   onAddLeaderboard?: (config: LeaderboardConfig) => Promise<{ error?: string; success?: boolean }>;
   onUpdateLeaderboard?: (config: LeaderboardConfig) => Promise<{ error?: string; success?: boolean }>;
   onDeleteLeaderboard?: (id: string) => Promise<{ error?: string; success?: boolean }>;
@@ -63,7 +62,8 @@ interface AdminProps {
 }
 
 const Admin: React.FC<AdminProps> = ({ 
-  marketItems, missions, badges, zones, govToRunRate, bugReports = [], suggestions = [], leaderboards = [], levels = [], allUsers = {}, lastBurnTimestamp = 0,
+  marketItems, missions, badges, zones, govToRunRate, bugReports = [], suggestions = [], leaderboards = [], levels = [], allUsers = {}, 
+  lastBurnTimestamp: lastBurnTimestampProp, // Rinominiamo per evitare confusione
   onAddItem, onUpdateItem, onRemoveItem,
   onAddMission, onUpdateMission, onRemoveMission,
   onAddBadge, onUpdateBadge, onRemoveBadge,
@@ -76,6 +76,18 @@ const Admin: React.FC<AdminProps> = ({
 }) => {
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<'ITEMS' | 'ECONOMY' | 'MISSIONS' | 'ZONES' | 'LEADERBOARD' | 'REPORTS' | 'IDEAS' | 'LEVELS' | 'USERS'>('ITEMS');
+  
+  // Assicuriamo che il timestamp sia un numero, usando 0 come default se non definito
+  const lastBurnTimestamp = lastBurnTimestampProp || 0;
+console.log("🔥 [Admin Load] lastBurnTimestamp Prop Value:", lastBurnTimestamp);
+  console.log("🔥 [Admin Load] lastBurnTimestamp Date:", lastBurnTimestamp > 0 ? new Date(lastBurnTimestamp).toLocaleString() : 'N/A');
+  // Trigger data refresh when Admin component mounts.
+  useEffect(() => {
+      // Questo effect si attiva quando lastBurnTimestamp cambia
+      if (lastBurnTimestamp > 0) {
+          console.log("🟢 [Admin RENDERED] lastBurnTimestamp VALIDO ricevuto dopo il fetch:", lastBurnTimestamp);
+      }
+  }, [lastBurnTimestamp]); // Dipendenza dalla prop
 
   // Trigger data refresh when Admin component mounts.
   useEffect(() => {
@@ -145,7 +157,7 @@ const Admin: React.FC<AdminProps> = ({
       {activeTab === 'ECONOMY' && (
           <AdminEconomyTab 
               govToRunRate={govToRunRate} 
-              lastBurnTimestamp={lastBurnTimestamp}
+              lastBurnTimestamp={lastBurnTimestamp} // Passiamo il valore pulito (0 se non definito)
               onUpdateExchangeRate={onUpdateExchangeRate} 
               onTriggerBurn={onTriggerBurn} 
               onDistributeRewards={onDistributeRewards} 
