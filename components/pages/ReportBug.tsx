@@ -124,7 +124,7 @@ const ReportBug: React.FC<ReportBugProps> = ({ onReport }) => {
                           </div>
                       )}
                   </div>
-                  <p className="text-[10px] text-gray-500 mt-2">Images are automatically compressed to save space.</p>
+                  <p className="text-[10px] text-gray-500 mt-2">Supported formats: JPG, PNG, WEBP.</p>
               </div>
 
               <button 

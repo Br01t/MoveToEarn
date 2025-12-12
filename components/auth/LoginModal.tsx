@@ -35,6 +35,8 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLogin, onRegister, o
     try {
       if (viewState === 'UPDATE_PASSWORD') {
           if (!password) return;
+          if (password.length < 6) throw new Error("Password must be at least 6 characters.");
+          
           if (onUpdatePassword) {
               const { error } = await onUpdatePassword(password);
               if (error) throw error;
@@ -77,14 +79,16 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLogin, onRegister, o
         {/* Decorative Grid BG */}
         <div className="absolute inset-0 bg-[radial-gradient(#10b981_1px,transparent_1px)] [background-size:20px_20px] opacity-10 pointer-events-none"></div>
         
-        {/* Close Button - Increased z-index and click area */}
-        <button 
-            type="button" 
-            onClick={onClose} 
-            className="absolute top-4 right-4 text-gray-500 hover:text-white z-50 transition-colors p-2 bg-gray-900/50 rounded-full"
-        >
-          <X size={24} />
-        </button>
+        {/* Close Button - Hide only during critical update phase */}
+        {viewState !== 'UPDATE_PASSWORD' && (
+            <button 
+                type="button" 
+                onClick={onClose} 
+                className="absolute top-4 right-4 text-gray-500 hover:text-white z-50 transition-colors p-2 bg-gray-900/50 rounded-full"
+            >
+              <X size={24} />
+            </button>
+        )}
 
         <div className="p-8 relative z-10">
           
@@ -94,10 +98,10 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLogin, onRegister, o
                {viewState === 'RESET' || viewState === 'UPDATE_PASSWORD' ? <KeyRound size={32} className="text-emerald-400" /> : <Activity size={32} className="text-emerald-400" />}
             </div>
             <h2 className="text-3xl font-black text-white tracking-tighter uppercase mb-1">
-              {viewState === 'SIGNUP' ? 'New Runner' : (viewState === 'RESET' ? 'Reset Password' : (viewState === 'UPDATE_PASSWORD' ? 'New Password' : t('auth.title')))}
+              {viewState === 'SIGNUP' ? 'New Runner' : (viewState === 'RESET' ? 'Reset Password' : (viewState === 'UPDATE_PASSWORD' ? 'Secure Reset' : t('auth.title')))}
             </h2>
             <p className="text-gray-400 text-sm">
-              {viewState === 'SIGNUP' ? 'Create your identity to join the grid.' : (viewState === 'RESET' ? 'Enter your email to recover access.' : (viewState === 'UPDATE_PASSWORD' ? 'Enter your new secure password.' : t('auth.subtitle')))}
+              {viewState === 'SIGNUP' ? 'Create your identity to join the grid.' : (viewState === 'RESET' ? 'Enter your email to recover access.' : (viewState === 'UPDATE_PASSWORD' ? 'Create a strong new password.' : t('auth.subtitle')))}
             </p>
           </div>
 
@@ -185,6 +189,9 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLogin, onRegister, o
                             minLength={6}
                         />
                         </div>
+                        {viewState === 'UPDATE_PASSWORD' && (
+                            <p className="text-[10px] text-gray-500 mt-1 pl-1">Min 6 characters.</p>
+                        )}
                     </div>
                 )}
 
@@ -221,8 +228,8 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLogin, onRegister, o
                         <ArrowLeft size={14} /> Back to Login
                     </button>
                 ) : viewState === 'UPDATE_PASSWORD' ? (
-                    // No links here, forcing update
-                    null
+                    // No back links during secure recovery
+                    <p className="text-[10px] text-gray-600">Secure session active</p>
                 ) : (
                     <>
                         <p className="text-gray-500 text-sm mb-2">

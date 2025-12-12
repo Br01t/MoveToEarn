@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { User, Zone, Mission, Badge, Rarity, LevelConfig, LeaderboardConfig, BugReport, Suggestion } from '../types';
-import { Award, History, Coins, BarChart3, Shield, Trophy, MapPin, ChevronUp, ChevronDown, Users, X, Medal, Crown } from 'lucide-react';
+import { Award, History, Coins, BarChart3, Shield, Trophy, MapPin, ChevronUp, ChevronDown, Users, X, Medal, Crown, Zap } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 import Pagination from './Pagination';
 import ZoneStatsModal from './profile/ZoneStatsModal';
@@ -62,6 +62,12 @@ const Profile: React.FC<ProfileProps> = ({
   const totalRuns = user.runHistory.length;
   // const avgDistance = totalRuns > 0 ? (user.totalKm / totalRuns).toFixed(2) : '0.00'; // Removed as requested
   const maxDistance = totalRuns > 0 ? Math.max(...user.runHistory.map(r => r.km)).toFixed(2) : '0.00';
+
+  // Territory Stats Calculations
+  const now = Date.now();
+  const totalOwned = myZones.length;
+  const activeBoosts = myZones.filter(z => z.boostExpiresAt && z.boostExpiresAt > now).length;
+  const activeShields = myZones.filter(z => z.shieldExpiresAt && z.shieldExpiresAt > now).length;
 
   // --- LEVEL LOGIC ---
   let currentLevel = 1;
@@ -271,18 +277,36 @@ const Profile: React.FC<ProfileProps> = ({
               </div>
           </div>
 
+          {/* TERRITORY STATUS - UPDATED LAYOUT */}
           <div className="bg-gray-800 rounded-xl border border-gray-700 p-5 flex flex-col justify-between">
               <h3 className="text-white font-bold mb-4 flex items-center gap-2 border-b border-gray-700 pb-2">
                   <Shield size={18} className="text-gray-400"/> {t('profile.territory_status')}
               </h3>
-              <div className="grid grid-cols-2 gap-3 mb-4">
-                  <div className="bg-gray-900 p-3 rounded-lg text-center">
-                      <span className="block text-xl font-bold text-white">{myZones.filter(z => z.defenseLevel > 1).length}</span>
-                      <span className="text-[10px] text-gray-500 uppercase">{t('profile.fortified')}</span>
+              
+              {/* Total Owned */}
+              <div className="bg-gray-900 p-3 rounded-lg border border-gray-700 flex items-center justify-between mb-3">
+                   <div className="flex items-center gap-2">
+                       <div className="p-1.5 bg-emerald-500/20 rounded text-emerald-400">
+                           <MapPin size={16} />
+                       </div>
+                       <span className="text-xs text-gray-400 font-bold uppercase">{t('profile.owned_zones')}</span>
+                   </div>
+                   <span className="text-2xl font-bold text-white">{totalOwned}</span>
+              </div>
+
+              {/* Boosts & Shields Grid */}
+              <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-gray-900 p-3 rounded-lg border border-gray-700 flex flex-col items-center justify-center">
+                      <div className="flex items-center gap-1 text-xl font-bold text-white mb-1">
+                          <Zap size={16} className="text-amber-400 fill-amber-400" /> {activeBoosts}
+                      </div>
+                      <span className="text-[10px] text-gray-500 uppercase font-bold">{t('zone.boosted')}</span>
                   </div>
-                  <div className="bg-gray-900 p-3 rounded-lg text-center">
-                      <span className="block text-xl font-bold text-white">{myZones.filter(z => z.interestRate > 3).length}</span>
-                      <span className="text-[10px] text-gray-500 uppercase">{t('profile.high_yield')}</span>
+                  <div className="bg-gray-900 p-3 rounded-lg border border-gray-700 flex flex-col items-center justify-center">
+                      <div className="flex items-center gap-1 text-xl font-bold text-white mb-1">
+                          <Shield size={16} className="text-cyan-400 fill-cyan-400/50" /> {activeShields}
+                      </div>
+                      <span className="text-[10px] text-gray-500 uppercase font-bold">{t('zone.shielded')}</span>
                   </div>
               </div>
           </div>

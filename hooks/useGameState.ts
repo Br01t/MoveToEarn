@@ -362,7 +362,10 @@ export const useGameState = () => {
     initSession();
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      // HANDLE PASSWORD RECOVERY EVENT
+      // This happens when the user clicks the link in the email and is redirected back to the app
       if (event === 'PASSWORD_RECOVERY') {
+          console.log("🔄 Recovery mode activated");
           setRecoveryMode(true);
       }
       
@@ -378,15 +381,27 @@ export const useGameState = () => {
   const login = async (email: string, password: string) => await supabase.auth.signInWithPassword({ email, password });
   
   const resetPassword = async (email: string) => {
+      // Determines the redirect URL: 
+      // 1. Production Env Variable (VITE_SITE_URL) if explicitly set
+      // 2. Fallback to current window origin (works for localhost AND basic production deployments)
+      // NOTE: You must also whitelist this URL in Supabase Dashboard > Authentication > URL Configuration
+      const productionUrl = (import.meta as any).env.VITE_SITE_URL;
+      const redirectTo = productionUrl || window.location.origin;
+      
+      console.log(`📧 Sending reset email. Redirecting to: ${redirectTo}`);
+
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: window.location.origin,
+          redirectTo: redirectTo,
       });
       return { error };
   };
 
   const updatePassword = async (newPassword: string) => {
       const { error } = await supabase.auth.updateUser({ password: newPassword });
-      if (!error) setRecoveryMode(false);
+      if (!error) {
+          setRecoveryMode(false); // Exit recovery mode on success
+          alert("Password updated successfully!");
+      }
       return { error };
   };
 
