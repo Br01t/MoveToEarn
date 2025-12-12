@@ -400,7 +400,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
   const hasEnded = activeBoard.type === 'TEMPORARY' && timeLeft <= 0;
 
   return (
-    <div className="max-w-7xl mx-auto p-4 md:p-6">
+    <div className="max-w-7xl mx-auto p-4 md:p-6 pb-20 md:pb-6">
       
       {/* Player Profile Modal */}
       {selectedUserId && (
@@ -424,12 +424,12 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
                   <Trophy className="text-yellow-400" /> {t('leader.title')}
               </h2>
               
-              <div className="flex flex-col gap-2">
+              <div className="flex lg:flex-col gap-2 overflow-x-auto pb-2 lg:pb-0 scrollbar-hide">
                   {leaderboards.map(board => (
                       <button
                           key={board.id}
                           onClick={() => handleBoardChange(board.id)}
-                          className={`flex items-center justify-between p-3 rounded-xl border transition-all text-left group ${
+                          className={`flex items-center justify-between p-3 rounded-xl border transition-all text-left group shrink-0 min-w-[200px] lg:min-w-0 ${
                               activeBoardId === board.id 
                               ? 'bg-emerald-900/20 border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.2)]' 
                               : 'bg-gray-800 border-gray-700 hover:border-gray-500'
@@ -461,19 +461,19 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
                   </div>
                   
                   <div className="relative z-10">
-                      <div className="flex justify-between items-start">
+                      <div className="flex flex-col md:flex-row md:justify-between items-start md:items-center gap-4">
                           <div>
-                              <h1 className="text-3xl font-black text-white uppercase tracking-tight">{activeBoard.title}</h1>
-                              <p className="text-gray-400 mt-1 max-w-lg">{activeBoard.description}</p>
+                              <h1 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tight leading-none">{activeBoard.title}</h1>
+                              <p className="text-gray-400 mt-2 text-sm max-w-lg">{activeBoard.description}</p>
                           </div>
                           {activeBoard.type === 'TEMPORARY' && (
-                              <div className="text-right">
+                              <div className="text-left md:text-right bg-black/20 p-3 rounded-lg md:bg-transparent md:p-0">
                                   {hasEnded ? (
                                       <div className="text-xs font-bold text-red-400 uppercase tracking-wider mb-1">Event Ended</div>
                                   ) : (
                                       <div className="text-xs font-bold text-purple-400 uppercase tracking-wider mb-1">{t('leader.ends_in')}</div>
                                   )}
-                                  <div className={`text-2xl font-mono font-bold ${hasEnded ? 'text-gray-500' : 'text-white'}`}>
+                                  <div className={`text-xl font-mono font-bold ${hasEnded ? 'text-gray-500' : 'text-white'}`}>
                                       {hasEnded ? 'CLOSED' : `${daysLeft} Days`}
                                   </div>
                               </div>
@@ -481,10 +481,10 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
                       </div>
 
                       {activeBoard.rewardPool && (
-                          <div className="mt-4 inline-flex items-center gap-2 bg-yellow-900/20 border border-yellow-500/30 px-4 py-2 rounded-lg">
-                              <Coins size={16} className="text-yellow-400" />
-                              <span className="text-xs text-yellow-200 font-bold uppercase tracking-wider">{t('leader.pool')}:</span>
-                              <span className="text-lg font-mono font-bold text-yellow-400">{activeBoard.rewardPool.toLocaleString()} {activeBoard.rewardCurrency || 'GOV'}</span>
+                          <div className="mt-4 inline-flex items-center gap-2 bg-yellow-900/20 border border-yellow-500/30 px-3 py-1.5 rounded-lg">
+                              <Coins size={14} className="text-yellow-400" />
+                              <span className="text-[10px] text-yellow-200 font-bold uppercase tracking-wider">{t('leader.pool')}:</span>
+                              <span className="text-sm font-mono font-bold text-yellow-400">{activeBoard.rewardPool.toLocaleString()} {activeBoard.rewardCurrency || 'GOV'}</span>
                           </div>
                       )}
                   </div>
@@ -512,15 +512,15 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
 
               {/* Table */}
               <div className="bg-gray-800 border border-gray-700 rounded-xl overflow-hidden shadow-2xl">
-                <table className="w-full text-left">
-                  <thead className="bg-gray-900 text-gray-400 text-xs uppercase font-bold">
+                <table className="w-full text-left border-collapse">
+                  <thead className="bg-gray-900 text-gray-400 text-[10px] uppercase font-bold tracking-wider">
                     <tr>
-                      <th className="px-4 md:px-6 py-4 w-20">{t('leader.rank')}</th>
-                      <th className="px-4 md:px-6 py-4">{t('leader.runner')}</th>
-                      <th className="px-4 md:px-6 py-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
+                      <th className="px-3 py-3 w-12 text-center md:px-6">{t('leader.rank')}</th>
+                      <th className="px-3 py-3 md:px-6">{t('leader.runner')}</th>
+                      <th className="px-3 py-3 text-right md:px-6">
+                          <div className="flex items-center justify-end gap-1 md:gap-2">
                               {getMetricIcon(activeBoard.metric)}
-                              {getMetricLabel(activeBoard.metric)}
+                              <span className="hidden md:inline">{getMetricLabel(activeBoard.metric)}</span>
                           </div>
                       </th>
                     </tr>
@@ -529,9 +529,9 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
                     {displayedRankings.map((user) => {
                       const isMe = user.id === currentUser.id;
                       let rankIcon = null;
-                      if (user.rank === 1) rankIcon = <Medal className="text-yellow-400" size={24} />;
-                      else if (user.rank === 2) rankIcon = <Medal className="text-gray-300" size={24} />;
-                      else if (user.rank === 3) rankIcon = <Medal className="text-amber-600" size={24} />;
+                      if (user.rank === 1) rankIcon = <Medal className="text-yellow-400 fill-yellow-400/20" size={20} />;
+                      else if (user.rank === 2) rankIcon = <Medal className="text-gray-300 fill-gray-300/20" size={20} />;
+                      else if (user.rank === 3) rankIcon = <Medal className="text-amber-600 fill-amber-600/20" size={20} />;
 
                       const userBadge = user.badgeId ? badges.find(b => b.id === user.badgeId) : null;
 
@@ -541,35 +541,45 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
                             onClick={() => setSelectedUserId(user.id)}
                             className={`${isMe ? 'bg-emerald-900/20' : 'hover:bg-gray-750'} transition-colors cursor-pointer group`}
                         >
-                          <td className="px-4 md:px-6 py-4 font-bold text-white">
-                            <div className="flex items-center gap-3">
-                              <span className="w-6 text-lg text-center">{user.rank}</span>
-                              {rankIcon}
+                          <td className="px-2 md:px-6 py-4 font-bold text-white text-center w-12 align-middle">
+                            <div className="flex flex-col items-center justify-center">
+                              {rankIcon ? rankIcon : <span className="text-sm text-gray-500 font-mono">#{user.rank}</span>}
                             </div>
                           </td>
-                          <td className="px-4 md:px-6 py-4">
-                            <div className="flex items-center gap-4">
-                              <div className="relative">
-                                  <img src={user.avatar} alt={user.name} className="w-10 h-10 rounded-full bg-gray-600 object-cover ring-2 ring-gray-700 group-hover:border-emerald-500 transition-colors" />
-                                  {user.rank === 1 && <Crown size={14} className="absolute -top-2 -right-1 text-yellow-500 fill-yellow-500 animate-pulse" />}
+                          
+                          <td className="px-2 md:px-6 py-3 align-middle">
+                            <div className="flex items-center gap-3 md:gap-4">
+                              {/* Avatar */}
+                              <div className="relative shrink-0">
+                                  <img src={user.avatar} alt={user.name} className="w-12 h-12 rounded-full bg-gray-600 object-cover ring-2 ring-gray-700 group-hover:border-emerald-500 transition-colors" />
+                                  {user.rank === 1 && <Crown size={14} className="absolute -top-1.5 -right-1 text-yellow-500 fill-yellow-500 animate-pulse bg-gray-900 rounded-full" />}
                               </div>
-                              <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-3">
-                                  <span className={`font-bold text-lg ${isMe ? 'text-emerald-400' : 'text-white group-hover:text-emerald-300 transition-colors'}`}>
-                                    {user.name} {isMe && t('leader.you')}
-                                  </span>
+                              
+                              {/* Name & Badge Stack */}
+                              <div className="flex flex-col min-w-0">
+                                  <div className="flex items-center gap-2">
+                                      <span className={`font-bold text-sm md:text-lg truncate ${isMe ? 'text-emerald-400' : 'text-white group-hover:text-emerald-300 transition-colors'}`}>
+                                        {user.name}
+                                      </span>
+                                      {isMe && <span className="text-[9px] bg-emerald-900 text-emerald-400 px-1 rounded font-mono hidden md:inline">YOU</span>}
+                                  </div>
+                                  
+                                  {/* Badge - Always Visible, Stacked */}
                                   {userBadge && (
-                                       <div className={`hidden md:flex items-center gap-1.5 px-2 py-1 rounded-md border ${getRarityColor(userBadge.rarity)}`} title={userBadge.name}>
-                                           {renderBadgeIcon(userBadge.icon, "w-3 h-3")}
-                                           <span className="text-[10px] font-bold uppercase tracking-wide">{userBadge.name}</span>
+                                       <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full border w-fit mt-1 max-w-full ${getRarityColor(userBadge.rarity)}`} title={userBadge.name}>
+                                           {renderBadgeIcon(userBadge.icon, "w-3 h-3 shrink-0")}
+                                           <span className="text-[10px] font-bold uppercase tracking-wide truncate">{userBadge.name}</span>
                                        </div>
                                   )}
                               </div>
                             </div>
                           </td>
-                          <td className="px-4 md:px-6 py-4 text-right">
-                            <span className="font-mono text-xl font-bold text-cyan-400">
+                          
+                          <td className="px-3 md:px-6 py-3 text-right align-middle">
+                            <span className="font-mono text-base md:text-xl font-bold text-cyan-400">
                                 {user.score.toLocaleString(undefined, { minimumFractionDigits: activeBoard.metric.includes('BALANCE') || activeBoard.metric === 'TOTAL_KM' ? 1 : 0 })}
                             </span>
+                            <div className="text-[9px] text-gray-500 uppercase md:hidden">{getMetricLabel(activeBoard.metric)}</div>
                           </td>
                         </tr>
                       );

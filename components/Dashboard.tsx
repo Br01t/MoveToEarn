@@ -181,8 +181,8 @@ const Dashboard: React.FC<DashboardProps> = ({
 
       <DashboardControls onZoomIn={zoomIn} onZoomOut={zoomOut} />
 
-      {/* Sync Run Button - Adjusted bottom position for mobile from 24 to 36 */}
-      <div className="absolute bottom-36 md:bottom-10 left-1/2 transform -translate-x-1/2 z-30 flex items-center justify-center">
+      {/* Sync Run Button - Adjusted bottom position for mobile from 36 to 44 (approx 176px) to clear 2-row navbar */}
+      <div className="absolute bottom-44 md:bottom-10 left-1/2 transform -translate-x-1/2 z-30 flex items-center justify-center">
             <div className="absolute inset-0 bg-emerald-500 rounded-full animate-ping opacity-20 duration-1000"></div>
             <div className="absolute inset-0 bg-emerald-400 rounded-full blur-xl opacity-40"></div>
             
