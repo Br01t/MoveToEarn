@@ -4,6 +4,7 @@ import { Zone, User, Badge, Rarity } from '../../types';
 import { X, Crown, Clock, Shield, Medal, Lock, Zap, Swords, Flag, Award, Mountain, Globe, Home, Landmark, Swords as SwordsIcon, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users, AlertTriangle, CheckCircle, Coins, Activity } from 'lucide-react';
 import { useLanguage } from '../../LanguageContext';
 import { CONQUEST_COST } from '../../constants';
+import { useGlobalUI } from '../../contexts/GlobalUIContext';
 
 interface ZoneDetailsProps {
   zone: Zone;
@@ -23,6 +24,7 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
     onClaim, onBoost, onDefend, hasBoostItem, hasDefenseItem 
 }) => {
   const { t } = useLanguage();
+  const { triggerParticles } = useGlobalUI();
   const [now, setNow] = useState(Date.now());
   const [confirmAction, setConfirmAction] = useState<'BOOST' | 'SHIELD' | null>(null);
 
@@ -70,10 +72,21 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
       }
   };
 
-  const handleConfirmAction = () => {
-      if (confirmAction === 'BOOST') onBoost(zone.id);
-      if (confirmAction === 'SHIELD') onDefend(zone.id);
+  const handleConfirmAction = (e: React.MouseEvent) => {
+      if (confirmAction === 'BOOST') {
+          onBoost(zone.id);
+          triggerParticles(e.clientX, e.clientY, '#fbbf24'); // Amber particles
+      }
+      if (confirmAction === 'SHIELD') {
+          onDefend(zone.id);
+          triggerParticles(e.clientX, e.clientY, '#06b6d4'); // Cyan particles
+      }
       setConfirmAction(null);
+  };
+
+  const handleClaimClick = (e: React.MouseEvent) => {
+      onClaim(zone.id);
+      triggerParticles(e.clientX, e.clientY, '#10b981'); // Emerald particles
   };
 
   return (
@@ -228,7 +241,7 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
                           <button 
                               onClick={() => setConfirmAction('BOOST')}
                               disabled={!hasBoostItem}
-                              className={`flex-1 py-3 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all border text-xs md:text-sm uppercase tracking-wide shadow-lg ${hasBoostItem ? 'bg-amber-600/80 hover:bg-amber-500 border-amber-500/50' : 'bg-gray-800 opacity-50 border-transparent'}`}
+                              className={`flex-1 py-3 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all border text-xs md:text-sm uppercase tracking-wide shadow-lg ${hasBoostItem ? 'bg-amber-600/80 hover:bg-amber-500 border-amber-500/50 hover:scale-105' : 'bg-gray-800 opacity-50 border-transparent'}`}
                           >
                               <Zap size={16} /> {t('zone.action.boost')}
                           </button>
@@ -240,7 +253,7 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
                           <button 
                               onClick={() => setConfirmAction('SHIELD')}
                               disabled={!hasDefenseItem}
-                              className={`flex-1 py-3 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all border text-xs md:text-sm uppercase tracking-wide shadow-lg ${hasDefenseItem ? 'bg-cyan-600/80 hover:bg-cyan-500 border-cyan-500/50' : 'bg-gray-800 opacity-50 border-transparent'}`}
+                              className={`flex-1 py-3 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all border text-xs md:text-sm uppercase tracking-wide shadow-lg ${hasDefenseItem ? 'bg-cyan-600/80 hover:bg-cyan-500 border-cyan-500/50 hover:scale-105' : 'bg-gray-800 opacity-50 border-transparent'}`}
                           >
                               <Shield size={16} /> {t('zone.action.shield')}
                           </button>
@@ -252,8 +265,9 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
               <>
                  {isTopRunner ? (
                      <button 
-                         onClick={() => onClaim(zone.id)}
-                         className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-[0_0_15px_rgba(16,185,129,0.3)] animate-pulse uppercase tracking-wide border border-emerald-400/30"
+                         onClick={handleClaimClick}
+                         data-text="CLAIM ZONE"
+                         className="btn-glitch w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-[0_0_15px_rgba(16,185,129,0.3)] animate-pulse uppercase tracking-wide border border-emerald-400/30"
                      >
                          <Swords size={18} /> {t('zone.action.claim')} ({CONQUEST_COST} RUN)
                      </button>

@@ -1,8 +1,9 @@
 
 import React from 'react';
 import { ViewState, User } from '../types';
-import { Map, ShoppingBag, Trophy, Wallet, LogOut, Package, User as UserIcon, Settings, Target } from 'lucide-react';
+import { Map, ShoppingBag, Trophy, Wallet, LogOut, Package, User as UserIcon, Settings, Target, Volume2, VolumeX } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
+import { useGlobalUI } from '../contexts/GlobalUIContext';
 
 interface NavbarProps {
   currentView: ViewState;
@@ -13,6 +14,7 @@ interface NavbarProps {
 
 const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, user, onLogout }) => {
   const { toggleLanguage, language, t } = useLanguage();
+  const { isMuted, toggleMute } = useGlobalUI();
 
   if (!user) return null;
 
@@ -72,11 +74,22 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, user, onLogout
             <div className="flex items-center ml-4 gap-2">
               <button
                 onClick={toggleLanguage}
-                className="p-2 text-xl hover:scale-110 transition-transform bg-gray-800 rounded-lg border border-gray-700"
+                className="p-2 text-xl hover:scale-110 transition-transform bg-gray-800 rounded-lg border border-gray-700 hover:border-gray-500"
                 title="Switch Language"
               >
                 {language === 'en' ? '🇮🇹' : '🇬🇧'}
               </button>
+              
+              <button
+                onClick={toggleMute}
+                className={`p-2 transition-colors rounded-lg border ${isMuted ? 'text-red-400 border-red-500/30 bg-red-900/10' : 'text-gray-400 border-gray-700 bg-gray-800 hover:text-white'}`}
+                title={isMuted ? "Unmute" : "Mute"}
+              >
+                {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
+              </button>
+
+              <div className="w-px h-6 bg-gray-700 mx-1"></div>
+
               <button
                 onClick={onLogout}
                 className="p-2 text-gray-500 hover:text-red-400 transition-colors"
@@ -89,18 +102,26 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, user, onLogout
         </div>
       </nav>
 
-      {/* MOBILE TOP BAR (Logo + Language + Admin + Logout) */}
+      {/* MOBILE TOP BAR (Logo + Language + Audio + Admin + Logout) */}
       <nav className="bg-gray-900 border-b border-gray-800 sticky top-0 z-50 h-16 md:hidden flex justify-between items-center px-4 shadow-lg">
           <span className="text-2xl font-black uppercase tracking-widest bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-500" onClick={() => onNavigate('DASHBOARD')}>
             ZoneRun
           </span>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
              <button
                 onClick={toggleLanguage}
                 className="text-2xl hover:scale-110 transition-transform"
               >
                 {language === 'en' ? '🇮🇹' : '🇬🇧'}
               </button>
+             
+             <button
+                onClick={toggleMute}
+                className={`transition-colors ${isMuted ? 'text-red-400' : 'text-gray-400 hover:text-white'}`}
+             >
+                {isMuted ? <VolumeX size={24} /> : <Volume2 size={24} />}
+             </button>
+
              {user.isAdmin && (
                  <button onClick={() => onNavigate('ADMIN')} className={`text-gray-400 ${currentView === 'ADMIN' ? 'text-red-400' : ''}`}>
                     <Settings size={24}/>
