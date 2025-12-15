@@ -38,22 +38,39 @@ export const getBearing = (startLat: number, startLng: number, destLat: number, 
 // Axial Hex Directions (Pointy Topped)
 // 0: East, 1: SouthEast, 2: SouthWest, 3: West, 4: NorthWest, 5: NorthEast
 export const HEX_DIRECTIONS = [
-    { q: 1, r: 0 },   // 0: East
-    { q: 0, r: 1 },   // 1: SouthEast
-    { q: -1, r: 1 },  // 2: SouthWest
-    { q: -1, r: 0 },  // 3: West
-    { q: 0, r: -1 },  // 4: NorthWest
-    { q: 1, r: -1 }   // 5: NorthEast
+    { q: 1, r: 0 },   // 0: East (approx 90deg)
+    { q: 0, r: 1 },   // 1: SouthEast (approx 150deg)
+    { q: -1, r: 1 },  // 2: SouthWest (approx 210deg)
+    { q: -1, r: 0 },  // 3: West (approx 270deg)
+    { q: 0, r: -1 },  // 4: NorthWest (approx 330deg)
+    { q: 1, r: -1 }   // 5: NorthEast (approx 30deg)
 ];
 
 // Map 0-360 bearing to 0-5 Hex Direction Index
-export const bearingToHexDirection = (bearing: number) => {
-    if (bearing >= 330 || bearing < 30) return 5; // NE (roughly) - Adjusted for pointy top
-    if (bearing >= 30 && bearing < 90) return 0; // E
-    if (bearing >= 90 && bearing < 150) return 1; // SE
-    if (bearing >= 150 && bearing < 210) return 2; // SW
-    if (bearing >= 210 && bearing < 270) return 3; // W
-    return 4; // NW
+export const bearingToHexDirectionIndex = (bearing: number) => {
+    // Hex sectors are 60 degrees wide.
+    // 0 (East) is centered at 90 degrees bearing? No, usually North is 0.
+    // Let's map standard Map Bearing (0=N, 90=E, 180=S, 270=W) to Hex Sides.
+    
+    // Hex layout "Pointy Top":
+    // N (approx) -> NE (5) or NW (4)
+    
+    // We align sectors:
+    // 30-90: East (0)
+    // 90-150: SE (1)
+    // 150-210: SW (2)
+    // 210-270: West (3)
+    // 270-330: NW (4)
+    // 330-30: NE (5)
+    
+    const normalized = (bearing + 360) % 360;
+    
+    if (normalized >= 30 && normalized < 90) return 0;
+    if (normalized >= 90 && normalized < 150) return 1;
+    if (normalized >= 150 && normalized < 210) return 2;
+    if (normalized >= 210 && normalized < 270) return 3;
+    if (normalized >= 270 && normalized < 330) return 4;
+    return 5; // 330 to 30
 };
 
 // Convert Axial Hex Coords (q, r) to Pixel Coords (x, y)
@@ -63,90 +80,142 @@ export const getHexPixelPosition = (q: number, r: number, size: number) => {
     return { x, y };
 };
 
-// --- ZONE PLACEMENT LOGIC ---
+export const getZoneCountry = (name: string): string => {
+    const parts = name.split(' - ');
+    return parts.length > 1 ? parts[parts.length - 1] : 'XX';
+};
 
-// Find a valid Hex position using Nearest Neighbor Logic
-export const calculateHexPosition = (
-    referenceZone: Zone | null, // Legacy param, ignored in favor of global search
+// --- DYNAMIC PLACEMENT ENGINE ---
+
+/**
+ * Recursive function to shift zones if a spot is taken.
+ * Returns a map of ALL modified zones (id -> Zone).
+ */
+const shiftZoneRecursively = (
+    occupantId: string, 
+    pushDirectionIndex: number, 
+    zoneMap: Map<string, Zone>, 
+    coordMap: Map<string, string>, // "x,y" -> zoneId
+    modifiedZones: Map<string, Zone>
+) => {
+    const occupier = zoneMap.get(occupantId);
+    if (!occupier) return;
+
+    const dir = HEX_DIRECTIONS[pushDirectionIndex];
+    const newX = occupier.x + dir.q;
+    const newY = occupier.y + dir.r;
+    const newKey = `${newX},${newY}`;
+
+    // Check if the NEW spot is also occupied
+    const nextOccupantId = coordMap.get(newKey);
+    if (nextOccupantId) {
+        // RECURSION: Push the next guy in the SAME direction
+        shiftZoneRecursively(nextOccupantId, pushDirectionIndex, zoneMap, coordMap, modifiedZones);
+    }
+
+    // Move the current occupier
+    // We update the object directly but also track it in modifiedZones
+    const updatedZone = { ...occupier, x: newX, y: newY };
+    
+    // Update lookup maps for subsequent logic in this frame
+    coordMap.delete(`${occupier.x},${occupier.y}`);
+    coordMap.set(newKey, occupier.id); // Update key with ID
+    zoneMap.set(occupier.id, updatedZone);
+    
+    modifiedZones.set(occupier.id, updatedZone);
+};
+
+export const insertZoneAndShift = (
     targetLat: number, 
     targetLng: number, 
     countryCode: string, 
     currentZones: Zone[]
-) => {
-    // 1. NEAREST NEIGHBOR SEARCH
-    // Instead of relying on a random reference, iterate ALL zones to find the geographically closest one.
-    // This ensures Zone B snaps to Zone A if they are real-world neighbors.
+): { x: number, y: number, shiftedZones: Zone[] } => {
     
-    let nearestZone: Zone | null = null;
-    let minDistance = Infinity;
+    // 1. Setup Lookup Maps
+    const zoneMap = new Map<string, Zone>();
+    const coordMap = new Map<string, string>(); // "x,y" -> id
+    currentZones.forEach(z => {
+        zoneMap.set(z.id, z);
+        coordMap.set(`${z.x},${z.y}`, z.id);
+    });
 
-    if (currentZones.length > 0) {
-        currentZones.forEach(z => {
-            const dist = getDistanceFromLatLonInKm(targetLat, targetLng, z.lat, z.lng);
-            if (dist < minDistance) {
-                minDistance = dist;
-                nearestZone = z;
+    const modifiedZones = new Map<string, Zone>();
+
+    // 2. Identify Relation (Ally or Alien)
+    const sameCountryZones = currentZones.filter(z => getZoneCountry(z.name) === countryCode);
+    
+    let anchor: Zone | null = null;
+    let bearing = 0;
+    let distanceBuffer = 1; // Standard adjacency
+
+    if (sameCountryZones.length > 0) {
+        // CASE A: Existing Country Cluster
+        // Find nearest geographical neighbor in same country
+        let minDist = Infinity;
+        sameCountryZones.forEach(z => {
+            const d = getDistanceFromLatLonInKm(targetLat, targetLng, z.lat, z.lng);
+            if (d < minDist) {
+                minDist = d;
+                anchor = z;
             }
         });
-    }
-
-    // 2. NEW CLUSTER CASE
-    // If map is empty OR the nearest zone is too far away (e.g. > 500km), start a new independent cluster.
-    if (!nearestZone || minDistance > 500) {
-        if (currentZones.length === 0) return { x: 0, y: 0 };
-        
-        // Place far to the right to avoid overlap
-        const maxX = Math.max(...currentZones.map(z => z.x));
-        return { x: maxX + 10, y: 0 }; 
-    }
-
-    // 3. TOPOLOGY MAPPING
-    // We found a neighbor. Calculate the angle between them to place the new hex relative to the neighbor.
-    const bearing = getBearing(nearestZone.lat, nearestZone.lng, targetLat, targetLng);
-    const directionIndex = bearingToHexDirection(bearing);
-    const idealDir = HEX_DIRECTIONS[directionIndex];
-
-    let proposedX = nearestZone.x + idealDir.q;
-    let proposedY = nearestZone.y + idealDir.r;
-
-    // 4. COLLISION RESOLUTION (Spiral Search)
-    // We try to place it at the ideal vector. If taken, we spiral OUT from that ideal spot 
-    // to find the closest available slot, prioritizing the general direction of the expansion.
-    
-    const isOccupied = (x: number, y: number) => currentZones.some(z => z.x === x && z.y === y);
-
-    if (!isOccupied(proposedX, proposedY)) {
-        return { x: proposedX, y: proposedY };
-    }
-
-    // BFS Spiral
-    const queue = [{ x: proposedX, y: proposedY }];
-    const visited = new Set([`${proposedX},${proposedY}`]);
-    // Pre-mark existing zones as visited to avoid checking them
-    currentZones.forEach(z => visited.add(`${z.x},${z.y}`));
-
-    let safeGuard = 0;
-    while (queue.length > 0 && safeGuard < 500) {
-        const current = queue.shift()!;
-        safeGuard++;
-
-        // Check neighbors of current
-        for (const dir of HEX_DIRECTIONS) {
-            const nx = current.x + dir.q;
-            const ny = current.y + dir.r;
-            const key = `${nx},${ny}`;
-
-            if (!visited.has(key)) {
-                visited.add(key);
-                // If this spot is not in the original zones list, it's free
-                if (!isOccupied(nx, ny)) {
-                    return { x: nx, y: ny };
-                }
-                queue.push({ x: nx, y: ny });
+        // We want to be adjacent to anchor
+        distanceBuffer = 1; 
+    } else if (currentZones.length > 0) {
+        // CASE B: New Country Cluster
+        // Find nearest global zone to maintain world geography relative to map center
+        let minDist = Infinity;
+        currentZones.forEach(z => {
+            const d = getDistanceFromLatLonInKm(targetLat, targetLng, z.lat, z.lng);
+            if (d < minDist) {
+                minDist = d;
+                anchor = z;
             }
-        }
+        });
+        // We want to be separated from the other country
+        distanceBuffer = 4; // Gap for visual separation
+    } else {
+        // CASE C: Genesis (First zone ever)
+        return { x: 0, y: 0, shiftedZones: [] };
     }
+
+    if (!anchor) return { x: 0, y: 0, shiftedZones: [] }; // Should not happen given logic above
+
+    // 3. Calculate Vector
+    bearing = getBearing(anchor.lat, anchor.lng, targetLat, targetLng);
+    const hexDirIndex = bearingToHexDirectionIndex(bearing);
+    const dir = HEX_DIRECTIONS[hexDirIndex];
+
+    // 4. Determine Target Spot
+    const targetX = anchor.x + (dir.q * distanceBuffer);
+    const targetY = anchor.y + (dir.r * distanceBuffer);
+    const targetKey = `${targetX},${targetY}`;
+
+    // 5. Collision & Shifting Logic
+    const occupierId = coordMap.get(targetKey);
     
-    // Fallback
-    return { x: proposedX + 5, y: proposedY + 5 };
+    if (occupierId) {
+        // Spot is taken. We must SHIFT the occupier (and anything behind it)
+        // We shift them in the SAME direction we are entering.
+        shiftZoneRecursively(occupierId, hexDirIndex, zoneMap, coordMap, modifiedZones);
+    }
+
+    return { 
+        x: targetX, 
+        y: targetY, 
+        shiftedZones: Array.from(modifiedZones.values()) 
+    };
+};
+
+// Legacy support wrapper (to minimize refactoring breakages elsewhere, though usage in hook is updated)
+export const calculateHexPosition = (
+    _ref: Zone | null, 
+    lat: number, 
+    lng: number, 
+    cc: string, 
+    zones: Zone[]
+) => {
+    const res = insertZoneAndShift(lat, lng, cc, zones);
+    return { x: res.x, y: res.y };
 };

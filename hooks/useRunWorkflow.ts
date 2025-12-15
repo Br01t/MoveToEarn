@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { User, Zone, RunAnalysisData, RunEntry } from '../types';
-import { getDistanceFromLatLonInKm, calculateHexPosition } from '../utils/geo';
+import { getDistanceFromLatLonInKm, insertZoneAndShift } from '../utils/geo';
 import { processRunRewards } from '../utils/rewards';
 import { MINT_COST, MINT_REWARD_GOV, ITEM_DURATION_SEC, DEFAULT_ZONE_INTEREST_RATE } from '../constants';
 
@@ -84,8 +84,10 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction,
   // --- LOGIC: Check if new zones are needed ---
   const analyzeForNewZones = (data: RunAnalysisData) => {
     const { startPoint, endPoint } = data;
-    // Use both global zones and session zones for checking overlap
-    const allZones = [...zones, ...sessionCreatedZonesRef.current];
+    
+    // Merge Strategy: Prioritize `zones` state
+    const sessionZonesUnique = sessionCreatedZonesRef.current.filter(sz => !zones.some(z => z.id === sz.id));
+    const allZones = [...zones, ...sessionZonesUnique];
 
     let startZone = allZones.find(z => getDistanceFromLatLonInKm(startPoint.lat, startPoint.lng, z.lat, z.lng) < 1.0);
     let endZone = allZones.find(z => getDistanceFromLatLonInKm(endPoint.lat, endPoint.lng, z.lat, z.lng) < 1.0);
@@ -121,15 +123,13 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction,
 
   // --- LOGIC: Commit Run Data ---
   const finalizeRun = async (data: RunAnalysisData, currentUser: User, currentZones: Zone[]) => {
-      // Merge global zones + session zones for accurate reward calculation
-      // This is vital: It ensures the user gets rewards for zones they JUST created in this batch
       const allZonesMap = new Map<string, Zone>();
       currentZones.forEach(z => allZonesMap.set(z.id, z));
-      sessionCreatedZonesRef.current.forEach(z => allZonesMap.set(z.id, z));
+      sessionCreatedZonesRef.current.forEach(z => {
+          if (!allZonesMap.has(z.id)) allZonesMap.set(z.id, z);
+      });
       
       const fullZoneList = Array.from(allZonesMap.values());
-
-      // Result includes updated zones with new Interest Pool values and split rewards
       const result = processRunRewards(data, currentUser, fullZoneList);
 
       const newRun: RunEntry = {
@@ -153,31 +153,34 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction,
           totalKm: currentUser.totalKm + data.totalKm
       };
 
-      // Identify modified zones to update in DB
-      // We must include any zones created in this session (INSERT)
-      // AND any existing zones that were modified (UPDATE) during reward processing
+      // Identify modified zones (earnings/defense updates)
+      // Note: We don't need to re-save X/Y here usually, as they are saved during creation,
+      // BUT if creation caused shifting, those shifts must be persisted.
+      // In this flow, we assume `zones` state already has the shifted coordinates from `confirmZoneCreation`.
+      
       const modifiedZones = result.zoneUpdates.filter(u => {
           const isNew = sessionCreatedZonesRef.current.some(nz => nz.id === u.id);
           if (isNew) return true;
-
           const original = allZonesMap.get(u.id);
-          // Check if stats changed from what we knew before this run
-          return original && (original.recordKm !== u.recordKm || original.interestPool !== u.interestPool);
+          return original && (
+              original.recordKm !== u.recordKm || 
+              original.interestPool !== u.interestPool || 
+              original.ownerId !== u.ownerId ||
+              original.x !== u.x || // Check if position shifted
+              original.y !== u.y
+          );
       });
 
-      // DB SAVE (Atomic)
       if (recordRun) {
           const dbResult = await recordRun(currentUser.id, newRun, modifiedZones);
           if (!dbResult.success) {
-              alert(`Sync Failed: ${dbResult.error || 'Database error'}. Local state not updated.`);
+              alert(`Sync Failed: ${dbResult.error || 'Database error'}.`);
               return; 
           }
       } else if (result.totalRunEarned > 0) {
-          // Fallback legacy logging if recordRun not available
           logTransaction(currentUser.id, 'IN', 'RUN', result.totalRunEarned, `Run Reward: ${result.locationName}`);
       }
 
-      // Update State
       setZones(result.zoneUpdates);
       setUser(finalUser);
       
@@ -188,7 +191,7 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction,
       if (result.isReinforced) batchStatsRef.current.reinforcedCount++;
 
       setPendingRunData(null);
-      setPendingRunsQueue(prev => prev.slice(1)); // Remove processed run
+      setPendingRunsQueue(prev => prev.slice(1)); 
   };
 
   // --- ACTIONS: Modal Interactions ---
@@ -198,22 +201,24 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction,
       const pendingZone = zoneCreationQueue[0];
       if (user.runBalance < MINT_COST) return { success: false, msg: "Insufficient funds" };
 
-      // LOG TRANSACTIONS
       logTransaction(user.id, 'OUT', 'RUN', MINT_COST, `Zone Mint Fee: ${customName}`);
       logTransaction(user.id, 'IN', 'GOV', MINT_REWARD_GOV, `Zone Mint Reward: ${customName}`);
 
       const hasCountryCode = / - [A-Z]{2}$/.test(customName);
+      const countryCode = hasCountryCode ? customName.split(' - ').pop() || "XX" : "XX";
       const finalName = hasCountryCode ? customName : `${customName} - XX`;
 
-      // Calculate Position - Nearest Neighbor logic
-      // We pass ALL zones (existing + session created) to find the right neighbor to snap to.
-      const currentAllZones = [...zones, ...sessionCreatedZonesRef.current];
-      const hexPos = calculateHexPosition(null, pendingZone.lat, pendingZone.lng, "XX", currentAllZones);
+      // --- DYNAMIC PLACEMENT & SHIFTING ---
+      const sessionZonesUnique = sessionCreatedZonesRef.current.filter(sz => !zones.some(z => z.id === sz.id));
+      const currentAllZones = [...zones, ...sessionZonesUnique];
+      
+      // This function calculates the new spot AND returns any zones that had to move to make room
+      const placementResult = insertZoneAndShift(pendingZone.lat, pendingZone.lng, countryCode, currentAllZones);
 
       const newZone: Zone = {
           id: crypto.randomUUID(),
-          x: hexPos.x,
-          y: hexPos.y,
+          x: placementResult.x,
+          y: placementResult.y,
           lat: pendingZone.lat,
           lng: pendingZone.lng,
           ownerId: user.id,
@@ -231,14 +236,31 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction,
           govBalance: user.govBalance + MINT_REWARD_GOV 
       };
       
-      // Add to session ref so subsequent runs/creations in this batch see it
       sessionCreatedZonesRef.current.push(newZone);
       
-      setUser(updatedUser);
-      // Immediately update zones in state so dashboard reflects it (even though it's optimistic until finalizeRun commits it)
-      setZones(prev => [...prev, newZone]); 
+      // Update State: We must merge the new zone AND any shifted zones
+      setZones(prev => {
+          // 1. Add new zone
+          const listWithNew = [...prev, newZone];
+          // 2. Apply shifts (if any)
+          if (placementResult.shiftedZones.length > 0) {
+              return listWithNew.map(z => {
+                  const shiftUpdate = placementResult.shiftedZones.find(s => s.id === z.id);
+                  return shiftUpdate ? { ...z, x: shiftUpdate.x, y: shiftUpdate.y } : z;
+              });
+          }
+          return listWithNew;
+      });
 
-      proceedQueue(updatedUser, [...zones, newZone]);
+      // Pass the updated world state to the next step (recursive queue processing)
+      // Note: We need to reconstruct the "currentZones" logic to include the shifts for the immediate next calculation
+      const nextZonesState = [...zones, newZone].map(z => {
+          const shiftUpdate = placementResult.shiftedZones.find(s => s.id === z.id);
+          return shiftUpdate ? { ...z, x: shiftUpdate.x, y: shiftUpdate.y } : z;
+      });
+
+      setUser(updatedUser);
+      proceedQueue(updatedUser, nextZonesState);
       return { success: true };
   };
 
