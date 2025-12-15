@@ -227,12 +227,13 @@ export const useGameData = () => {
               }).filter((i): i is InventoryItem => i !== null && i !== undefined);
           }
 
+          // Increased limit to 1000 to support accurate charting from the first transaction
           const { data: txRows } = await supabase
               .from('transactions')
               .select('*')
               .eq('user_id', userId)
               .order('timestamp', { ascending: false })
-              .limit(100);
+              .limit(1000);
 
           if (txRows) {
               const mappedTxs: Transaction[] = txRows.map((t: any) => ({

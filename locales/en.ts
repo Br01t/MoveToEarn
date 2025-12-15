@@ -251,9 +251,10 @@ export const en = {
     "profile.save_profile": "Save Profile",
     "profile.cancel": "Cancel",
     "profile.upgrade_pro": "Upgrade to Pro",
-    "profile.liquid_assets": "Liquid Assets",
+    "profile.liquid_assets": "Assets & Inventory",
     "profile.run_balance": "RUN Balance",
     "profile.gov_holdings": "GOV Holdings",
+    "profile.inventory_items": "Inventory Items",
     "profile.perf_metrics": "Performance Metrics",
     "profile.longest_run": "Longest Run",
     "profile.total_dist": "Total Distance",
@@ -731,4 +732,4 @@ export const en = {
     "htp.upload.desc": "Once you have obtained the .zip file (full archive) or the single run file, upload it to our service.",
     "htp.upload.guarantee_title": "Non-Duplication Guarantee",
     "htp.upload.guarantee_desc": "Our system is able to recognize and automatically ignore runs you have already uploaded. You can upload the full history multiple times without creating duplicates, ensuring your data is always up to date."
-  };
+};
