@@ -1,8 +1,9 @@
 
 import React, { useState } from 'react';
-import { Activity, Shield, Coins, TrendingUp, Terminal, BookOpen, ChevronRight, Zap, X } from 'lucide-react';
+import { Activity, Shield, Coins, TrendingUp, Terminal, BookOpen, ChevronRight, Zap, X, Volume2, VolumeX } from 'lucide-react';
 import { ViewState } from '../types';
 import { useLanguage } from '../LanguageContext';
+import { useGlobalUI } from '../contexts/GlobalUIContext';
 
 interface LandingPageProps {
   onLogin: () => void;
@@ -14,6 +15,7 @@ type FeatureKey = 'earn_run' | 'earn_gov' | 'spend' | 'burn';
 
 const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
   const { t, language, toggleLanguage } = useLanguage();
+  const { isMuted, toggleMute } = useGlobalUI();
   const [activeFeature, setActiveFeature] = useState<FeatureKey | null>(null);
 
   const features: { key: FeatureKey; icon: any; color: string }[] = [
@@ -68,12 +70,22 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
           </div>
         </div>
         
-        <button
-            onClick={toggleLanguage}
-            className="px-4 py-2 text-xs font-bold glass-panel text-gray-400 hover:text-white rounded-lg transition-all"
-        >
-            {language === 'en' ? 'IT' : 'EN'}
-        </button>
+        <div className="flex items-center gap-3">
+            <button
+                onClick={toggleMute}
+                className={`p-2 rounded-lg glass-panel transition-all border ${isMuted ? 'text-red-400 border-red-500/30 bg-red-900/10' : 'text-gray-400 border-white/10 hover:text-white hover:border-white/30'}`}
+                title={isMuted ? "Unmute" : "Mute"}
+            >
+                {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
+            </button>
+
+            <button
+                onClick={toggleLanguage}
+                className="px-4 py-2 text-xs font-bold glass-panel text-gray-400 hover:text-white rounded-lg transition-all border border-white/10 hover:border-white/30"
+            >
+                {language === 'en' ? 'IT' : 'EN'}
+            </button>
+        </div>
       </header>
 
       {/* --- HERO SECTION --- */}
