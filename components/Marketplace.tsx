@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Item, User } from '../types';
 import { Shield, Zap, ShoppingCart, X, AlertTriangle, CheckCircle, Package, Coins, Clock, TrendingUp, ShoppingBag } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
+import { useGlobalUI } from '../contexts/GlobalUIContext';
 
 interface MarketplaceProps {
   user: User;
@@ -12,14 +13,16 @@ interface MarketplaceProps {
 
 const Marketplace: React.FC<MarketplaceProps> = ({ user, items, onBuy }) => {
   const { t } = useLanguage();
+  const { triggerParticles } = useGlobalUI();
   const [confirmItem, setConfirmItem] = useState<Item | null>(null);
 
   const handleBuyClick = (item: Item) => {
     setConfirmItem(item);
   };
 
-  const confirmPurchase = () => {
+  const confirmPurchase = (e: React.MouseEvent) => {
     if (confirmItem) {
+      triggerParticles(e.clientX, e.clientY, '#10b981'); // Emerald explosion
       onBuy(confirmItem);
       setConfirmItem(null);
     }
@@ -79,7 +82,10 @@ const Marketplace: React.FC<MarketplaceProps> = ({ user, items, onBuy }) => {
             const isLowStock = item.quantity > 0 && item.quantity < 10;
 
             return (
-              <div key={item.id} className={`glass-panel rounded-xl overflow-hidden transition-all group flex flex-col relative ${hasStock ? 'hover:border-emerald-500/50 hover:shadow-[0_0_20px_rgba(16,185,129,0.1)]' : 'opacity-60 grayscale'}`}>
+              <div 
+                key={item.id} 
+                className={`glass-panel rounded-xl overflow-hidden transition-all group flex flex-col relative ${hasStock ? 'hover:border-emerald-500/50 hover:shadow-[0_0_20px_rgba(16,185,129,0.1)]' : 'opacity-60 grayscale'}`}
+              >
                 {isLowStock && (
                     <div className="absolute top-0 right-0 bg-orange-600/90 backdrop-blur text-white text-[10px] font-bold px-2 py-1 rounded-bl-lg z-10">
                         {t('market.low_stock')}
@@ -109,7 +115,8 @@ const Marketplace: React.FC<MarketplaceProps> = ({ user, items, onBuy }) => {
                     <button
                       onClick={() => canAfford && hasStock && handleBuyClick(item)}
                       disabled={!canAfford || !hasStock}
-                      className={`px-5 py-2.5 rounded-lg font-bold flex items-center gap-2 transition-all uppercase tracking-wide text-sm ${
+                      data-text={t('market.buy')}
+                      className={`btn-glitch px-5 py-2.5 rounded-lg font-bold flex items-center gap-2 transition-all uppercase tracking-wide text-sm ${
                         canAfford && hasStock
                         ? 'bg-emerald-500 hover:bg-emerald-600 text-black shadow-lg shadow-emerald-500/20 hover:scale-105' 
                         : 'bg-gray-700/50 text-gray-500 cursor-not-allowed border border-white/5'

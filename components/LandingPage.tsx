@@ -109,7 +109,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
             {/* Primary: Start */}
             <button
               onClick={onLogin}
-              className="group relative w-full sm:w-auto px-10 py-5 bg-white text-black font-black text-lg rounded-xl transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-3 overflow-hidden shadow-[0_0_40px_rgba(255,255,255,0.3)] hover:shadow-[0_0_60px_rgba(16,185,129,0.6)]"
+              data-text={t('landing.start_btn')}
+              className="btn-glitch group relative w-full sm:w-auto px-10 py-5 bg-white text-black font-black text-lg rounded-xl transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-3 overflow-hidden shadow-[0_0_40px_rgba(255,255,255,0.3)] hover:shadow-[0_0_60px_rgba(16,185,129,0.6)]"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-emerald-400 via-cyan-400 to-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               <span className="relative z-10 flex items-center gap-2 uppercase tracking-wide">

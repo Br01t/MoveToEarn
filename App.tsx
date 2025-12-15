@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Navbar from "./components/Navbar";
 import LandingPage from "./components/LandingPage";
 import Dashboard from "./components/Dashboard";
@@ -32,6 +32,8 @@ import { LanguageProvider, useLanguage } from "./LanguageContext";
 import { GlobalUIProvider, useGlobalUI } from "./contexts/GlobalUIContext";
 import { PrivacyProvider } from "./contexts/PrivacyContext";
 import { MINT_COST, MINT_REWARD_GOV } from "./constants";
+// REMOVED: direct import of playSound to fix muting issue
+// import { playSound } from './utils/audio';
 
 // Custom Hooks (Backend Logic)
 import { useGameState } from "./hooks/useGameState";
@@ -41,7 +43,8 @@ import { usePWA } from "./hooks/usePWA";
 
 const AppContent: React.FC = () => {
   const { t } = useLanguage();
-  const { showToast, showConfirm } = useGlobalUI(); 
+  // Get playSound from context, which respects the isMuted state
+  const { showToast, showConfirm, playSound } = useGlobalUI(); 
   const [currentView, setCurrentView] = useState<ViewState>("LANDING");
   const [showSyncModal, setShowSyncModal] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -50,6 +53,45 @@ const AppContent: React.FC = () => {
   // PWA State
   const { deferredPrompt, isIOS, isStandalone, installPWA } = usePWA();
   const [forceShowPWA, setForceShowPWA] = useState(false);
+
+  // Sound Interaction State
+  const lastHoveredRef = useRef<HTMLElement | null>(null);
+
+  // GLOBAL AUDIO LISTENER
+  useEffect(() => {
+    const handleGlobalInteraction = (e: Event) => {
+        // Do not play sounds if viewing the Whitepaper
+        if (currentView === 'WHITEPAPER') return;
+
+        const target = e.target as HTMLElement;
+        // Find if the target or any parent is interactive
+        const interactiveElement = target.closest('button, a, [role="button"], input[type="submit"], input[type="button"]');
+
+        if (interactiveElement) {
+            if (e.type === 'click') {
+                playSound('CLICK');
+            } else if (e.type === 'mouseover') {
+                // Prevent playing sound repeatedly when moving inside the same element
+                if (interactiveElement !== lastHoveredRef.current) {
+                    playSound('HOVER');
+                    lastHoveredRef.current = interactiveElement as HTMLElement;
+                }
+            }
+        } else {
+            if (e.type === 'mouseover') {
+                lastHoveredRef.current = null;
+            }
+        }
+    };
+
+    window.addEventListener('click', handleGlobalInteraction);
+    window.addEventListener('mouseover', handleGlobalInteraction);
+
+    return () => {
+        window.removeEventListener('click', handleGlobalInteraction);
+        window.removeEventListener('mouseover', handleGlobalInteraction);
+    };
+  }, [currentView, playSound]); // Added playSound to dependencies so it updates when context changes
 
   // 1. GAME STATE (Virtual Database)
   const { 
