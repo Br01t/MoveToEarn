@@ -63,17 +63,17 @@ const ZoneStatsModal: React.FC<ZoneStatsModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in">
-      <div className="relative w-full max-w-sm bg-gray-900 rounded-2xl border border-gray-700 shadow-2xl overflow-hidden flex flex-col animate-slide-up">
+      <div className="relative w-full max-w-sm glass-panel-heavy rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-slide-up">
         
         {/* Header */}
-        <div className="p-5 border-b border-gray-800 flex justify-between items-center bg-gray-800/50">
+        <div className="p-5 border-b border-white/10 flex justify-between items-center bg-black/20">
             <div className="flex items-center gap-2 overflow-hidden">
-                <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-400 shrink-0">
+                <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-400 shrink-0 border border-emerald-500/20">
                     <MapPin size={20} />
                 </div>
                 <h3 className="font-bold text-lg text-white truncate">{zone.name}</h3>
             </div>
-            <button onClick={onClose} className="p-1 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors">
+            <button onClick={onClose} className="p-1 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
                 <X size={20} />
             </button>
         </div>
@@ -83,7 +83,7 @@ const ZoneStatsModal: React.FC<ZoneStatsModalProps> = ({
             
             {/* Owner Info */}
             {ownerDetails && (
-                <div className="bg-black/30 p-4 rounded-xl border border-gray-700/50 flex items-center gap-4">
+                <div className="bg-black/30 p-4 rounded-xl border border-white/5 flex items-center gap-4">
                     <div className="relative shrink-0">
                         <img 
                             src={ownerDetails.avatar || `https://ui-avatars.com/api/?name=${ownerDetails.name}&background=10b981&color=fff`} 
@@ -113,7 +113,7 @@ const ZoneStatsModal: React.FC<ZoneStatsModalProps> = ({
             {/* Stats Grid */}
             <div className="grid grid-cols-2 gap-3">
                 {/* Yield Card */}
-                <div className="bg-gray-800/50 p-3 rounded-xl border border-gray-700/50 flex flex-col items-center justify-center text-center">
+                <div className="bg-black/30 p-3 rounded-xl border border-white/5 flex flex-col items-center justify-center text-center">
                      <div className="text-[10px] text-gray-400 uppercase font-bold mb-1">{t('dash.yield')}</div>
                      <div className="font-mono text-xl font-bold text-emerald-400 flex items-center gap-1">
                          <Zap size={14} className="mb-0.5" /> {zone.interestRate}%
@@ -121,7 +121,7 @@ const ZoneStatsModal: React.FC<ZoneStatsModalProps> = ({
                 </div>
 
                 {/* Status Card (Replaced Defense Level) */}
-                <div className="bg-gray-800/50 p-3 rounded-xl border border-gray-700/50 flex flex-col items-center justify-center text-center">
+                <div className="bg-black/30 p-3 rounded-xl border border-white/5 flex flex-col items-center justify-center text-center">
                      <div className="text-[10px] text-gray-400 uppercase font-bold mb-1">{t('zone.status')}</div>
                      
                      {isBoostActive ? (
@@ -145,11 +145,11 @@ const ZoneStatsModal: React.FC<ZoneStatsModalProps> = ({
                 <h4 className="text-xs font-bold text-gray-500 uppercase mb-3 flex items-center gap-2 pl-1">
                     <Medal size={14} className="text-yellow-500"/> {t('zone.top_runners')}
                 </h4>
-                <div className="bg-gray-800/30 rounded-xl border border-gray-700/50 overflow-hidden">
+                <div className="bg-black/30 rounded-xl border border-white/5 overflow-hidden">
                     {zoneLeaderboard.length === 0 ? (
                         <div className="p-4 text-center text-gray-500 text-xs">No runners recorded yet.</div>
                     ) : (
-                        <div className="divide-y divide-gray-700/50">
+                        <div className="divide-y divide-white/5">
                             {zoneLeaderboard.map((runner, index) => (
                                 <div key={runner.id} className={`flex items-center justify-between p-3 transition-colors ${runner.id === user.id ? 'bg-emerald-900/10' : ''}`}>
                                     <div className="flex items-center gap-3">

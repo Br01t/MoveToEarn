@@ -78,7 +78,7 @@ const ReportBug: React.FC<ReportBugProps> = ({ onReport }) => {
       <p className="text-gray-400">{t('report.subtitle')}</p>
 
       {isSubmitted ? (
-          <div className="bg-emerald-900/20 border border-emerald-500 rounded-xl p-8 text-center animate-fade-in">
+          <div className="bg-emerald-900/20 border border-emerald-500 rounded-xl p-8 text-center animate-fade-in backdrop-blur-sm">
               <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
                   <CheckCircle size={32} className="text-emerald-400" />
               </div>
@@ -92,11 +92,11 @@ const ReportBug: React.FC<ReportBugProps> = ({ onReport }) => {
               </button>
           </div>
       ) : (
-          <form onSubmit={handleSubmit} className="bg-gray-800 rounded-xl p-8 border border-gray-700 space-y-6">
+          <form onSubmit={handleSubmit} className="glass-panel rounded-xl p-8 space-y-6">
               <div>
                   <label className="block text-sm font-bold text-gray-400 uppercase mb-2">{t('report.desc_label')}</label>
                   <textarea 
-                      className="w-full bg-gray-900 border border-gray-600 rounded-xl p-4 text-white focus:border-emerald-500 focus:outline-none min-h-[150px]"
+                      className="w-full bg-black/40 border border-gray-600 rounded-xl p-4 text-white focus:border-emerald-500 focus:outline-none min-h-[150px]"
                       placeholder={t('report.desc_placeholder')}
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
@@ -108,7 +108,7 @@ const ReportBug: React.FC<ReportBugProps> = ({ onReport }) => {
               <div>
                   <label className="block text-sm font-bold text-gray-400 uppercase mb-2">{t('report.screenshot_label')}</label>
                   <div className="flex items-center gap-4">
-                      <label className={`cursor-pointer flex items-center gap-2 px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg hover:border-emerald-500 transition-colors group ${isSending ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                      <label className={`cursor-pointer flex items-center gap-2 px-4 py-2 bg-black/40 border border-gray-600 rounded-lg hover:border-emerald-500 transition-colors group ${isSending ? 'opacity-50 cursor-not-allowed' : ''}`}>
                           <Camera size={20} className="text-gray-400 group-hover:text-emerald-400" />
                           <span className="text-sm text-gray-300">Upload Image</span>
                           <input type="file" accept="image/*" onChange={handleFileChange} hidden disabled={isSending} />

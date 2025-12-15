@@ -59,7 +59,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
         <div className="flex items-center gap-3 cursor-pointer group" onClick={() => onNavigate('LANDING')}>
           <div className="relative">
              <div className="absolute inset-0 bg-emerald-500 blur-md opacity-20 group-hover:opacity-40 transition-opacity rounded-lg"></div>
-             <div className="bg-gray-900 p-2.5 rounded-lg border border-gray-800 group-hover:border-emerald-500/50 transition-colors relative z-10">
+             <div className="glass-panel p-2.5 rounded-lg border-white/10 group-hover:border-emerald-500/50 transition-colors relative z-10">
                 <Activity size={24} className="text-emerald-400" />
              </div>
           </div>
@@ -70,7 +70,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
         
         <button
             onClick={toggleLanguage}
-            className="px-4 py-2 text-xs font-bold bg-gray-900/50 text-gray-400 hover:text-white rounded-lg border border-gray-800 hover:border-gray-600 backdrop-blur-sm transition-all"
+            className="px-4 py-2 text-xs font-bold glass-panel text-gray-400 hover:text-white rounded-lg transition-all"
         >
             {language === 'en' ? 'IT' : 'EN'}
         </button>
@@ -79,7 +79,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
       {/* --- HERO SECTION --- */}
       <main className="relative z-10 flex-1 flex flex-col justify-center items-center px-4 text-center pb-20 pt-10">
         
-        <div className="mb-10 inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-gray-900/80 border border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)] backdrop-blur-md animate-fade-in-up">
+        <div className="mb-10 inline-flex items-center gap-3 px-4 py-1.5 rounded-full glass-panel shadow-[0_0_15px_rgba(16,185,129,0.1)] animate-fade-in-up">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
@@ -120,7 +120,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
             {/* Secondary: Game Rules */}
             <button 
               onClick={() => onNavigate('RULES')}
-              className="group w-full sm:w-auto px-8 py-5 bg-gray-900 hover:bg-gray-800 border border-gray-700 hover:border-emerald-500 text-white font-bold text-lg rounded-xl transition-all flex items-center justify-center gap-3 backdrop-blur-sm"
+              className="group w-full sm:w-auto px-8 py-5 glass-panel hover:bg-gray-800 text-white font-bold text-lg rounded-xl transition-all flex items-center justify-center gap-3"
             >
               <Terminal size={18} className="text-gray-500 group-hover:text-emerald-400 transition-colors" />
               <span className="uppercase tracking-wide">{t('landing.game_guide_btn')}</span>
@@ -129,7 +129,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
             {/* Tertiary: Whitepaper */}
             <button 
               onClick={() => onNavigate('WHITEPAPER')}
-              className="group w-full sm:w-auto px-8 py-5 bg-transparent hover:bg-gray-900 border border-transparent hover:border-gray-700 text-gray-400 hover:text-white font-bold text-lg rounded-xl transition-all flex items-center justify-center gap-3"
+              className="group w-full sm:w-auto px-8 py-5 glass-panel bg-transparent hover:bg-gray-900 border-white/5 hover:border-white/20 text-gray-400 hover:text-white font-bold text-lg rounded-xl transition-all flex items-center justify-center gap-3"
             >
               <BookOpen size={18} className="text-gray-600 group-hover:text-cyan-400 transition-colors" />
               <span className="uppercase tracking-wide">{t('landing.rules_btn')}</span>
@@ -157,7 +157,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
         {activeFeature && activeContent && (
             <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-md p-4 animate-fade-in" onClick={() => setActiveFeature(null)}>
                 <div 
-                    className="bg-gray-900 border border-gray-700 rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl relative animate-slide-up" 
+                    className="glass-panel-heavy rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl relative animate-slide-up" 
                     onClick={(e) => e.stopPropagation()}
                 >
                     {/* Header Image / Gradient */}
@@ -205,39 +205,39 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
 // Reusable Feature Card Component
 const FeatureCard = ({ icon, title, description, color, onClick }: { icon: any, title: string, description: string, color: string, onClick: () => void }) => {
     const borderClass = {
-        emerald: 'group-hover:border-emerald-500/50',
-        cyan: 'group-hover:border-cyan-500/50',
-        blue: 'group-hover:border-blue-500/50',
-        red: 'group-hover:border-red-500/50',
+        emerald: 'hover:border-emerald-500/50',
+        cyan: 'hover:border-cyan-500/50',
+        blue: 'hover:border-blue-500/50',
+        red: 'hover:border-red-500/50',
     }[color];
 
     const textClass = {
-        emerald: 'group-hover:text-emerald-400',
-        cyan: 'group-hover:text-cyan-400',
-        blue: 'group-hover:text-blue-400',
-        red: 'group-hover:text-red-400',
+        emerald: 'text-emerald-400',
+        cyan: 'text-cyan-400',
+        blue: 'text-blue-400',
+        red: 'text-red-400',
     }[color];
 
     const iconBgClass = {
-        emerald: 'group-hover:bg-emerald-500/20 group-hover:text-emerald-400',
-        cyan: 'group-hover:bg-cyan-500/20 group-hover:text-cyan-400',
-        blue: 'group-hover:bg-blue-500/20 group-hover:text-blue-400',
-        red: 'group-hover:bg-red-500/20 group-hover:text-red-400',
+        emerald: 'bg-emerald-500/20 text-emerald-400',
+        cyan: 'bg-cyan-500/20 text-cyan-400',
+        blue: 'bg-blue-500/20 text-blue-400',
+        red: 'bg-red-500/20 text-red-400',
     }[color];
 
     return (
       <div 
         onClick={onClick}
-        className={`group bg-gray-900/40 backdrop-blur-md border border-white/5 p-8 rounded-3xl text-left transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl cursor-pointer relative overflow-hidden ${borderClass}`}
+        className={`glass-panel group p-8 rounded-3xl text-left transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl cursor-pointer relative overflow-hidden ${borderClass}`}
       >
-        <div className={`mb-6 w-14 h-14 rounded-2xl border border-white/10 flex items-center justify-center transition-all duration-500 bg-black/40 text-gray-400 ${iconBgClass}`}>
+        <div className={`mb-6 w-14 h-14 rounded-2xl border border-white/10 flex items-center justify-center transition-all duration-500 ${iconBgClass}`}>
           {icon}
         </div>
         
-        <h3 className={`text-xl font-bold uppercase tracking-wide text-white mb-3 transition-colors ${textClass}`}>{title}</h3>
-        <p className="text-gray-400 text-sm leading-relaxed group-hover:text-gray-300 transition-colors font-medium">{description}</p>
+        <h3 className={`text-xl font-bold uppercase tracking-wide text-white mb-3 transition-colors`}>{title}</h3>
+        <p className="text-gray-400 text-sm leading-relaxed font-medium">{description}</p>
         
-        <div className={`mt-6 flex items-center gap-2 text-xs font-bold uppercase tracking-wider transition-all duration-300 translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 ${textClass}`}>
+        <div className={`mt-6 flex items-center gap-2 text-xs font-bold uppercase tracking-wider transition-all duration-300 ${textClass}`}>
             Learn More <ChevronRight size={12} />
         </div>
         

@@ -213,9 +213,9 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in">
-      <div className="bg-gray-800 rounded-2xl border border-gray-700 w-full max-w-md shadow-2xl overflow-hidden animate-slide-up flex flex-col max-h-[85vh]">
+      <div className="glass-panel-heavy rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-slide-up flex flex-col max-h-[85vh]">
          
-         <div className="p-4 border-b border-gray-700 flex justify-between items-center bg-gray-900">
+         <div className="p-4 border-b border-white/10 flex justify-between items-center bg-black/20">
             <h3 className="text-lg font-bold text-white flex items-center gap-2">
                <UploadCloud className="text-emerald-400" /> {t('sync.title')}
             </h3>
@@ -226,22 +226,22 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
                 >
                     <HelpCircle size={16} /> Help
                 </button>
-                <button onClick={onClose} className="text-gray-400 hover:text-white"><X size={24}/></button>
+                <button onClick={onClose} className="text-gray-400 hover:text-white p-1 rounded-full hover:bg-white/10"><X size={24}/></button>
             </div>
          </div>
          
-         <div className="flex border-b border-gray-700">
+         <div className="flex border-b border-white/10 bg-black/10">
             <button 
               onClick={() => { setSyncTab('FREE'); setUploadStep('SELECT'); }}
               disabled={uploadStep === 'PROCESSING' || uploadStep === 'SUCCESS'}
-              className={`flex-1 py-3 font-bold text-sm transition-colors ${syncTab === 'FREE' ? 'bg-gray-800 text-emerald-400 border-b-2 border-emerald-400' : 'bg-gray-900 text-gray-500'}`}
+              className={`flex-1 py-3 font-bold text-sm transition-colors ${syncTab === 'FREE' ? 'bg-white/5 text-emerald-400 border-b-2 border-emerald-400' : 'text-gray-500 hover:text-gray-300'}`}
             >
                 {t('sync.manual')}
             </button>
             <button 
               onClick={() => setSyncTab('PREMIUM')}
               disabled={uploadStep === 'PROCESSING' || uploadStep === 'SUCCESS'}
-              className={`flex-1 py-3 font-bold text-sm transition-colors flex justify-center items-center gap-2 ${syncTab === 'PREMIUM' ? 'bg-gray-800 text-yellow-400 border-b-2 border-yellow-400' : 'bg-gray-900 text-gray-500'}`}
+              className={`flex-1 py-3 font-bold text-sm transition-colors flex justify-center items-center gap-2 ${syncTab === 'PREMIUM' ? 'bg-white/5 text-yellow-400 border-b-2 border-yellow-400' : 'text-gray-500 hover:text-gray-300'}`}
             >
                 <Crown size={14} /> {t('sync.auto')}
             </button>
@@ -273,7 +273,7 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
                                 />
                                 <div 
                                     onClick={() => fileInputRef.current?.click()}
-                                    className={`w-full border-2 border-dashed rounded-lg p-6 md:p-8 flex flex-col items-center justify-center cursor-pointer transition-colors group ${selectedFiles.length > 0 ? 'border-emerald-500 bg-emerald-900/10' : 'border-gray-600 hover:border-emerald-400 hover:bg-gray-800'}`}
+                                    className={`w-full border-2 border-dashed rounded-lg p-6 md:p-8 flex flex-col items-center justify-center cursor-pointer transition-colors group ${selectedFiles.length > 0 ? 'border-emerald-500 bg-emerald-900/10' : 'border-gray-600 hover:border-emerald-400 hover:bg-white/5'}`}
                                 >
                                     <FileText className={`mb-3 ${selectedFiles.length > 0 ? 'text-emerald-400' : 'text-gray-500 group-hover:text-emerald-300'}`} size={32} />
                                     {selectedFiles.length > 0 ? (
@@ -292,7 +292,7 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
 
                             <button 
                                 onClick={handleStartUpload}
-                                className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
+                                className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg shadow-emerald-900/20"
                             >
                                 <UploadCloud size={20} /> {t('sync.analyze_btn')}
                             </button>
@@ -317,7 +317,7 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
                                 </div>
                             )}
 
-                            <div className="w-full bg-black/50 rounded-lg p-4 font-mono text-xs text-emerald-400 h-40 overflow-y-auto border border-gray-700">
+                            <div className="w-full bg-black/50 rounded-lg p-4 font-mono text-xs text-emerald-400 h-40 overflow-y-auto border border-gray-700/50">
                                 {logs.map((log, i) => <div key={i} className="mb-1"> {log}</div>)}
                             </div>
                         </div>
@@ -332,11 +332,11 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
                                 <h3 className="text-xl font-bold text-white mb-2">{t('sync.success')}</h3>
                                 <div className="text-sm text-gray-300 mb-2">{validResults.length} run(s) validated.</div>
                                 <div className="grid grid-cols-2 gap-4 text-sm text-gray-300 mb-2 mt-4">
-                                    <div className="bg-gray-800 p-2 rounded border border-gray-700">
+                                    <div className="bg-black/30 p-2 rounded border border-gray-700">
                                         <span className="block text-[10px] text-gray-500 uppercase">Total Dist</span>
                                         <span className="font-mono text-white">{validResults.reduce((acc, r) => acc + r.totalKm, 0).toFixed(2)} km</span>
                                     </div>
-                                    <div className="bg-gray-800 p-2 rounded border border-gray-700">
+                                    <div className="bg-black/30 p-2 rounded border border-gray-700">
                                         <span className="block text-[10px] text-gray-500 uppercase">Total Time</span>
                                         <span className="font-mono text-white">{Math.floor(validResults.reduce((acc, r) => acc + r.durationMinutes, 0))} min</span>
                                     </div>
@@ -374,7 +374,7 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
                 <div className="space-y-6 py-4">
                     {!user.isPremium ? (
                         <div className="text-center space-y-6">
-                            <div className="bg-gray-900/50 p-6 rounded-xl border border-gray-700 flex flex-col items-center">
+                            <div className="bg-black/30 p-6 rounded-xl border border-gray-700 flex flex-col items-center">
                                 <div className="bg-gray-800 p-4 rounded-full mb-4"><Lock size={32} className="text-gray-500" /></div>
                                 <h4 className="text-lg font-bold text-white mb-2">{t('sync.premium_locked')}</h4>
                                 <p className="text-gray-400 text-xs mb-6 max-w-xs mx-auto">{t('sync.premium_desc')}</p>
@@ -383,7 +383,7 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
                         </div>
                     ) : (
                         <div className="space-y-6">
-                            <div className="bg-gray-900/50 p-4 rounded-xl border border-emerald-500/30 flex items-center justify-center">
+                            <div className="bg-black/30 p-4 rounded-xl border border-emerald-500/30 flex items-center justify-center">
                                 <div className="flex items-center gap-3">
                                     <div className="bg-[#FC4C02] p-2 rounded text-white font-bold text-xs">STRAVA</div>
                                     <div>

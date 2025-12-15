@@ -301,39 +301,39 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
           case 'COMMON': return { 
               border: 'border-gray-600', 
               text: 'text-gray-400', 
-              bg: 'bg-gray-800', 
-              badge: 'bg-gray-700 text-gray-300',
+              bg: '', // Removed solid background for glass-panel
+              badge: 'bg-gray-700/50 text-gray-300',
               progress: 'bg-gray-500',
-              doneBadge: 'bg-gray-700 text-gray-300'
+              doneBadge: 'bg-gray-700/50 text-gray-300'
           };
           case 'RARE': return { 
-              border: 'border-cyan-500', 
+              border: 'border-cyan-500/50', 
               text: 'text-cyan-400', 
-              bg: 'bg-cyan-900/20', 
-              badge: 'bg-cyan-900 text-cyan-400 border border-cyan-500/30',
+              bg: '',
+              badge: 'bg-cyan-900/50 text-cyan-400 border border-cyan-500/30',
               progress: 'bg-cyan-500',
               doneBadge: 'bg-cyan-500 text-black'
           };
           case 'EPIC': return { 
-              border: 'border-purple-500', 
+              border: 'border-purple-500/50', 
               text: 'text-purple-400', 
-              bg: 'bg-purple-900/20', 
-              badge: 'bg-purple-900 text-purple-400 border border-purple-500/30',
+              bg: '',
+              badge: 'bg-purple-900/50 text-purple-400 border border-purple-500/30',
               progress: 'bg-purple-500',
               doneBadge: 'bg-purple-500 text-black'
           };
           case 'LEGENDARY': return { 
-              border: 'border-yellow-500', 
+              border: 'border-yellow-500/50', 
               text: 'text-yellow-400', 
-              bg: 'bg-yellow-900/20', 
-              badge: 'bg-yellow-900 text-yellow-400 border border-yellow-500/50',
+              bg: '',
+              badge: 'bg-yellow-900/50 text-yellow-400 border border-yellow-500/50',
               progress: 'bg-yellow-500',
               doneBadge: 'bg-yellow-500 text-black'
           };
           default: return { 
               border: 'border-gray-600', 
               text: 'text-gray-400', 
-              bg: 'bg-gray-800', 
+              bg: '',
               badge: 'bg-gray-700', 
               progress: 'bg-gray-500',
               doneBadge: 'bg-emerald-500 text-black'
@@ -356,31 +356,31 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
       <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
         <button 
             onClick={() => onFilterChange('ALL')}
-            className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-colors whitespace-nowrap ${currentFilter === 'ALL' ? 'bg-white text-black' : 'bg-gray-800 text-gray-400 hover:text-white'}`}
+            className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-colors whitespace-nowrap ${currentFilter === 'ALL' ? 'bg-white text-black' : 'glass-panel hover:bg-white/10'}`}
         >
             {t('miss.filter.all')}
         </button>
         <button 
             onClick={() => onFilterChange('COMMON')}
-            className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-colors whitespace-nowrap ${currentFilter === 'COMMON' ? 'bg-gray-500 text-white' : 'bg-gray-800 text-gray-500 hover:text-gray-300'}`}
+            className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-colors whitespace-nowrap ${currentFilter === 'COMMON' ? 'bg-gray-500 text-white' : 'glass-panel text-gray-400 hover:text-white'}`}
         >
             {t('miss.filter.common')}
         </button>
         <button 
             onClick={() => onFilterChange('RARE')}
-            className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-colors whitespace-nowrap ${currentFilter === 'RARE' ? 'bg-cyan-500 text-black' : 'bg-gray-800 text-cyan-500 hover:bg-cyan-900/20'}`}
+            className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-colors whitespace-nowrap ${currentFilter === 'RARE' ? 'bg-cyan-500 text-black' : 'glass-panel text-cyan-400 hover:text-cyan-300'}`}
         >
             {t('miss.filter.rare')}
         </button>
         <button 
             onClick={() => onFilterChange('EPIC')}
-            className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-colors whitespace-nowrap ${currentFilter === 'EPIC' ? 'bg-purple-500 text-white' : 'bg-gray-800 text-purple-500 hover:bg-purple-900/20'}`}
+            className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-colors whitespace-nowrap ${currentFilter === 'EPIC' ? 'bg-purple-500 text-white' : 'glass-panel text-purple-400 hover:text-purple-300'}`}
         >
             {t('miss.filter.epic')}
         </button>
         <button 
             onClick={() => onFilterChange('LEGENDARY')}
-            className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-colors whitespace-nowrap ${currentFilter === 'LEGENDARY' ? 'bg-yellow-500 text-black' : 'bg-gray-800 text-yellow-500 hover:bg-yellow-900/20'}`}
+            className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-colors whitespace-nowrap ${currentFilter === 'LEGENDARY' ? 'bg-yellow-500 text-black' : 'glass-panel text-yellow-400 hover:text-yellow-300'}`}
         >
             {t('miss.filter.legendary')}
         </button>
@@ -400,10 +400,10 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
       const isMission = type === 'MISSION';
       
       return (
-          <div className="flex bg-gray-900 rounded-lg p-1 border border-gray-700 h-9 shrink-0">
+          <div className="flex glass-panel rounded-lg p-1 h-9 shrink-0 items-center">
               <button 
                   onClick={() => onChange('ALL')}
-                  className={`px-3 rounded transition-all flex items-center justify-center ${current === 'ALL' ? 'bg-gray-700 text-white shadow-sm' : 'text-gray-500 hover:text-gray-300'}`}
+                  className={`px-3 rounded transition-all flex items-center justify-center ${current === 'ALL' ? 'bg-gray-700/80 text-white shadow-sm' : 'text-gray-500 hover:text-gray-300'}`}
                   title="All"
               >
                   <List size={16} />
@@ -464,7 +464,7 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
                                 setMissionSearch(e.target.value);
                                 setMissionPage(1);
                             }}
-                            className="w-full bg-gray-800 border border-gray-600 rounded-lg pl-9 pr-3 py-2 text-xs text-white focus:border-emerald-500 focus:outline-none"
+                            className="w-full glass-panel rounded-lg pl-9 pr-3 py-2 text-xs text-white focus:border-emerald-500 focus:outline-none placeholder-gray-500"
                         />
                     </div>
                 </div>
@@ -475,7 +475,7 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
         </div>
 
         {filteredMissions.length === 0 ? (
-            <div className="text-center py-12 bg-gray-800 rounded-xl border border-gray-700 border-dashed">
+            <div className="text-center py-12 glass-panel rounded-xl border-dashed">
                 <Filter className="mx-auto text-gray-600 mb-2" />
                 <p className="text-gray-500 text-sm">{t('miss.no_found')}</p>
                 <button onClick={() => { handleMissionFilterChange('ALL'); setMissionSearch(''); setMissionStatus('ALL'); }} className="text-emerald-400 text-xs mt-2 hover:underline">{t('miss.clear_filter')}</button>
@@ -486,11 +486,11 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
                     const style = getRarityStyles(mission.rarity);
                     
                     const containerClass = mission.isCompleted 
-                        ? `${style.bg} ${style.border} opacity-70` 
-                        : 'bg-gray-800 border-gray-700';
+                        ? `glass-panel ${style.border} opacity-60` 
+                        : 'glass-panel';
 
                     return (
-                        <div key={mission.id} className={`rounded-lg border p-4 flex flex-col justify-between relative overflow-hidden transition-all ${containerClass}`}>
+                        <div key={mission.id} className={`rounded-lg p-4 flex flex-col justify-between relative overflow-hidden transition-all ${containerClass}`}>
                             <div className="flex justify-between items-start mb-2">
                                 <h3 className={`font-bold text-sm pr-2 ${mission.isCompleted ? 'text-white' : 'text-gray-200'}`}>
                                     {mission.title}
@@ -516,7 +516,7 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
                                         {mission.stats.current % 1 !== 0 ? mission.stats.current.toFixed(1) : mission.stats.current} / {mission.stats.target} {mission.stats.unit}
                                     </span>
                                 </div>
-                                <div className="w-full bg-gray-900 rounded-full h-1.5 border border-gray-700/50">
+                                <div className="w-full bg-black/40 rounded-full h-1.5 border border-gray-700/50">
                                     <div 
                                         className={`h-full rounded-full transition-all duration-500 ${style.progress}`} 
                                         style={{ width: `${mission.stats.percent}%` }}
@@ -570,7 +570,7 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
                                 setBadgeSearch(e.target.value);
                                 setBadgePage(1);
                             }}
-                            className="w-full bg-gray-800 border border-gray-600 rounded-lg pl-9 pr-3 py-2 text-xs text-white focus:border-yellow-500 focus:outline-none"
+                            className="w-full glass-panel rounded-lg pl-9 pr-3 py-2 text-xs text-white focus:border-yellow-500 focus:outline-none placeholder-gray-500"
                         />
                     </div>
                 </div>
@@ -581,7 +581,7 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
         </div>
 
         {filteredBadges.length === 0 ? (
-            <div className="text-center py-12 bg-gray-800 rounded-xl border border-gray-700 border-dashed">
+            <div className="text-center py-12 glass-panel rounded-xl border-dashed">
                 <Award className="mx-auto text-gray-600 mb-2" />
                 <p className="text-gray-500 text-sm">No badges found.</p>
                 <button onClick={() => { handleBadgeFilterChange('ALL'); setBadgeSearch(''); setBadgeStatus('ALL'); }} className="text-yellow-400 text-xs mt-2 hover:underline">{t('miss.clear_filter')}</button>
@@ -596,77 +596,47 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
         return (
             <div 
                 key={badge.id} 
-                // CLASSE CONTENITORE: Aggiunto 'group' per l'effetto hover
-                className={`aspect-square rounded-xl flex flex-col items-center justify-between p-3 text-center border transition-all relative overflow-visible group 
-                    ${badge.isUnlocked ? `${style.bg} ${style.border}` : 'bg-gray-900 border-gray-700'}`} 
+                className={`aspect-square rounded-xl flex flex-col items-center justify-between p-3 text-center transition-all relative overflow-visible group 
+                    ${badge.isUnlocked ? `glass-panel ${style.border}` : 'glass-panel opacity-60'}`} 
             >
                 
-                {/* TOOLTIP: Il nuovo blocco per la descrizione */}
-                <div className="absolute z-50 top-0 left-1/2 transform -translate-x-1/2 mt-[-10px] w-56 p-3 bg-gray-700 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                {/* TOOLTIP */}
+                <div className="absolute z-50 top-0 left-1/2 transform -translate-x-1/2 mt-[-10px] w-56 p-3 glass-panel-heavy rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
                     <h5 className={`font-bold text-sm mb-1 ${style.text}`}>{badge.name}</h5>
                     <p className="text-xs text-gray-300">{badge.description}</p>
-                    <div className="flex flex-wrap justify-center items-center gap-2 pt-2 border-t border-gray-600">
-                <span className="text-[10px] text-gray-400 font-bold uppercase">{t('miss.reward')}:</span>
-                
-                {/* Visualizza la ricompensa RUN */}
-                {rewardRun > 0 && (
-                    <span className="text-xs text-emerald-400 font-bold font-mono">+{rewardRun} RUN</span>
-                )}
-                
-                {/* Visualizza la ricompensa GOV (se presente) */}
-                {rewardGov > 0 && (
-                    <span className="text-xs text-cyan-400 font-bold font-mono border border-cyan-500/30 px-1 rounded">+{rewardGov} GOV</span>
-                )}
-
-                {/* Se non ci sono ricompense, mostra un testo placeholder */}
-                {rewardRun === 0 && rewardGov === 0 && (
-                    <span className="text-xs text-gray-500 font-mono">Nessuna ricompensa</span>
-                )}
-            </div>
-                    {/* Puntatore del tooltip */}
-                    <div className="absolute left-1/2 transform -translate-x-1/2 bottom-[-4px] w-2 h-2 rotate-45 bg-gray-700"></div>
+                    <div className="flex flex-wrap justify-center items-center gap-2 pt-2 border-t border-gray-600/50 mt-2">
+                        <span className="text-[10px] text-gray-400 font-bold uppercase">{t('miss.reward')}:</span>
+                        {rewardRun > 0 && <span className="text-xs text-emerald-400 font-bold font-mono">+{rewardRun} RUN</span>}
+                        {rewardGov > 0 && <span className="text-xs text-cyan-400 font-bold font-mono border border-cyan-500/30 px-1 rounded">+{rewardGov} GOV</span>}
+                        {rewardRun === 0 && rewardGov === 0 && <span className="text-xs text-gray-500 font-mono">Nessuna ricompensa</span>}
+                    </div>
                 </div>
 
-                {/* EFFETTO VISIVO PER EPIC/LEGENDARY SBLOCCATI */}
+                {/* EFFETTO VISIVO */}
                 {badge.isUnlocked && (badge.rarity === 'LEGENDARY' || badge.rarity === 'EPIC') && (
-                    <div className={`absolute top-0 left-0 w-full h-full opacity-20 bg-gradient-to-br ${badge.rarity === 'LEGENDARY' ? 'from-yellow-500 to-transparent' : 'from-purple-500 to-transparent'}`}></div>
+                    <div className={`absolute top-0 left-0 w-full h-full opacity-10 bg-gradient-to-br ${badge.rarity === 'LEGENDARY' ? 'from-yellow-500 to-transparent' : 'from-purple-500 to-transparent'}`}></div>
                 )}
 
                 <div className="flex-1 flex flex-col items-center justify-center w-full relative z-10">
-                    {/* CONTENITORE ICONA */}
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center mb-1 
-                        ${badge.isUnlocked ? `${style.badge} ring-2 ring-opacity-50` : `${style.badge} bg-gray-800 text-gray-400 ring-2 ring-gray-600/50`}`} 
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-1 
+                        ${badge.isUnlocked ? `${style.badge} ring-2 ring-opacity-50` : 'bg-black/30 text-gray-500 ring-1 ring-gray-600/30'}`} 
                     >
-                        {/* ICONA: Mostra SEMPRE l'icona corretta, non il lucchetto */}
-                        {renderIcon(badge.icon, "w-4 h-4")} 
+                        {renderIcon(badge.icon, "w-5 h-5")} 
                     </div>
                     
-                    {/* NOME BADGE */}
                     <h4 className={`font-bold text-xs truncate w-full px-1 ${badge.isUnlocked ? style.text : 'text-gray-400'}`}>{badge.name}</h4>
                     
-                    {/* PROGRESSO: Mostra lo stato di avanzamento se BLOCACCATO */}
                     {!badge.isUnlocked && (
                         <div className="w-full px-2 mt-2 text-center">
-                            <span className="text-[9px] text-gray-500 font-mono bg-gray-900/50 px-2 py-0.5 rounded border border-gray-800">
+                            <span className="text-[9px] text-gray-500 font-mono bg-black/40 px-2 py-0.5 rounded border border-gray-700/50">
                                 {badge.stats.current.toFixed(0)} / {badge.stats.target} {badge.stats.unit}
                             </span>
                         </div>
                     )}
                 </div>
                 
-                {/* PIE' DI PAGINA: Mostra rarità e ricompensa/stato bloccato */}
                 <div className="relative z-10 mt-1">
-                    {badge.isUnlocked ? (
-                        <div className="flex flex-col items-center">
-                            {/* Rarità e Ricompense quando SBLOCCATO */}
-                            <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded ${style.badge}`}>{badge.rarity}</span>
-                            {rewardRun > 0 && <span className="text-[8px] text-emerald-400 font-mono mt-0.5">+{rewardRun} RUN</span>}
-                            {rewardGov > 0 && <span className="text-[8px] text-cyan-400 font-mono">+{rewardGov} GOV</span>}
-                        </div>
-                    ) : (
-                        // Mostra solo la rarità quando bloccato per evitare 'LOCKED'
-                        <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded ${style.badge}`}>{badge.rarity}</span>
-                    )}
+                    <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded ${style.badge}`}>{badge.rarity}</span>
                 </div>
             </div>
         );

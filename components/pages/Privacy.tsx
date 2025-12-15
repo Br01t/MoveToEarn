@@ -7,7 +7,7 @@ const Privacy: React.FC = () => {
   const { t } = useLanguage();
 
   const Section = ({ title, icon: Icon, children }: { title: string; icon: any; children: React.ReactNode }) => (
-    <div className="border-b border-gray-800 pb-8 last:border-0">
+    <div className="border-b border-gray-700/50 pb-8 last:border-0">
       <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
         <Icon className="text-emerald-500" size={24} /> {title}
       </h3>
@@ -22,7 +22,7 @@ const Privacy: React.FC = () => {
         
         {/* Header */}
         <div className="text-center space-y-4 mb-12">
-            <div className="inline-flex p-4 bg-gray-900 rounded-full border border-gray-700 shadow-xl mb-2">
+            <div className="inline-flex p-4 glass-panel rounded-full mb-2">
                 <Lock className="text-emerald-400" size={48} />
             </div>
             <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight uppercase">
@@ -32,12 +32,12 @@ const Privacy: React.FC = () => {
         </div>
 
         {/* Intro */}
-        <div className="bg-gray-800/50 p-6 rounded-2xl border border-gray-700 text-gray-300 text-sm leading-relaxed">
+        <div className="glass-panel p-6 rounded-2xl text-gray-300 text-sm leading-relaxed">
             {t('page.privacy.intro')}
         </div>
 
         {/* Main Content */}
-        <div className="bg-gray-900 border border-gray-700 rounded-2xl p-8 space-y-8 shadow-2xl">
+        <div className="glass-panel rounded-2xl p-8 space-y-8 shadow-2xl">
             
             <Section title={t('page.privacy.sec1.title')} icon={Database}>
                 <p><strong>{t('page.privacy.sec1.p1_title')}</strong> {t('page.privacy.sec1.p1_body')}</p>

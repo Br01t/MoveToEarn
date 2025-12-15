@@ -20,7 +20,7 @@ export const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate }) => {
 
   // Helper for the clean interface cards
   const InterfaceCard = ({ icon: Icon, title, desc, className = "" }: { icon: any, title: string, desc: string, className?: string }) => (
-    <div className={`bg-gray-900/80 backdrop-blur-md rounded-2xl p-6 border border-gray-700/50 hover:border-emerald-500/50 transition-all duration-300 group shadow-lg hover:shadow-emerald-900/20 ${className}`}>
+    <div className={`glass-panel rounded-2xl p-6 transition-all duration-300 group ${className}`}>
         <div className="flex items-center gap-4 mb-3">
             <div className="w-10 h-10 rounded-lg bg-gray-800/50 flex items-center justify-center text-emerald-400 group-hover:bg-emerald-500 group-hover:text-white transition-colors duration-300">
                 <Icon size={20} />
@@ -69,7 +69,7 @@ export const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate }) => {
 
         {/* Title */}
         <div className="text-center mb-16">
-            <div className="inline-flex p-4 bg-gray-900/80 rounded-full border border-gray-700/50 mb-6 shadow-2xl backdrop-blur-md relative overflow-hidden group">
+            <div className="inline-flex p-4 glass-panel rounded-full mb-6 shadow-2xl relative overflow-hidden group">
                 <div className="absolute inset-0 bg-emerald-500/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 <Terminal className="text-emerald-400 relative z-10" size={48} />
             </div>
@@ -79,7 +79,7 @@ export const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate }) => {
             <p className="text-xl text-gray-400 font-light">{t('rules.subtitle')}</p>
             
             {/* New Gamification Intro */}
-            <div className="mt-12 text-left bg-gray-900/60 backdrop-blur-md border border-white/10 p-8 rounded-2xl relative overflow-hidden shadow-2xl">
+            <div className="mt-12 text-left glass-panel p-8 rounded-2xl relative overflow-hidden shadow-2xl">
                 <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-emerald-500 to-cyan-500"></div>
                 <h3 className="text-2xl font-bold text-white mb-4">{t('rules.intro.title')}</h3>
                 <p className="text-gray-300 text-lg leading-relaxed">{t('rules.intro.body')}</p>
@@ -90,7 +90,7 @@ export const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate }) => {
                 <div className="flex flex-col md:flex-row items-center justify-center gap-4 mt-8">
                     <button 
                         onClick={() => onNavigate('WHITEPAPER')}
-                        className="inline-flex items-center gap-2 px-6 py-3 bg-gray-900/80 hover:bg-gray-800 border border-gray-600 rounded-xl transition-all group backdrop-blur-sm"
+                        className="inline-flex items-center gap-2 px-6 py-3 glass-panel hover:bg-gray-800 rounded-xl transition-all group"
                     >
                         <BookOpen size={18} className="text-cyan-400" />
                         <span className="text-sm font-bold text-gray-200 group-hover:text-white">{t('rules.whitepaper_link')}</span>
@@ -98,7 +98,7 @@ export const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate }) => {
                     
                     <button 
                         onClick={() => onNavigate('HOW_TO_PLAY')}
-                        className="inline-flex items-center gap-2 px-6 py-3 bg-gray-900/80 hover:bg-gray-800 border border-gray-600 hover:border-emerald-500 rounded-xl transition-all group backdrop-blur-sm"
+                        className="inline-flex items-center gap-2 px-6 py-3 glass-panel hover:bg-gray-800 rounded-xl transition-all group"
                     >
                         <Download size={18} className="text-emerald-400" />
                         <span className="text-sm font-bold text-gray-200 group-hover:text-white">{t('rules.export_guide_link')}</span>
@@ -115,7 +115,7 @@ export const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate }) => {
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* 1. MOVE */}
-                    <div className="group relative bg-gray-900/80 backdrop-blur-sm border-l-4 border-emerald-500 p-6 rounded-r-xl shadow-lg hover:-translate-y-1 transition-transform border-y border-r border-gray-700/50">
+                    <div className="group relative glass-panel border-l-4 border-emerald-500 p-6 rounded-r-xl shadow-lg hover:-translate-y-1 transition-transform border-y border-r border-white/5">
                         <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-r-xl pointer-events-none"></div>
                         <div className="flex justify-between items-start mb-4">
                             <h3 className="text-2xl font-black text-white italic">{t('rules.mech.move_title')}</h3>
@@ -125,7 +125,7 @@ export const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate }) => {
                     </div>
 
                     {/* 2. MINT */}
-                    <div className="group relative bg-gray-900/80 backdrop-blur-sm border-l-4 border-purple-500 p-6 rounded-r-xl shadow-lg hover:-translate-y-1 transition-transform border-y border-r border-gray-700/50">
+                    <div className="group relative glass-panel border-l-4 border-purple-500 p-6 rounded-r-xl shadow-lg hover:-translate-y-1 transition-transform border-y border-r border-white/5">
                         <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-r-xl pointer-events-none"></div>
                         <div className="flex justify-between items-start mb-4">
                             <h3 className="text-2xl font-black text-white italic">{t('rules.mech.mint_title')}</h3>
@@ -135,7 +135,7 @@ export const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate }) => {
                     </div>
 
                     {/* 3. CONQUER */}
-                    <div className="group relative bg-gray-900/80 backdrop-blur-sm border-l-4 border-red-500 p-6 rounded-r-xl shadow-lg hover:-translate-y-1 transition-transform border-y border-r border-gray-700/50">
+                    <div className="group relative glass-panel border-l-4 border-red-500 p-6 rounded-r-xl shadow-lg hover:-translate-y-1 transition-transform border-y border-r border-white/5">
                         <div className="absolute inset-0 bg-gradient-to-r from-red-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-r-xl pointer-events-none"></div>
                         <div className="flex justify-between items-start mb-4">
                             <h3 className="text-2xl font-black text-white italic">{t('rules.mech.conquer_title')}</h3>
@@ -145,7 +145,7 @@ export const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate }) => {
                     </div>
 
                     {/* 4. EARN */}
-                    <div className="group relative bg-gray-900/80 backdrop-blur-sm border-l-4 border-yellow-500 p-6 rounded-r-xl shadow-lg hover:-translate-y-1 transition-transform border-y border-r border-gray-700/50">
+                    <div className="group relative glass-panel border-l-4 border-yellow-500 p-6 rounded-r-xl shadow-lg hover:-translate-y-1 transition-transform border-y border-r border-white/5">
                         <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-r-xl pointer-events-none"></div>
                         <div className="flex justify-between items-start mb-4">
                             <h3 className="text-2xl font-black text-white italic">{t('rules.mech.earn_title')}</h3>
@@ -159,7 +159,7 @@ export const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate }) => {
             {/* INTERFACE GUIDE - STYLE B (Modern / Clean / Professional) */}
             <section>
                 <SectionHeader icon={Terminal} title={t('rules.nav.title')} />
-                <p className="text-gray-400 mb-8 text-sm max-w-2xl bg-gray-900/50 p-4 rounded-xl border border-gray-800 backdrop-blur-sm">{t('rules.nav.desc')}</p>
+                <p className="text-gray-400 mb-8 text-sm max-w-2xl glass-panel p-4 rounded-xl">{t('rules.nav.desc')}</p>
 
                 {/* 
                    GRID LOGIC: 

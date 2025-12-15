@@ -91,7 +91,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
 
   if (!activeBoard) {
       return (
-          <div className="max-w-7xl mx-auto p-4 md:p-6 text-center text-gray-500 min-h-[400px] flex flex-col items-center justify-center">
+          <div className="max-w-7xl mx-auto p-4 md:p-6 text-center text-gray-500 min-h-[400px] flex flex-col items-center justify-center glass-panel rounded-xl">
               <Trophy size={64} className="mx-auto mb-4 opacity-20" />
               <h2 className="text-2xl font-bold text-white mb-2">No active leaderboards</h2>
               <p>Check back later for global rankings.</p>
@@ -161,16 +161,16 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
                           onClick={() => handleBoardChange(board.id)}
                           className={`flex items-center justify-between p-3 rounded-xl border transition-all text-left group shrink-0 min-w-[200px] lg:min-w-0 ${
                               activeBoardId === board.id 
-                              ? 'bg-emerald-900/20 border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.2)]' 
-                              : 'bg-gray-800 border-gray-700 hover:border-gray-500'
+                              ? 'glass-panel-active text-emerald-400' 
+                              : 'glass-panel border-gray-700 hover:border-gray-500 text-gray-400'
                           }`}
                       >
                           <div className="flex flex-col">
-                              <span className={`font-bold text-sm ${activeBoardId === board.id ? 'text-white' : 'text-gray-400 group-hover:text-gray-200'}`}>
+                              <span className={`font-bold text-sm ${activeBoardId === board.id ? 'text-emerald-400' : 'text-gray-300 group-hover:text-white'}`}>
                                   {board.title}
                               </span>
                               <div className="flex items-center gap-1 mt-1">
-                                  <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${board.type === 'PERMANENT' ? 'bg-gray-700 text-gray-400' : 'bg-purple-900/50 text-purple-400 border border-purple-500/30'}`}>
+                                  <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${board.type === 'PERMANENT' ? 'bg-gray-800 text-gray-500' : 'bg-purple-900/50 text-purple-400 border border-purple-500/30'}`}>
                                       {board.type === 'PERMANENT' ? t('leader.perm_tag') : t('leader.temp_tag')}
                                   </span>
                               </div>
@@ -185,7 +185,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
           <div className="flex-1 space-y-6">
               
               {/* Header Card */}
-              <div className="bg-gray-800 border border-gray-700 rounded-xl p-6 relative overflow-hidden">
+              <div className="glass-panel rounded-xl p-6 relative overflow-hidden">
                   <div className="absolute top-0 right-0 p-6 opacity-10 pointer-events-none">
                       {activeBoard.type === 'TEMPORARY' ? <Clock size={120} /> : <Trophy size={120} />}
                   </div>
@@ -226,7 +226,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
                   <input 
                       type="text" 
                       placeholder="Search runner..." 
-                      className="w-full bg-gray-800 border border-gray-700 rounded-xl pl-10 pr-10 py-3 text-white focus:border-emerald-500 focus:outline-none transition-colors"
+                      className="w-full glass-panel rounded-xl pl-10 pr-10 py-3 text-white focus:border-emerald-500 focus:outline-none transition-colors"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                   />
@@ -241,9 +241,9 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
               </div>
 
               {/* Table */}
-              <div className="bg-gray-800 border border-gray-700 rounded-xl overflow-hidden shadow-2xl">
+              <div className="glass-panel rounded-xl overflow-hidden shadow-2xl">
                 <table className="w-full text-left border-collapse">
-                  <thead className="bg-gray-900 text-gray-400 text-[10px] uppercase font-bold tracking-wider">
+                  <thead className="bg-black/30 text-gray-400 text-[10px] uppercase font-bold tracking-wider">
                     <tr>
                       <th className="px-3 py-3 w-12 text-center md:px-6">{t('leader.rank')}</th>
                       <th className="px-3 py-3 md:px-6">{t('leader.runner')}</th>
@@ -255,7 +255,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-700">
+                  <tbody className="divide-y divide-gray-700/50">
                     {displayedRankings.map((user) => {
                       const isMe = user.id === currentUser.id;
                       let rankIcon = null;
@@ -269,7 +269,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
                         <tr 
                             key={user.id} 
                             onClick={() => setSelectedUserId(user.id)}
-                            className={`${isMe ? 'bg-emerald-900/20' : 'hover:bg-gray-750'} transition-colors cursor-pointer group`}
+                            className={`${isMe ? 'bg-emerald-900/20' : 'hover:bg-white/5'} transition-colors cursor-pointer group`}
                         >
                           <td className="px-2 md:px-6 py-4 font-bold text-white text-center w-12 align-middle">
                             <div className="flex flex-col items-center justify-center">
@@ -291,7 +291,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
                                       <span className={`font-bold text-sm md:text-lg truncate ${isMe ? 'text-emerald-400' : 'text-white group-hover:text-emerald-300 transition-colors'}`}>
                                         {user.name}
                                       </span>
-                                      {isMe && <span className="text-[9px] bg-emerald-900 text-emerald-400 px-1 rounded font-mono hidden md:inline">YOU</span>}
+                                      {isMe && <span className="text-[9px] bg-emerald-900/50 text-emerald-400 px-1 rounded font-mono hidden md:inline border border-emerald-500/30">YOU</span>}
                                   </div>
                                   
                                   {/* Badge - Always Visible, Stacked */}

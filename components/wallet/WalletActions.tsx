@@ -56,7 +56,7 @@ const WalletActions: React.FC<WalletActionsProps> = ({ govBalance, govToRunRate,
   return (
     <>
         {/* SWAP CARD (GOV -> RUN) */}
-        <div className="bg-gray-800 rounded-2xl border border-gray-700 p-6 relative overflow-visible shrink-0">
+        <div className="glass-panel rounded-2xl p-6 relative overflow-visible shrink-0">
             <div className="relative z-10">
                 <div className="flex items-center justify-between mb-2">
                     <h2 className="text-xl font-bold text-white flex items-center gap-2">
@@ -81,7 +81,7 @@ const WalletActions: React.FC<WalletActionsProps> = ({ govBalance, govToRunRate,
                 <div className="space-y-2">
                     <div className="relative">
                         <label className="text-[10px] uppercase font-bold text-gray-500 absolute top-2 left-3">{t('wallet.swap.gov_input')}</label>
-                        <div className="flex items-center bg-gray-900 border border-gray-600 rounded-xl px-3 pt-6 pb-2 focus-within:border-cyan-500 transition-colors">
+                        <div className="flex items-center bg-black/40 border border-gray-600 rounded-xl px-3 pt-6 pb-2 focus-within:border-cyan-500 transition-colors">
                             <Crown size={16} className="text-cyan-400 mr-2" />
                             <input 
                                 type="number" 
@@ -121,7 +121,7 @@ const WalletActions: React.FC<WalletActionsProps> = ({ govBalance, govToRunRate,
         </div>
 
         {/* BUY FIAT CARD */}
-        <div className="bg-gray-800 rounded-2xl border border-gray-700 p-6 relative overflow-hidden shrink-0">
+        <div className="glass-panel rounded-2xl p-6 relative overflow-hidden shrink-0">
             <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
                 <CreditCard size={120} className="text-white" />
             </div>
@@ -138,7 +138,7 @@ const WalletActions: React.FC<WalletActionsProps> = ({ govBalance, govToRunRate,
                 <div className="space-y-4">
                     <div className="space-y-2">
                         <label className="text-xs font-bold text-gray-500 uppercase">{t('wallet.you_pay')}</label>
-                        <div className="flex items-center bg-gray-900 border border-gray-600 rounded-xl px-4 py-3 focus-within:border-emerald-500 transition-colors">
+                        <div className="flex items-center bg-black/40 border border-gray-600 rounded-xl px-4 py-3 focus-within:border-emerald-500 transition-colors">
                             <Euro size={20} className="text-gray-400 mr-2" />
                             <input 
                                 type="number" 
@@ -165,14 +165,14 @@ const WalletActions: React.FC<WalletActionsProps> = ({ govBalance, govToRunRate,
         {/* CUSTOM SWAP CONFIRMATION MODAL */}
         {showSwapConfirm && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in">
-                <div className="bg-gray-800 rounded-2xl border-2 border-emerald-500/50 w-full max-w-sm shadow-2xl overflow-hidden flex flex-col relative animate-slide-up">
+                <div className="glass-panel-heavy rounded-2xl w-full max-w-sm overflow-hidden flex flex-col relative animate-slide-up">
                     
                     {/* Confetti if success */}
                     {swapSuccess && (
                         <div className="absolute inset-0 pointer-events-none z-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-emerald-500/10 to-transparent animate-pulse"></div>
                     )}
 
-                    <div className="p-6 border-b border-gray-700 flex justify-between items-center bg-gray-900 relative z-10">
+                    <div className="p-6 border-b border-gray-700 flex justify-between items-center bg-black/20 relative z-10">
                         <h3 className="text-lg font-bold text-white flex items-center gap-2">
                             {swapSuccess ? <CheckCircle className="text-emerald-400" /> : <ArrowRightLeft className="text-yellow-400" />}
                             {swapSuccess ? t('wallet.swap.success_title') : t('wallet.swap.confirm_title')}
@@ -190,12 +190,12 @@ const WalletActions: React.FC<WalletActionsProps> = ({ govBalance, govToRunRate,
                                 </p>
                                 
                                 <div className="flex items-center justify-between gap-2">
-                                    <div className="bg-gray-900 p-3 rounded-xl border border-cyan-500/30 text-center flex-1">
+                                    <div className="bg-black/30 p-3 rounded-xl border border-cyan-500/30 text-center flex-1">
                                         <span className="block text-2xl font-bold text-cyan-400 font-mono">{parseFloat(swapGovAmount).toFixed(2)}</span>
                                         <span className="text-[10px] text-gray-500 font-bold">GOV</span>
                                     </div>
                                     <ArrowRight size={20} className="text-gray-500" />
-                                    <div className="bg-gray-900 p-3 rounded-xl border border-emerald-500/30 text-center flex-1">
+                                    <div className="bg-black/30 p-3 rounded-xl border border-emerald-500/30 text-center flex-1">
                                         <span className="block text-2xl font-bold text-emerald-400 font-mono">{calculatedRun.toFixed(2)}</span>
                                         <span className="text-[10px] text-gray-500 font-bold">RUN</span>
                                     </div>

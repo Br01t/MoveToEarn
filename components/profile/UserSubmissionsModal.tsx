@@ -16,21 +16,21 @@ const UserSubmissionsModal: React.FC<UserSubmissionsModalProps> = ({ bugReports,
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in">
-      <div className="bg-gray-900 rounded-2xl border border-gray-700 w-full max-w-lg shadow-2xl flex flex-col max-h-[80vh] animate-slide-up">
+      <div className="glass-panel-heavy rounded-2xl w-full max-w-lg shadow-2xl flex flex-col max-h-[80vh] animate-slide-up overflow-hidden">
         
         {/* Header */}
-        <div className="p-4 border-b border-gray-700 flex justify-between items-center bg-gray-800/50 rounded-t-2xl">
+        <div className="p-4 border-b border-white/10 flex justify-between items-center bg-black/20">
             <h3 className="font-bold text-white flex items-center gap-2">
                 {activeTab === 'BUGS' ? <Bug className="text-red-400" size={20}/> : <Lightbulb className="text-yellow-400" size={20}/>}
                 My Submissions
             </h3>
-            <button onClick={onClose} className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-gray-700 transition-colors">
+            <button onClick={onClose} className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors">
                 <X size={20} />
             </button>
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-gray-700">
+        <div className="flex border-b border-white/10 bg-black/10">
             <button 
                 onClick={() => setActiveTab('BUGS')}
                 className={`flex-1 py-3 text-sm font-bold transition-colors border-b-2 ${activeTab === 'BUGS' ? 'border-red-500 text-white bg-red-900/10' : 'border-transparent text-gray-500 hover:text-gray-300'}`}
@@ -52,7 +52,7 @@ const UserSubmissionsModal: React.FC<UserSubmissionsModalProps> = ({ bugReports,
                     <div className="text-center py-8 text-gray-500 text-sm">No bug reports submitted.</div>
                 ) : (
                     bugReports.map(bug => (
-                        <div key={bug.id} className="bg-gray-800 p-3 rounded-xl border border-gray-700">
+                        <div key={bug.id} className="bg-black/30 p-3 rounded-xl border border-white/5">
                             <div className="flex justify-between items-start mb-2">
                                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${bug.status === 'OPEN' ? 'bg-red-900/30 text-red-400' : 'bg-emerald-900/30 text-emerald-400'}`}>
                                     {bug.status}
@@ -73,7 +73,7 @@ const UserSubmissionsModal: React.FC<UserSubmissionsModalProps> = ({ bugReports,
                     <div className="text-center py-8 text-gray-500 text-sm">No suggestions submitted.</div>
                 ) : (
                     suggestions.map(idea => (
-                        <div key={idea.id} className="bg-gray-800 p-3 rounded-xl border border-gray-700">
+                        <div key={idea.id} className="bg-black/30 p-3 rounded-xl border border-white/5">
                             <div className="flex justify-between items-start mb-1">
                                 <h4 className="font-bold text-yellow-400 text-sm">{idea.title}</h4>
                                 <span className="text-[10px] text-gray-500">{new Date(idea.timestamp).toLocaleDateString()}</span>

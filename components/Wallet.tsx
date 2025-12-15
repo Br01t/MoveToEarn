@@ -134,7 +134,7 @@ const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuy
             className={`px-4 py-2 rounded-xl font-bold flex items-center gap-2 transition-all border ${
               isWalletConnected 
                 ? 'bg-emerald-900/20 text-emerald-400 border-emerald-500/50' 
-                : 'bg-gray-800 text-gray-400 border-gray-600 hover:bg-gray-700'
+                : 'glass-panel text-gray-400 hover:text-white'
             }`}
           >
              {isWalletConnected ? <><CheckCircle size={16}/> 0x71...9A23</> : <><LinkIcon size={16}/> {t('wallet.connect')}</>}
@@ -143,7 +143,7 @@ const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuy
 
       {/* PERSONAL BALANCE CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-gray-800 rounded-2xl border border-gray-700 p-6 flex items-center justify-between shadow-lg relative overflow-hidden">
+          <div className="glass-panel rounded-2xl p-6 flex items-center justify-between relative overflow-hidden">
               <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
                   <Activity size={100} />
               </div>
@@ -157,7 +157,7 @@ const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuy
               </div>
           </div>
 
-          <div className="bg-gray-800 rounded-2xl border border-gray-700 p-6 flex items-center justify-between shadow-lg relative overflow-hidden">
+          <div className="glass-panel rounded-2xl p-6 flex items-center justify-between relative overflow-hidden">
               <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
                   <Crown size={100} />
               </div>
@@ -186,7 +186,7 @@ const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuy
             />
 
             {/* RECENT TRANSACTIONS PREVIEW (Non-filtered, just last 5) */}
-            <div className="bg-gray-800 rounded-2xl border border-gray-700 p-6 flex-1 flex flex-col min-h-[300px]">
+            <div className="glass-panel rounded-2xl p-6 flex-1 flex flex-col min-h-[300px]">
                 <div className="flex justify-between items-center mb-4">
                    <h3 className="font-bold text-white flex items-center gap-2 text-sm uppercase tracking-wide">
                        <History size={16} className="text-gray-400"/> {t('wallet.recent_activity')}
@@ -245,14 +245,14 @@ const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuy
       </div>
       
       {/* Burn Stats Footer */}
-      <div className="bg-gray-800 rounded-2xl border border-red-900/30 p-6 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
+      <div className="glass-panel rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden border-red-500/20">
           <div className="absolute left-0 top-0 w-1 h-full bg-red-600"></div>
           <div className="absolute -right-10 -bottom-10 opacity-10 pointer-events-none">
              <Flame size={150} className="text-red-500" />
           </div>
           
           <div className="flex items-center gap-4 relative z-10">
-             <div className="bg-red-500/10 p-4 rounded-full">
+             <div className="bg-red-500/10 p-4 rounded-full border border-red-500/30">
                 <Flame size={32} className="text-red-500 animate-pulse" />
              </div>
              <div>
@@ -276,7 +276,7 @@ const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuy
       {/* FULL HISTORY MODAL WITH FILTERS */}
       {showHistoryModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in">
-           <div className="bg-gray-800 rounded-2xl border border-gray-700 w-full max-w-2xl shadow-2xl flex flex-col max-h-[85vh]">
+           <div className="bg-gray-900 rounded-2xl border border-gray-700 w-full max-w-2xl shadow-2xl flex flex-col max-h-[85vh]">
               
               {/* Header & Filters */}
               <div className="p-6 border-b border-gray-700 bg-gray-900 rounded-t-2xl space-y-4">
