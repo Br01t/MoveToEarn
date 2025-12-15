@@ -44,17 +44,19 @@ const HexMap = forwardRef<SVGSVGElement, HexMapProps>(({
   const isShieldActive = (zone: Zone) => zone.shieldExpiresAt && zone.shieldExpiresAt > Date.now();
 
   const getFillId = (zone: Zone) => {
-      if (isBoostActive(zone)) return "url(#grad-boosted-zone)";
-      if (isShieldActive(zone)) return "url(#grad-shielded-zone)"; 
+      // FILL REFLECTS OWNERSHIP ONLY
       if (zone.ownerId === user.id) return "url(#grad-my-zone)";
       return "url(#grad-enemy-zone)";
   };
 
   const getStrokeColor = (zone: Zone) => {
-    if (isBoostActive(zone)) return '#f59e0b';
-    if (isShieldActive(zone)) return '#06b6d4';
-    if (zone.ownerId === user.id) return '#34d399';
-    return '#f87171';
+    // STROKE REFLECTS ITEM STATUS
+    if (isBoostActive(zone)) return '#fbbf24'; // Amber (Boost)
+    if (isShieldActive(zone)) return '#06b6d4'; // Cyan (Shield)
+    
+    // Fallback: Ownership color if no item active
+    if (zone.ownerId === user.id) return '#34d399'; // Emerald (Mine)
+    return '#f87171'; // Red (Enemy)
   };
 
   const getBadgeColor = (zone: Zone, boosted: boolean, shielded: boolean) => {
@@ -75,12 +77,34 @@ const HexMap = forwardRef<SVGSVGElement, HexMapProps>(({
       return '#ef4444'; // red-500
   };
 
+  // Helper to reformat "Street, City - CC" to "City, Street - CC"
+  const formatZoneLabel = (originalName: string) => {
+      try {
+          const parts = originalName.split(' - ');
+          if (parts.length === 2) {
+              const [locationPart, country] = parts;
+              const locSegments = locationPart.split(', ');
+              
+              // Only swap if we have exactly Street and City detected
+              if (locSegments.length >= 2) {
+                  const city = locSegments[locSegments.length - 1];
+                  const street = locSegments.slice(0, locSegments.length - 1).join(', ');
+                  
+                  // Construct new string: "Milan, Via Feltre - IT"
+                  return `${city}, ${street} - ${country}`;
+              }
+          }
+          return originalName;
+      } catch (e) {
+          return originalName;
+      }
+  };
+
   return (
     <div 
         className="absolute inset-0 cursor-move touch-none"
         style={{
             // Hexagonal Grid Background Pattern
-            // Matches Landing Page size (56px 98px) but keeps dashboard subtle contrast color (#1f2937)
             backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='98' viewBox='0 0 56 98'%3E%3Cpath d='M28 66L0 50L0 16L28 0L56 16L56 50L28 66L28 100' fill='none' stroke='%231f2937' stroke-width='1' /%3E%3C/svg%3E")`,
             backgroundSize: '56px 98px'
         }}
@@ -110,18 +134,6 @@ const HexMap = forwardRef<SVGSVGElement, HexMapProps>(({
             <stop offset="60%" style={{ stopColor: '#dc2626', stopOpacity: 0.85 }} />
             <stop offset="100%" style={{ stopColor: '#fca5a5', stopOpacity: 0.9 }} />
           </linearGradient>
-
-          <linearGradient id="grad-boosted-zone" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" style={{ stopColor: '#78350f', stopOpacity: 0.9 }} />
-            <stop offset="60%" style={{ stopColor: '#d97706', stopOpacity: 0.9 }} />
-            <stop offset="100%" style={{ stopColor: '#fbbf24', stopOpacity: 0.95 }} />
-          </linearGradient>
-
-          <linearGradient id="grad-shielded-zone" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" style={{ stopColor: '#164e63', stopOpacity: 0.9 }} />
-            <stop offset="60%" style={{ stopColor: '#0891b2', stopOpacity: 0.9 }} />
-            <stop offset="100%" style={{ stopColor: '#67e8f9', stopOpacity: 0.95 }} />
-          </linearGradient>
         </defs>
 
         <g transform={`translate(${view.x},${view.y}) scale(${view.scale})`}>
@@ -150,6 +162,10 @@ const HexMap = forwardRef<SVGSVGElement, HexMapProps>(({
                   isMatch = false;
               }
 
+              // Format name for display (City first)
+              const formattedName = formatZoneLabel(zone.name);
+              const displayName = formattedName.length > 20 ? formattedName.substring(0, 18) + '..' : formattedName;
+
               return (
                 <g 
                   key={zone.id} 
@@ -162,6 +178,7 @@ const HexMap = forwardRef<SVGSVGElement, HexMapProps>(({
                     <polygon points={getHexPoints()} fill={strokeColor} opacity="0.2" filter="blur(20px)" transform="scale(1.2)"/>
                   )}
 
+                  {/* Pulsing Outer Rings for Items (Matches Border Color logic) */}
                   {boosted && isMatch && (
                      <polygon points={getHexPoints()} fill="none" stroke="#fbbf24" strokeWidth="3" opacity="0.6" transform="scale(1.1)" className="animate-pulse"/>
                   )}
@@ -169,11 +186,12 @@ const HexMap = forwardRef<SVGSVGElement, HexMapProps>(({
                      <polygon points={getHexPoints()} fill="none" stroke="#06b6d4" strokeWidth="3" opacity="0.6" transform="scale(1.1)" className="animate-pulse"/>
                   )}
                   
+                  {/* Main Hexagon - Stroke Color reflects Item, Fill reflects Owner */}
                   <polygon
                     points={getHexPoints()}
                     fill={fillUrl}
                     stroke={strokeColor}
-                    strokeWidth={isSelected ? 4 : 2}
+                    strokeWidth={isSelected ? 4 : (boosted || shielded ? 3 : 2)}
                     strokeLinejoin="round"
                     className="transition-all duration-300 group-hover:brightness-125 group-hover:stroke-[3px] group-hover:drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]"
                     style={{ filter: isSelected ? 'drop-shadow(0 0 8px rgba(255,255,255,0.4))' : 'none' }}
@@ -181,23 +199,22 @@ const HexMap = forwardRef<SVGSVGElement, HexMapProps>(({
                   
                   <polygon points={getHexPoints()} fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="1" transform="scale(0.85)" className="transition-all duration-300 opacity-50 group-hover:opacity-100 group-hover:stroke-white/40"/>
                   
-                  {/* Replaced foreignObject with pure SVG elements for iOS support */}
                   <g pointerEvents="none">
-                      {/* 1. Zone Name */}
+                      {/* 1. Zone Name (City First) */}
                       <text 
                           x="0" 
                           y="-20" 
                           textAnchor="middle" 
                           dominantBaseline="middle"
                           fill="white"
-                          fontSize="12"
+                          fontSize="11"
                           fontWeight="900"
-                          style={{ textShadow: '0 2px 3px rgba(0,0,0,0.9)', letterSpacing: '0.05em' }}
+                          style={{ textShadow: '0 2px 3px rgba(0,0,0,0.9)', letterSpacing: '0.02em' }}
                       >
-                          {zone.name.length > 18 ? zone.name.substring(0, 16) + '..' : zone.name}
+                          {displayName}
                       </text>
 
-                      {/* 2. Pool Badge (Replaced Interest %) */}
+                      {/* 2. Pool Badge */}
                       <g transform="translate(-27, -5)">
                           <rect 
                               x="0" 

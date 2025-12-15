@@ -2,6 +2,7 @@
 import { supabase } from '../../supabaseClient';
 import { User, Zone, Item, InventoryItem, Transaction, RunEntry } from '../../types';
 import { CONQUEST_COST, CONQUEST_REWARD_GOV, PREMIUM_COST, ITEM_DURATION_SEC } from '../../constants';
+import { useGlobalUI } from '../../contexts/GlobalUIContext';
 
 interface GameActionsProps {
     user: User | null;
@@ -18,6 +19,7 @@ interface GameActionsProps {
 export const useGameActions = ({ 
     user, zones, setUser, setZones, setTransactions, setMarketItems, setAllUsers, fetchUserProfile, govToRunRate 
 }: GameActionsProps) => {
+  const { showToast } = useGlobalUI();
 
   const logTransaction = async (userId: string, type: 'IN' | 'OUT', token: 'RUN' | 'GOV' | 'ITEM', amount: number, description: string) => {
       if (amount <= 0) return;
@@ -101,7 +103,10 @@ export const useGameActions = ({
 
   const buyItem = async (item: Item) => {
       if (!user) return;
-      if (user.runBalance < item.priceRun) { alert("Insufficient funds"); return; }
+      if (user.runBalance < item.priceRun) { 
+          showToast("Insufficient funds", 'ERROR'); 
+          return; 
+      }
 
       const previousUser = { ...user };
       const newRunBalance = parseFloat((user.runBalance - item.priceRun).toFixed(2));
@@ -112,10 +117,15 @@ export const useGameActions = ({
           await logTransaction(user.id, 'OUT', 'RUN', item.priceRun, `Market: ${item.name}`);
           await logTransaction(user.id, 'IN', 'GOV', item.effectValue, `Opened: ${item.name}`);
           const { error } = await supabase.from('profiles').update({ run_balance: newRunBalance, gov_balance: newGovBalance }).eq('id', user.id);
-          if (error) { alert("Transaction failed."); setUser(previousUser); return; }
+          if (error) { 
+              showToast("Transaction failed.", 'ERROR'); 
+              setUser(previousUser); 
+              return; 
+          }
           const newQty = item.quantity - 1;
           await supabase.from('items').update({ quantity: newQty }).eq('id', item.id);
           setMarketItems(prev => prev.map(i => i.id === item.id ? { ...i, quantity: newQty } : i));
+          showToast(`Purchased ${item.name}!`, 'SUCCESS');
           return;
       }
 
@@ -139,7 +149,11 @@ export const useGameActions = ({
       setUser({ ...user, runBalance: newRunBalance, inventory: newInventory });
       await logTransaction(user.id, 'OUT', 'RUN', item.priceRun, `Market: ${item.name}`);
       const { error: profileError } = await supabase.from('profiles').update({ run_balance: newRunBalance }).eq('id', user.id);
-      if (profileError) { alert(`Purchase failed. Rolling back.`); setUser(previousUser); return; }
+      if (profileError) { 
+          showToast("Purchase failed. Rolling back.", 'ERROR'); 
+          setUser(previousUser); 
+          return; 
+      }
 
       const { data: existingRows } = await supabase.from('inventory').select('*').eq('user_id', user.id).eq('item_id', item.id);
       const existingRow = existingRows?.[0];
@@ -152,11 +166,17 @@ export const useGameActions = ({
           invError = error;
       }
 
-      if (invError) { alert(`Error saving item.`); await supabase.from('profiles').update({ run_balance: user.runBalance }).eq('id', user.id); setUser(previousUser); return; }
+      if (invError) { 
+          showToast("Error saving item.", 'ERROR'); 
+          await supabase.from('profiles').update({ run_balance: user.runBalance }).eq('id', user.id); 
+          setUser(previousUser); 
+          return; 
+      }
       
       const newQty = item.quantity - 1;
       supabase.from('items').update({ quantity: newQty }).eq('id', item.id);
       setMarketItems(prev => prev.map(i => i.id === item.id ? { ...i, quantity: newQty } : i));
+      showToast(`Added ${item.name} to inventory`, 'SUCCESS');
   };
 
   const useItem = async (item: InventoryItem, targetZoneId: string) => {
@@ -181,7 +201,8 @@ export const useGameActions = ({
 
       setUser({ ...user, inventory: updatedInventory });
       setZones(updatedZones);
-      await logTransaction(user.id, 'OUT', 'ITEM', 1, `Used ${item.name} on ${zone.name}`);
+      
+      await logTransaction(user.id, 'OUT', 'ITEM', item.priceRun, `Used ${item.name} on ${zone.name}`);
       
       const { data: existingRows } = await supabase.from('inventory').select('*').eq('user_id', user.id).eq('item_id', item.id);
       const existingRow = existingRows?.[0];
@@ -203,11 +224,13 @@ export const useGameActions = ({
       } catch (err: any) { zoneUpdateError = err; }
 
       if (zoneUpdateError) {
-          alert(`Failed to apply effect.`);
+          showToast(`Failed to apply effect.`, 'ERROR');
           if (existingRow) await supabase.from('inventory').update({ quantity: existingRow.quantity }).eq('id', existingRow.id);
           else await supabase.from('inventory').insert({ user_id: user.id, item_id: item.id, quantity: 1 });
           setUser({ ...user, inventory: previousInventory });
           setZones(previousZones);
+      } else {
+          showToast(`${item.name} activated on ${zone.name}!`, item.type === 'BOOST' ? 'BOOST' : 'DEFENSE');
       }
   };
 
@@ -218,6 +241,7 @@ export const useGameActions = ({
       setUser(updatedUser);
       await logTransaction(user.id, 'IN', 'GOV', govAmount, `Fiat Purchase (€${amount})`);
       await supabase.from('profiles').update({ gov_balance: updatedUser.govBalance }).eq('id', user.id);
+      showToast(`Purchased ${govAmount} GOV!`, 'SUCCESS');
   };
 
   const swapGovToRun = async (amount: number) => {
@@ -285,13 +309,16 @@ export const useGameActions = ({
       if (!error) {
           setUser({ ...user, ...updates });
           setAllUsers(prev => ({ ...prev, [user.id]: { ...prev[user.id], ...updates } }));
+          showToast("Profile Updated", 'SUCCESS');
+      } else {
+          showToast("Update Failed", 'ERROR');
       }
   };
 
   const upgradePremium = async () => {
       if (!user) return;
-      if (user.isPremium) { alert("Already Premium!"); return; }
-      if (user.govBalance < PREMIUM_COST) { alert(`Insufficient GOV. Cost: ${PREMIUM_COST} GOV`); return; }
+      if (user.isPremium) { showToast("Already Premium!", 'ERROR'); return; }
+      if (user.govBalance < PREMIUM_COST) { showToast(`Insufficient GOV. Cost: ${PREMIUM_COST} GOV`, 'ERROR'); return; }
 
       const newGovBalance = user.govBalance - PREMIUM_COST;
       const updatedUser = { ...user, isPremium: true, govBalance: newGovBalance };
@@ -305,8 +332,10 @@ export const useGameActions = ({
 
       if (error) {
           console.error("Upgrade failed:", error);
-          alert("Upgrade failed. Reverting.");
+          showToast("Upgrade failed. Reverting.", 'ERROR');
           await fetchUserProfile(user.id);
+      } else {
+          showToast("Welcome to Premium!", 'SUCCESS');
       }
   };
 

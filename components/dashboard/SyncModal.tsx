@@ -5,6 +5,7 @@ import { useLanguage } from '../../LanguageContext';
 import { parseActivityFile, analyzeRun } from '../../utils/gpx';
 import { RunAnalysisData, User } from '../../types';
 import JSZip from 'jszip';
+import { useGlobalUI } from '../../contexts/GlobalUIContext';
 
 interface SyncModalProps {
   onClose: () => void;
@@ -15,6 +16,7 @@ interface SyncModalProps {
 
 const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, user }) => {
   const { t } = useLanguage();
+  const { showToast } = useGlobalUI();
   const [syncTab, setSyncTab] = useState<'FREE' | 'PREMIUM'>('FREE');
   const [uploadStep, setUploadStep] = useState<'SELECT' | 'UPLOADING' | 'PROCESSING' | 'SUCCESS' | 'ERROR'>('SELECT');
   const [errorType, setErrorType] = useState<'DUPLICATE' | 'INVALID' | null>(null);
@@ -35,7 +37,7 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
 
   const handleStartUpload = async () => {
     if (selectedFiles.length === 0) {
-        alert(t('sync.alert.no_file'));
+        showToast(t('sync.alert.no_file'), 'ERROR');
         return;
     }
     setUploadStep('UPLOADING');
@@ -71,12 +73,12 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
             tracks.forEach((points, idx) => {
                 // 1. DATE CHECK (7-Day Rule)
                 // Use the start time of the run found in the GPS data
-                // if (points.length > 0 && points[0].time.getTime() < cutoffTimestamp) {
-                //     ignoredOldCount++;
-                //     // Only log if it's not spamming
-                //     // addLog(`Skipped (Old): ${fileName} - ${points[0].time.toLocaleDateString()}`);
-                //     return;
-                // }
+                if (points.length > 0 && points[0].time.getTime() < cutoffTimestamp) {
+                    ignoredOldCount++;
+                    // Only log if it's not spamming
+                    // addLog(`Skipped (Old): ${fileName} - ${points[0].time.toLocaleDateString()}`);
+                    return;
+                }
 
                 const analysis = analyzeRun(points, tracks.length > 1 ? `${fileName} (Track ${idx+1})` : fileName);
                 const result = analysis.result;

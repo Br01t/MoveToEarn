@@ -5,6 +5,7 @@ import { Crown, Save, Mail, Camera, CheckCircle, X, Flag, Award, Zap, Mountain, 
 import { useLanguage } from '../../LanguageContext';
 import { compressImage } from '../../utils/imageCompression';
 import { useGameState } from '../../hooks/useGameState';
+import { useGlobalUI } from '../../contexts/GlobalUIContext';
 
 interface ProfileHeaderProps {
   user: User;
@@ -25,6 +26,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 }) => {
   const { t } = useLanguage();
   const { uploadFile } = useGameState();
+  const { showToast } = useGlobalUI();
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(user.name);
   const [email, setEmail] = useState(user.email || '');
@@ -65,11 +67,11 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               if (publicUrl) {
                   setAvatar(publicUrl);
               } else {
-                  alert("Failed to process image. Please try a different file.");
+                  showToast("Failed to process image. Please try a different file.", 'ERROR');
               }
           } catch (error) {
               console.error("Error processing image:", error);
-              alert("Error processing image.");
+              showToast("Error processing image.", 'ERROR');
           } finally {
               setIsUploading(false);
           }

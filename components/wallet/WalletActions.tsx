@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { ArrowRightLeft, Info, Crown, ArrowDown, Activity, CreditCard, Euro, CheckCircle, ArrowRight, X } from 'lucide-react';
 import { useLanguage } from '../../LanguageContext';
+import { useGlobalUI } from '../../contexts/GlobalUIContext';
 
 interface WalletActionsProps {
   govBalance: number;
@@ -12,6 +13,7 @@ interface WalletActionsProps {
 
 const WalletActions: React.FC<WalletActionsProps> = ({ govBalance, govToRunRate, onSwapGovToRun, onBuyFiat }) => {
   const { t } = useLanguage();
+  const { showToast } = useGlobalUI();
   const [swapGovAmount, setSwapGovAmount] = useState<string>('');
   const [fiatAmount, setFiatAmount] = useState<string>('');
   
@@ -23,7 +25,7 @@ const WalletActions: React.FC<WalletActionsProps> = ({ govBalance, govToRunRate,
       const val = parseFloat(swapGovAmount);
       if (isNaN(val) || val <= 0) return;
       if (govBalance < val) {
-          alert(t('alert.insufficient_gov'));
+          showToast(t('alert.insufficient_gov'), 'ERROR');
           return;
       }
       setShowSwapConfirm(true);

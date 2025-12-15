@@ -1,8 +1,8 @@
 
 import React, { useEffect } from 'react';
-import { Zap, Shield, CheckCircle, X } from 'lucide-react';
+import { Zap, Shield, CheckCircle, X, AlertTriangle } from 'lucide-react';
 
-export type ToastType = 'BOOST' | 'DEFENSE' | 'SUCCESS';
+export type ToastType = 'BOOST' | 'DEFENSE' | 'SUCCESS' | 'ERROR';
 
 interface GameToastProps {
   message: string;
@@ -37,6 +37,15 @@ const GameToast: React.FC<GameToastProps> = ({ message, type, onClose }) => {
           iconColor: 'text-cyan-400',
           Icon: Shield,
           shadow: 'shadow-[0_0_20px_rgba(6,182,212,0.4)]'
+        };
+      case 'ERROR':
+        return {
+          bg: 'bg-red-900/90',
+          border: 'border-red-500',
+          text: 'text-white',
+          iconColor: 'text-red-400',
+          Icon: AlertTriangle,
+          shadow: 'shadow-[0_0_20px_rgba(239,68,68,0.4)]'
         };
       case 'SUCCESS':
       default:

@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { User, Transaction } from '../types';
 import { Wallet as WalletIcon, CheckCircle, Link as LinkIcon, Activity, Crown, History, ArrowDownLeft, ArrowUpRight, Flame, X, Search, Filter } from 'lucide-react';
 import Pagination from './Pagination';
@@ -15,11 +15,13 @@ interface WalletProps {
   govToRunRate: number;
   onBuyFiat: (amount: number) => void;
   onSwapGovToRun: (amount: number) => void;
+  lastBurnTimestamp?: number;
+  totalBurned?: number;
 }
 
 const TRANSACTIONS_PER_PAGE = 7;
 
-const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuyFiat, onSwapGovToRun }) => {
+const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuyFiat, onSwapGovToRun, lastBurnTimestamp, totalBurned }) => {
   const { t } = useLanguage();
   const [isWalletConnected, setIsWalletConnected] = useState(false);
   
@@ -30,6 +32,37 @@ const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuy
   // New Filter States
   const [historySearch, setHistorySearch] = useState('');
   const [historyFilter, setHistoryFilter] = useState<'ALL' | 'IN' | 'OUT'>('ALL');
+  const [historyTokenFilter, setHistoryTokenFilter] = useState<'ALL' | 'RUN' | 'GOV'>('ALL');
+
+  // Countdown State
+  const [timeLeft, setTimeLeft] = useState(0);
+  const BURN_COOLDOWN_MS = 30 * 24 * 60 * 60 * 1000; // 30 Days
+
+  useEffect(() => {
+      const checkTimer = () => {
+          const now = Date.now();
+          const diff = now - (lastBurnTimestamp || 0); 
+
+          if (diff >= BURN_COOLDOWN_MS) {
+              setTimeLeft(0);
+          } else {
+              setTimeLeft(BURN_COOLDOWN_MS - diff);
+          }
+      };
+      
+      checkTimer();
+      const interval = setInterval(checkTimer, 1000);
+      return () => clearInterval(interval);
+  }, [lastBurnTimestamp]);
+
+  const formatTime = (ms: number) => {
+      if (ms <= 0) return "READY";
+      const d = Math.floor(ms / (1000 * 60 * 60 * 24));
+      const h = Math.floor((ms % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const m = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+      const s = Math.floor((ms % (1000 * 60)) / 1000);
+      return `${d}d ${h}h ${m}m ${s}s`;
+  };
 
   // Filter Transactions for current user, apply search/filter, and sort
   const myTransactions = useMemo(() => {
@@ -43,13 +76,18 @@ const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuy
           filtered = filtered.filter(t => t.description.toLowerCase().includes(lowerSearch));
       }
 
-      // Apply Type Filter
+      // Apply Type Filter (IN/OUT)
       if (historyFilter !== 'ALL') {
           filtered = filtered.filter(t => t.type === historyFilter);
       }
 
+      // Apply Token Filter (RUN/GOV)
+      if (historyTokenFilter !== 'ALL') {
+          filtered = filtered.filter(t => t.token === historyTokenFilter);
+      }
+
       return filtered;
-  }, [transactions, user.id, historySearch, historyFilter]);
+  }, [transactions, user.id, historySearch, historyFilter, historyTokenFilter]);
 
   // Pagination Logic (Based on filtered results)
   const totalHistoryPages = Math.ceil(myTransactions.length / TRANSACTIONS_PER_PAGE);
@@ -66,6 +104,11 @@ const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuy
   const handleFilterChange = (type: 'ALL' | 'IN' | 'OUT') => {
       setHistoryFilter(type);
       setHistoryPage(1); // Reset to page 1 on filter change
+  };
+
+  const handleTokenFilterChange = (token: 'ALL' | 'RUN' | 'GOV') => {
+      setHistoryTokenFilter(token);
+      setHistoryPage(1);
   };
 
   const formatDate = (ts: number) => {
@@ -153,6 +196,7 @@ const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuy
                          setHistoryPage(1);
                          setHistorySearch('');
                          setHistoryFilter('ALL');
+                         setHistoryTokenFilter('ALL');
                          setShowHistoryModal(true);
                      }}
                      className="text-[10px] text-emerald-400 hover:underline"
@@ -161,10 +205,15 @@ const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuy
                    </button>
                 </div>
                 <div className="space-y-3 flex-1 overflow-y-auto max-h-[300px]">
-                    {transactions.filter(t => t.userId === user.id).length === 0 ? (
-                        <div className="text-center text-gray-500 py-8 text-xs">No transactions found.</div>
+                    {/* FILTER: Exclude 'ITEM' type from the preview widget */}
+                    {transactions.filter(t => t.userId === user.id && t.token !== 'ITEM').length === 0 ? (
+                        <div className="text-center text-gray-500 py-8 text-xs">No recent transactions.</div>
                     ) : (
-                        transactions.filter(t => t.userId === user.id).sort((a,b) => b.timestamp - a.timestamp).slice(0, 5).map((tx) => (
+                        transactions
+                            .filter(t => t.userId === user.id && t.token !== 'ITEM')
+                            .sort((a,b) => b.timestamp - a.timestamp)
+                            .slice(0, 5)
+                            .map((tx) => (
                             <div key={tx.id} className="flex justify-between items-center bg-gray-900/50 p-3 rounded-lg border border-gray-700/50 hover:border-gray-600 transition-colors">
                                 <div className="flex items-center gap-3">
                                     <div className={`p-2 rounded-lg ${tx.type === 'IN' ? 'bg-emerald-900/20 text-emerald-400' : 'bg-gray-700/30 text-gray-400'}`}>
@@ -208,17 +257,17 @@ const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuy
              </div>
              <div>
                 <h3 className="text-lg font-bold text-white">{t('wallet.burn_event')}</h3>
-                <p className="text-gray-400 text-sm">{t('wallet.next_burn')} <span className="text-white font-mono">48:20:10</span></p>
+                <p className="text-gray-400 text-sm">{t('wallet.next_burn')} <span className="text-white font-mono">{formatTime(timeLeft)}</span></p>
              </div>
           </div>
 
           <div className="flex gap-8 text-center relative z-10">
              <div>
-                <span className="block text-2xl font-bold text-white">4.2M</span>
+                <span className="block text-2xl font-bold text-white">{((totalBurned || 0) / 1000000).toFixed(2)}</span>
                 <span className="text-xs text-gray-500 uppercase font-bold">{t('wallet.run_burned')}</span>
              </div>
              <div>
-                <span className="block text-2xl font-bold text-white">12.5%</span>
+                <span className="block text-2xl font-bold text-white">2%</span>
                 <span className="text-xs text-gray-500 uppercase font-bold">{t('wallet.tax_rate')}</span>
              </div>
           </div>
@@ -252,7 +301,8 @@ const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuy
                             className="w-full bg-gray-800 border border-gray-600 rounded-lg pl-9 pr-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
                          />
                      </div>
-                     <div className="flex gap-2">
+                     <div className="flex flex-wrap gap-2">
+                         {/* Type Filters */}
                          <button 
                             onClick={() => handleFilterChange('ALL')}
                             className={`px-3 py-2 rounded-lg text-xs font-bold uppercase transition-colors ${historyFilter === 'ALL' ? 'bg-white text-black' : 'bg-gray-800 text-gray-400 border border-gray-600 hover:text-white'}`}
@@ -270,6 +320,22 @@ const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuy
                             className={`px-3 py-2 rounded-lg text-xs font-bold uppercase transition-colors flex items-center gap-1 ${historyFilter === 'OUT' ? 'bg-gray-600 text-white' : 'bg-gray-800 text-gray-400 border border-gray-600 hover:text-gray-300'}`}
                          >
                              <ArrowUpRight size={14} /> Out
+                         </button>
+
+                         <div className="w-px bg-gray-700 mx-1"></div>
+
+                         {/* Token Filters */}
+                         <button 
+                            onClick={() => handleTokenFilterChange('RUN')}
+                            className={`px-3 py-2 rounded-lg text-xs font-bold uppercase transition-colors ${historyTokenFilter === 'RUN' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500' : 'bg-gray-800 text-gray-400 border border-gray-600 hover:text-emerald-400'}`}
+                         >
+                             RUN
+                         </button>
+                         <button 
+                            onClick={() => handleTokenFilterChange('GOV')}
+                            className={`px-3 py-2 rounded-lg text-xs font-bold uppercase transition-colors ${historyTokenFilter === 'GOV' ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500' : 'bg-gray-800 text-gray-400 border border-gray-600 hover:text-cyan-400'}`}
+                         >
+                             GOV
                          </button>
                      </div>
                  </div>
@@ -295,11 +361,13 @@ const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuy
                                 </div>
                             </div>
                             <div className="text-right">
-                                <div className={`font-mono text-sm font-bold ${tx.token === 'GOV' ? 'text-cyan-400' : (tx.type === 'IN' ? 'text-emerald-400' : 'text-white')}`}>
-                                    {tx.type === 'IN' ? '+' : '-'}{tx.amount.toFixed(2)} {tx.token}
+                                <div className={`font-mono text-sm font-bold ${tx.token === 'GOV' ? 'text-cyan-400' : (tx.type === 'IN' ? 'text-emerald-400' : (tx.token === 'ITEM' ? 'text-gray-300' : 'text-white'))}`}>
+                                    {tx.type === 'IN' ? '+' : '-'}{tx.amount.toFixed(2)} {tx.token === 'ITEM' ? 'RUN' : tx.token}
                                 </div>
                                 <div className="text-[10px] font-bold uppercase tracking-wider text-gray-600 flex items-center justify-end gap-1">
-                                    <CheckCircle size={10} className="text-emerald-500" /> Confirmed
+                                    {tx.token === 'ITEM' ? 'Item Cost' : (
+                                        <><CheckCircle size={10} className="text-emerald-500" /> Confirmed</>
+                                    )}
                                 </div>
                             </div>
                         </div>
