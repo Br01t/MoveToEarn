@@ -25,12 +25,12 @@ import RunSummaryModal from "./components/RunSummaryModal";
 import SyncModal from "./components/dashboard/SyncModal";
 import LoginModal from "./components/auth/LoginModal";
 import PWAInstallPrompt from "./components/PWAInstallPrompt"; 
-import CookieBanner from "./components/privacy/CookieBanner"; // IMPORTED
+import CookieBanner from "./components/privacy/CookieBanner";
 import { ViewState } from "./types";
 import { Layers, CheckCircle, AlertTriangle, X, ShoppingBag } from "lucide-react";
 import { LanguageProvider, useLanguage } from "./LanguageContext";
 import { GlobalUIProvider, useGlobalUI } from "./contexts/GlobalUIContext";
-import { PrivacyProvider } from "./contexts/PrivacyContext"; // IMPORTED
+import { PrivacyProvider } from "./contexts/PrivacyContext";
 import { MINT_COST, MINT_REWARD_GOV } from "./constants";
 
 // Custom Hooks (Backend Logic)
@@ -216,275 +216,310 @@ const AppContent: React.FC = () => {
       achievementSystem.achievementQueue.length > 0;
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white font-sans flex flex-col">
-      {showNavbar && <Navbar currentView={currentView} onNavigate={setCurrentView} user={user} onLogout={handleLogout} />}
+    <div className="min-h-screen font-sans flex flex-col relative text-slate-200">
+      
+      {/* --- BACKGROUND (Fixed Depth Hex Grid with Multi-Point Lighting) --- */}
+      <div className="fixed inset-0 z-[-1] bg-gray-950 pointer-events-none overflow-hidden">
+          
+          {/* 1. Base Gradient (Deep Space) */}
+          <div className="absolute inset-0 bg-gradient-to-b from-gray-900 via-gray-950 to-black"></div>
 
-      <main className={`flex-1 bg-gray-900 relative flex flex-col ${showNavbar && !isDashboard ? "pb-16 md:pb-0" : ""}`}>
-        
-        {/* PWA Install Prompt */}
-        <PWAInstallPrompt 
-            isAuthenticated={!!user} 
-            deferredPrompt={deferredPrompt}
-            isIOS={isIOS}
-            isStandalone={isStandalone}
-            onInstall={installPWA}
-            forceShow={forceShowPWA}
-            onCloseForce={() => setForceShowPWA(false)}
-        />
+          {/* 2. MULTIPLE LIGHT SOURCES (Ambient Glows) */}
+          
+          {/* Top Left: Emerald/Green Glow */}
+          <div className="absolute top-[-20%] left-[-10%] w-[70%] h-[70%] bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-emerald-900/30 via-gray-950/0 to-transparent blur-[100px]"></div>
 
-        {/* Cookie Consent Banner */}
-        <CookieBanner onNavigate={setCurrentView} />
+          {/* Bottom Right: Cyan/Blue Glow */}
+          <div className="absolute bottom-[-20%] right-[-10%] w-[70%] h-[70%] bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-cyan-900/30 via-gray-950/0 to-transparent blur-[100px]"></div>
 
-        <div className="flex-1 relative">
-          {isLanding && <LandingPage onLogin={handleOpenLogin} onNavigate={setCurrentView} />}
+          {/* Center/Top: Subtle Highlight */}
+          <div className="absolute top-[10%] left-1/2 -translate-x-1/2 w-[50%] h-[50%] bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-emerald-500/10 via-transparent to-transparent blur-[80px] opacity-50"></div>
 
-          {!isLanding && user && (
-            <>
-              {currentView === "DASHBOARD" && (
-                <Dashboard
-                  user={user}
-                  zones={zones}
-                  badges={badges} 
-                  users={allUsers} 
-                  onSyncRun={runWorkflow.startSync}
-                  onClaim={handleClaimZone}
-                  onBoost={handleBoostZone}
-                  onDefend={handleDefendZone}
-                  onNavigate={setCurrentView}
-                  onOpenSync={() => setShowSyncModal(true)}
-                  onGetZoneLeaderboard={gameState.fetchZoneLeaderboard}
-                />
-              )}
-              {currentView === "MARKETPLACE" && <Marketplace user={user} items={marketItems} onBuy={gameState.buyItem} />}
-              {currentView === "WALLET" && (
-                  <Wallet 
+          {/* 3. Hexagonal Grid Pattern (Matching Map Logic) */}
+          <div 
+              className="absolute inset-0 opacity-[0.08]" 
+              style={{
+                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='98' viewBox='0 0 56 98'%3E%3Cpath d='M28 66L0 50L0 16L28 0L56 16L56 50L28 66L28 100' fill='none' stroke='%2334d399' stroke-width='1' /%3E%3C/svg%3E")`, 
+                  backgroundSize: '56px 98px'
+              }}
+          ></div>
+
+          {/* 4. Heavy Vignette for Depth (Tunnel Effect) */}
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_10%,#020617_100%)] opacity-90"></div>
+          
+      </div>
+
+      {/* Main Content Wrapper */}
+      <div className="relative z-10 flex flex-col min-h-screen">
+          {showNavbar && <Navbar currentView={currentView} onNavigate={setCurrentView} user={user} onLogout={handleLogout} />}
+
+          <main className={`flex-1 relative flex flex-col ${showNavbar && !isDashboard ? "pb-16 md:pb-0" : ""}`}>
+            
+            {/* PWA Install Prompt */}
+            <PWAInstallPrompt 
+                isAuthenticated={!!user} 
+                deferredPrompt={deferredPrompt}
+                isIOS={isIOS}
+                isStandalone={isStandalone}
+                onInstall={installPWA}
+                forceShow={forceShowPWA}
+                onCloseForce={() => setForceShowPWA(false)}
+            />
+
+            {/* Cookie Consent Banner */}
+            <CookieBanner onNavigate={setCurrentView} />
+
+            <div className="flex-1 relative">
+              {isLanding && <LandingPage onLogin={handleOpenLogin} onNavigate={setCurrentView} />}
+
+              {!isLanding && user && (
+                <>
+                  {currentView === "DASHBOARD" && (
+                    <Dashboard
                       user={user}
-                      transactions={transactions}
-                      onBuyFiat={gameState.buyFiatGov} 
-                      govToRunRate={govToRunRate} 
-                      onSwapGovToRun={gameState.swapGovToRun}
-                      lastBurnTimestamp={lastBurnTimestamp}
-                      totalBurned={totalBurned}
-                  />
-              )}
-              {currentView === "INVENTORY" && <Inventory user={user} zones={zones} onUseItem={gameState.useItem} />}
-              
-              {currentView === "LEADERBOARD" && (
-                  <Leaderboard 
-                      users={allUsers} 
-                      currentUser={user} 
-                      zones={zones} 
+                      zones={zones}
                       badges={badges} 
-                      leaderboards={leaderboards} 
-                      levels={levels} 
-                  />
-              )}
-              
-              {currentView === "PROFILE" && (
-                <Profile
-                  user={user}
-                  zones={zones}
-                  missions={missions} 
-                  badges={badges} 
-                  levels={levels} 
-                  leaderboards={leaderboards} 
-                  bugReports={bugReports} 
-                  suggestions={suggestions} 
-                  allUsers={allUsers} 
-                  onUpdateUser={gameState.updateUser}
-                  onUpgradePremium={gameState.upgradePremium}
-                  onClaim={handleClaimZone}
-                  onBoost={handleBoostZone}
-                  onDefend={handleDefendZone}
-                  onGetZoneLeaderboard={gameState.fetchZoneLeaderboard}
-                />
-              )}
-              {currentView === "MISSIONS" && <Missions user={user} zones={zones} missions={missions} badges={badges} />}
-              
-              {currentView === "ADMIN" && user.isAdmin && (
-                <Admin
-                  marketItems={marketItems}
-                  missions={missions}
-                  badges={badges}
-                  zones={zones}
-                  govToRunRate={govToRunRate}
-                  bugReports={bugReports}
-                  suggestions={suggestions} 
-                  leaderboards={leaderboards}
-                  levels={levels}
-                  allUsers={allUsers} 
-                  lastBurnTimestamp={lastBurnTimestamp} 
+                      users={allUsers} 
+                      onSyncRun={runWorkflow.startSync}
+                      onClaim={handleClaimZone}
+                      onBoost={handleBoostZone}
+                      onDefend={handleDefendZone}
+                      onNavigate={setCurrentView}
+                      onOpenSync={() => setShowSyncModal(true)}
+                      onGetZoneLeaderboard={gameState.fetchZoneLeaderboard}
+                    />
+                  )}
+                  {currentView === "MARKETPLACE" && <Marketplace user={user} items={marketItems} onBuy={gameState.buyItem} />}
+                  {currentView === "WALLET" && (
+                      <Wallet 
+                          user={user}
+                          transactions={transactions}
+                          onBuyFiat={gameState.buyFiatGov} 
+                          govToRunRate={govToRunRate} 
+                          onSwapGovToRun={gameState.swapGovToRun}
+                          lastBurnTimestamp={lastBurnTimestamp}
+                          totalBurned={totalBurned}
+                      />
+                  )}
+                  {currentView === "INVENTORY" && <Inventory user={user} zones={zones} onUseItem={gameState.useItem} />}
                   
-                  onAddItem={gameState.addItem}
-                  onUpdateItem={gameState.updateItem}
-                  onRemoveItem={gameState.removeItem}
-                  onAddMission={gameState.addMission}
-                  onUpdateMission={gameState.updateMission}
-                  onRemoveMission={gameState.removeMission}
-                  onAddBadge={gameState.addBadge}
-                  onUpdateBadge={gameState.updateBadge}
-                  onRemoveBadge={gameState.removeBadge}
-                  onUpdateZone={gameState.updateZone}
-                  onDeleteZone={gameState.deleteZone}
-                  onTriggerBurn={gameState.triggerGlobalBurn}
-                  onDistributeRewards={gameState.distributeZoneRewards}
-                  onResetSeason={() => { 
-                      showConfirm({
-                          title: "Reset Season",
-                          message: "Are you sure? This will wipe all distance data.",
-                          onConfirm: () => gameState.setAllUsers({}),
-                          isDestructive: true
-                      });
-                  }}
-                  onUpdateExchangeRate={gameState.setGovToRunRate}
-                  onAddLeaderboard={gameState.addLeaderboard}
-                  onUpdateLeaderboard={gameState.updateLeaderboard}
-                  onDeleteLeaderboard={gameState.deleteLeaderboard}
-                  onResetLeaderboard={gameState.resetLeaderboard}
-                  onAddLevel={gameState.addLevel}
-                  onUpdateLevel={gameState.updateLevel}
-                  onDeleteLevel={gameState.deleteLevel}
-                  onUpdateBugStatus={gameState.updateBugStatus}
-                  onDeleteBugReport={gameState.deleteBugReport}
-                  onDeleteSuggestion={gameState.deleteSuggestion}
-                  onRevokeUserAchievement={gameState.revokeUserAchievement}
-                  onAdjustBalance={gameState.adjustUserBalance}
-                  onRefreshData={gameState.refreshData}
-                />
+                  {currentView === "LEADERBOARD" && (
+                      <Leaderboard 
+                          users={allUsers} 
+                          currentUser={user} 
+                          zones={zones} 
+                          badges={badges} 
+                          leaderboards={leaderboards} 
+                          levels={levels} 
+                      />
+                  )}
+                  
+                  {currentView === "PROFILE" && (
+                    <Profile
+                      user={user}
+                      zones={zones}
+                      missions={missions} 
+                      badges={badges} 
+                      levels={levels} 
+                      leaderboards={leaderboards} 
+                      bugReports={bugReports} 
+                      suggestions={suggestions} 
+                      allUsers={allUsers} 
+                      onUpdateUser={gameState.updateUser}
+                      onUpgradePremium={gameState.upgradePremium}
+                      onClaim={handleClaimZone}
+                      onBoost={handleBoostZone}
+                      onDefend={handleDefendZone}
+                      onGetZoneLeaderboard={gameState.fetchZoneLeaderboard}
+                    />
+                  )}
+                  {currentView === "MISSIONS" && <Missions user={user} zones={zones} missions={missions} badges={badges} />}
+                  
+                  {currentView === "ADMIN" && user.isAdmin && (
+                    <Admin
+                      marketItems={marketItems}
+                      missions={missions}
+                      badges={badges}
+                      zones={zones}
+                      govToRunRate={govToRunRate}
+                      bugReports={bugReports}
+                      suggestions={suggestions} 
+                      leaderboards={leaderboards}
+                      levels={levels}
+                      allUsers={allUsers} 
+                      lastBurnTimestamp={lastBurnTimestamp} 
+                      
+                      onAddItem={gameState.addItem}
+                      onUpdateItem={gameState.updateItem}
+                      onRemoveItem={gameState.removeItem}
+                      onAddMission={gameState.addMission}
+                      onUpdateMission={gameState.updateMission}
+                      onRemoveMission={gameState.removeMission}
+                      onAddBadge={gameState.addBadge}
+                      onUpdateBadge={gameState.updateBadge}
+                      onRemoveBadge={gameState.removeBadge}
+                      onUpdateZone={gameState.updateZone}
+                      onDeleteZone={gameState.deleteZone}
+                      onTriggerBurn={gameState.triggerGlobalBurn}
+                      onDistributeRewards={gameState.distributeZoneRewards}
+                      onResetSeason={() => { 
+                          showConfirm({
+                              title: "Reset Season",
+                              message: "Are you sure? This will wipe all distance data.",
+                              onConfirm: () => gameState.setAllUsers({}),
+                              isDestructive: true
+                          });
+                      }}
+                      onUpdateExchangeRate={gameState.setGovToRunRate}
+                      onAddLeaderboard={gameState.addLeaderboard}
+                      onUpdateLeaderboard={gameState.updateLeaderboard}
+                      onDeleteLeaderboard={gameState.deleteLeaderboard}
+                      onResetLeaderboard={gameState.resetLeaderboard}
+                      onAddLevel={gameState.addLevel}
+                      onUpdateLevel={gameState.updateLevel}
+                      onDeleteLevel={gameState.deleteLevel}
+                      onUpdateBugStatus={gameState.updateBugStatus}
+                      onDeleteBugReport={gameState.deleteBugReport}
+                      onDeleteSuggestion={gameState.deleteSuggestion}
+                      onRevokeUserAchievement={gameState.revokeUserAchievement}
+                      onAdjustBalance={gameState.adjustUserBalance}
+                      onRefreshData={gameState.refreshData}
+                    />
+                  )}
+                  {currentView === "REPORT_BUG" && <ReportBug onReport={gameState.reportBug} />}
+                  {currentView === "SUGGESTION" && <SuggestionPage onSubmit={gameState.submitSuggestion} />}
+                </>
               )}
-              {currentView === "REPORT_BUG" && <ReportBug onReport={gameState.reportBug} />}
-              {currentView === "SUGGESTION" && <SuggestionPage onSubmit={gameState.submitSuggestion} />}
-            </>
-          )}
 
-          {currentView === "RULES" && <GameRules onBack={() => setCurrentView(user ? "DASHBOARD" : "LANDING")} onNavigate={setCurrentView} />}
-          {currentView === "WHITEPAPER" && <Whitepaper onBack={() => setCurrentView(user ? "DASHBOARD" : "LANDING")} onNavigate={setCurrentView} />}
-          {currentView === "HOW_TO_PLAY" && <HowToPlay onBack={() => setCurrentView(user ? "DASHBOARD" : "LANDING")} />}
-          {currentView === "PRIVACY" && <Privacy />}
-          {currentView === "TERMS" && <Terms onNavigate={setCurrentView} />}
-          {currentView === "COMMUNITY" && <Community />}
-        </div>
-      </main>
+              {currentView === "RULES" && <GameRules onBack={() => setCurrentView(user ? "DASHBOARD" : "LANDING")} onNavigate={setCurrentView} />}
+              {currentView === "WHITEPAPER" && <Whitepaper onBack={() => setCurrentView(user ? "DASHBOARD" : "LANDING")} onNavigate={setCurrentView} />}
+              {currentView === "HOW_TO_PLAY" && <HowToPlay onBack={() => setCurrentView(user ? "DASHBOARD" : "LANDING")} />}
+              {currentView === "PRIVACY" && <Privacy />}
+              {currentView === "TERMS" && <Terms onNavigate={setCurrentView} />}
+              {currentView === "COMMUNITY" && <Community />}
+            </div>
+          </main>
 
-      {/* --- GLOBAL MODALS --- */}
+          {/* --- GLOBAL MODALS --- */}
 
-      {/* Insufficient Funds Modal */}
-      {showInsufficientFundsModal && (
-          <div className="fixed inset-0 z-[250] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 animate-fade-in">
-              <div className="bg-gray-900 border-2 border-red-500 rounded-2xl w-full max-w-sm shadow-[0_0_50px_rgba(239,68,68,0.3)] overflow-hidden relative animate-slide-up">
-                  <div className="absolute top-0 right-0 p-4">
-                      <button onClick={() => setShowInsufficientFundsModal(false)} className="text-gray-500 hover:text-white"><X size={24}/></button>
-                  </div>
-                  <div className="p-8 text-center flex flex-col items-center">
-                      <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mb-4 animate-bounce">
-                          <AlertTriangle size={32} className="text-red-500" />
+          {/* Insufficient Funds Modal */}
+          {showInsufficientFundsModal && (
+              <div className="fixed inset-0 z-[250] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 animate-fade-in">
+                  <div className="bg-gray-900 border-2 border-red-500 rounded-2xl w-full max-w-sm shadow-[0_0_50px_rgba(239,68,68,0.3)] overflow-hidden relative animate-slide-up">
+                      <div className="absolute top-0 right-0 p-4">
+                          <button onClick={() => setShowInsufficientFundsModal(false)} className="text-gray-500 hover:text-white"><X size={24}/></button>
                       </div>
-                      <h3 className="text-2xl font-black text-white uppercase tracking-tight mb-2">{t('app.funds.title')}</h3>
-                      <p className="text-gray-400 text-sm mb-6">
-                          {t('app.funds.body')}
-                      </p>
-                      <button 
-                          onClick={() => { setShowInsufficientFundsModal(false); setCurrentView("MARKETPLACE"); }}
-                          className="w-full py-3 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
-                      >
-                          <ShoppingBag size={18} /> {t('app.funds.btn')}
-                      </button>
+                      <div className="p-8 text-center flex flex-col items-center">
+                          <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mb-4 animate-bounce">
+                              <AlertTriangle size={32} className="text-red-500" />
+                          </div>
+                          <h3 className="text-2xl font-black text-white uppercase tracking-tight mb-2">{t('app.funds.title')}</h3>
+                          <p className="text-gray-400 text-sm mb-6">
+                              {t('app.funds.body')}
+                          </p>
+                          <button 
+                              onClick={() => { setShowInsufficientFundsModal(false); setCurrentView("MARKETPLACE"); }}
+                              className="w-full py-3 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
+                          >
+                              <ShoppingBag size={18} /> {t('app.funds.btn')}
+                          </button>
+                      </div>
                   </div>
               </div>
-          </div>
-      )}
+          )}
 
-      {showLoginModal && (
-          <LoginModal 
-              onClose={() => {
-                  setShowLoginModal(false);
-                  gameState.setRecoveryMode(false);
-              }}
-              onLogin={handleLogin}
-              onRegister={handleRegister}
-              onResetPassword={gameState.resetPassword}
-              initialView={recoveryMode ? 'UPDATE_PASSWORD' : 'LOGIN'}
-              onUpdatePassword={gameState.updatePassword}
+          {showLoginModal && (
+              <LoginModal 
+                  onClose={() => {
+                      setShowLoginModal(false);
+                      gameState.setRecoveryMode(false);
+                  }}
+                  onLogin={handleLogin}
+                  onRegister={handleRegister}
+                  onResetPassword={gameState.resetPassword}
+                  initialView={recoveryMode ? 'UPDATE_PASSWORD' : 'LOGIN'}
+                  onUpdatePassword={gameState.updatePassword}
+              />
+          )}
+
+          {showSyncModal && user && (
+              <SyncModal 
+                  onClose={() => setShowSyncModal(false)}
+                  onNavigate={setCurrentView}
+                  onSyncRun={runWorkflow.startSync}
+                  user={user}
+              />
+          )}
+
+          {runWorkflow.zoneCreationQueue.length > 0 && (
+              <ZoneDiscoveryModal
+                  isOpen={true}
+                  data={{
+                      lat: runWorkflow.zoneCreationQueue[0].lat,
+                      lng: runWorkflow.zoneCreationQueue[0].lng,
+                      defaultName: runWorkflow.zoneCreationQueue[0].defaultName,
+                      cost: MINT_COST,
+                      reward: MINT_REWARD_GOV
+                  }}
+                  onConfirm={handleZoneConfirm}
+                  onDiscard={runWorkflow.discardZoneCreation}
+              />
+          )}
+
+          {achievementSystem.achievementQueue.length > 0 && (
+              <AchievementModal 
+                  key={achievementSystem.achievementQueue[0].item.id}
+                  data={achievementSystem.achievementQueue[0]} 
+                  onClose={achievementSystem.handleCloseNotification} 
+                  onClaimAll={achievementSystem.handleClaimAllNotifications}
+                  remainingCount={achievementSystem.achievementQueue.length - 1}
+              />
+          )}
+
+          {runWorkflow.runSummary && (
+              <RunSummaryModal 
+                  data={runWorkflow.runSummary} 
+                  onClose={runWorkflow.closeSummary} 
+              />
+          )}
+
+          {achievementSystem.claimSummary && (
+            <div className="fixed inset-0 z-[110] flex items-center justify-center pointer-events-none">
+              <div className="bg-gray-900/95 backdrop-blur-xl border border-emerald-500/50 p-6 rounded-2xl shadow-[0_0_50px_rgba(16,185,129,0.3)] animate-slide-up flex flex-col items-center gap-2 pointer-events-auto transform scale-110">
+                  <div className="p-3 bg-emerald-500/10 rounded-full mb-1">
+                    <Layers className="text-emerald-400" size={32} />
+                  </div>
+                  <h3 className="text-xl font-bold text-white tracking-tight">{t('ach.batch_claimed')}</h3>
+                  <p className="text-gray-400 text-sm flex items-center gap-1">
+                      <CheckCircle size={12}/> {achievementSystem.claimSummary.count} {t('ach.unlocked')}
+                  </p>
+                  
+                  <div className="flex flex-col items-center">
+                      {achievementSystem.claimSummary.totalRun > 0 && (
+                          <div className="mt-2 text-3xl font-mono font-black text-emerald-400 drop-shadow-lg flex items-center gap-2">
+                              +{achievementSystem.claimSummary.totalRun} RUN
+                          </div>
+                      )}
+                      {achievementSystem.claimSummary.totalGov > 0 && (
+                          <div className="mt-1 text-xl font-mono font-black text-cyan-400 drop-shadow-lg flex items-center gap-2">
+                              +{achievementSystem.claimSummary.totalGov} GOV
+                          </div>
+                      )}
+                  </div>
+              </div>
+            </div>
+          )}
+
+          <Footer 
+              onNavigate={setCurrentView} 
+              currentView={currentView} 
+              isAuthenticated={!!user} 
+              isHidden={isAnyModalOpen} 
+              onInstall={handleFooterInstall}
+              isInstallable={!!deferredPrompt || isIOS}
+              isStandalone={isStandalone}
           />
-      )}
-
-      {showSyncModal && user && (
-          <SyncModal 
-              onClose={() => setShowSyncModal(false)}
-              onNavigate={setCurrentView}
-              onSyncRun={runWorkflow.startSync}
-              user={user}
-          />
-      )}
-
-      {runWorkflow.zoneCreationQueue.length > 0 && (
-          <ZoneDiscoveryModal
-              isOpen={true}
-              data={{
-                  lat: runWorkflow.zoneCreationQueue[0].lat,
-                  lng: runWorkflow.zoneCreationQueue[0].lng,
-                  defaultName: runWorkflow.zoneCreationQueue[0].defaultName,
-                  cost: MINT_COST,
-                  reward: MINT_REWARD_GOV
-              }}
-              onConfirm={handleZoneConfirm}
-              onDiscard={runWorkflow.discardZoneCreation}
-          />
-      )}
-
-      {achievementSystem.achievementQueue.length > 0 && (
-          <AchievementModal 
-              key={achievementSystem.achievementQueue[0].item.id}
-              data={achievementSystem.achievementQueue[0]} 
-              onClose={achievementSystem.handleCloseNotification} 
-              onClaimAll={achievementSystem.handleClaimAllNotifications}
-              remainingCount={achievementSystem.achievementQueue.length - 1}
-          />
-      )}
-
-      {runWorkflow.runSummary && (
-          <RunSummaryModal 
-              data={runWorkflow.runSummary} 
-              onClose={runWorkflow.closeSummary} 
-          />
-      )}
-
-      {achievementSystem.claimSummary && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center pointer-events-none">
-           <div className="bg-gray-900/95 backdrop-blur-xl border border-emerald-500/50 p-6 rounded-2xl shadow-[0_0_50px_rgba(16,185,129,0.3)] animate-slide-up flex flex-col items-center gap-2 pointer-events-auto transform scale-110">
-               <div className="p-3 bg-emerald-500/10 rounded-full mb-1">
-                 <Layers className="text-emerald-400" size={32} />
-               </div>
-               <h3 className="text-xl font-bold text-white tracking-tight">{t('ach.batch_claimed')}</h3>
-               <p className="text-gray-400 text-sm flex items-center gap-1">
-                   <CheckCircle size={12}/> {achievementSystem.claimSummary.count} {t('ach.unlocked')}
-               </p>
-               
-               <div className="flex flex-col items-center">
-                   {achievementSystem.claimSummary.totalRun > 0 && (
-                       <div className="mt-2 text-3xl font-mono font-black text-emerald-400 drop-shadow-lg flex items-center gap-2">
-                           +{achievementSystem.claimSummary.totalRun} RUN
-                       </div>
-                   )}
-                   {achievementSystem.claimSummary.totalGov > 0 && (
-                       <div className="mt-1 text-xl font-mono font-black text-cyan-400 drop-shadow-lg flex items-center gap-2">
-                           +{achievementSystem.claimSummary.totalGov} GOV
-                       </div>
-                   )}
-               </div>
-           </div>
-        </div>
-      )}
-
-      <Footer 
-          onNavigate={setCurrentView} 
-          currentView={currentView} 
-          isAuthenticated={!!user} 
-          isHidden={isAnyModalOpen} 
-          onInstall={handleFooterInstall}
-          isInstallable={!!deferredPrompt || isIOS}
-          isStandalone={isStandalone}
-      />
+      </div>
     </div>
   );
 };

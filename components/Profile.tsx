@@ -326,44 +326,44 @@ const Profile: React.FC<ProfileProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl border border-gray-700 p-5 relative overflow-hidden flex flex-col justify-between">
               <div className="absolute top-0 right-0 p-4 opacity-5"><Coins size={80}/></div>
-              <h3 className="text-white font-bold mb-4 flex items-center gap-2">
+              <h3 className="text-white font-bold uppercase tracking-wide mb-4 flex items-center gap-2">
                   <Coins size={18} className="text-yellow-500"/> {t('profile.liquid_assets')}
               </h3>
               <div className="space-y-3 relative z-10">
                   <div className="flex justify-between items-end bg-black/20 p-3 rounded-lg">
-                      <span className="text-sm text-gray-400">{t('profile.run_balance')}</span>
+                      <span className="text-sm text-gray-400 font-bold">{t('profile.run_balance')}</span>
                       <span className="text-xl font-mono font-bold text-emerald-400">{user.runBalance.toFixed(1)}</span>
                   </div>
                   <div className="flex justify-between items-end bg-black/20 p-3 rounded-lg">
-                      <span className="text-sm text-gray-400">{t('profile.gov_holdings')}</span>
+                      <span className="text-sm text-gray-400 font-bold">{t('profile.gov_holdings')}</span>
                       <span className="text-xl font-mono font-bold text-cyan-400">{user.govBalance.toFixed(1)}</span>
                   </div>
               </div>
           </div>
 
           <div className="bg-gray-800 rounded-xl border border-gray-700 p-5 flex flex-col justify-between">
-              <h3 className="text-white font-bold mb-4 flex items-center gap-2 border-b border-gray-700 pb-2">
+              <h3 className="text-white font-bold uppercase tracking-wide mb-4 flex items-center gap-2 border-b border-gray-700 pb-2">
                   <BarChart3 size={18} className="text-gray-400"/> {t('profile.perf_metrics')}
               </h3>
               <div className="space-y-4">
                   <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-400">{t('profile.longest_run')}</span>
-                      <span className="text-white font-mono font-bold">{maxDistance} km</span>
+                      <span className="text-sm text-gray-400 font-medium">{t('profile.longest_run')}</span>
+                      <span className="text-white font-mono font-bold text-lg">{maxDistance} km</span>
                   </div>
                   <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-400">{t('profile.total_dist')}</span>
-                      <span className="text-white font-mono font-bold">{calculatedTotalKm} km</span>
+                      <span className="text-sm text-gray-400 font-medium">{t('profile.total_dist')}</span>
+                      <span className="text-white font-mono font-bold text-lg">{calculatedTotalKm} km</span>
                   </div>
                   <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-400">{t('profile.total_runs')}</span>
-                      <span className="text-white font-mono font-bold">{totalRuns}</span>
+                      <span className="text-sm text-gray-400 font-medium">{t('profile.total_runs')}</span>
+                      <span className="text-white font-mono font-bold text-lg">{totalRuns}</span>
                   </div>
               </div>
           </div>
 
           {/* TERRITORY STATUS - UPDATED LAYOUT */}
           <div className="bg-gray-800 rounded-xl border border-gray-700 p-5 flex flex-col justify-between">
-              <h3 className="text-white font-bold mb-4 flex items-center gap-2 border-b border-gray-700 pb-2">
+              <h3 className="text-white font-bold uppercase tracking-wide mb-4 flex items-center gap-2 border-b border-gray-700 pb-2">
                   <Shield size={18} className="text-gray-400"/> {t('profile.territory_status')}
               </h3>
               
@@ -373,24 +373,24 @@ const Profile: React.FC<ProfileProps> = ({
                        <div className="p-1.5 bg-emerald-500/20 rounded text-emerald-400">
                            <MapPin size={16} />
                        </div>
-                       <span className="text-xs text-gray-400 font-bold uppercase">{t('profile.owned_zones')}</span>
+                       <span className="text-xs text-gray-400 font-bold uppercase tracking-wider">{t('profile.owned_zones')}</span>
                    </div>
-                   <span className="text-2xl font-bold text-white">{totalOwned}</span>
+                   <span className="text-2xl font-mono font-bold text-white">{totalOwned}</span>
               </div>
 
               {/* Boosts & Shields Grid */}
               <div className="grid grid-cols-2 gap-3">
                   <div className="bg-gray-900 p-3 rounded-lg border border-gray-700 flex flex-col items-center justify-center">
-                      <div className="flex items-center gap-1 text-xl font-bold text-white mb-1">
+                      <div className="flex items-center gap-1 text-xl font-mono font-bold text-white mb-1">
                           <Zap size={16} className="text-amber-400 fill-amber-400" /> {activeBoosts}
                       </div>
-                      <span className="text-[10px] text-gray-500 uppercase font-bold">{t('zone.boosted')}</span>
+                      <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">{t('zone.boosted')}</span>
                   </div>
                   <div className="bg-gray-900 p-3 rounded-lg border border-gray-700 flex flex-col items-center justify-center">
-                      <div className="flex items-center gap-1 text-xl font-bold text-white mb-1">
+                      <div className="flex items-center gap-1 text-xl font-mono font-bold text-white mb-1">
                           <Shield size={16} className="text-cyan-400 fill-cyan-400/50" /> {activeShields}
                       </div>
-                      <span className="text-[10px] text-gray-500 uppercase font-bold">{t('zone.shielded')}</span>
+                      <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">{t('zone.shielded')}</span>
                   </div>
               </div>
           </div>
@@ -399,7 +399,7 @@ const Profile: React.FC<ProfileProps> = ({
       {/* LEADERBOARD RANKS */}
       {leaderboards.length > 0 && (
           <div className="bg-gray-800 rounded-xl border border-gray-700 p-5">
-              <h3 className="text-white font-bold mb-4 flex items-center gap-2">
+              <h3 className="text-white font-bold uppercase tracking-wide mb-4 flex items-center gap-2">
                   <Trophy size={18} className="text-yellow-400"/> {t('profile.active_rankings')}
               </h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -410,14 +410,14 @@ const Profile: React.FC<ProfileProps> = ({
                           <div key={lb.id} className={`p-3 rounded-xl border transition-colors flex flex-col justify-between ${isTop3 ? 'bg-gradient-to-br from-gray-900 to-yellow-900/20 border-yellow-500/30' : 'bg-gray-900 border-gray-700'}`}>
                               <div className="flex justify-between items-start mb-2 gap-2">
                                   <div className="min-w-0">
-                                      <h4 className="font-bold text-white text-xs truncate" title={lb.title}>{lb.title}</h4>
+                                      <h4 className="font-bold text-white text-xs truncate uppercase tracking-wider" title={lb.title}>{lb.title}</h4>
                                       <span className={`text-[9px] uppercase font-bold px-1 py-0.5 rounded ${lb.type === 'PERMANENT' ? 'bg-gray-800 text-gray-500' : 'bg-purple-900/50 text-purple-400'}`}>
                                           {lb.type === 'PERMANENT' ? 'Seas.' : 'Evt.'}
                                       </span>
                                   </div>
                                   <div className={`flex flex-col items-center justify-center w-8 h-8 rounded-lg shrink-0 ${isTop3 ? 'bg-yellow-500 text-black' : 'bg-gray-800 text-gray-400'}`}>
                                       <span className="text-[9px] font-bold">#</span>
-                                      <span className="text-sm font-black leading-none">{rank}</span>
+                                      <span className="text-sm font-black leading-none font-mono">{rank}</span>
                                   </div>
                               </div>
                               <div className="mt-1 pt-2 border-t border-gray-800 flex justify-between items-center">
@@ -435,7 +435,7 @@ const Profile: React.FC<ProfileProps> = ({
 
       {/* ZONE STATS */}
       <div className="bg-gray-800 rounded-xl border border-gray-700 p-5">
-          <h3 className="text-white font-bold mb-4 flex items-center gap-2">
+          <h3 className="text-white font-bold uppercase tracking-wide mb-4 flex items-center gap-2">
               <MapPin size={18} className="text-emerald-400"/> {t('profile.zone_stats')}
           </h3>
           {sortedZoneStats.length === 0 ? (
@@ -470,10 +470,10 @@ const Profile: React.FC<ProfileProps> = ({
 
                               return (
                                   <div key={idx} className="grid grid-cols-12 gap-2 p-3 items-center hover:bg-gray-800 transition-colors cursor-pointer group" onClick={() => setSelectedZoneId(stat.id)}>
-                                      <div className={`col-span-2 md:col-span-1 text-center font-black ${rankColor} text-sm flex items-center justify-center`}>
+                                      <div className={`col-span-2 md:col-span-1 text-center font-black ${rankColor} text-sm flex items-center justify-center font-mono`}>
                                           {rankIcon} #{rank}
                                       </div>
-                                      <div className="col-span-6 md:col-span-7 font-bold text-white text-xs truncate group-hover:text-emerald-400 transition-colors" title={stat.name}>{stat.name}</div>
+                                      <div className="col-span-6 md:col-span-7 font-bold text-white text-xs truncate group-hover:text-emerald-400 transition-colors uppercase tracking-wide" title={stat.name}>{stat.name}</div>
                                       <div className="col-span-2 text-right font-mono text-white font-bold text-xs">{stat.count}</div>
                                       <div className="col-span-2 text-right font-mono text-emerald-400 font-bold text-xs">{stat.km.toFixed(1)}</div>
                                   </div>
@@ -490,10 +490,10 @@ const Profile: React.FC<ProfileProps> = ({
       <div className="w-full">
           <div className="bg-gray-800 rounded-xl border border-gray-700 min-h-[500px] flex flex-col relative z-0">
               <div className="flex border-b border-gray-700 bg-gray-900/50 rounded-t-xl">
-                  <button onClick={() => setActiveTab('ACHIEVEMENTS')} className={`flex-1 py-4 text-sm font-bold flex items-center justify-center gap-2 border-b-2 transition-colors ${activeTab === 'ACHIEVEMENTS' ? 'border-yellow-500 text-yellow-400 bg-gray-800 rounded-tl-xl' : 'border-transparent text-gray-500 hover:text-white rounded-tl-xl'}`}>
+                  <button onClick={() => setActiveTab('ACHIEVEMENTS')} className={`flex-1 py-4 text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 border-b-2 transition-colors ${activeTab === 'ACHIEVEMENTS' ? 'border-yellow-500 text-yellow-400 bg-gray-800 rounded-tl-xl' : 'border-transparent text-gray-500 hover:text-white rounded-tl-xl'}`}>
                       <Award size={16} /> {t('profile.tab.achievements')}
                   </button>
-                  <button onClick={() => setActiveTab('HISTORY')} className={`flex-1 py-4 text-sm font-bold flex items-center justify-center gap-2 border-b-2 transition-colors ${activeTab === 'HISTORY' ? 'border-emerald-500 text-emerald-400 bg-gray-800 rounded-tr-xl' : 'border-transparent text-gray-500 hover:text-white rounded-tr-xl'}`}>
+                  <button onClick={() => setActiveTab('HISTORY')} className={`flex-1 py-4 text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 border-b-2 transition-colors ${activeTab === 'HISTORY' ? 'border-emerald-500 text-emerald-400 bg-gray-800 rounded-tr-xl' : 'border-transparent text-gray-500 hover:text-white rounded-tr-xl'}`}>
                       <History size={16} /> {t('profile.tab.history')}
                   </button>
               </div>
@@ -538,7 +538,7 @@ const Profile: React.FC<ProfileProps> = ({
 
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-left">
-                                        <thead className="text-[10px] uppercase font-bold text-gray-500 border-b border-gray-700">
+                                        <thead className="text-[10px] uppercase font-bold text-gray-500 border-b border-gray-700 tracking-wider">
                                             <tr><th className="pb-3 pl-2">{t('profile.date')}</th><th className="pb-3">{t('profile.location')}</th><th className="pb-3 text-right">Dist</th><th className="pb-3 text-right pr-2">{t('profile.rewards')}</th></tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-700/50 text-sm">
@@ -552,10 +552,10 @@ const Profile: React.FC<ProfileProps> = ({
 
                                                     return (
                                                         <tr key={run.id} className="hover:bg-gray-750 transition-colors">
-                                                            <td className="py-3 pl-2 text-gray-400 text-xs">{new Date(run.timestamp).toLocaleDateString()}</td>
-                                                            <td className="py-3 font-medium text-white">{locationDisplay}</td>
+                                                            <td className="py-3 pl-2 text-gray-400 text-xs font-mono">{new Date(run.timestamp).toLocaleDateString()}</td>
+                                                            <td className="py-3 font-bold text-white uppercase tracking-wide text-xs md:text-sm">{locationDisplay}</td>
                                                             <td className="py-3 text-right font-mono text-emerald-400">{run.km.toFixed(2)} km</td>
-                                                            <td className="py-3 text-right pr-2"><div className="flex flex-col items-end"><span className="text-xs font-bold text-white">+{run.runEarned} RUN</span>{run.govEarned && <span className="text-[10px] text-cyan-400">+{run.govEarned} GOV</span>}</div></td>
+                                                            <td className="py-3 text-right pr-2"><div className="flex flex-col items-end"><span className="text-xs font-bold text-white font-mono">+{run.runEarned} RUN</span>{run.govEarned && <span className="text-[10px] text-cyan-400 font-mono">+{run.govEarned} GOV</span>}</div></td>
                                                         </tr>
                                                     );
                                                 })

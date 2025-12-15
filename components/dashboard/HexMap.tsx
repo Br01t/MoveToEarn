@@ -136,11 +136,6 @@ const HexMap = forwardRef<SVGSVGElement, HexMapProps>(({
   return (
     <div 
         className="absolute inset-0 cursor-move touch-none"
-        style={{
-            // Hexagonal Grid Background Pattern
-            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='98' viewBox='0 0 56 98'%3E%3Cpath d='M28 66L0 50L0 16L28 0L56 16L56 50L28 66L28 100' fill='none' stroke='%231f2937' stroke-width='1' /%3E%3C/svg%3E")`,
-            backgroundSize: '56px 98px'
-        }}
         onMouseDown={onMouseDown}
         onMouseMove={onMouseMove}
         onMouseUp={onMouseUp}
@@ -259,21 +254,21 @@ const HexMap = forwardRef<SVGSVGElement, HexMapProps>(({
                   <polygon points={getHexPoints()} fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="1" transform="scale(0.85)" className="transition-all duration-300 opacity-50 group-hover:opacity-100 group-hover:stroke-white/40"/>
                   
                   <g pointerEvents="none">
-                      {/* 1. Zone Name (City First) - Scaled Up */}
+                      {/* 1. Zone Name (City First) - Scaled Up Font Size (16 -> 20) */}
                       <text 
                           x="0" 
                           y="-28" 
                           textAnchor="middle" 
                           dominantBaseline="middle"
                           fill="white"
-                          fontSize="16"
+                          fontSize="18"
                           fontWeight="900"
                           style={{ textShadow: '0 2px 3px rgba(0,0,0,0.9)', letterSpacing: '0.02em' }}
                       >
                           {displayName}
                       </text>
 
-                      {/* 2. Pool Badge - Scaled Up */}
+                      {/* 2. Pool Badge - Scaled Up Font Size (14 -> 16) */}
                       <g transform="translate(-40, -5)">
                           <rect 
                               x="0" 
