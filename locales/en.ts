@@ -350,6 +350,8 @@ export const en = {
     "wallet.run_burned": "RUN Burned",
     "wallet.tax_rate": "Tax Rate",
     "wallet.trans_history": "Transaction History",
+    "wallet.chart.balance": "Balance",
+    "wallet.chart.burned": "Burned",
     "wallet.swap.title": "Liquidity Swap",
     "wallet.swap.desc": "Convert Governance to Utility tokens.",
     "wallet.swap.info_tooltip": "Swap GOV for RUN to immediately get liquid tokens for minting zones, buying items, or attacking. Useful if you are low on RUN but rich in GOV.",
