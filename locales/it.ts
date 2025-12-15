@@ -316,6 +316,8 @@ export const it = {
     "wallet.run_burned": "RUN Bruciati",
     "wallet.tax_rate": "Tasso Tassa",
     "wallet.trans_history": "Storico Transazioni",
+    "wallet.chart.balance": "Saldo",
+    "wallet.chart.burned": "Bruciati",
     "wallet.swap.title": "Liquidity Swap",
     "wallet.swap.desc": "Converti token Governance in Utility.",
     "wallet.swap.info_tooltip": "Scambia GOV in RUN per ottenere subito token liquidi per coniare zone, comprare oggetti o attaccare. Utile se sei a corto di RUN ma ricco di GOV.",
@@ -569,9 +571,9 @@ export const it = {
     "wp.zones.pool_title": "6.2 Sistema Interessi (Pool RUN)",
     "wp.zones.pool_desc": "Ogni zona accumula una 'Pool' interna di RUN basata sull'attività (km percorsi) di TUTTI i runner al suo interno. Questa pool è il bottino. Viene distribuita ogni 24h.",
     "wp.zones.case_a": "Caso A: Conquista (PvP)",
-    "wp.zones.case_a_desc": "Se un rivale supera il record del proprietario prima delle 24h, prende il 100% della pool accumulata immediatamente. Incentiva l'attacco e la difesa attiva.",
+    "wp.zones.case_a_desc": "Se un rivale supera il record del proprietario prima delle 24h, prende il 100% della pool accumulata immediatamente. Incentivizes l'attacco e la difesa attiva.",
     "wp.zones.case_b": "Caso B: Nessuna Conquista",
-    "wp.zones.case_b_desc": "Se la zona resiste 24h, la pool si svuota: 50% al Proprietario (Rendita Passiva), 50% diviso tra i Top 10 Runner locali (in proporzione ai km).",
+    "wp.zones.case_b_desc": "Se la zona resiste 24h, la pool si svuota: 50% al Proprietario (Rendita Passiva), 50% diviso tra i Top 10 Local Runners (proportional to km).",
     "wp.zones.costs_title": "6.3 Costi e Azioni",
     "wp.zones.col_action": "Azione",
     "wp.zones.col_cost": "Costo",
@@ -691,5 +693,5 @@ export const it = {
     "htp.upload.title": "Caricamento e Garanzia di Integrità",
     "htp.upload.desc": "Una volta ottenuto il file .zip (archivio completo) o il file della singola corsa, caricalo nel nostro servizio.",
     "htp.upload.guarantee_title": "Garanzia di Non Duplicazione",
-    "htp.upload.guarantee_desc": "Il nostro sistema è in grado di riconoscere e ignorare automaticamente le corse che hai già caricato. Puoi caricare lo storico completo anche più volte senza creare duplicati, assicurando così che tutti i tuoi dati siano sempre aggiornati."
+    "htp.upload.guarantee_desc": "Il nostro sistema è in grado di riconoscere e ignorare automaticamente le corse che hai già caricato. Puoi caricare lo storico completo anche più volte senza creare duplicati, assicurando così che tutti i tuoi dati siano sempre aggiornati.",
 };
