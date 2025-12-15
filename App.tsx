@@ -383,15 +383,15 @@ const AppContent: React.FC = () => {
                       <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mb-4 animate-bounce">
                           <AlertTriangle size={32} className="text-red-500" />
                       </div>
-                      <h3 className="text-2xl font-black text-white uppercase tracking-tight mb-2">Insufficient RUN</h3>
+                      <h3 className="text-2xl font-black text-white uppercase tracking-tight mb-2">{t('app.funds.title')}</h3>
                       <p className="text-gray-400 text-sm mb-6">
-                          You don't have enough RUN tokens to perform this action. Run more to earn or visit the market.
+                          {t('app.funds.body')}
                       </p>
                       <button 
                           onClick={() => { setShowInsufficientFundsModal(false); setCurrentView("MARKETPLACE"); }}
                           className="w-full py-3 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
                       >
-                          <ShoppingBag size={18} /> Go to Market
+                          <ShoppingBag size={18} /> {t('app.funds.btn')}
                       </button>
                   </div>
               </div>
