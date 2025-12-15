@@ -24,11 +24,13 @@ import ZoneDiscoveryModal from "./components/ZoneDiscoveryModal";
 import RunSummaryModal from "./components/RunSummaryModal";
 import SyncModal from "./components/dashboard/SyncModal";
 import LoginModal from "./components/auth/LoginModal";
-import GameToast, { ToastType } from "./components/GameToast"; // Import Toast
-import PWAInstallPrompt from "./components/PWAInstallPrompt"; // Import PWA Prompt
+import PWAInstallPrompt from "./components/PWAInstallPrompt"; 
+import CookieBanner from "./components/privacy/CookieBanner"; // IMPORTED
 import { ViewState } from "./types";
 import { Layers, CheckCircle, AlertTriangle, X, ShoppingBag } from "lucide-react";
 import { LanguageProvider, useLanguage } from "./LanguageContext";
+import { GlobalUIProvider, useGlobalUI } from "./contexts/GlobalUIContext";
+import { PrivacyProvider } from "./contexts/PrivacyContext"; // IMPORTED
 import { MINT_COST, MINT_REWARD_GOV } from "./constants";
 
 // Custom Hooks (Backend Logic)
@@ -39,6 +41,7 @@ import { usePWA } from "./hooks/usePWA";
 
 const AppContent: React.FC = () => {
   const { t } = useLanguage();
+  const { showToast, showConfirm } = useGlobalUI(); 
   const [currentView, setCurrentView] = useState<ViewState>("LANDING");
   const [showSyncModal, setShowSyncModal] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -48,19 +51,11 @@ const AppContent: React.FC = () => {
   const { deferredPrompt, isIOS, isStandalone, installPWA } = usePWA();
   const [forceShowPWA, setForceShowPWA] = useState(false);
 
-  // Custom Toast State
-  const [gameToast, setGameToast] = useState<{ message: string; type: ToastType } | null>(null);
-
   // 1. GAME STATE (Virtual Database)
-  // ***************************************************************
-  // * CORREZIONE: Destrutturiamo tutte le proprietà di stato per  *
-  // * garantire che React tracci i cambiamenti e forzi il re-render *
-  // * per i componenti che dipendono da esse (come Admin).        *
-  // ***************************************************************
   const { 
     user, zones, setUser, setZones, loading, transactions, logTransaction, recoveryMode,
-    // Variabili Globali necessarie per il re-render di AppContent/Admin
     lastBurnTimestamp,
+    totalBurned,
     govToRunRate,
     marketItems,
     missions,
@@ -70,12 +65,10 @@ const AppContent: React.FC = () => {
     leaderboards,
     levels,
     allUsers,
-    // Manteniamo il resto dell'oggetto con spread operator per le funzioni di mutazione
     ...gameState
   } = useGameState();
 
   // 2. WORKFLOWS (Business Logic)
-  // Passed recordRun to ensure atomic DB updates
   const runWorkflow = useRunWorkflow({ 
       user, zones, setUser, setZones, 
       logTransaction, 
@@ -84,50 +77,48 @@ const AppContent: React.FC = () => {
   
   const achievementSystem = useAchievements({ 
       user, zones, 
-      missions: missions, // Usiamo la variabile destrutturata
-      badges: badges,     // Usiamo la variabile destrutturata
+      missions: missions, 
+      badges: badges,
       setUser,
       logTransaction 
   });
 
+  // --- SCROLL TO TOP ON VIEW CHANGE ---
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [currentView]);
+
   // --- AUTOMATIC REDIRECT & MODAL HANDLING ---
   useEffect(() => {
-    // Check if recovery mode triggered
     if (recoveryMode) {
         setShowLoginModal(true);
     }
 
-    // If user is authenticated
     if (user) {
-        // If currently on landing page, move to dashboard
         if (currentView === "LANDING") {
             setCurrentView("DASHBOARD");
         }
-        // Force close login modal if it's open and NOT in recovery mode
         if (showLoginModal && !recoveryMode) {
             setShowLoginModal(false);
         }
         
-        // Security Check: If trying to access ADMIN but not admin, kick to dashboard
         if (currentView === "ADMIN" && !user.isAdmin) {
             setCurrentView("DASHBOARD");
         }
 
     } else if (!loading && !user && currentView !== "LANDING") {
-        // If logged out and loading finished, return to landing
-        // But allow rules/privacy pages to be viewed without login
         const publicPages: ViewState[] = ["RULES", "WHITEPAPER", "HOW_TO_PLAY", "PRIVACY", "TERMS", "COMMUNITY"];
         if (!publicPages.includes(currentView)) {
             setCurrentView("LANDING");
         }
     }
-  }, [user, loading, currentView, showLoginModal, recoveryMode]); // Manteniamo le dipendenze essenziali
+  }, [user, loading, currentView, showLoginModal, recoveryMode]);
 
   // --- WRAPPERS FOR AUTH TO SHOW TOASTS ---
   const handleLogin = async (email: string, password: string) => {
       const result = await gameState.login(email, password);
       if (!result.error) {
-          setGameToast({ message: "Login Successful. Welcome back.", type: 'SUCCESS' });
+          showToast("Login Successful. Welcome back.", 'SUCCESS');
       }
       return result;
   };
@@ -135,11 +126,10 @@ const AppContent: React.FC = () => {
   const handleRegister = async (email: string, password: string, username: string) => {
       const result = await gameState.register(email, password, username);
       if (!result.error) {
-          // If session exists, auto-login happened. If not, email confirmation might be needed.
           if (result.data?.session) {
-              setGameToast({ message: "Registration Complete. Logging in...", type: 'SUCCESS' });
+              showToast("Registration Complete. Logging in...", 'SUCCESS');
           } else {
-              setGameToast({ message: "Registration Complete. Check email.", type: 'SUCCESS' });
+              showToast("Registration Complete. Check email.", 'SUCCESS');
           }
       }
       return result;
@@ -157,7 +147,7 @@ const AppContent: React.FC = () => {
       if (!user) return;
       const z = zones.find(z => z.id === zoneId);
       if (z && z.shieldExpiresAt && z.shieldExpiresAt > Date.now()) {
-          alert(t('alert.zone_shielded'));
+          showToast(t('alert.zone_shielded'), 'ERROR');
           return;
       }
       // Conquest Cost Check
@@ -165,39 +155,46 @@ const AppContent: React.FC = () => {
           setShowInsufficientFundsModal(true);
           return;
       }
-      if (window.confirm(t('alert.claim_confirm'))) {
-          gameState.claimZone(zoneId);
-          setGameToast({ message: `${t('alert.zone_claimed')} +25 GOV`, type: 'SUCCESS' });
-      }
+      
+      showConfirm({
+          title: t('zone.action.claim'),
+          message: t('alert.claim_confirm'),
+          onConfirm: () => {
+              gameState.claimZone(zoneId);
+              showToast(`${t('alert.zone_claimed')} +25 GOV`, 'SUCCESS');
+          }
+      });
   };
 
   const handleBoostZone = (zoneId: string) => {
       if (!user) return;
       const item = user.inventory.find(i => i.type === "BOOST");
-      if (!item) { alert(t('alert.need_item') + " Boost."); return; }
+      if (!item) { 
+          showToast(t('alert.need_item') + " Boost.", 'ERROR'); 
+          return; 
+      }
       
       gameState.useItem(item, zoneId);
-      setGameToast({ message: `${t('alert.item_used')} ${item.name}`, type: 'BOOST' });
   };
 
   const handleDefendZone = (zoneId: string) => {
       if (!user) return;
       const item = user.inventory.find(i => i.type === "DEFENSE");
-      if (!item) { alert(t('alert.need_item') + " Defense."); return; }
+      if (!item) { 
+          showToast(t('alert.need_item') + " Defense.", 'ERROR'); 
+          return; 
+      }
       
       gameState.useItem(item, zoneId);
-      setGameToast({ message: `${t('alert.item_used')} ${item.name}`, type: 'DEFENSE' });
   };
 
   const handleLogout = async () => {
       await gameState.logout();
-      window.location.reload(); // Forces reload to clear state and return to Landing
+      window.location.reload(); 
   };
 
-  // Auth Handlers
   const handleOpenLogin = () => setShowLoginModal(true);
   
-  // Install Handler for Footer
   const handleFooterInstall = () => {
       if (deferredPrompt) {
           installPWA();
@@ -210,7 +207,6 @@ const AppContent: React.FC = () => {
   const showNavbar = !isLanding && user;
   const isDashboard = currentView === "DASHBOARD";
 
-  // Determine if any full-screen modal is open to hide footer elements
   const isAnyModalOpen = 
       showSyncModal || 
       showLoginModal ||
@@ -225,15 +221,6 @@ const AppContent: React.FC = () => {
 
       <main className={`flex-1 bg-gray-900 relative flex flex-col ${showNavbar && !isDashboard ? "pb-16 md:pb-0" : ""}`}>
         
-        {/* Render Custom Toast */}
-        {gameToast && (
-            <GameToast 
-                message={gameToast.message} 
-                type={gameToast.type} 
-                onClose={() => setGameToast(null)} 
-            />
-        )}
-
         {/* PWA Install Prompt */}
         <PWAInstallPrompt 
             isAuthenticated={!!user} 
@@ -245,6 +232,9 @@ const AppContent: React.FC = () => {
             onCloseForce={() => setForceShowPWA(false)}
         />
 
+        {/* Cookie Consent Banner */}
+        <CookieBanner onNavigate={setCurrentView} />
+
         <div className="flex-1 relative">
           {isLanding && <LandingPage onLogin={handleOpenLogin} onNavigate={setCurrentView} />}
 
@@ -254,8 +244,8 @@ const AppContent: React.FC = () => {
                 <Dashboard
                   user={user}
                   zones={zones}
-                  badges={badges} // Variabile destrutturata
-                  users={allUsers} // Variabile destrutturata
+                  badges={badges} 
+                  users={allUsers} 
                   onSyncRun={runWorkflow.startSync}
                   onClaim={handleClaimZone}
                   onBoost={handleBoostZone}
@@ -271,20 +261,22 @@ const AppContent: React.FC = () => {
                       user={user}
                       transactions={transactions}
                       onBuyFiat={gameState.buyFiatGov} 
-                      govToRunRate={govToRunRate} // Variabile destrutturata
+                      govToRunRate={govToRunRate} 
                       onSwapGovToRun={gameState.swapGovToRun}
+                      lastBurnTimestamp={lastBurnTimestamp}
+                      totalBurned={totalBurned}
                   />
               )}
               {currentView === "INVENTORY" && <Inventory user={user} zones={zones} onUseItem={gameState.useItem} />}
               
               {currentView === "LEADERBOARD" && (
                   <Leaderboard 
-                      users={allUsers} // Variabile destrutturata
+                      users={allUsers} 
                       currentUser={user} 
                       zones={zones} 
-                      badges={badges} // Variabile destrutturata
-                      leaderboards={leaderboards} // Variabile destrutturata
-                      levels={levels} // Variabile destrutturata
+                      badges={badges} 
+                      leaderboards={leaderboards} 
+                      levels={levels} 
                   />
               )}
               
@@ -292,13 +284,13 @@ const AppContent: React.FC = () => {
                 <Profile
                   user={user}
                   zones={zones}
-                  missions={missions} // Variabile destrutturata
-                  badges={badges} // Variabile destrutturata
-                  levels={levels} // Variabile destrutturata
-                  leaderboards={leaderboards} // Variabile destrutturata
-                  bugReports={bugReports} // Variabile destrutturata
-                  suggestions={suggestions} // Variabile destrutturata
-                  allUsers={allUsers} // Variabile destrutturata
+                  missions={missions} 
+                  badges={badges} 
+                  levels={levels} 
+                  leaderboards={leaderboards} 
+                  bugReports={bugReports} 
+                  suggestions={suggestions} 
+                  allUsers={allUsers} 
                   onUpdateUser={gameState.updateUser}
                   onUpgradePremium={gameState.upgradePremium}
                   onClaim={handleClaimZone}
@@ -321,9 +313,6 @@ const AppContent: React.FC = () => {
                   leaderboards={leaderboards}
                   levels={levels}
                   allUsers={allUsers} 
-                  // ***************************************************************
-                  // * QUI PASSAMO lastBurnTimestamp, ORA CORRETTAMENTE TRACCIATO  *
-                  // ***************************************************************
                   lastBurnTimestamp={lastBurnTimestamp} 
                   
                   onAddItem={gameState.addItem}
@@ -339,7 +328,14 @@ const AppContent: React.FC = () => {
                   onDeleteZone={gameState.deleteZone}
                   onTriggerBurn={gameState.triggerGlobalBurn}
                   onDistributeRewards={gameState.distributeZoneRewards}
-                  onResetSeason={() => { if(confirm("Reset?")) gameState.setAllUsers({}); }}
+                  onResetSeason={() => { 
+                      showConfirm({
+                          title: "Reset Season",
+                          message: "Are you sure? This will wipe all distance data.",
+                          onConfirm: () => gameState.setAllUsers({}),
+                          isDestructive: true
+                      });
+                  }}
                   onUpdateExchangeRate={gameState.setGovToRunRate}
                   onAddLeaderboard={gameState.addLeaderboard}
                   onUpdateLeaderboard={gameState.updateLeaderboard}
@@ -365,7 +361,7 @@ const AppContent: React.FC = () => {
           {currentView === "WHITEPAPER" && <Whitepaper onBack={() => setCurrentView(user ? "DASHBOARD" : "LANDING")} onNavigate={setCurrentView} />}
           {currentView === "HOW_TO_PLAY" && <HowToPlay onBack={() => setCurrentView(user ? "DASHBOARD" : "LANDING")} />}
           {currentView === "PRIVACY" && <Privacy />}
-          {currentView === "TERMS" && <Terms />}
+          {currentView === "TERMS" && <Terms onNavigate={setCurrentView} />}
           {currentView === "COMMUNITY" && <Community />}
         </div>
       </main>
@@ -496,7 +492,11 @@ const AppContent: React.FC = () => {
 const App: React.FC = () => {
     return (
         <LanguageProvider>
-            <AppContent />
+            <GlobalUIProvider>
+                <PrivacyProvider>
+                    <AppContent />
+                </PrivacyProvider>
+            </GlobalUIProvider>
         </LanguageProvider>
     );
 };

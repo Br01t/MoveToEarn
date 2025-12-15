@@ -3,6 +3,7 @@ import React from 'react';
 import { ViewState } from '../types';
 import { useLanguage } from '../LanguageContext';
 import { Download } from 'lucide-react';
+import { usePrivacy } from '../contexts/PrivacyContext';
 
 interface FooterProps {
     onNavigate: (view: ViewState) => void;
@@ -16,6 +17,7 @@ interface FooterProps {
 
 const Footer: React.FC<FooterProps> = ({ onNavigate, currentView, isAuthenticated, isHidden, onInstall, isInstallable, isStandalone }) => {
   const { t } = useLanguage();
+  const { openBanner } = usePrivacy();
 
   // 1. DASHBOARD MODE: No Footer
   if (currentView === 'DASHBOARD') {
@@ -38,6 +40,9 @@ const Footer: React.FC<FooterProps> = ({ onNavigate, currentView, isAuthenticate
            <button onClick={() => onNavigate('HOW_TO_PLAY')} className="hover:text-emerald-400 transition-colors">{t('footer.export_guide')}</button>
            <button onClick={() => onNavigate('PRIVACY')} className="hover:text-emerald-400 transition-colors">{t('footer.privacy')}</button>
            <button onClick={() => onNavigate('TERMS')} className="hover:text-emerald-400 transition-colors">{t('footer.terms')}</button>
+           
+           <button onClick={openBanner} className="hover:text-emerald-400 transition-colors">{t('footer.cookies')}</button>
+
            <button onClick={() => onNavigate('COMMUNITY')} className="hover:text-emerald-400 transition-colors">{t('footer.community')}</button>
            
            {isAuthenticated && (

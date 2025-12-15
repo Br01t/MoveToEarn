@@ -1,11 +1,13 @@
 
 import { supabase } from '../../supabaseClient';
+import { useGlobalUI } from '../../contexts/GlobalUIContext';
 
 export const useGameAuth = (
     setUser: (u: any) => void, 
     setZones: (z: any[]) => void, 
     setRecoveryMode: (b: boolean) => void
 ) => {
+  const { showToast } = useGlobalUI();
     
   const login = async (email: string, password: string) => await supabase.auth.signInWithPassword({ email, password });
   
@@ -20,7 +22,7 @@ export const useGameAuth = (
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (!error) {
           setRecoveryMode(false); 
-          alert("Password updated successfully!");
+          showToast("Password updated successfully!", 'SUCCESS');
       }
       return { error };
   };

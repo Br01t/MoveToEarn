@@ -24,13 +24,14 @@ export const useGameData = () => {
   const [loading, setLoading] = useState(true);
   const [recoveryMode, setRecoveryMode] = useState(false);
   const [lastBurnTimestamp, setLastBurnTimestamp] = useState<number>(0);
+  const [totalBurned, setTotalBurned] = useState<number>(0);
 
   // --- DATA FETCHING ---
   const fetchGameData = async () => {
       try {
           const [
               profilesRes, missionsRes, badgesRes, itemsRes, zonesRes,
-              leaderboardsRes, levelsRes, reportsRes, suggestionsRes, lastBurnRes
+              leaderboardsRes, levelsRes, reportsRes, suggestionsRes, lastBurnRes, totalBurnRes
           ] = await Promise.all([
               supabase.from('profiles').select('*'),
               supabase.from('missions').select('*'),
@@ -41,7 +42,8 @@ export const useGameData = () => {
               supabase.from('levels').select('*').order('level', { ascending: true }),
               supabase.from('bug_reports').select('*').order('timestamp', { ascending: false }),
               supabase.from('suggestions').select('*').order('timestamp', { ascending: false }),
-              supabase.from('transactions').select('timestamp').eq('description', 'Global Burn Protocol (System)').order('timestamp', { ascending: false }).limit(1).maybeSingle()
+              supabase.from('transactions').select('timestamp').eq('description', 'Global Burn Protocol (System)').order('timestamp', { ascending: false }).limit(1).maybeSingle(),
+              supabase.from('transactions').select('amount').eq('description', 'Global Burn Protocol (System)')
           ]);
 
           if (profilesRes.data) {
@@ -198,6 +200,11 @@ export const useGameData = () => {
               }
           }
           setLastBurnTimestamp(timestampValue);
+
+          if (totalBurnRes.data) {
+              const total = totalBurnRes.data.reduce((acc, curr) => acc + (curr.amount || 0), 0);
+              setTotalBurned(total);
+          }
 
       } catch (err) {
           console.error("❌ [GAME STATE] Critical error fetching data:", err);
@@ -411,8 +418,8 @@ export const useGameData = () => {
 
   return {
       user, zones, allUsers, missions, badges, marketItems, leaderboards, levels, bugReports, suggestions, transactions,
-      govToRunRate, loading, recoveryMode, lastBurnTimestamp,
-      setUser, setZones, setAllUsers, setTransactions, setMarketItems, setBugReports, setSuggestions, setGovToRunRate, setRecoveryMode, setLastBurnTimestamp,
+      govToRunRate, loading, recoveryMode, lastBurnTimestamp, totalBurned,
+      setUser, setZones, setAllUsers, setTransactions, setMarketItems, setBugReports, setSuggestions, setGovToRunRate, setRecoveryMode, setLastBurnTimestamp, setTotalBurned,
       fetchGameData, fetchUserProfile, fetchZoneLeaderboard
   };
 };

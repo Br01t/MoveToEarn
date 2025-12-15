@@ -50,7 +50,8 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [lastMousePos, setLastMousePos] = useState({ x: 0, y: 0 });
   const svgRef = useRef<SVGSVGElement>(null);
 
-  const prevZonesLengthRef = useRef(zones.length);
+  // Initialize to 0 to force density centering on mount even if data exists
+  const prevZonesLengthRef = useRef(0);
 
   // Derived Values - earningRate logic removed
 
@@ -100,21 +101,69 @@ const Dashboard: React.FC<DashboardProps> = ({
   }, [selectedZone]);
 
   // --- Effects ---
+  
+  // DENSITY CENTERING ALGORITHM
+  // Finds the cluster with the most zones and calculates its center
+  const calculateDensityCenter = (currentZones: Zone[]) => {
+      if (currentZones.length === 0) return null;
+
+      // 1. Group zones into "buckets" (sectors of approx 5x5 hexes)
+      const CLUSTER_SIZE = 5;
+      const clusters: Record<string, Zone[]> = {};
+
+      currentZones.forEach(z => {
+          const key = `${Math.floor(z.x / CLUSTER_SIZE)},${Math.floor(z.y / CLUSTER_SIZE)}`;
+          if (!clusters[key]) clusters[key] = [];
+          clusters[key].push(z);
+      });
+
+      // 2. Find the cluster with the highest population
+      let densestCluster: Zone[] = [];
+      Object.values(clusters).forEach(c => {
+          if (c.length > densestCluster.length) densestCluster = c;
+      });
+
+      // If broad dispersion, fallback to all zones
+      const targetGroup = densestCluster.length > 0 ? densestCluster : currentZones;
+
+      // 3. Calculate Average Axial Coordinate (Q, R) of that cluster
+      let sumQ = 0, sumR = 0;
+      targetGroup.forEach(z => {
+          sumQ += z.x;
+          sumR += z.y;
+      });
+
+      const avgQ = sumQ / targetGroup.length;
+      const avgR = sumR / targetGroup.length;
+
+      // 4. Convert to Pixel Coordinates
+      const pos = getHexPixelPosition(avgQ, avgR, HEX_SIZE);
+      
+      return {
+          x: window.innerWidth / 2 - pos.x * 0.8, // Using initial scale 0.8
+          y: window.innerHeight / 2 - pos.y * 0.8
+      };
+  };
+
   useEffect(() => {
-    if (zones.length > prevZonesLengthRef.current) {
+    // CASE A: First Load (Zones appear from 0 to N) -> Center on Density
+    if (prevZonesLengthRef.current === 0 && zones.length > 0) {
+        const center = calculateDensityCenter(zones);
+        if (center) {
+            setView(v => ({ ...v, x: center.x, y: center.y }));
+        }
+    }
+    // CASE B: New Zone Minted (N -> N+1) -> Focus on the specific new zone
+    else if (zones.length > prevZonesLengthRef.current) {
         const newZone = zones[zones.length - 1];
         const pos = getHexPixelPosition(newZone.x, newZone.y, HEX_SIZE);
         const newX = window.innerWidth / 2 - pos.x * view.scale;
         const newY = window.innerHeight / 2 - pos.y * view.scale;
         
-        // Only center map on new zones if it's a runtime update (minting), not initial load
-        if (prevZonesLengthRef.current > 0) {
-            setView(v => ({ ...v, x: newX, y: newY }));
-            // Note: We do NOT auto-select the zone here anymore to keep details closed by default
-        }
+        setView(v => ({ ...v, x: newX, y: newY }));
     }
     prevZonesLengthRef.current = zones.length;
-  }, [zones, view.scale]);
+  }, [zones]); // Removed view.scale dependency to avoid loops during init
 
   // --- Map Interactions ---
   // Note: Wheel zoom handler removed to restrict zooming to buttons only.
@@ -156,20 +205,10 @@ const Dashboard: React.FC<DashboardProps> = ({
   const handleRecenter = () => {
       if (zones.length === 0) return;
       
-      let sumX = 0, sumY = 0;
-      zones.forEach(z => {
-          const pos = getHexPixelPosition(z.x, z.y, HEX_SIZE);
-          sumX += pos.x;
-          sumY += pos.y;
-      });
-      const centerX = sumX / zones.length;
-      const centerY = sumY / zones.length;
-
-      setView(prev => ({
-          ...prev,
-          x: window.innerWidth / 2 - centerX * prev.scale,
-          y: window.innerHeight / 2 - centerY * prev.scale
-      }));
+      const center = calculateDensityCenter(zones);
+      if (center) {
+          setView(v => ({ ...v, x: center.x, y: center.y }));
+      }
   };
 
   // --- Prep Render Data ---

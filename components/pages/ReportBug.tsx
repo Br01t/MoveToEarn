@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Bug, Camera, Send, CheckCircle, AlertTriangle, Loader2 } from 'lucide-react';
 import { useLanguage } from '../../LanguageContext';
 import { compressImage } from '../../utils/imageCompression';
+import { useGlobalUI } from '../../contexts/GlobalUIContext';
 
 interface ReportBugProps {
   onReport: (description: string, screenshot?: File) => Promise<boolean>;
@@ -10,6 +11,7 @@ interface ReportBugProps {
 
 const ReportBug: React.FC<ReportBugProps> = ({ onReport }) => {
   const { t } = useLanguage();
+  const { showToast } = useGlobalUI();
   const [description, setDescription] = useState('');
   const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -22,7 +24,7 @@ const ReportBug: React.FC<ReportBugProps> = ({ onReport }) => {
       const file = e.target.files[0];
       // Increased limit to 20MB for high-res mobile photos (compression will reduce this significantly later)
       if (file.size > 20 * 1024 * 1024) { 
-          alert("File too large. Max 20MB.");
+          showToast("File too large. Max 20MB.", 'ERROR');
           return;
       }
       
@@ -34,7 +36,7 @@ const ReportBug: React.FC<ReportBugProps> = ({ onReport }) => {
           setPreviewUrl(URL.createObjectURL(compressed));
       } catch (err) {
           console.error("Compression error:", err);
-          alert("Failed to process image.");
+          showToast("Failed to process image.", 'ERROR');
       }
     }
   };

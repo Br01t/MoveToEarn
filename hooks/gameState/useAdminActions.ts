@@ -1,6 +1,7 @@
 
 import { supabase } from '../../supabaseClient';
 import { Item, Mission, Badge, Zone, LeaderboardConfig, LevelConfig, User, AchievementLog } from '../../types';
+import { useGlobalUI } from '../../contexts/GlobalUIContext';
 
 interface AdminActionsProps {
     fetchGameData: () => Promise<void>;
@@ -19,6 +20,7 @@ interface AdminActionsProps {
 export const useAdminActions = ({ 
     fetchGameData, user, lastBurnTimestamp, setLastBurnTimestamp, fetchUserProfile, setAllUsers, logTransaction, setBugReports, setSuggestions, setZones, allUsers 
 }: AdminActionsProps) => {
+  const { showToast } = useGlobalUI();
 
   const triggerGlobalBurn = async () => {
       if (!user || !user.isAdmin) return { success: false, message: "Unauthorized" };
@@ -130,9 +132,9 @@ export const useAdminActions = ({
 
   const distributeZoneRewards = async () => {
       const { error } = await supabase.rpc('distribute_zone_rewards');
-      if (error) alert("Distribution Failed: " + error.message);
+      if (error) showToast("Distribution Failed: " + error.message, 'ERROR');
       else {
-          alert("Rewards Distributed Successfully via RPC!");
+          showToast("Rewards Distributed Successfully via RPC!", 'SUCCESS');
           await fetchGameData();
       }
   };
