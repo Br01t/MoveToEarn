@@ -117,13 +117,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   }, [zones, view.scale]);
 
   // --- Map Interactions ---
-  const handleWheel = (e: React.WheelEvent) => {
-    e.preventDefault();
-    const scaleFactor = 0.1;
-    const direction = e.deltaY > 0 ? -1 : 1;
-    const newScale = Math.min(Math.max(0.3, view.scale + direction * scaleFactor), 2.5);
-    setView(v => ({ ...v, scale: newScale }));
-  };
+  // Note: Wheel zoom handler removed to restrict zooming to buttons only.
 
   const handleMouseDown = (e: React.MouseEvent) => {
     setIsDragging(true);
@@ -158,6 +152,26 @@ const Dashboard: React.FC<DashboardProps> = ({
   const zoomIn = () => setView(v => ({ ...v, scale: Math.min(v.scale + 0.2, 2.5) }));
   const zoomOut = () => setView(v => ({ ...v, scale: Math.max(v.scale - 0.2, 0.3) }));
 
+  // Center map on the "Empire Center" (Geometric center of all zones)
+  const handleRecenter = () => {
+      if (zones.length === 0) return;
+      
+      let sumX = 0, sumY = 0;
+      zones.forEach(z => {
+          const pos = getHexPixelPosition(z.x, z.y, HEX_SIZE);
+          sumX += pos.x;
+          sumY += pos.y;
+      });
+      const centerX = sumX / zones.length;
+      const centerY = sumY / zones.length;
+
+      setView(prev => ({
+          ...prev,
+          x: window.innerWidth / 2 - centerX * prev.scale,
+          y: window.innerHeight / 2 - centerY * prev.scale
+      }));
+  };
+
   // --- Prep Render Data ---
   const ownerDetails = selectedZone ? getOwnerDetails(selectedZone.ownerId) : null;
 
@@ -180,6 +194,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           lastRun={lastRun}
           zones={zones}
           onViewHistory={() => { setHistoryPage(1); setShowHistoryModal(true); }}
+          onRecenter={handleRecenter}
       />
 
       <DashboardControls onZoomIn={zoomIn} onZoomOut={zoomOut} />
@@ -220,7 +235,6 @@ const Dashboard: React.FC<DashboardProps> = ({
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={() => setIsDragging(false)}
-          onWheel={handleWheel}
       />
 
       {/* ZONE DETAILS PANEL */}

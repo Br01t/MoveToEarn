@@ -162,8 +162,9 @@ export const processRunRewards = (
     const involvedZonesList = Array.from(involvedZoneIds);
     const zoneCount = involvedZonesList.length;
     
-    const boostItem = user.inventory.find(i => i.type === 'BOOST');
-    const baseRate = boostItem ? RUN_RATE_BOOST : RUN_RATE_BASE;
+    // REMOVED: Global inventory check. Boost rate is now strictly zone-dependent.
+    // const boostItem = user.inventory.find(i => i.type === 'BOOST');
+    // const baseRate = boostItem ? RUN_RATE_BOOST : RUN_RATE_BASE;
 
     let totalGrossRun = 0;
     const zoneBreakdown: Record<string, number> = {};
@@ -185,11 +186,18 @@ export const processRunRewards = (
             if (involvedZoneIds.has(z.id)) {
                 involvedZoneNames.push(z.name);
                 
-                // Calculate earnings: Split KM * Rate * Interest
-                const zoneEarnings = kmPerZone * baseRate * (1 + (z.interestRate / 100));
+                // UPDATED CALCULATION:
+                // Check if THIS SPECIFIC ZONE has an active boost.
+                // It does NOT depend on user holding an item, but on the zone state (consumed item).
+                const isBoostActive = z.boostExpiresAt ? z.boostExpiresAt > Date.now() : false;
+                const effectiveRate = isBoostActive ? RUN_RATE_BOOST : RUN_RATE_BASE;
+
+                // Gross Earnings = Distance Portion * Effective Rate.
+                const zoneEarnings = kmPerZone * effectiveRate;
                 totalGrossRun += zoneEarnings;
 
                 // Pool Contribution: 2% of earnings generated in this zone context
+                // This 2% is taken FROM the gross earnings (subtracted from user share later)
                 const poolContribution = zoneEarnings * REWARD_SPLIT_POOL;
 
                 let newZone = { ...z };
@@ -206,10 +214,6 @@ export const processRunRewards = (
                     if (newZone.recordKm > 150 && newZone.defenseLevel < 3) newZone.defenseLevel = 3;
                     if (newZone.recordKm > 500 && newZone.defenseLevel < 4) newZone.defenseLevel = 4;
                     if (newZone.recordKm > 1000 && newZone.defenseLevel < 5) newZone.defenseLevel = 5;
-
-                    if (newZone.interestRate < 5.0) {
-                        newZone.interestRate = parseFloat((newZone.interestRate + 0.05).toFixed(2));
-                    }
                 }
                 return newZone;
             }
@@ -217,7 +221,8 @@ export const processRunRewards = (
         });
     } else {
         // Uncharted Territory (No zones within 10km)
-        totalGrossRun = data.totalKm * baseRate;
+        // Uses Base Rate as there is no zone to have a boost on.
+        totalGrossRun = data.totalKm * RUN_RATE_BASE;
         updatedZones = [...allZones]; // No updates to zones
     }
 
@@ -245,6 +250,7 @@ export const processRunRewards = (
         locationName = "Uncharted Area"; 
     }
 
+    // USER SHARE = Gross * 0.98
     const totalUserRun = totalGrossRun * REWARD_SPLIT_USER;
 
     return {

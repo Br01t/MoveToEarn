@@ -21,16 +21,19 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, user, onLogout
     const activeClass = isAdmin ? 'text-red-400 bg-red-500/10' : 'text-emerald-400 bg-emerald-500/10';
     const inactiveClass = isAdmin ? 'text-gray-500 hover:text-red-400' : 'text-gray-400 hover:text-white';
 
-    // Mobile layout adjustment: slightly tighter padding for 2-row layout
+    // Mobile layout adjustment: 
+    // Increased padding (py-2.5 instead of py-1.5)
+    // Increased Icon size (24 instead of 18)
+    // Increased Text size (text-[11px] instead of text-[9px])
     return (
       <button
         onClick={() => onNavigate(view)}
         className={`flex flex-col items-center justify-center rounded-lg transition-colors w-full ${
-          compact ? 'py-1.5' : 'py-2 px-3 md:flex-row md:space-x-2'
+          compact ? 'py-2.5' : 'py-2 px-3 md:flex-row md:space-x-2'
         } ${isActive ? activeClass : inactiveClass}`}
       >
-        <Icon size={compact ? 18 : 20} className={isActive ? 'stroke-2' : 'stroke-1'} />
-        <span className={`${compact ? 'text-[9px] mt-0.5' : 'text-[10px] md:text-sm mt-1 md:mt-0'} font-medium truncate max-w-full leading-tight tracking-tight`}>
+        <Icon size={compact ? 24 : 20} className={isActive ? 'stroke-2' : 'stroke-1'} />
+        <span className={`${compact ? 'text-[11px] mt-1' : 'text-[10px] md:text-sm mt-1 md:mt-0'} font-medium truncate max-w-full leading-tight tracking-tight`}>
             {mobileLabel || label}
         </span>
       </button>
@@ -87,23 +90,24 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, user, onLogout
       </nav>
 
       {/* MOBILE TOP BAR (Logo + Language + Admin + Logout) */}
-      <nav className="bg-gray-900 border-b border-gray-800 sticky top-0 z-50 h-14 md:hidden flex justify-between items-center px-4">
-          <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-500" onClick={() => onNavigate('DASHBOARD')}>
+      {/* Increased height to h-16, larger text and icons */}
+      <nav className="bg-gray-900 border-b border-gray-800 sticky top-0 z-50 h-16 md:hidden flex justify-between items-center px-4 shadow-lg">
+          <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-500" onClick={() => onNavigate('DASHBOARD')}>
             ZoneRun
           </span>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
              <button
                 onClick={toggleLanguage}
-                className="text-xl hover:scale-110 transition-transform"
+                className="text-2xl hover:scale-110 transition-transform"
               >
                 {language === 'en' ? '🇮🇹' : '🇬🇧'}
               </button>
              {user.isAdmin && (
                  <button onClick={() => onNavigate('ADMIN')} className={`text-gray-400 ${currentView === 'ADMIN' ? 'text-red-400' : ''}`}>
-                    <Settings size={20}/>
+                    <Settings size={24}/>
                  </button>
              )}
-             <button onClick={onLogout} className="text-gray-400"><LogOut size={20}/></button>
+             <button onClick={onLogout} className="text-gray-400 hover:text-white transition-colors"><LogOut size={24}/></button>
           </div>
       </nav>
 

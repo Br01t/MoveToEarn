@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Search, X, Globe, Activity, History } from 'lucide-react';
+import { Search, X, Globe, Activity, History, Crosshair } from 'lucide-react';
 import { useLanguage } from '../../LanguageContext';
 import { RunEntry, Zone } from '../../types';
 
@@ -15,6 +15,7 @@ interface DashboardSidebarProps {
   lastRun?: RunEntry;
   onViewHistory: () => void;
   zones: Zone[];
+  onRecenter: () => void;
 }
 
 const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
@@ -24,18 +25,27 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
   countries,
   lastRun,
   onViewHistory,
-  zones
+  zones,
+  onRecenter
 }) => {
   const { t } = useLanguage();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isLastRunOpen, setIsLastRunOpen] = useState(false);
 
   // Resolve location names for last run if available
-  const lastRunLocation = lastRun 
-      ? (lastRun.involvedZones && lastRun.involvedZones.length > 0
-          ? lastRun.involvedZones.map(id => zones.find(z => z.id === id)?.name).filter(Boolean).join(', ')
-          : lastRun.location)
-      : '';
+  // Fallback to run.location if IDs don't match any known zone (e.g. deleted zone or legacy data)
+  const lastRunLocation = React.useMemo(() => {
+      if (!lastRun) return '';
+      
+      let names: string[] = [];
+      if (lastRun.involvedZones && lastRun.involvedZones.length > 0) {
+          names = lastRun.involvedZones
+              .map(id => zones.find(z => z.id === id)?.name)
+              .filter((n): n is string => !!n);
+      }
+      
+      return names.length > 0 ? names.join(', ') : (lastRun.location || 'Unknown Location');
+  }, [lastRun, zones]);
 
   return (
     <div className="absolute top-14 left-2 z-20 flex flex-col gap-2 items-start pointer-events-none">
@@ -113,6 +123,14 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
                )}
            </div>
         )}
+
+        <button 
+            onClick={onRecenter}
+            className="w-10 h-10 bg-gray-800/90 backdrop-blur-md rounded-full border border-gray-700 shadow-lg flex items-center justify-center text-gray-400 hover:text-white hover:border-gray-500 pointer-events-auto transition-colors z-30"
+            title="Center Map"
+        >
+            <Crosshair size={20} />
+        </button>
     </div>
   );
 };

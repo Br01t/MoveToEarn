@@ -21,7 +21,6 @@ interface HexMapProps {
   onTouchStart: (e: React.TouchEvent) => void;
   onTouchMove: (e: React.TouchEvent) => void;
   onTouchEnd: () => void;
-  onWheel: (e: React.WheelEvent) => void;
 }
 
 const HEX_SIZE = 100;
@@ -29,7 +28,7 @@ const HEX_SIZE = 100;
 const HexMap = forwardRef<SVGSVGElement, HexMapProps>(({ 
     zones, user, view, selectedZoneId, onZoneClick, 
     filterMode, filterCountry, searchTerm,
-    onMouseDown, onMouseMove, onMouseUp, onTouchStart, onTouchMove, onTouchEnd, onWheel
+    onMouseDown, onMouseMove, onMouseUp, onTouchStart, onTouchMove, onTouchEnd
 }, ref) => {
   
   // Helper functions internal to rendering
@@ -92,7 +91,6 @@ const HexMap = forwardRef<SVGSVGElement, HexMapProps>(({
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
-        onWheel={onWheel}
     >
       <svg 
         ref={ref}
@@ -199,12 +197,12 @@ const HexMap = forwardRef<SVGSVGElement, HexMapProps>(({
                           {zone.name.length > 18 ? zone.name.substring(0, 16) + '..' : zone.name}
                       </text>
 
-                      {/* 2. Yield Badge */}
-                      <g transform="translate(-22, -5)">
+                      {/* 2. Pool Badge (Replaced Interest %) */}
+                      <g transform="translate(-27, -5)">
                           <rect 
                               x="0" 
                               y="0" 
-                              width="44" 
+                              width="56" 
                               height="20" 
                               rx="6" 
                               fill={getBadgeColor(zone, boosted, shielded)}
@@ -213,14 +211,15 @@ const HexMap = forwardRef<SVGSVGElement, HexMapProps>(({
                               strokeWidth="1"
                           />
                           <text 
-                              x="22" 
+                              x="28" 
                               y="14" 
                               textAnchor="middle" 
                               fill="white"
-                              fontSize="11"
+                              fontSize="10"
                               fontWeight="bold"
+                              style={{ fontFamily: 'monospace' }}
                           >
-                              {zone.interestRate}%
+                              {(zone.interestPool || 0).toFixed(2)} RUN
                           </text>
                       </g>
 
