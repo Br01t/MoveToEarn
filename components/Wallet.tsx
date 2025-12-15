@@ -122,7 +122,7 @@ const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuy
       {/* HEADER */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-2">
          <div>
-            <h1 className="text-3xl font-bold text-white flex items-center gap-2">
+            <h1 className="text-3xl font-bold uppercase tracking-widest text-white flex items-center gap-2">
                <WalletIcon className="text-emerald-400" size={32} /> {t('wallet.title')}
             </h1>
             <p className="text-gray-400 text-sm">{t('wallet.subtitle')}</p>
@@ -188,7 +188,7 @@ const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuy
             {/* RECENT TRANSACTIONS PREVIEW (Non-filtered, just last 5) */}
             <div className="bg-gray-800 rounded-2xl border border-gray-700 p-6 flex-1 flex flex-col min-h-[300px]">
                 <div className="flex justify-between items-center mb-4">
-                   <h3 className="font-bold text-white flex items-center gap-2 text-sm">
+                   <h3 className="font-bold text-white flex items-center gap-2 text-sm uppercase tracking-wide">
                        <History size={16} className="text-gray-400"/> {t('wallet.recent_activity')}
                    </h3>
                    <button 
@@ -256,18 +256,18 @@ const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuy
                 <Flame size={32} className="text-red-500 animate-pulse" />
              </div>
              <div>
-                <h3 className="text-lg font-bold text-white">{t('wallet.burn_event')}</h3>
+                <h3 className="text-lg font-bold text-white uppercase tracking-wide">{t('wallet.burn_event')}</h3>
                 <p className="text-gray-400 text-sm">{t('wallet.next_burn')} <span className="text-white font-mono">{formatTime(timeLeft)}</span></p>
              </div>
           </div>
 
           <div className="flex gap-8 text-center relative z-10">
              <div>
-                <span className="block text-2xl font-bold text-white">{((totalBurned || 0) / 1000000).toFixed(2)}</span>
+                <span className="block text-2xl font-bold font-mono text-white">{((totalBurned || 0) / 1000000).toFixed(2)}</span>
                 <span className="text-xs text-gray-500 uppercase font-bold">{t('wallet.run_burned')}</span>
              </div>
              <div>
-                <span className="block text-2xl font-bold text-white">2%</span>
+                <span className="block text-2xl font-bold font-mono text-white">2%</span>
                 <span className="text-xs text-gray-500 uppercase font-bold">{t('wallet.tax_rate')}</span>
              </div>
           </div>
@@ -281,7 +281,7 @@ const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuy
               {/* Header & Filters */}
               <div className="p-6 border-b border-gray-700 bg-gray-900 rounded-t-2xl space-y-4">
                  <div className="flex justify-between items-center">
-                     <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                     <h3 className="text-xl font-bold uppercase tracking-wide text-white flex items-center gap-2">
                          <History className="text-emerald-400" /> {t('wallet.trans_history')}
                      </h3>
                      <button onClick={() => setShowHistoryModal(false)} className="text-gray-400 hover:text-white transition-colors bg-gray-800 p-2 rounded-full hover:bg-gray-700">

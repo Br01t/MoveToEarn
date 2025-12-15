@@ -63,7 +63,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
                 <Activity size={24} className="text-emerald-400" />
              </div>
           </div>
-          <div className="text-2xl font-black text-white tracking-tighter">
+          <div className="text-2xl font-black text-white uppercase tracking-widest">
             ZONE<span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">RUN</span>
           </div>
         </div>
@@ -92,14 +92,14 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-emerald-500/5 blur-[80px] rounded-full pointer-events-none"></div>
 
           {/* Reduced Title Size */}
-          <h1 className="text-5xl md:text-7xl font-black text-white tracking-tighter leading-[0.9] drop-shadow-2xl relative z-10">
+          <h1 className="text-5xl md:text-7xl font-black text-white tracking-widest uppercase leading-[0.9] drop-shadow-2xl relative z-10">
             Run. Conquer. <br/>
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-cyan-300 to-emerald-400 animate-gradient bg-300%">
                 {t('landing.title_suffix')}
             </span>
           </h1>
           
-          <p className="text-lg md:text-2xl text-gray-400 max-w-2xl mx-auto leading-relaxed font-light tracking-wide">
+          <p className="text-lg md:text-2xl text-gray-400 max-w-2xl mx-auto leading-relaxed font-bold tracking-wide">
             {t('landing.subtitle')}
           </p>
           
@@ -112,7 +112,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
               className="group relative w-full sm:w-auto px-10 py-5 bg-white text-black font-black text-lg rounded-xl transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-3 overflow-hidden shadow-[0_0_40px_rgba(255,255,255,0.3)] hover:shadow-[0_0_60px_rgba(16,185,129,0.6)]"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-emerald-400 via-cyan-400 to-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              <span className="relative z-10 flex items-center gap-2">
+              <span className="relative z-10 flex items-center gap-2 uppercase tracking-wide">
                   <Zap size={20} className="fill-black group-hover:fill-black transition-colors" /> {t('landing.start_btn')}
               </span>
             </button>
@@ -123,7 +123,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
               className="group w-full sm:w-auto px-8 py-5 bg-gray-900 hover:bg-gray-800 border border-gray-700 hover:border-emerald-500 text-white font-bold text-lg rounded-xl transition-all flex items-center justify-center gap-3 backdrop-blur-sm"
             >
               <Terminal size={18} className="text-gray-500 group-hover:text-emerald-400 transition-colors" />
-              <span>{t('landing.game_guide_btn')}</span>
+              <span className="uppercase tracking-wide">{t('landing.game_guide_btn')}</span>
             </button>
 
             {/* Tertiary: Whitepaper */}
@@ -132,7 +132,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
               className="group w-full sm:w-auto px-8 py-5 bg-transparent hover:bg-gray-900 border border-transparent hover:border-gray-700 text-gray-400 hover:text-white font-bold text-lg rounded-xl transition-all flex items-center justify-center gap-3"
             >
               <BookOpen size={18} className="text-gray-600 group-hover:text-cyan-400 transition-colors" />
-              <span>{t('landing.rules_btn')}</span>
+              <span className="uppercase tracking-wide">{t('landing.rules_btn')}</span>
             </button>
 
           </div>
@@ -175,19 +175,19 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
                             <div className="p-4 bg-gray-900 rounded-2xl border border-gray-700 shadow-xl">
                                 {features.find(f => f.key === activeFeature)?.icon}
                             </div>
-                            <h3 className="text-3xl font-bold text-white tracking-tight">{activeContent.title}</h3>
+                            <h3 className="text-3xl font-black text-white tracking-widest uppercase">{activeContent.title}</h3>
                         </div>
                     </div>
 
                     <div className="p-8">
-                        <p className="text-lg text-gray-300 leading-relaxed">
+                        <p className="text-lg text-gray-300 leading-relaxed font-medium">
                             {activeContent.body}
                         </p>
                         
                         <div className="mt-8 pt-6 border-t border-gray-800 flex justify-end">
                             <button 
                                 onClick={() => setActiveFeature(null)}
-                                className="px-6 py-3 bg-white text-black font-bold rounded-xl hover:bg-gray-200 transition-colors"
+                                className="px-6 py-3 bg-white text-black font-bold uppercase tracking-wide rounded-xl hover:bg-gray-200 transition-colors"
                             >
                                 {t('landing.close')}
                             </button>
@@ -234,8 +234,8 @@ const FeatureCard = ({ icon, title, description, color, onClick }: { icon: any, 
           {icon}
         </div>
         
-        <h3 className={`text-xl font-bold text-white mb-3 transition-colors ${textClass}`}>{title}</h3>
-        <p className="text-gray-400 text-sm leading-relaxed group-hover:text-gray-300 transition-colors">{description}</p>
+        <h3 className={`text-xl font-bold uppercase tracking-wide text-white mb-3 transition-colors ${textClass}`}>{title}</h3>
+        <p className="text-gray-400 text-sm leading-relaxed group-hover:text-gray-300 transition-colors font-medium">{description}</p>
         
         <div className={`mt-6 flex items-center gap-2 text-xs font-bold uppercase tracking-wider transition-all duration-300 translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 ${textClass}`}>
             Learn More <ChevronRight size={12} />

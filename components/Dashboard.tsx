@@ -215,7 +215,8 @@ const Dashboard: React.FC<DashboardProps> = ({
   const ownerDetails = selectedZone ? getOwnerDetails(selectedZone.ownerId) : null;
 
   return (
-    <div className="relative w-full h-[calc(100vh-56px)] md:h-[calc(100vh-64px)] overflow-hidden bg-gray-900 shadow-inner">
+    // Changed bg-gray-900 to bg-transparent to show global background
+    <div className="relative w-full h-[calc(100vh-56px)] md:h-[calc(100vh-64px)] overflow-hidden bg-transparent shadow-inner">
       
       <DashboardHUD 
           runBalance={user.runBalance} 

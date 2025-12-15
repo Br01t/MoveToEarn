@@ -17,7 +17,47 @@
 
     <!-- Original Dynamic SVG Favicon -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%2334d399'/%3E%3Cstop offset='100%25' stop-color='%2306b6d4'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpolygon points='50,5 93.3,25 93.3,75 50,95 6.7,75 6.7,25' fill='url(%23g)'/%3E%3Cpath d='M55 22 L62 22 L42 52 L58 52 L38 82 L38 82 L42 58 L28 58 Z' fill='white' transform='translate(5, -2)'/%3E%3C/svg%3E">
+    
+    <!-- FONTS: Rajdhani (Tech/Sci-Fi UI) & JetBrains Mono (Data/Numbers) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Rajdhani', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+              mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+            },
+            letterSpacing: {
+              wide: '.05em',   /* Slightly wider default text */
+              widest: '.15em', /* Aggressive spacing for headers */
+            },
+            // OVERRIDE FONT SIZES TO BE SLIGHTLY LARGER GLOBALLY
+            fontSize: {
+              xs: ['0.8125rem', { lineHeight: '1.5' }], // 13px
+              sm: ['0.9375rem', { lineHeight: '1.5' }], // 15px
+              base: ['1.0625rem', { lineHeight: '1.6' }], // 17px
+              lg: ['1.1875rem', { lineHeight: '1.75' }], // 19px
+              xl: ['1.3125rem', { lineHeight: '1.75' }], // 21px
+              '2xl': ['1.6rem', { lineHeight: '2rem' }], // 25.6px
+              '3xl': ['2rem', { lineHeight: '2.25rem' }], // 32px
+              '4xl': ['2.5rem', { lineHeight: '2.5rem' }], // 40px
+              '5xl': ['3.25rem', { lineHeight: '1' }], 
+              '6xl': ['4rem', { lineHeight: '1' }],
+              '7xl': ['5rem', { lineHeight: '1' }],
+            },
+            animation: {
+              'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            }
+          }
+        }
+      }
+    </script>
+
     <style>
       /* Custom scrollbar for dark theme aesthetics */
       ::-webkit-scrollbar {
@@ -25,18 +65,15 @@
         height: 8px; /* Added height for horizontal bars */
       }
       ::-webkit-scrollbar-track {
-        background: #1f2937;
+        background: #0f172a; /* Darker track matching gray-950 */
       }
       ::-webkit-scrollbar-thumb {
-        background: #4b5563;
+        background: #334155;
         border-radius: 4px;
+        border: 2px solid #0f172a; /* Padding effect */
       }
       ::-webkit-scrollbar-thumb:hover {
-        background: #6b7280;
-      }
-      @keyframes pulse-neon {
-        0%, 100% { box-shadow: 0 0 5px #10b981, 0 0 10px #10b981; }
-        50% { box-shadow: 0 0 20px #10b981, 0 0 30px #10b981; }
+        background: #475569;
       }
 
       /* Utility to hide scrollbar but allow scrolling */
@@ -52,6 +89,7 @@
       body {
         padding-top: env(safe-area-inset-top);
         padding-bottom: env(safe-area-inset-bottom);
+        background-color: #020617; /* Slate 950 */
       }
     </style>
   <!-- <script type="importmap">
@@ -64,12 +102,15 @@
     "vite": "https://aistudiocdn.com/vite@^7.2.7",
     "lucide-react": "https://aistudiocdn.com/lucide-react@^0.556.0",
     "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.1.2",
-    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@^2.87.1"
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@^2.87.1",
+    "fit-file-parser": "https://esm.sh/fit-file-parser@1.9.0",
+    "jszip": "https://esm.sh/jszip@3.10.1"
   }
 }
 </script> -->
 </head>
-  <body class="bg-gray-900 text-white font-sans antialiased selection:bg-emerald-500 selection:text-white">
+  <!-- Removed overflow-hidden from body, added overflow-x-hidden -->
+  <body class="bg-gray-950 text-slate-200 font-sans font-medium tracking-wide antialiased selection:bg-emerald-500 selection:text-black overflow-x-hidden">
     <div id="root"></div>
     <!-- Entry Point for React/Vite -->
     <script type="module" src="./index.tsx"></script>

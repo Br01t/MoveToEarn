@@ -24,7 +24,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, user, onLogout
     // Mobile layout adjustment: 
     // Increased padding (py-2.5 instead of py-1.5)
     // Increased Icon size (24 instead of 18)
-    // Increased Text size (text-[11px] instead of text-[9px])
+    // Text size updated to 'text-xs' (which is now 13px) instead of arbitrary small values
     return (
       <button
         onClick={() => onNavigate(view)}
@@ -33,7 +33,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, user, onLogout
         } ${isActive ? activeClass : inactiveClass}`}
       >
         <Icon size={compact ? 24 : 20} className={isActive ? 'stroke-2' : 'stroke-1'} />
-        <span className={`${compact ? 'text-[11px] mt-1' : 'text-[10px] md:text-sm mt-1 md:mt-0'} font-medium truncate max-w-full leading-tight tracking-tight`}>
+        <span className={`${compact ? 'text-xs mt-1' : 'text-xs md:text-sm mt-1 md:mt-0'} font-bold uppercase tracking-wide truncate max-w-full leading-tight`}>
             {mobileLabel || label}
         </span>
       </button>
@@ -47,7 +47,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, user, onLogout
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
           <div className="flex items-center justify-between h-full">
             <div className="flex items-center">
-              <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-500 cursor-pointer" onClick={() => onNavigate('DASHBOARD')}>
+              <span className="text-3xl font-black uppercase tracking-widest bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-500 cursor-pointer" onClick={() => onNavigate('DASHBOARD')}>
                 ZoneRun
               </span>
             </div>
@@ -90,9 +90,8 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, user, onLogout
       </nav>
 
       {/* MOBILE TOP BAR (Logo + Language + Admin + Logout) */}
-      {/* Increased height to h-16, larger text and icons */}
       <nav className="bg-gray-900 border-b border-gray-800 sticky top-0 z-50 h-16 md:hidden flex justify-between items-center px-4 shadow-lg">
-          <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-500" onClick={() => onNavigate('DASHBOARD')}>
+          <span className="text-2xl font-black uppercase tracking-widest bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-500" onClick={() => onNavigate('DASHBOARD')}>
             ZoneRun
           </span>
           <div className="flex items-center gap-4">

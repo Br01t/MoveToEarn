@@ -32,10 +32,10 @@ const Marketplace: React.FC<MarketplaceProps> = ({ user, items, onBuy }) => {
     <div className="max-w-7xl mx-auto p-6 relative">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
-           <h2 className="text-3xl font-bold text-white flex items-center gap-3">
+           <h2 className="text-3xl font-black uppercase tracking-widest text-white flex items-center gap-3">
              <ShoppingBag size={32} className="text-emerald-400" /> {t('market.title')}
            </h2>
-           <p className="text-gray-400">{t('market.subtitle')}</p>
+           <p className="text-gray-400 font-medium">{t('market.subtitle')}</p>
         </div>
         <div className="bg-gray-800 px-4 py-2 rounded-lg border border-emerald-500/30 text-emerald-400 font-mono font-bold flex items-center gap-2 shadow-lg">
           <CheckCircle size={16} />
@@ -54,7 +54,7 @@ const Marketplace: React.FC<MarketplaceProps> = ({ user, items, onBuy }) => {
                    <TrendingUp size={24} />
                </div>
                <div>
-                   <h4 className="font-bold text-white text-lg mb-1">{t('market.flash_active')}</h4>
+                   <h4 className="font-bold text-white text-lg mb-1 uppercase tracking-wide">{t('market.flash_active')}</h4>
                    <p className="text-gray-300 text-sm max-w-2xl leading-relaxed">
                        {t('market.flash_desc')}
                        <span className="text-yellow-400 font-bold block mt-1">{t('market.flash_warn')}</span>
@@ -67,7 +67,7 @@ const Marketplace: React.FC<MarketplaceProps> = ({ user, items, onBuy }) => {
       {items.length === 0 ? (
         <div className="text-center py-12 bg-gray-800 rounded-xl border border-gray-700">
           <Package className="mx-auto h-12 w-12 text-gray-600 mb-4" />
-          <h3 className="text-xl font-bold text-white">{t('market.empty')}</h3>
+          <h3 className="text-xl font-bold text-white uppercase tracking-wide">{t('market.empty')}</h3>
           <p className="text-gray-400">{t('market.empty_desc')}</p>
         </div>
       ) : (
@@ -98,18 +98,18 @@ const Marketplace: React.FC<MarketplaceProps> = ({ user, items, onBuy }) => {
                         </span>
                     </div>
                   </div>
-                  <h3 className="text-xl font-bold text-white mb-2">{item.name}</h3>
-                  <p className="text-gray-400 text-sm mb-6 min-h-[3rem]">{item.description}</p>
+                  <h3 className="text-xl font-bold uppercase tracking-wide text-white mb-2">{item.name}</h3>
+                  <p className="text-gray-400 text-sm mb-6 min-h-[3rem] font-medium">{item.description}</p>
                   
                   <div className="flex items-center justify-between mt-auto pt-4 border-t border-gray-700">
                     <div className="flex flex-col">
                         <span className="text-xs text-gray-500 uppercase font-bold">{t('market.price')}</span>
-                        <span className="text-2xl font-bold text-emerald-400">{item.priceRun} <span className="text-sm text-gray-500">RUN</span></span>
+                        <span className="text-2xl font-bold text-emerald-400 font-mono">{item.priceRun} <span className="text-sm text-gray-500 font-sans">RUN</span></span>
                     </div>
                     <button
                       onClick={() => canAfford && hasStock && handleBuyClick(item)}
                       disabled={!canAfford || !hasStock}
-                      className={`px-5 py-2.5 rounded-lg font-bold flex items-center gap-2 transition-all ${
+                      className={`px-5 py-2.5 rounded-lg font-bold flex items-center gap-2 transition-all uppercase tracking-wide text-sm ${
                         canAfford && hasStock
                         ? 'bg-emerald-500 hover:bg-emerald-600 text-black shadow-lg shadow-emerald-500/20 hover:scale-105' 
                         : 'bg-gray-700 text-gray-500 cursor-not-allowed'
@@ -132,7 +132,7 @@ const Marketplace: React.FC<MarketplaceProps> = ({ user, items, onBuy }) => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in">
           <div className="bg-gray-800 rounded-2xl border border-gray-700 w-full max-w-sm shadow-2xl overflow-hidden animate-slide-up">
              <div className="p-6 border-b border-gray-700 flex justify-between items-center bg-gray-900">
-               <h3 className="text-lg font-bold text-white flex items-center gap-2">
+               <h3 className="text-lg font-bold uppercase tracking-wide text-white flex items-center gap-2">
                  {t('market.confirm_title')}
                </h3>
                <button onClick={() => setConfirmItem(null)} className="text-gray-400 hover:text-white">
@@ -146,8 +146,8 @@ const Marketplace: React.FC<MarketplaceProps> = ({ user, items, onBuy }) => {
                       {confirmItem.type === 'DEFENSE' ? <Shield size={24}/> : (confirmItem.type === 'CURRENCY' ? <Coins size={24}/> : <Zap size={24}/>)}
                    </div>
                    <div>
-                      <div className="text-white font-bold">{confirmItem.name}</div>
-                      <div className="text-emerald-400 font-bold">{confirmItem.priceRun} RUN</div>
+                      <div className="text-white font-bold uppercase tracking-wide">{confirmItem.name}</div>
+                      <div className="text-emerald-400 font-bold font-mono">{confirmItem.priceRun} RUN</div>
                    </div>
                 </div>
 
@@ -164,7 +164,7 @@ const Marketplace: React.FC<MarketplaceProps> = ({ user, items, onBuy }) => {
                              {t('market.instant_effect')}
                          </p>
                          <p className="text-sm text-white">
-                             {t('market.receive_immediate')} <strong className="text-cyan-400">+{confirmItem.effectValue} GOV</strong>
+                             {t('market.receive_immediate')} <strong className="text-cyan-400 font-mono">+{confirmItem.effectValue} GOV</strong>
                          </p>
                      </div>
                 )}
@@ -173,13 +173,13 @@ const Marketplace: React.FC<MarketplaceProps> = ({ user, items, onBuy }) => {
              <div className="p-6 pt-0 flex gap-3">
                <button 
                  onClick={() => setConfirmItem(null)}
-                 className="flex-1 py-3 bg-gray-700 hover:bg-gray-600 text-white font-bold rounded-xl transition-colors"
+                 className="flex-1 py-3 bg-gray-700 hover:bg-gray-600 text-white font-bold rounded-xl transition-colors uppercase tracking-wide text-sm"
                >
                  {t('market.cancel')}
                </button>
                <button 
                  onClick={confirmPurchase}
-                 className="flex-1 py-3 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl transition-colors flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(16,185,129,0.4)]"
+                 className="flex-1 py-3 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl transition-colors flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(16,185,129,0.4)] uppercase tracking-wide text-sm"
                >
                  <CheckCircle size={18} /> {t('market.confirm')}
                </button>
