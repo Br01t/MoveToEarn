@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { User, Zone, Mission, Badge, Rarity, LevelConfig, LeaderboardConfig, BugReport, Suggestion } from '../types';
-import { Award, History, Coins, BarChart3, Shield, Trophy, MapPin, ChevronUp, ChevronDown, Users, X, Medal, Crown, Zap, Search } from 'lucide-react';
+import { Award, History, Coins, BarChart3, Shield, Trophy, MapPin, ChevronUp, ChevronDown, Users, X, Medal, Crown, Zap, Search, Package } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 import Pagination from './Pagination';
 import ZoneStatsModal from './profile/ZoneStatsModal';
@@ -57,6 +57,11 @@ const Profile: React.FC<ProfileProps> = ({
 
   const myBugReports = useMemo(() => bugReports.filter(b => b.userId === user.id), [bugReports, user.id]);
   const mySuggestions = useMemo(() => suggestions.filter(s => s.userId === user.id), [suggestions, user.id]);
+
+  // Inventory Calcs
+  const totalItems = user.inventory.reduce((acc, i) => acc + i.quantity, 0);
+  const boostCount = user.inventory.filter(i => i.type === 'BOOST').reduce((acc, i) => acc + i.quantity, 0);
+  const shieldCount = user.inventory.filter(i => i.type === 'DEFENSE').reduce((acc, i) => acc + i.quantity, 0);
 
   // --- PERFORMANCE METRICS ---
   const validHistory = user.runHistory || [];
@@ -266,10 +271,11 @@ const Profile: React.FC<ProfileProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="glass-panel rounded-xl p-5 relative overflow-hidden flex flex-col justify-between">
               <div className="absolute top-0 right-0 p-4 opacity-5"><Coins size={80}/></div>
-              <h3 className="text-white font-bold uppercase tracking-wide mb-4 flex items-center gap-2">
+              <h3 className="text-white font-bold uppercase tracking-wide mb-4 flex items-center gap-2 border-b border-white/10 pb-2">
                   <Coins size={18} className="text-yellow-500"/> {t('profile.liquid_assets')}
               </h3>
-              <div className="space-y-3 relative z-10">
+              
+              <div className="space-y-3 relative z-10 flex-1">
                   <div className="flex justify-between items-end bg-black/20 p-3 rounded-lg border border-white/5">
                       <span className="text-sm text-gray-400 font-bold">{t('profile.run_balance')}</span>
                       <span className="text-xl font-mono font-bold text-emerald-400">{user.runBalance.toFixed(1)}</span>
@@ -277,6 +283,31 @@ const Profile: React.FC<ProfileProps> = ({
                   <div className="flex justify-between items-end bg-black/20 p-3 rounded-lg border border-white/5">
                       <span className="text-sm text-gray-400 font-bold">{t('profile.gov_holdings')}</span>
                       <span className="text-xl font-mono font-bold text-cyan-400">{user.govBalance.toFixed(1)}</span>
+                  </div>
+                  
+                  {/* INVENTORY SUMMARY */}
+                  <div className="flex flex-col bg-black/20 p-3 rounded-lg border border-white/5 mt-auto">
+                      <div className="flex justify-between items-center mb-2">
+                          <span className="text-sm text-gray-400 font-bold flex items-center gap-1">
+                              <Package size={14} className="text-gray-500"/> {t('profile.inventory_items')}
+                          </span>
+                          <span className="text-xl font-mono font-bold text-white">{totalItems}</span>
+                      </div>
+                      <div className="flex gap-2">
+                          {boostCount > 0 && (
+                              <span className="text-[10px] bg-amber-900/40 text-amber-400 px-2 py-0.5 rounded border border-amber-500/20 font-bold flex items-center gap-1">
+                                  <Zap size={10} className="fill-amber-400"/> {boostCount}
+                              </span>
+                          )}
+                          {shieldCount > 0 && (
+                              <span className="text-[10px] bg-cyan-900/40 text-cyan-400 px-2 py-0.5 rounded border border-cyan-500/20 font-bold flex items-center gap-1">
+                                  <Shield size={10} className="fill-cyan-400"/> {shieldCount}
+                              </span>
+                          )}
+                          {totalItems === 0 && (
+                              <span className="text-[10px] text-gray-600 italic">Empty Backpack</span>
+                          )}
+                      </div>
                   </div>
               </div>
           </div>

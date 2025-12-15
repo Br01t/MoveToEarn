@@ -240,7 +240,11 @@ const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuy
 
         {/* --- RIGHT COL: CHARTS --- */}
         <div className="lg:col-span-2 space-y-6 h-full flex flex-col">
-            <WalletCharts transactions={transactions} />
+            <WalletCharts 
+                transactions={transactions} 
+                runBalance={user.runBalance}
+                govBalance={user.govBalance}
+            />
         </div>
       </div>
       
