@@ -79,11 +79,11 @@ const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in">
-            <div className="bg-gray-900 rounded-2xl border border-gray-700 w-full max-w-sm shadow-2xl relative overflow-hidden animate-slide-up">
+            <div className="glass-panel-heavy rounded-2xl w-full max-w-sm shadow-2xl relative overflow-hidden animate-slide-up">
                 
-                {/* Header Banner */}
-                <div className="h-24 bg-gradient-to-r from-gray-800 to-gray-900 relative">
-                    <button onClick={onClose} className="absolute top-4 right-4 text-white hover:text-red-400 z-10 bg-black/20 rounded-full p-1"><X size={20}/></button>
+                {/* Header Banner - Semi-transparent */}
+                <div className="h-24 bg-gradient-to-r from-gray-800/80 to-gray-900/80 relative border-b border-white/5">
+                    <button onClick={onClose} className="absolute top-4 right-4 text-white hover:text-red-400 z-10 bg-black/40 rounded-full p-1 transition-colors"><X size={20}/></button>
                 </div>
 
                 <div className="px-6 pb-6 relative z-10 -mt-12 text-center">
@@ -104,7 +104,7 @@ const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                     {/* Level Title */}
                     {currentLevelConfig?.title && (
                         <div className="flex items-center justify-center gap-1 mb-2">
-                            <span className="text-xs font-bold text-gray-300 uppercase tracking-widest bg-gray-800 px-2 py-0.5 rounded border border-gray-700">
+                            <span className="text-xs font-bold text-gray-300 uppercase tracking-widest bg-black/30 px-2 py-0.5 rounded border border-white/5">
                                 {currentLevelConfig.title}
                             </span>
                         </div>
@@ -112,21 +112,21 @@ const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
 
                     {/* Stats Grid 2x2 */}
                     <div className="grid grid-cols-2 gap-3 mb-6 mt-4">
-                        <div className="bg-gray-800 p-3 rounded-xl border border-gray-700">
+                        <div className="bg-black/30 p-3 rounded-xl border border-white/5">
                             <div className="text-[10px] text-gray-400 uppercase font-bold mb-1">{t('leader.profile.total_km')}</div>
                             <div className="text-xl font-mono font-bold text-white">{user.totalKm.toLocaleString()} KM</div>
                         </div>
-                        <div className="bg-gray-800 p-3 rounded-xl border border-gray-700">
+                        <div className="bg-black/30 p-3 rounded-xl border border-white/5">
                             <div className="text-[10px] text-gray-400 uppercase font-bold mb-1">{t('leader.profile.owned_zones')}</div>
                             <div className="text-xl font-mono font-bold text-emerald-400">{ownedZones}</div>
                         </div>
                         
                         {/* New Balances */}
-                        <div className="bg-gray-800 p-3 rounded-xl border border-gray-700">
+                        <div className="bg-black/30 p-3 rounded-xl border border-white/5">
                             <div className="text-[10px] text-gray-400 uppercase font-bold mb-1 flex items-center justify-center gap-1"><Activity size={10} /> RUN</div>
                             <div className="text-xl font-mono font-bold text-emerald-400">{(user as any).runBalance?.toFixed(0) ?? 0}</div>
                         </div>
-                        <div className="bg-gray-800 p-3 rounded-xl border border-gray-700">
+                        <div className="bg-black/30 p-3 rounded-xl border border-white/5">
                             <div className="text-[10px] text-gray-400 uppercase font-bold mb-1 flex items-center justify-center gap-1"><Crown size={10} /> GOV</div>
                             <div className="text-xl font-mono font-bold text-cyan-400">{(user as any).govBalance?.toFixed(0) ?? 0}</div>
                         </div>
@@ -134,7 +134,7 @@ const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
 
                     {/* Favorite Badge */}
                     {favoriteBadge ? (
-                        <div className="bg-gray-800/50 p-4 rounded-xl border border-gray-700 flex items-center gap-4 text-left">
+                        <div className="bg-black/30 p-4 rounded-xl border border-white/5 flex items-center gap-4 text-left">
                             <div className={`p-3 rounded-full border bg-gray-900 ${getRarityColor(favoriteBadge.rarity)}`}>
                                 {renderBadgeIcon(favoriteBadge.icon, "w-6 h-6")}
                             </div>
@@ -145,7 +145,7 @@ const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                             </div>
                         </div>
                     ) : (
-                        <div className="p-4 rounded-xl border border-gray-700 border-dashed text-gray-500 text-xs italic">
+                        <div className="p-4 rounded-xl border border-white/10 border-dashed text-gray-500 text-xs italic">
                             No badge equipped
                         </div>
                     )}
@@ -156,7 +156,7 @@ const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                             <span>{t('leader.profile.level')} {currentLevel}</span>
                             <span>{Math.floor(progressToNextLevel)}%</span>
                         </div>
-                        <div className="w-full bg-gray-800 rounded-full h-1.5 overflow-hidden">
+                        <div className="w-full bg-black/50 rounded-full h-1.5 overflow-hidden">
                             <div className="bg-emerald-500 h-full rounded-full" style={{ width: `${progressToNextLevel}%` }}></div>
                         </div>
                     </div>

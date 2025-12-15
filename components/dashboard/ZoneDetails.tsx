@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Zone, User, Badge, Rarity } from '../../types';
-import { X, Crown, Clock, Shield, Medal, Lock, Zap, Swords, Flag, Award, Mountain, Globe, Home, Landmark, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users, AlertTriangle, CheckCircle, Coins, Activity } from 'lucide-react';
+import { X, Crown, Clock, Shield, Medal, Lock, Zap, Swords, Flag, Award, Mountain, Globe, Home, Landmark, Swords as SwordsIcon, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users, AlertTriangle, CheckCircle, Coins, Activity } from 'lucide-react';
 import { useLanguage } from '../../LanguageContext';
 import { CONQUEST_COST } from '../../constants';
 
@@ -46,7 +46,6 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
   const topRunner = zoneLeaderboard.length > 0 ? zoneLeaderboard[0] : null;
   const isTopRunner = topRunner ? topRunner.id === user.id : false;
   
-  // Find current user's stats in this zone
   const currentUserStats = zoneLeaderboard.find(u => u.id === user.id);
   const myKmInZone = currentUserStats ? currentUserStats.km : 0;
   
@@ -58,21 +57,6 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
           case 'Crown': return <Crown className={className} />;
           case 'Award': return <Award className={className} />;
           case 'Zap': return <Zap className={className} />;
-          case 'Mountain': return <Mountain className={className} />;
-          case 'Globe': return <Globe className={className} />;
-          case 'Home': return <Home className={className} />;
-          case 'Landmark': return <Landmark className={className} />;
-          case 'Swords': return <Swords className={className} />;
-          case 'Footprints': return <Footprints className={className} />;
-          case 'Rocket': return <Rocket className={className} />;
-          case 'Tent': return <Tent className={className} />;
-          case 'Timer': return <Timer className={className} />;
-          case 'Building2': return <Building2 className={className} />;
-          case 'Moon': return <Moon className={className} />;
-          case 'Sun': return <Sun className={className} />;
-          case 'ShieldCheck': return <ShieldCheck className={className} />;
-          case 'Gem': return <Gem className={className} />;
-          case 'Users': return <Users className={className} />;
           default: return <Award className={className} />;
       }
   };
@@ -93,12 +77,12 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
   };
 
   return (
-    <div className="fixed bottom-[56px] md:bottom-24 md:right-6 md:left-auto left-0 right-0 md:w-80 bg-gray-900/95 md:rounded-2xl rounded-t-2xl border-t md:border border-emerald-500/30 shadow-[0_-5px_20px_rgba(0,0,0,0.5)] overflow-hidden animate-slide-up z-40 max-h-[70vh] flex flex-col">
+    <div className="fixed bottom-[56px] md:bottom-24 md:right-6 md:left-auto left-0 right-0 md:w-80 glass-panel-heavy md:rounded-2xl rounded-t-2xl shadow-[0_-10px_30px_rgba(0,0,0,0.6)] overflow-hidden animate-slide-up z-40 max-h-[70vh] flex flex-col">
       <div className="relative p-5 flex flex-col h-full overflow-hidden">
         
         {/* CONFIRMATION MODAL OVERLAY */}
         {confirmAction && (
-            <div className="absolute inset-0 z-50 bg-gray-900/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center animate-fade-in">
+            <div className="absolute inset-0 z-50 bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center animate-fade-in">
                 <div className={`p-4 rounded-full mb-4 ${confirmAction === 'BOOST' ? 'bg-amber-900/40 text-amber-400' : 'bg-cyan-900/40 text-cyan-400'}`}>
                     {confirmAction === 'BOOST' ? <Zap size={32} /> : <Shield size={32} />}
                 </div>
@@ -111,7 +95,7 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
                 <div className="flex gap-3 w-full">
                     <button 
                         onClick={() => setConfirmAction(null)}
-                        className="flex-1 py-3 bg-gray-800 hover:bg-gray-700 text-gray-400 font-bold rounded-xl text-sm transition-colors uppercase tracking-wide"
+                        className="flex-1 py-3 bg-white/10 hover:bg-white/20 text-gray-300 font-bold rounded-xl text-sm transition-colors uppercase tracking-wide border border-white/10"
                     >
                         {t('zone.modal.cancel')}
                     </button>
@@ -125,8 +109,8 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
             </div>
         )}
 
-        <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-white z-10">
-          <X size={20} />
+        <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-white z-10 bg-black/30 rounded-full p-1 border border-white/10">
+          <X size={18} />
         </button>
 
         <h3 className="font-bold text-xl text-white mb-4 pr-6 tracking-tight break-words uppercase">{zone.name}</h3>
@@ -135,7 +119,7 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
             
             {/* Owner Card */}
             {ownerDetails && (
-                <div className="bg-black/40 p-3 rounded-lg border border-white/5 flex items-center gap-3">
+                <div className="glass-panel p-3 rounded-xl flex items-center gap-3">
                     <div className="relative shrink-0">
                         <img 
                             src={ownerDetails.avatar || `https://ui-avatars.com/api/?name=${ownerDetails.name}&background=10b981&color=fff`} 
@@ -163,13 +147,13 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
             )}
 
             <div className="grid grid-cols-2 gap-2">
-                <div className="bg-black/40 p-2 rounded-lg border border-white/5 text-center">
+                <div className="bg-black/30 p-2 rounded-lg border border-white/5 text-center backdrop-blur-sm">
                      <div className="text-xs text-gray-400 uppercase font-bold tracking-wider">{t('dash.yield')}</div>
                      <div className={`font-bold font-mono text-xl ${isBoostActive ? 'text-amber-400' : 'text-cyan-400'}`}>
                          {zone.interestRate}%
                      </div>
                 </div>
-                <div className="bg-black/40 p-2 rounded-lg border border-white/5 text-center">
+                <div className="bg-black/30 p-2 rounded-lg border border-white/5 text-center backdrop-blur-sm">
                      <div className="text-xs text-gray-400 uppercase font-bold tracking-wider">{t('zone.status')}</div>
                      <div className={`font-bold text-xs uppercase pt-1 tracking-wide ${zone.ownerId === user.id ? 'text-emerald-500' : 'text-red-500'}`}>
                          {zone.ownerId === user.id ? t('zone.occupied') : t('zone.hostile')}
@@ -178,9 +162,9 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
             </div>
 
             {/* Interest Pool Display */}
-            <div className="bg-emerald-900/20 p-2 rounded-lg border border-emerald-500/20 text-center flex items-center justify-center gap-3">
+            <div className="bg-emerald-900/30 p-2 rounded-lg border border-emerald-500/30 text-center flex items-center justify-center gap-3 backdrop-blur-sm">
                 <div className="text-left">
-                    <div className="text-xs text-gray-400 uppercase font-bold tracking-wider">Interest Pool</div>
+                    <div className="text-xs text-emerald-200/70 uppercase font-bold tracking-wider">Interest Pool</div>
                     <div className="font-mono text-emerald-400 font-bold text-base flex items-center gap-1">
                         <Coins size={12} /> {(zone.interestPool || 0).toFixed(4)} RUN
                     </div>
@@ -188,7 +172,7 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
             </div>
 
             {isBoostActive && zone.boostExpiresAt && (
-             <div className="flex items-center justify-between text-sm bg-amber-500/10 p-2 rounded-lg border border-amber-500/30">
+             <div className="flex items-center justify-between text-sm bg-amber-500/10 p-2 rounded-lg border border-amber-500/30 backdrop-blur-sm">
                <span className="text-amber-400 flex items-center gap-1 text-xs font-bold uppercase tracking-wide"><Clock size={12}/> {t('zone.boosted')}</span>
                <span className="text-amber-100 font-mono text-xs font-bold">
                  {formatTimeRemaining(zone.boostExpiresAt)}
@@ -197,7 +181,7 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
             )}
 
             {isShieldActive && zone.shieldExpiresAt && (
-             <div className="flex items-center justify-between text-sm bg-cyan-500/10 p-2 rounded-lg border border-cyan-500/30">
+             <div className="flex items-center justify-between text-sm bg-cyan-500/10 p-2 rounded-lg border border-cyan-500/30 backdrop-blur-sm">
                <span className="text-cyan-400 flex items-center gap-1 text-xs font-bold uppercase tracking-wide"><Shield size={12}/> {t('zone.shielded')}</span>
                <span className="text-cyan-100 font-mono text-xs font-bold">
                  {formatTimeRemaining(zone.shieldExpiresAt)}
@@ -206,19 +190,19 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
             )}
 
             {/* My Stats Highlight */}
-            <div className="bg-emerald-900/10 border border-emerald-500/20 p-2 rounded-lg flex justify-between items-center">
+            <div className="glass-panel p-2 rounded-lg flex justify-between items-center border-emerald-500/20 bg-emerald-900/10">
                 <span className="text-xs text-emerald-400 font-bold uppercase tracking-wide">Your Distance:</span>
                 <span className="font-mono font-bold text-white text-base">{myKmInZone.toFixed(2)} km</span>
             </div>
 
             {/* Leaderboard */}
-            <div className="bg-gray-800/50 rounded-lg border border-gray-700/50 p-3">
+            <div className="bg-black/20 rounded-lg border border-white/5 p-3">
                 <h4 className="text-xs font-bold text-gray-400 uppercase mb-3 flex items-center gap-1 tracking-wider">
                     <Medal size={12} className="text-yellow-500"/> {t('zone.top_runners')}
                 </h4>
                 <div className="space-y-2 max-h-[120px] overflow-y-auto pr-1">
                     {zoneLeaderboard.map((runner, index) => (
-                        <div key={runner.id} className={`flex items-center justify-between text-xs p-1 rounded transition-colors ${runner.id === user.id ? 'bg-emerald-900/20' : 'hover:bg-white/5'}`}>
+                        <div key={runner.id} className={`flex items-center justify-between text-xs p-1 rounded transition-colors ${runner.id === user.id ? 'bg-emerald-900/20 border border-emerald-500/20' : 'hover:bg-white/5'}`}>
                             <div className="flex items-center gap-2">
                                 <span className={`w-4 text-center font-bold font-mono ${index === 0 ? 'text-yellow-400' : (index === 1 ? 'text-gray-300' : (index === 2 ? 'text-amber-600' : 'text-gray-600'))}`}>
                                     {index + 1}
@@ -237,31 +221,31 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
             </div>
         </div>
 
-        <div className="pt-4 mt-2 border-t border-gray-800 shrink-0">
+        <div className="pt-4 mt-2 border-t border-white/10 shrink-0">
            {zone.ownerId === user.id ? (
                 <div className="flex gap-2">
                       {!isBoostActive ? (
                           <button 
                               onClick={() => setConfirmAction('BOOST')}
                               disabled={!hasBoostItem}
-                              className={`flex-1 py-3 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all border text-xs md:text-sm uppercase tracking-wide ${hasBoostItem ? 'bg-amber-600 hover:bg-amber-500' : 'bg-gray-800 opacity-50'}`}
+                              className={`flex-1 py-3 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all border text-xs md:text-sm uppercase tracking-wide shadow-lg ${hasBoostItem ? 'bg-amber-600/80 hover:bg-amber-500 border-amber-500/50' : 'bg-gray-800 opacity-50 border-transparent'}`}
                           >
                               <Zap size={16} /> {t('zone.action.boost')}
                           </button>
                       ) : (
-                          <div className="flex-1 py-3 bg-gray-800 text-amber-500 font-bold rounded-xl flex items-center justify-center gap-2 border border-amber-500/20 text-xs md:text-sm uppercase tracking-wide"><Zap size={16} /> {t('zone.action.active')}</div>
+                          <div className="flex-1 py-3 bg-black/40 text-amber-500 font-bold rounded-xl flex items-center justify-center gap-2 border border-amber-500/20 text-xs md:text-sm uppercase tracking-wide"><Zap size={16} /> {t('zone.action.active')}</div>
                       )}
 
                       {!isShieldActive ? (
                           <button 
                               onClick={() => setConfirmAction('SHIELD')}
                               disabled={!hasDefenseItem}
-                              className={`flex-1 py-3 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all border text-xs md:text-sm uppercase tracking-wide ${hasDefenseItem ? 'bg-cyan-600 hover:bg-cyan-500' : 'bg-gray-800 opacity-50'}`}
+                              className={`flex-1 py-3 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all border text-xs md:text-sm uppercase tracking-wide shadow-lg ${hasDefenseItem ? 'bg-cyan-600/80 hover:bg-cyan-500 border-cyan-500/50' : 'bg-gray-800 opacity-50 border-transparent'}`}
                           >
                               <Shield size={16} /> {t('zone.action.shield')}
                           </button>
                       ) : (
-                          <div className="flex-1 py-3 bg-gray-800 text-cyan-400 font-bold rounded-xl flex items-center justify-center gap-2 border border-cyan-500/20 text-xs md:text-sm uppercase tracking-wide"><Shield size={16} /> {t('zone.action.active')}</div>
+                          <div className="flex-1 py-3 bg-black/40 text-cyan-400 font-bold rounded-xl flex items-center justify-center gap-2 border border-cyan-500/20 text-xs md:text-sm uppercase tracking-wide"><Shield size={16} /> {t('zone.action.active')}</div>
                       )}
                 </div>
            ) : (
@@ -269,12 +253,12 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
                  {isTopRunner ? (
                      <button 
                          onClick={() => onClaim(zone.id)}
-                         className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-[0_0_15px_rgba(16,185,129,0.3)] animate-pulse uppercase tracking-wide"
+                         className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-[0_0_15px_rgba(16,185,129,0.3)] animate-pulse uppercase tracking-wide border border-emerald-400/30"
                      >
                          <Swords size={18} /> {t('zone.action.claim')} ({CONQUEST_COST} RUN)
                      </button>
                  ) : (
-                     <div className="bg-red-900/20 border border-red-500/30 p-3 rounded-lg text-center">
+                     <div className="bg-red-900/20 border border-red-500/30 p-3 rounded-lg text-center backdrop-blur-sm">
                          <div className="text-red-400 font-bold text-xs uppercase mb-1 flex items-center justify-center gap-2 tracking-wider">
                             <Lock size={12}/> {t('zone.locked')}
                          </div>

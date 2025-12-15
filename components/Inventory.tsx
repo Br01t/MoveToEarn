@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { InventoryItem, User, Zone } from '../types';
-import { Shield, Zap, Package, MapPin, X, Info, Clock, AlertTriangle } from 'lucide-react';
+import { Shield, Zap, Package, MapPin, X, Info, Clock, AlertTriangle, Box } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 
 interface InventoryProps {
@@ -47,51 +47,74 @@ const Inventory: React.FC<InventoryProps> = ({ user, zones, onUseItem }) => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6 relative">
-      <h2 className="text-3xl font-bold text-white mb-8 flex items-center gap-3">
-        <Package className="text-emerald-400" /> {t('inv.title')}
-      </h2>
+    <div className="max-w-5xl mx-auto p-6 relative min-h-[80vh]">
+      
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
+         <div>
+            <h1 className="text-3xl font-black uppercase tracking-widest text-white flex items-center gap-3">
+               <Box className="text-emerald-400" size={32} /> {t('inv.title')}
+            </h1>
+            <p className="text-gray-400 text-sm font-medium">Manage your tactical resources.</p>
+         </div>
+      </div>
 
       {user.inventory.length === 0 ? (
-        <div className="bg-gray-800 border border-gray-700 rounded-xl p-12 text-center text-gray-500">
-           <Package size={64} className="mx-auto mb-4 opacity-20" />
-           <p className="text-xl">{t('inv.empty_title')}</p>
-           <p className="text-sm mt-2">{t('inv.empty_desc')}</p>
+        <div className="glass-panel rounded-xl p-12 text-center text-gray-500 flex flex-col items-center justify-center min-h-[400px]">
+           <div className="p-6 bg-gray-900/50 rounded-full mb-4 border border-gray-700/50">
+               <Package size={48} className="opacity-40" />
+           </div>
+           <h3 className="text-xl font-bold text-white uppercase tracking-wide mb-2">{t('inv.empty_title')}</h3>
+           <p className="text-sm max-w-md">{t('inv.empty_desc')}</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {user.inventory.map((item, idx) => {
             const Icon = item.type === 'DEFENSE' ? Shield : Zap;
+            const isDefense = item.type === 'DEFENSE';
+            
             return (
               <div 
                 key={`${item.id}-${idx}`} 
                 onClick={() => handleItemClick(item)}
-                className="bg-gray-800 border border-gray-700 rounded-lg p-5 flex flex-col justify-between group hover:border-emerald-500/30 transition-colors cursor-pointer relative"
+                className="glass-panel rounded-xl p-5 flex flex-col justify-between group hover:border-emerald-500/50 hover:shadow-[0_0_25px_rgba(16,185,129,0.15)] transition-all cursor-pointer relative overflow-hidden"
               >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-4">
-                    <div className={`p-3 rounded-lg ${item.type === 'DEFENSE' ? 'bg-blue-500/10 text-blue-400' : 'bg-yellow-500/10 text-yellow-400'}`}>
-                      <Icon size={24} />
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-white text-lg">{item.name}</h4>
-                      <span className="text-xs font-bold px-2 py-0.5 rounded bg-gray-700 text-gray-300">{item.type}</span>
-                    </div>
-                  </div>
-                  {/* Quantity Badge */}
-                  {item.quantity > 0 && (
-                      <div className="bg-emerald-900/80 border border-emerald-500/50 px-3 py-1 rounded-full text-sm font-bold text-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.2)]">
-                        x{item.quantity}
-                      </div>
-                  )}
-                </div>
-                
-                {/* Truncated description for the card view */}
-                <p className="text-sm text-gray-400 mb-4 flex-grow line-clamp-2">{item.description}</p>
+                {/* Decorative background glow */}
+                <div className={`absolute -top-10 -right-10 w-32 h-32 rounded-full blur-[60px] opacity-20 pointer-events-none transition-opacity group-hover:opacity-30 ${isDefense ? 'bg-cyan-500' : 'bg-amber-500'}`}></div>
 
-                <div className="w-full py-2 bg-gray-700 group-hover:bg-emerald-600 group-hover:text-white text-gray-300 font-bold rounded-lg transition-colors flex items-center justify-center gap-2">
-                  <Info size={16} /> {t('inv.inspect')}
+                <div>
+                    <div className="flex items-start justify-between mb-4 relative z-10">
+                      <div className="flex items-center gap-3">
+                        <div className={`p-3 rounded-lg border border-white/5 shadow-lg ${isDefense ? 'bg-cyan-500/20 text-cyan-400' : 'bg-amber-500/20 text-amber-400'}`}>
+                          <Icon size={28} />
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-white text-lg leading-tight uppercase tracking-tight">{item.name}</h4>
+                          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border border-white/10 ${isDefense ? 'bg-cyan-900/40 text-cyan-300' : 'bg-amber-900/40 text-amber-300'}`}>
+                              {item.type}
+                          </span>
+                        </div>
+                      </div>
+                      {/* Quantity Badge */}
+                      {item.quantity > 0 && (
+                          <div className="flex flex-col items-center justify-center bg-gray-900/80 backdrop-blur border border-white/10 px-2 py-1 rounded min-w-[3rem]">
+                            <span className="text-[9px] text-gray-500 uppercase font-bold">QTY</span>
+                            <span className="text-lg font-mono font-bold text-white leading-none">{item.quantity}</span>
+                          </div>
+                      )}
+                    </div>
+                    
+                    <div className="h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent mb-3"></div>
+
+                    {/* Description */}
+                    <p className="text-xs text-gray-400 mb-6 font-medium leading-relaxed min-h-[2.5rem] line-clamp-2">
+                        {item.description}
+                    </p>
                 </div>
+
+                <button className="w-full py-2.5 bg-white/5 hover:bg-white/10 border border-white/5 hover:border-emerald-500/30 text-gray-300 group-hover:text-emerald-400 font-bold rounded-lg transition-all flex items-center justify-center gap-2 uppercase tracking-wide text-xs">
+                  <Info size={14} /> {t('inv.inspect')}
+                </button>
               </div>
             );
           })}
@@ -100,67 +123,76 @@ const Inventory: React.FC<InventoryProps> = ({ user, zones, onUseItem }) => {
 
       {/* Item Detail & Usage Modal */}
       {selectedItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="bg-gray-800 rounded-2xl border border-gray-700 w-full max-w-lg shadow-2xl overflow-hidden animate-slide-up flex flex-col max-h-[90vh]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fade-in">
+          <div className="glass-panel-heavy rounded-2xl w-full max-w-lg shadow-[0_0_50px_rgba(0,0,0,0.6)] overflow-hidden animate-slide-up flex flex-col max-h-[85vh]">
             
             {/* Modal Header */}
-            <div className="p-6 border-b border-gray-700 flex justify-between items-start bg-gray-900">
-              <div className="flex gap-4">
-                 <div className={`p-3 rounded-xl h-fit ${selectedItem.type === 'DEFENSE' ? 'bg-blue-500/20 text-blue-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
-                    {selectedItem.type === 'DEFENSE' ? <Shield size={32}/> : <Zap size={32}/>}
+            <div className="p-6 border-b border-white/10 flex justify-between items-start bg-black/20">
+              <div className="flex gap-4 items-center">
+                 <div className={`p-4 rounded-xl shadow-[0_0_20px_rgba(0,0,0,0.3)] border border-white/10 ${selectedItem.type === 'DEFENSE' ? 'bg-cyan-500/20 text-cyan-400' : 'bg-amber-500/20 text-amber-400'}`}>
+                    {selectedItem.type === 'DEFENSE' ? <Shield size={36}/> : <Zap size={36}/>}
                  </div>
                  <div>
-                    <h3 className="text-2xl font-bold text-white leading-tight">
+                    <h3 className="text-2xl font-black text-white leading-none uppercase tracking-wide">
                       {selectedItem.name}
                     </h3>
                     <div className="flex gap-2 mt-2">
-                        <span className="text-xs font-bold px-2 py-0.5 rounded bg-gray-700 text-gray-300">{selectedItem.type}</span>
-                        <span className="text-xs font-bold px-2 py-0.5 rounded bg-emerald-900 text-emerald-400 border border-emerald-500/30">{t('inv.owned')}: {selectedItem.quantity}</span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-gray-800 text-gray-400 border border-white/10 uppercase tracking-wider">{selectedItem.type}</span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-900/50 text-emerald-400 border border-emerald-500/30 uppercase tracking-wider">{t('inv.owned')}: {selectedItem.quantity}</span>
                     </div>
                  </div>
               </div>
-              <button onClick={() => setSelectedItem(null)} className="text-gray-400 hover:text-white transition-colors bg-gray-800 p-2 rounded-full hover:bg-gray-700">
-                <X size={20}/>
+              <button onClick={() => setSelectedItem(null)} className="text-gray-500 hover:text-white transition-colors p-2 rounded-full hover:bg-white/10">
+                <X size={24}/>
               </button>
             </div>
             
             {/* Full Description Section */}
-            <div className="p-6 bg-gray-800/50 border-b border-gray-700">
-                <h4 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-2">{t('inv.item_desc')}</h4>
-                <p className="text-gray-300 text-sm leading-relaxed mb-3">
-                    {selectedItem.description}
-                </p>
+            <div className="p-6 bg-black/10 border-b border-white/5 space-y-4">
+                <div>
+                    <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">{t('inv.item_desc')}</h4>
+                    <p className="text-gray-300 text-sm leading-relaxed font-medium">
+                        {selectedItem.description}
+                    </p>
+                </div>
                 
-                <p className="text-xs text-orange-400/80 italic flex items-start gap-1.5">
-                   <AlertTriangle size={14} className="mt-0.5 shrink-0" />
-                   {t('inv.stack_warn')}
-                </p>
-
-                <div className="mt-4 p-3 bg-gray-900/50 rounded-lg border border-gray-700/50 flex items-center gap-2 text-sm text-gray-400">
-                    <Info size={16} className="text-emerald-500" />
-                    <span>{t('inv.effect_power')}: <strong>{selectedItem.effectValue}</strong></span>
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="p-3 bg-black/40 rounded-lg border border-white/5 flex items-center gap-3">
+                        <div className="bg-emerald-500/20 p-1.5 rounded text-emerald-400"><Info size={16}/></div>
+                        <div>
+                            <span className="block text-[9px] text-gray-500 uppercase font-bold">{t('inv.effect_power')}</span>
+                            <span className="text-white font-mono font-bold text-lg">{selectedItem.effectValue}x</span>
+                        </div>
+                    </div>
+                    <div className="p-3 bg-black/40 rounded-lg border border-white/5 flex items-center gap-3">
+                        <div className="bg-orange-500/20 p-1.5 rounded text-orange-400"><AlertTriangle size={16}/></div>
+                        <div>
+                            <span className="block text-[9px] text-gray-500 uppercase font-bold">Restriction</span>
+                            <span className="text-orange-300 text-[10px] leading-tight">Single active effect only</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             {/* Zone Selection List */}
-            <div className="flex-1 overflow-y-auto p-6">
-               <h4 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4 sticky top-0 bg-gray-800 z-10 py-2">
-                 {t('inv.select_zone')}
+            <div className="flex-1 overflow-y-auto p-6 bg-black/5">
+               <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                 <MapPin size={14} className="text-emerald-500"/> {t('inv.select_zone')}
                </h4>
                
                {myZones.length === 0 ? (
-                 <div className="text-center py-8 text-gray-500 border-2 border-dashed border-gray-700 rounded-xl">
-                    <p>{t('inv.no_zones')}</p>
-                    <p className="text-xs mt-1">{t('inv.conquer_tip')}</p>
+                 <div className="text-center py-10 text-gray-500 border border-dashed border-white/10 rounded-xl bg-white/5">
+                    <MapPin size={32} className="mx-auto mb-2 opacity-30" />
+                    <p className="text-sm font-bold">{t('inv.no_zones')}</p>
+                    <p className="text-xs mt-1 opacity-70">{t('inv.conquer_tip')}</p>
                  </div>
                ) : (
-                 <div className="grid grid-cols-1 gap-2">
+                 <div className="flex flex-col gap-2">
                   {myZones.map(zone => {
                     const boostTime = getRemainingTime(zone.boostExpiresAt);
                     const shieldTime = getRemainingTime(zone.shieldExpiresAt);
                     
                     // Logic to check if we can apply the item
-                    // Can only apply if the specific effect isn't already active
                     const canApply = 
                         (selectedItem.type === 'BOOST' && !boostTime) ||
                         (selectedItem.type === 'DEFENSE' && !shieldTime);
@@ -170,30 +202,34 @@ const Inventory: React.FC<InventoryProps> = ({ user, zones, onUseItem }) => {
                         key={zone.id}
                         onClick={() => canApply && handleZoneSelect(zone.id)}
                         disabled={!canApply}
-                        className={`flex justify-between items-center p-4 rounded-xl border border-gray-700 transition-all group text-left ${canApply ? 'bg-gray-900 hover:bg-gray-800 hover:border-emerald-500 cursor-pointer' : 'bg-gray-900/50 opacity-60 cursor-not-allowed'}`}
+                        className={`flex justify-between items-center p-3 rounded-lg border transition-all group text-left ${
+                            canApply 
+                            ? 'bg-black/40 border-white/5 hover:border-emerald-500/50 hover:bg-emerald-900/10 cursor-pointer' 
+                            : 'bg-black/20 border-transparent opacity-50 cursor-not-allowed grayscale'
+                        }`}
                       >
                         <div className="min-w-0 flex-1 pr-4">
                           <div className="flex items-center gap-2 mb-1">
-                              <MapPin size={16} className="text-emerald-500 shrink-0" />
-                              <span className="font-bold text-white truncate">{zone.name}</span>
+                              <span className={`font-bold text-sm truncate ${canApply ? 'text-white' : 'text-gray-500'}`}>{zone.name}</span>
                           </div>
                           
-                          <div className="text-xs text-gray-400 flex flex-wrap gap-3">
-                            <span>{t('inv.yield')}: {zone.interestRate}%</span>
-                            <span>{t('inv.defense')}: Lvl {zone.defenseLevel}</span>
+                          <div className="text-[10px] text-gray-500 flex items-center gap-3">
+                            <span className="font-mono">YIELD: {zone.interestRate}%</span>
+                            <span className="w-px h-3 bg-gray-700"></span>
+                            <span className="font-mono">DEF: {zone.defenseLevel}</span>
                           </div>
 
                           {/* Active Effects Display */}
                           {(boostTime || shieldTime) && (
-                              <div className="flex flex-wrap gap-2 mt-2">
+                              <div className="flex flex-wrap gap-2 mt-1.5">
                                   {boostTime && (
-                                      <span className="flex items-center gap-1 text-[10px] font-bold bg-amber-900/40 text-amber-400 px-2 py-0.5 rounded border border-amber-500/30">
-                                          <Zap size={10} className="fill-amber-400" /> {boostTime}
+                                      <span className="flex items-center gap-1 text-[9px] font-bold bg-amber-900/30 text-amber-500 px-1.5 py-0.5 rounded border border-amber-500/20">
+                                          <Zap size={8} className="fill-amber-500" /> {boostTime}
                                       </span>
                                   )}
                                   {shieldTime && (
-                                      <span className="flex items-center gap-1 text-[10px] font-bold bg-cyan-900/40 text-cyan-400 px-2 py-0.5 rounded border border-cyan-500/30">
-                                          <Shield size={10} className="fill-cyan-400" /> {shieldTime}
+                                      <span className="flex items-center gap-1 text-[9px] font-bold bg-cyan-900/30 text-cyan-500 px-1.5 py-0.5 rounded border border-cyan-500/20">
+                                          <Shield size={8} className="fill-cyan-500" /> {shieldTime}
                                       </span>
                                   )}
                               </div>
@@ -201,7 +237,7 @@ const Inventory: React.FC<InventoryProps> = ({ user, zones, onUseItem }) => {
                         </div>
                         
                         {canApply && (
-                            <div className="px-3 py-1 bg-gray-800 rounded text-xs font-bold text-emerald-400 group-hover:bg-emerald-500 group-hover:text-black transition-colors shrink-0">
+                            <div className="px-4 py-2 bg-emerald-600 group-hover:bg-emerald-500 text-white rounded text-xs font-bold uppercase tracking-wider shadow-lg transition-colors">
                                 {t('inv.apply')}
                             </div>
                         )}
@@ -212,8 +248,10 @@ const Inventory: React.FC<InventoryProps> = ({ user, zones, onUseItem }) => {
                )}
             </div>
             
-            <div className="p-4 bg-gray-950 border-t border-gray-800 text-center text-xs text-gray-500">
-               {t('inv.consume_warn')}
+            <div className="p-4 bg-black/40 border-t border-white/5 text-center">
+               <p className="text-[10px] text-gray-500 uppercase tracking-wide">
+                   <span className="text-red-400 font-bold">Warning:</span> {t('inv.consume_warn')}
+               </p>
             </div>
           </div>
         </div>

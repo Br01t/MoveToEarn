@@ -41,9 +41,9 @@ const Profile: React.FC<ProfileProps> = ({
   const [activeTab, setActiveTab] = useState<'ACHIEVEMENTS' | 'HISTORY'>('ACHIEVEMENTS');
   const [showSubmissionsModal, setShowSubmissionsModal] = useState(false);
   
-  // Local states for history/zones that remain in parent for now or can be extracted further
+  // Local states
   const [runPage, setRunPage] = useState(1);
-  const [historySearch, setHistorySearch] = useState(''); // NEW: Search state for history
+  const [historySearch, setHistorySearch] = useState(''); 
   const [zonePage, setZonePage] = useState(1);
   const [sortConfig, setSortConfig] = useState<{ key: 'rank' | 'count' | 'km'; direction: 'asc' | 'desc' }>({ key: 'km', direction: 'desc' });
   const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
@@ -55,24 +55,16 @@ const Profile: React.FC<ProfileProps> = ({
   const allCompletedMissions = missions.filter(m => user.completedMissionIds.includes(m.id));
   const favoriteBadge = badges.find(b => b.id === user.favoriteBadgeId);
 
-  // Filter reports for this user
   const myBugReports = useMemo(() => bugReports.filter(b => b.userId === user.id), [bugReports, user.id]);
   const mySuggestions = useMemo(() => suggestions.filter(s => s.userId === user.id), [suggestions, user.id]);
 
-  // --- PERFORMANCE METRICS CALCULATION ---
-  // Ensure runHistory exists and calculate metrics robustly
+  // --- PERFORMANCE METRICS ---
   const validHistory = user.runHistory || [];
   const totalRuns = validHistory.length;
-  
-  // Calculate max distance
-  const maxDistance = totalRuns > 0 
-      ? Math.max(...validHistory.map(r => Number(r.km))).toFixed(2) 
-      : '0.00';
-
-  // Calculate total distance dynamically from history to ensure consistency
+  const maxDistance = totalRuns > 0 ? Math.max(...validHistory.map(r => Number(r.km))).toFixed(2) : '0.00';
   const calculatedTotalKm = validHistory.reduce((acc, curr) => acc + Number(curr.km), 0).toFixed(2);
 
-  // Territory Stats Calculations
+  // Territory Stats
   const now = Date.now();
   const totalOwned = myZones.length;
   const activeBoosts = myZones.filter(z => z.boostExpiresAt && z.boostExpiresAt > now).length;
@@ -83,8 +75,6 @@ const Profile: React.FC<ProfileProps> = ({
   let nextLevelKm = 50; 
   let progressToNextLevel = 0;
   let currentLevelConfig: LevelConfig | undefined;
-
-  // Use calculatedTotalKm for levels too, to be consistent
   const currentTotalKmVal = parseFloat(calculatedTotalKm);
 
   if (levels && levels.length > 0) {
@@ -106,12 +96,12 @@ const Profile: React.FC<ProfileProps> = ({
       progressToNextLevel = ((currentTotalKmVal - ((currentLevel - 1) * 50)) / 50) * 100;
   }
 
-  // --- ZONE DATA LOOKUP FOR MODAL ---
+  // --- ZONE DATA LOOKUP ---
   const selectedZone = useMemo(() => zones.find(z => z.id === selectedZoneId), [zones, selectedZoneId]);
 
   useEffect(() => {
       if (selectedZone) {
-          setZoneLeaderboard([]); // Clear while loading
+          setZoneLeaderboard([]); 
           onGetZoneLeaderboard(selectedZone.id).then(setZoneLeaderboard);
       }
   }, [selectedZone, onGetZoneLeaderboard]);
@@ -125,58 +115,29 @@ const Profile: React.FC<ProfileProps> = ({
       return { name: userData.name, avatar: userData.avatar, badge: userBadge };
   }, [selectedZone, allUsers, user, badges]);
 
-  // --- ZONE STATS & RANK LOGIC ---
+  // --- ZONE STATS LOGIC ---
   const sortedZoneStats = useMemo(() => {
-      // 1. Initialize statsMap with OWNED ZONES
-      // IMPORTANT: Use z.recordKm as the source of truth for owned zones.
       const statsMap = new Map<string, { id: string; name: string; count: number; km: number; isOwned: boolean }>();
-      
       myZones.forEach(z => {
-          statsMap.set(z.id, { 
-              id: z.id, 
-              name: z.name, 
-              count: 0, // Will be incremented by run history loop
-              km: z.recordKm, // <--- Fixed Source of Truth for Owned
-              isOwned: true 
-          });
+          statsMap.set(z.id, { id: z.id, name: z.name, count: 0, km: z.recordKm, isOwned: true });
       });
 
-      // Helper to add stats to map
       const updateEntry = (zoneId: string, zoneName: string, kmToAdd: number) => {
           const entry = statsMap.get(zoneId);
-          
           if (entry) {
               entry.count += 1;
-              // If NOT owned, we sum up the history.
-              // If OWNED, we rely on the z.recordKm set above (don't add to it to avoid double counting).
-              if (!entry.isOwned) {
-                  entry.km += kmToAdd;
-              }
+              if (!entry.isOwned) entry.km += kmToAdd;
           } else {
-              // Not owned, not in map yet. Initialize.
-              statsMap.set(zoneId, { 
-                  id: zoneId, 
-                  name: zoneName, 
-                  count: 1, 
-                  km: kmToAdd, 
-                  isOwned: false 
-              });
+              statsMap.set(zoneId, { id: zoneId, name: zoneName, count: 1, km: kmToAdd, isOwned: false });
           }
       };
 
-      // 2. Aggregate Stats from Run History
       validHistory.forEach(run => {
           const involvedIds = new Set<string>();
-
-          // A: Gather all unique Zone IDs involved in this run
-          if (run.involvedZones && run.involvedZones.length > 0) {
-              run.involvedZones.forEach(id => involvedIds.add(id));
-          }
+          if (run.involvedZones && run.involvedZones.length > 0) run.involvedZones.forEach(id => involvedIds.add(id));
           
-          // B: Fallback for legacy runs (aggregate by Location Name string match if no IDs)
           if (involvedIds.size === 0 && run.location) {
               const cleanLoc = run.location.trim().toLowerCase();
-              // Try to find a matching zone in the global list
               const match = zones.find(z => {
                   const zName = z.name.trim().toLowerCase();
                   return zName === cleanLoc || zName.startsWith(cleanLoc) || cleanLoc.startsWith(zName);
@@ -184,53 +145,36 @@ const Profile: React.FC<ProfileProps> = ({
               if (match) involvedIds.add(match.id);
           }
 
-          // C: Distribute Data to Map
           const idsArray = Array.from(involvedIds);
           if (idsArray.length > 0) {
               idsArray.forEach(zoneId => {
                   const zoneDef = zones.find(z => z.id === zoneId);
                   const zoneName = zoneDef ? zoneDef.name : "Unknown Zone";
-                  
-                  // Calculate KM for this specific zone in this run
                   let runKmForZone = 0;
-                  
-                  // Priority 1: Exact Breakdown
-                  if (run.zoneBreakdown && run.zoneBreakdown[zoneId]) {
-                      runKmForZone = Number(run.zoneBreakdown[zoneId]);
-                  } 
-                  // Priority 2: Even Split
-                  else {
-                      runKmForZone = run.km / idsArray.length;
-                  }
-
+                  if (run.zoneBreakdown && run.zoneBreakdown[zoneId]) runKmForZone = Number(run.zoneBreakdown[zoneId]);
+                  else runKmForZone = run.km / idsArray.length;
                   updateEntry(zoneId, zoneName, runKmForZone);
               });
           }
       });
 
-      // 3. Determine Rank based on Ownership or Record Proximity
       const dataWithRank = Array.from(statsMap.values()).map(stat => {
           const zoneObj = zones.find(z => z.id === stat.id);
           let rank = 999; 
-
           if (zoneObj) {
-              if (zoneObj.ownerId === user.id) {
-                  rank = 1; 
-              } else if (zoneObj.recordKm > 0) {
+              if (zoneObj.ownerId === user.id) rank = 1; 
+              else if (zoneObj.recordKm > 0) {
                   const ratio = stat.km / zoneObj.recordKm;
                   if (ratio >= 1) rank = 1;
                   else if (ratio > 0.8) rank = 2;
                   else if (ratio > 0.6) rank = 3;
                   else if (ratio > 0.4) rank = 4;
                   else rank = Math.floor((1 - ratio) * 10) + 5; 
-              } else {
-                  rank = 1;
-              }
+              } else rank = 1;
           }
           return { ...stat, rank };
       });
 
-      // 4. Sort Results
       return dataWithRank.sort((a, b) => {
           const modifier = sortConfig.direction === 'asc' ? 1 : -1;
           if (a[sortConfig.key] < b[sortConfig.key]) return -1 * modifier;
@@ -241,19 +185,15 @@ const Profile: React.FC<ProfileProps> = ({
 
   const currentZoneStats = sortedZoneStats.slice((zonePage - 1) * ZONES_PER_PAGE, zonePage * ZONES_PER_PAGE);
 
-  // --- FILTERED HISTORY LOGIC ---
+  // --- FILTERED HISTORY ---
   const filteredRuns = useMemo(() => {
       return validHistory.filter(run => {
           if (!historySearch) return true;
           const searchLower = historySearch.toLowerCase();
-          
-          // Resolve location string for searching (to match what user sees)
           const locationDisplay = (run.involvedZones && run.involvedZones.length > 0)
               ? run.involvedZones.map(id => zones.find(z => z.id === id)?.name).filter(Boolean).join(', ')
               : run.location;
-          
           const dateStr = new Date(run.timestamp).toLocaleDateString();
-
           return (locationDisplay || '').toLowerCase().includes(searchLower) || dateStr.includes(searchLower);
       });
   }, [validHistory, historySearch, zones]);
@@ -322,27 +262,27 @@ const Profile: React.FC<ProfileProps> = ({
           onViewSubmissions={() => setShowSubmissionsModal(true)}
       />
 
-      {/* STATS ROW */}
+      {/* STATS ROW (HUD EFFECT APPLIED) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl border border-gray-700 p-5 relative overflow-hidden flex flex-col justify-between">
+          <div className="glass-panel rounded-xl p-5 relative overflow-hidden flex flex-col justify-between">
               <div className="absolute top-0 right-0 p-4 opacity-5"><Coins size={80}/></div>
               <h3 className="text-white font-bold uppercase tracking-wide mb-4 flex items-center gap-2">
                   <Coins size={18} className="text-yellow-500"/> {t('profile.liquid_assets')}
               </h3>
               <div className="space-y-3 relative z-10">
-                  <div className="flex justify-between items-end bg-black/20 p-3 rounded-lg">
+                  <div className="flex justify-between items-end bg-black/20 p-3 rounded-lg border border-white/5">
                       <span className="text-sm text-gray-400 font-bold">{t('profile.run_balance')}</span>
                       <span className="text-xl font-mono font-bold text-emerald-400">{user.runBalance.toFixed(1)}</span>
                   </div>
-                  <div className="flex justify-between items-end bg-black/20 p-3 rounded-lg">
+                  <div className="flex justify-between items-end bg-black/20 p-3 rounded-lg border border-white/5">
                       <span className="text-sm text-gray-400 font-bold">{t('profile.gov_holdings')}</span>
                       <span className="text-xl font-mono font-bold text-cyan-400">{user.govBalance.toFixed(1)}</span>
                   </div>
               </div>
           </div>
 
-          <div className="bg-gray-800 rounded-xl border border-gray-700 p-5 flex flex-col justify-between">
-              <h3 className="text-white font-bold uppercase tracking-wide mb-4 flex items-center gap-2 border-b border-gray-700 pb-2">
+          <div className="glass-panel rounded-xl p-5 flex flex-col justify-between">
+              <h3 className="text-white font-bold uppercase tracking-wide mb-4 flex items-center gap-2 border-b border-white/10 pb-2">
                   <BarChart3 size={18} className="text-gray-400"/> {t('profile.perf_metrics')}
               </h3>
               <div className="space-y-4">
@@ -361,14 +301,13 @@ const Profile: React.FC<ProfileProps> = ({
               </div>
           </div>
 
-          {/* TERRITORY STATUS - UPDATED LAYOUT */}
-          <div className="bg-gray-800 rounded-xl border border-gray-700 p-5 flex flex-col justify-between">
-              <h3 className="text-white font-bold uppercase tracking-wide mb-4 flex items-center gap-2 border-b border-gray-700 pb-2">
+          {/* TERRITORY STATUS */}
+          <div className="glass-panel rounded-xl p-5 flex flex-col justify-between">
+              <h3 className="text-white font-bold uppercase tracking-wide mb-4 flex items-center gap-2 border-b border-white/10 pb-2">
                   <Shield size={18} className="text-gray-400"/> {t('profile.territory_status')}
               </h3>
               
-              {/* Total Owned */}
-              <div className="bg-gray-900 p-3 rounded-lg border border-gray-700 flex items-center justify-between mb-3">
+              <div className="bg-black/30 p-3 rounded-lg border border-white/5 flex items-center justify-between mb-3">
                    <div className="flex items-center gap-2">
                        <div className="p-1.5 bg-emerald-500/20 rounded text-emerald-400">
                            <MapPin size={16} />
@@ -378,15 +317,14 @@ const Profile: React.FC<ProfileProps> = ({
                    <span className="text-2xl font-mono font-bold text-white">{totalOwned}</span>
               </div>
 
-              {/* Boosts & Shields Grid */}
               <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-gray-900 p-3 rounded-lg border border-gray-700 flex flex-col items-center justify-center">
+                  <div className="bg-black/30 p-3 rounded-lg border border-white/5 flex flex-col items-center justify-center">
                       <div className="flex items-center gap-1 text-xl font-mono font-bold text-white mb-1">
                           <Zap size={16} className="text-amber-400 fill-amber-400" /> {activeBoosts}
                       </div>
                       <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">{t('zone.boosted')}</span>
                   </div>
-                  <div className="bg-gray-900 p-3 rounded-lg border border-gray-700 flex flex-col items-center justify-center">
+                  <div className="bg-black/30 p-3 rounded-lg border border-white/5 flex flex-col items-center justify-center">
                       <div className="flex items-center gap-1 text-xl font-mono font-bold text-white mb-1">
                           <Shield size={16} className="text-cyan-400 fill-cyan-400/50" /> {activeShields}
                       </div>
@@ -398,7 +336,7 @@ const Profile: React.FC<ProfileProps> = ({
 
       {/* LEADERBOARD RANKS */}
       {leaderboards.length > 0 && (
-          <div className="bg-gray-800 rounded-xl border border-gray-700 p-5">
+          <div className="glass-panel rounded-xl p-5">
               <h3 className="text-white font-bold uppercase tracking-wide mb-4 flex items-center gap-2">
                   <Trophy size={18} className="text-yellow-400"/> {t('profile.active_rankings')}
               </h3>
@@ -407,7 +345,7 @@ const Profile: React.FC<ProfileProps> = ({
                       const { rank, score } = getLeaderboardRank(lb);
                       const isTop3 = rank <= 3;
                       return (
-                          <div key={lb.id} className={`p-3 rounded-xl border transition-colors flex flex-col justify-between ${isTop3 ? 'bg-gradient-to-br from-gray-900 to-yellow-900/20 border-yellow-500/30' : 'bg-gray-900 border-gray-700'}`}>
+                          <div key={lb.id} className={`p-3 rounded-xl border transition-colors flex flex-col justify-between ${isTop3 ? 'bg-gradient-to-br from-black/60 to-yellow-900/20 border-yellow-500/30' : 'bg-black/40 border-white/5'}`}>
                               <div className="flex justify-between items-start mb-2 gap-2">
                                   <div className="min-w-0">
                                       <h4 className="font-bold text-white text-xs truncate uppercase tracking-wider" title={lb.title}>{lb.title}</h4>
@@ -420,7 +358,7 @@ const Profile: React.FC<ProfileProps> = ({
                                       <span className="text-sm font-black leading-none font-mono">{rank}</span>
                                   </div>
                               </div>
-                              <div className="mt-1 pt-2 border-t border-gray-800 flex justify-between items-center">
+                              <div className="mt-1 pt-2 border-t border-white/10 flex justify-between items-center">
                                   <span className="text-[9px] text-gray-500 uppercase font-bold truncate pr-1 hidden sm:block">{t('profile.score')}</span>
                                   <span className={`font-mono text-xs font-bold truncate ${isTop3 ? 'text-yellow-400' : 'text-emerald-400'}`}>
                                       {score.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 1 })}
@@ -434,16 +372,16 @@ const Profile: React.FC<ProfileProps> = ({
       )}
 
       {/* ZONE STATS */}
-      <div className="bg-gray-800 rounded-xl border border-gray-700 p-5">
+      <div className="glass-panel rounded-xl p-5">
           <h3 className="text-white font-bold uppercase tracking-wide mb-4 flex items-center gap-2">
               <MapPin size={18} className="text-emerald-400"/> {t('profile.zone_stats')}
           </h3>
           {sortedZoneStats.length === 0 ? (
-              <div className="text-center py-8 text-gray-500 border border-dashed border-gray-700 rounded-lg"><p>{t('profile.no_runs')}</p></div>
+              <div className="text-center py-8 text-gray-500 border border-dashed border-white/10 rounded-lg"><p>{t('profile.no_runs')}</p></div>
           ) : (
               <div>
-                  <div className="rounded-lg overflow-hidden border border-gray-700 bg-gray-900 mb-4">
-                      <div className="grid grid-cols-12 gap-2 p-3 bg-gray-950 text-[10px] font-bold text-gray-500 uppercase tracking-wider border-b border-gray-700">
+                  <div className="rounded-lg overflow-hidden border border-white/10 bg-black/40 mb-4">
+                      <div className="grid grid-cols-12 gap-2 p-3 bg-black/60 text-[10px] font-bold text-gray-500 uppercase tracking-wider border-b border-white/10">
                           <button onClick={() => handleSort('rank')} className="col-span-2 md:col-span-1 text-center hover:text-white flex items-center justify-center gap-1">
                               {t('profile.zone_rank')} {renderSortArrow('rank')}
                           </button>
@@ -455,7 +393,7 @@ const Profile: React.FC<ProfileProps> = ({
                               {renderSortArrow('km')} {t('profile.zone_total')}
                           </button>
                       </div>
-                      <div className="divide-y divide-gray-800">
+                      <div className="divide-y divide-white/10">
                           {currentZoneStats.map((stat, idx) => {
                               const rank = stat.rank; 
                               let rankColor = "text-gray-500";
@@ -469,7 +407,7 @@ const Profile: React.FC<ProfileProps> = ({
                               else if (rank === 3) rankColor = "text-amber-600";
 
                               return (
-                                  <div key={idx} className="grid grid-cols-12 gap-2 p-3 items-center hover:bg-gray-800 transition-colors cursor-pointer group" onClick={() => setSelectedZoneId(stat.id)}>
+                                  <div key={idx} className="grid grid-cols-12 gap-2 p-3 items-center hover:bg-white/5 transition-colors cursor-pointer group" onClick={() => setSelectedZoneId(stat.id)}>
                                       <div className={`col-span-2 md:col-span-1 text-center font-black ${rankColor} text-sm flex items-center justify-center font-mono`}>
                                           {rankIcon} #{rank}
                                       </div>
@@ -486,19 +424,19 @@ const Profile: React.FC<ProfileProps> = ({
           )}
       </div>
 
-      {/* TABS */}
+      {/* TABS (Glass Style) */}
       <div className="w-full">
-          <div className="bg-gray-800 rounded-xl border border-gray-700 min-h-[500px] flex flex-col relative z-0">
-              <div className="flex border-b border-gray-700 bg-gray-900/50 rounded-t-xl">
-                  <button onClick={() => setActiveTab('ACHIEVEMENTS')} className={`flex-1 py-4 text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 border-b-2 transition-colors ${activeTab === 'ACHIEVEMENTS' ? 'border-yellow-500 text-yellow-400 bg-gray-800 rounded-tl-xl' : 'border-transparent text-gray-500 hover:text-white rounded-tl-xl'}`}>
+          <div className="glass-panel rounded-xl min-h-[500px] flex flex-col relative z-0">
+              <div className="flex border-b border-white/10 bg-black/40 rounded-t-xl">
+                  <button onClick={() => setActiveTab('ACHIEVEMENTS')} className={`flex-1 py-4 text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 border-b-2 transition-colors ${activeTab === 'ACHIEVEMENTS' ? 'border-yellow-500 text-yellow-400 bg-white/5 rounded-tl-xl' : 'border-transparent text-gray-500 hover:text-white rounded-tl-xl'}`}>
                       <Award size={16} /> {t('profile.tab.achievements')}
                   </button>
-                  <button onClick={() => setActiveTab('HISTORY')} className={`flex-1 py-4 text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 border-b-2 transition-colors ${activeTab === 'HISTORY' ? 'border-emerald-500 text-emerald-400 bg-gray-800 rounded-tr-xl' : 'border-transparent text-gray-500 hover:text-white rounded-tr-xl'}`}>
+                  <button onClick={() => setActiveTab('HISTORY')} className={`flex-1 py-4 text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 border-b-2 transition-colors ${activeTab === 'HISTORY' ? 'border-emerald-500 text-emerald-400 bg-white/5 rounded-tr-xl' : 'border-transparent text-gray-500 hover:text-white rounded-tr-xl'}`}>
                       <History size={16} /> {t('profile.tab.history')}
                   </button>
               </div>
 
-              <div className="p-6 flex-1 bg-gray-800 rounded-b-xl">
+              <div className="p-6 flex-1 rounded-b-xl">
                   {activeTab === 'ACHIEVEMENTS' && (
                       <ProfileAchievementsTab 
                           user={user} 
@@ -519,11 +457,11 @@ const Profile: React.FC<ProfileProps> = ({
                                     <input 
                                         type="text" 
                                         placeholder="Search history by location or date..." 
-                                        className="w-full bg-gray-900 border border-gray-600 rounded-lg pl-9 pr-8 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
+                                        className="w-full bg-black/40 border border-gray-600 rounded-lg pl-9 pr-8 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
                                         value={historySearch}
                                         onChange={(e) => {
                                             setHistorySearch(e.target.value);
-                                            setRunPage(1); // Reset to page 1 on search
+                                            setRunPage(1); 
                                         }}
                                     />
                                     {historySearch && (
@@ -541,7 +479,7 @@ const Profile: React.FC<ProfileProps> = ({
                                         <thead className="text-[10px] uppercase font-bold text-gray-500 border-b border-gray-700 tracking-wider">
                                             <tr><th className="pb-3 pl-2">{t('profile.date')}</th><th className="pb-3">{t('profile.location')}</th><th className="pb-3 text-right">Dist</th><th className="pb-3 text-right pr-2">{t('profile.rewards')}</th></tr>
                                         </thead>
-                                        <tbody className="divide-y divide-gray-700/50 text-sm">
+                                        <tbody className="divide-y divide-white/10 text-sm">
                                             {filteredRuns.length === 0 ? (
                                                 <tr><td colSpan={4} className="py-8 text-center text-gray-500 italic">No runs found matching search.</td></tr>
                                             ) : (
@@ -551,7 +489,7 @@ const Profile: React.FC<ProfileProps> = ({
                                                         : run.location;
 
                                                     return (
-                                                        <tr key={run.id} className="hover:bg-gray-750 transition-colors">
+                                                        <tr key={run.id} className="hover:bg-white/5 transition-colors">
                                                             <td className="py-3 pl-2 text-gray-400 text-xs font-mono">{new Date(run.timestamp).toLocaleDateString()}</td>
                                                             <td className="py-3 font-bold text-white uppercase tracking-wide text-xs md:text-sm">{locationDisplay}</td>
                                                             <td className="py-3 text-right font-mono text-emerald-400">{run.km.toFixed(2)} km</td>
@@ -572,7 +510,7 @@ const Profile: React.FC<ProfileProps> = ({
           </div>
       </div>
 
-      {/* ZONE DETAILS MODAL (Displayed when a zone is selected from stats) */}
+      {/* ZONE DETAILS MODAL */}
       {selectedZone && (
           <ZoneStatsModal 
               zone={selectedZone}

@@ -108,18 +108,18 @@ const ZoneDiscoveryModal: React.FC<ZoneDiscoveryModalProps> = ({ isOpen, data, o
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 animate-fade-in">
       
-      {/* Container: Increased size to max-w-2xl for a bigger modal */}
-      <div className="bg-gray-900 rounded-2xl border-2 border-emerald-500 w-full max-w-2xl shadow-[0_0_60px_rgba(16,185,129,0.25)] overflow-hidden flex flex-col animate-slide-up relative">
+      {/* Container: Glass panel heavy */}
+      <div className="glass-panel-heavy rounded-2xl w-full max-w-2xl shadow-[0_0_60px_rgba(16,185,129,0.3)] overflow-hidden flex flex-col animate-slide-up relative">
         
         {/* Background Grid Decoration */}
-        <div className="absolute inset-0 bg-[radial-gradient(#10b981_1px,transparent_1px)] [background-size:20px_20px] opacity-5 pointer-events-none"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(#10b981_1px,transparent_1px)] [background-size:20px_20px] opacity-10 pointer-events-none"></div>
 
-        {/* TOP: MAP VISUAL (Interactive Embed) - Increased height to h-72 */}
-        <div className="relative h-72 bg-gray-800 border-b border-gray-700 w-full shrink-0 group">
+        {/* TOP: MAP VISUAL (Interactive Embed) */}
+        <div className="relative h-72 bg-gray-900 border-b border-white/10 w-full shrink-0 group">
             
             {/* Loading Skeleton for Map */}
             {(!showMap || isMapLoading) && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-800 z-20 animate-pulse">
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-900 z-20 animate-pulse">
                     <Loader size={32} className="text-emerald-500 animate-spin mb-2" />
                     <span className="text-xs text-emerald-500/80 font-mono uppercase tracking-widest">Acquiring Satellite Feed...</span>
                 </div>
@@ -133,13 +133,13 @@ const ZoneDiscoveryModal: React.FC<ZoneDiscoveryModalProps> = ({ isOpen, data, o
                     frameBorder="0" 
                     scrolling="no" 
                     src={`https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${data.lat},${data.lng}`}
-                    className={`opacity-90 group-hover:opacity-100 transition-opacity duration-700 ${isMapLoading ? 'opacity-0' : 'opacity-90'}`}
+                    className={`opacity-80 group-hover:opacity-100 transition-opacity duration-700 ${isMapLoading ? 'opacity-0' : 'opacity-80'} grayscale hover:grayscale-0`}
                     onLoad={() => setIsMapLoading(false)}
                 ></iframe>
             )}
             
             {/* Gradient Overlay for Text Readability */}
-            <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-gray-900 via-transparent to-transparent"></div>
+            <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-gray-950 via-transparent to-transparent"></div>
             
             {/* Floating Header on Map */}
             <div className="absolute bottom-5 left-6 right-6 flex justify-between items-end z-20">
@@ -158,7 +158,7 @@ const ZoneDiscoveryModal: React.FC<ZoneDiscoveryModalProps> = ({ isOpen, data, o
         </div>
 
         {/* BOTTOM: CONTROLS & STATS */}
-        <div className="p-8 flex flex-col gap-6 relative z-10 bg-gray-900">
+        <div className="p-8 flex flex-col gap-6 relative z-10 bg-transparent">
            
            {/* Naming Input */}
            <div>
@@ -175,7 +175,7 @@ const ZoneDiscoveryModal: React.FC<ZoneDiscoveryModalProps> = ({ isOpen, data, o
                          setCustomName(e.target.value);
                          setWarning(null); 
                      }}
-                     className={`w-full bg-gray-800 border-2 rounded-xl px-5 py-4 text-white placeholder-gray-600 focus:outline-none transition-all font-bold text-lg ${warning ? 'border-yellow-500 focus:border-yellow-500' : 'border-gray-700 focus:border-emerald-500'}`}
+                     className={`w-full bg-black/40 border-2 rounded-xl px-5 py-4 text-white placeholder-gray-600 focus:outline-none transition-all font-bold text-lg ${warning ? 'border-yellow-500 focus:border-yellow-500' : 'border-gray-700 focus:border-emerald-500'}`}
                   />
                   {warning && <AlertTriangle className="absolute right-4 top-1/2 -translate-y-1/2 text-yellow-500 animate-pulse" size={20} />}
               </div>
@@ -192,7 +192,7 @@ const ZoneDiscoveryModal: React.FC<ZoneDiscoveryModalProps> = ({ isOpen, data, o
 
            {/* Compact Stats Row */}
            <div className="grid grid-cols-2 gap-6">
-              <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-4 flex items-center justify-between px-5">
+              <div className="bg-black/30 border border-gray-700 rounded-xl p-4 flex items-center justify-between px-5">
                  <span className="text-xs text-red-400 uppercase font-bold tracking-wider">{t('discovery.cost')}</span>
                  <span className="text-lg font-bold text-white font-mono">{data.cost} <span className="text-xs text-gray-500">RUN</span></span>
               </div>

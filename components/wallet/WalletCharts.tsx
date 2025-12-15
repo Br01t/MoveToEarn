@@ -87,7 +87,7 @@ const WalletCharts: React.FC<WalletChartsProps> = ({ transactions }) => {
     <div className="space-y-6 h-full flex flex-col">
         
         {/* RUN SUPPLY CHART */}
-        <div className="bg-gray-800 rounded-2xl border border-gray-700 p-6 flex flex-col shadow-lg">
+        <div className="glass-panel rounded-2xl p-6 flex flex-col shadow-lg">
             {/* Header Info */}
             <div className="flex justify-between items-start mb-6">
                 <div>
@@ -168,7 +168,7 @@ const WalletCharts: React.FC<WalletChartsProps> = ({ transactions }) => {
         </div>
 
         {/* GOV SUPPLY CHART */}
-        <div className="bg-gray-800 rounded-2xl border border-gray-700 p-6 flex flex-col shadow-lg">
+        <div className="glass-panel rounded-2xl p-6 flex flex-col shadow-lg">
             {/* Header Info */}
             <div className="flex justify-between items-start mb-6">
                 <div>

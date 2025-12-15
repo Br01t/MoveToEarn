@@ -37,7 +37,7 @@ const Marketplace: React.FC<MarketplaceProps> = ({ user, items, onBuy }) => {
            </h2>
            <p className="text-gray-400 font-medium">{t('market.subtitle')}</p>
         </div>
-        <div className="bg-gray-800 px-4 py-2 rounded-lg border border-emerald-500/30 text-emerald-400 font-mono font-bold flex items-center gap-2 shadow-lg">
+        <div className="glass-panel px-4 py-2 rounded-lg text-emerald-400 font-mono font-bold flex items-center gap-2">
           <CheckCircle size={16} />
           {user.runBalance.toFixed(2)} RUN
         </div>
@@ -45,7 +45,7 @@ const Marketplace: React.FC<MarketplaceProps> = ({ user, items, onBuy }) => {
 
       {/* FLASH DROP INFO BANNER - Visible ONLY if CURRENCY items exist */}
       {hasFlashItems && (
-        <div className="bg-gradient-to-r from-yellow-900/40 to-transparent border-l-4 border-yellow-500 p-6 rounded-r-xl mb-8 relative overflow-hidden group animate-fade-in">
+        <div className="bg-gradient-to-r from-yellow-900/40 to-transparent border-l-4 border-yellow-500 p-6 rounded-r-xl mb-8 relative overflow-hidden group animate-fade-in glass-panel border-y-0 border-r-0">
            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
               <Clock size={100} className="text-yellow-500" />
            </div>
@@ -65,7 +65,7 @@ const Marketplace: React.FC<MarketplaceProps> = ({ user, items, onBuy }) => {
       )}
 
       {items.length === 0 ? (
-        <div className="text-center py-12 bg-gray-800 rounded-xl border border-gray-700">
+        <div className="text-center py-12 glass-panel rounded-xl">
           <Package className="mx-auto h-12 w-12 text-gray-600 mb-4" />
           <h3 className="text-xl font-bold text-white uppercase tracking-wide">{t('market.empty')}</h3>
           <p className="text-gray-400">{t('market.empty_desc')}</p>
@@ -79,20 +79,20 @@ const Marketplace: React.FC<MarketplaceProps> = ({ user, items, onBuy }) => {
             const isLowStock = item.quantity > 0 && item.quantity < 10;
 
             return (
-              <div key={item.id} className={`bg-gray-800 border border-gray-700 rounded-xl overflow-hidden transition-all group flex flex-col relative ${hasStock ? 'hover:border-emerald-500 hover:shadow-lg hover:shadow-emerald-900/20' : 'opacity-60 grayscale'}`}>
+              <div key={item.id} className={`glass-panel rounded-xl overflow-hidden transition-all group flex flex-col relative ${hasStock ? 'hover:border-emerald-500/50 hover:shadow-[0_0_20px_rgba(16,185,129,0.1)]' : 'opacity-60 grayscale'}`}>
                 {isLowStock && (
-                    <div className="absolute top-0 right-0 bg-orange-600 text-white text-[10px] font-bold px-2 py-1 rounded-bl-lg z-10">
+                    <div className="absolute top-0 right-0 bg-orange-600/90 backdrop-blur text-white text-[10px] font-bold px-2 py-1 rounded-bl-lg z-10">
                         {t('market.low_stock')}
                     </div>
                 )}
                 
                 <div className="p-6 flex-1">
                   <div className="flex items-center justify-between mb-4">
-                    <div className={`p-3 rounded-lg ${item.type === 'DEFENSE' ? 'bg-blue-500/10 text-blue-400' : (item.type === 'CURRENCY' ? 'bg-cyan-500/10 text-cyan-400' : 'bg-yellow-500/10 text-yellow-400')}`}>
+                    <div className={`p-3 rounded-lg border border-white/5 ${item.type === 'DEFENSE' ? 'bg-blue-500/10 text-blue-400' : (item.type === 'CURRENCY' ? 'bg-cyan-500/10 text-cyan-400' : 'bg-yellow-500/10 text-yellow-400')}`}>
                       <Icon size={32} />
                     </div>
                     <div className="flex flex-col items-end gap-1">
-                        <span className="text-[10px] uppercase font-bold px-2 py-1 rounded bg-gray-700 text-gray-300 tracking-wider">{item.type}</span>
+                        <span className="text-[10px] uppercase font-bold px-2 py-1 rounded bg-black/40 text-gray-300 tracking-wider border border-white/5">{item.type}</span>
                         <span className={`text-xs font-bold font-mono ${hasStock ? (isLowStock ? 'text-orange-400' : 'text-emerald-400') : 'text-red-500'}`}>
                             {hasStock ? `${item.quantity} ${t('market.left')}` : t('market.sold_out')}
                         </span>
@@ -101,7 +101,7 @@ const Marketplace: React.FC<MarketplaceProps> = ({ user, items, onBuy }) => {
                   <h3 className="text-xl font-bold uppercase tracking-wide text-white mb-2">{item.name}</h3>
                   <p className="text-gray-400 text-sm mb-6 min-h-[3rem] font-medium">{item.description}</p>
                   
-                  <div className="flex items-center justify-between mt-auto pt-4 border-t border-gray-700">
+                  <div className="flex items-center justify-between mt-auto pt-4 border-t border-white/10">
                     <div className="flex flex-col">
                         <span className="text-xs text-gray-500 uppercase font-bold">{t('market.price')}</span>
                         <span className="text-2xl font-bold text-emerald-400 font-mono">{item.priceRun} <span className="text-sm text-gray-500 font-sans">RUN</span></span>
@@ -112,7 +112,7 @@ const Marketplace: React.FC<MarketplaceProps> = ({ user, items, onBuy }) => {
                       className={`px-5 py-2.5 rounded-lg font-bold flex items-center gap-2 transition-all uppercase tracking-wide text-sm ${
                         canAfford && hasStock
                         ? 'bg-emerald-500 hover:bg-emerald-600 text-black shadow-lg shadow-emerald-500/20 hover:scale-105' 
-                        : 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                        : 'bg-gray-700/50 text-gray-500 cursor-not-allowed border border-white/5'
                       }`}
                     >
                       <ShoppingCart size={18} />
@@ -130,8 +130,8 @@ const Marketplace: React.FC<MarketplaceProps> = ({ user, items, onBuy }) => {
       {/* Confirmation Modal */}
       {confirmItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="bg-gray-800 rounded-2xl border border-gray-700 w-full max-w-sm shadow-2xl overflow-hidden animate-slide-up">
-             <div className="p-6 border-b border-gray-700 flex justify-between items-center bg-gray-900">
+          <div className="glass-panel-heavy rounded-2xl w-full max-w-sm overflow-hidden animate-slide-up">
+             <div className="p-6 border-b border-white/10 flex justify-between items-center bg-black/20">
                <h3 className="text-lg font-bold uppercase tracking-wide text-white flex items-center gap-2">
                  {t('market.confirm_title')}
                </h3>
@@ -141,7 +141,7 @@ const Marketplace: React.FC<MarketplaceProps> = ({ user, items, onBuy }) => {
              </div>
 
              <div className="p-6 space-y-4">
-                <div className="flex items-center gap-4 bg-gray-900 p-4 rounded-xl border border-gray-700">
+                <div className="flex items-center gap-4 bg-black/30 p-4 rounded-xl border border-white/5">
                    <div className={`p-3 rounded-lg ${confirmItem.type === 'DEFENSE' ? 'bg-blue-500/20 text-blue-400' : (confirmItem.type === 'CURRENCY' ? 'bg-cyan-500/20 text-cyan-400' : 'bg-yellow-500/20 text-yellow-400')}`}>
                       {confirmItem.type === 'DEFENSE' ? <Shield size={24}/> : (confirmItem.type === 'CURRENCY' ? <Coins size={24}/> : <Zap size={24}/>)}
                    </div>
@@ -173,7 +173,7 @@ const Marketplace: React.FC<MarketplaceProps> = ({ user, items, onBuy }) => {
              <div className="p-6 pt-0 flex gap-3">
                <button 
                  onClick={() => setConfirmItem(null)}
-                 className="flex-1 py-3 bg-gray-700 hover:bg-gray-600 text-white font-bold rounded-xl transition-colors uppercase tracking-wide text-sm"
+                 className="flex-1 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold rounded-xl transition-colors uppercase tracking-wide text-sm"
                >
                  {t('market.cancel')}
                </button>

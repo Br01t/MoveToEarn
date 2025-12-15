@@ -78,7 +78,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLogin, onRegister, o
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/90 backdrop-blur-md p-4 animate-fade-in">
-      <div className="relative w-full max-w-md bg-gray-900 rounded-3xl border-2 border-emerald-500/50 shadow-[0_0_50px_rgba(16,185,129,0.2)] overflow-hidden">
+      <div className="relative w-full max-w-md glass-panel-heavy rounded-3xl overflow-hidden shadow-[0_0_60px_rgba(16,185,129,0.15)]">
         
         {/* Decorative Grid BG */}
         <div className="absolute inset-0 bg-[radial-gradient(#10b981_1px,transparent_1px)] [background-size:20px_20px] opacity-10 pointer-events-none"></div>
@@ -88,7 +88,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLogin, onRegister, o
             <button 
                 type="button" 
                 onClick={onClose} 
-                className="absolute top-4 right-4 text-gray-500 hover:text-white z-50 transition-colors p-2 bg-gray-900/50 rounded-full"
+                className="absolute top-4 right-4 text-gray-500 hover:text-white z-50 transition-colors p-2 hover:bg-white/10 rounded-full"
             >
               <X size={24} />
             </button>
@@ -98,7 +98,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLogin, onRegister, o
           
           {/* Header */}
           <div className="text-center mb-8">
-            <div className="w-16 h-16 mx-auto bg-emerald-500/10 rounded-full flex items-center justify-center mb-4 border border-emerald-500/30">
+            <div className="w-16 h-16 mx-auto bg-emerald-500/10 rounded-full flex items-center justify-center mb-4 border border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.2)]">
                {viewState === 'RESET' || viewState === 'UPDATE_PASSWORD' ? <KeyRound size={32} className="text-emerald-400" /> : <Activity size={32} className="text-emerald-400" />}
             </div>
             <h2 className="text-3xl font-black text-white tracking-tighter uppercase mb-1">
@@ -137,7 +137,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLogin, onRegister, o
                         <input 
                             type="text" 
                             placeholder="RunnerOne"
-                            className="w-full bg-gray-800 border-2 border-gray-700 rounded-xl py-3 pl-12 pr-4 text-white focus:outline-none focus:border-emerald-500 focus:shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all"
+                            className="w-full bg-black/40 border border-gray-600 rounded-xl py-3 pl-12 pr-4 text-white focus:outline-none focus:border-emerald-500 focus:shadow-[0_0_20px_rgba(16,185,129,0.2)] transition-all placeholder-gray-600"
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
                             required={viewState === 'SIGNUP'}
@@ -156,7 +156,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLogin, onRegister, o
                         <input 
                             type="email" 
                             placeholder={t('auth.email_placeholder')}
-                            className="w-full bg-gray-800 border-2 border-gray-700 rounded-xl py-3 pl-12 pr-4 text-white focus:outline-none focus:border-emerald-500 focus:shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all"
+                            className="w-full bg-black/40 border border-gray-600 rounded-xl py-3 pl-12 pr-4 text-white focus:outline-none focus:border-emerald-500 focus:shadow-[0_0_20px_rgba(16,185,129,0.2)] transition-all placeholder-gray-600"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required
@@ -186,7 +186,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLogin, onRegister, o
                         <input 
                             type="password" 
                             placeholder="••••••••"
-                            className="w-full bg-gray-800 border-2 border-gray-700 rounded-xl py-3 pl-12 pr-4 text-white focus:outline-none focus:border-emerald-500 focus:shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all"
+                            className="w-full bg-black/40 border border-gray-600 rounded-xl py-3 pl-12 pr-4 text-white focus:outline-none focus:border-emerald-500 focus:shadow-[0_0_20px_rgba(16,185,129,0.2)] transition-all placeholder-gray-600"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
@@ -200,15 +200,15 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLogin, onRegister, o
                 )}
 
                 {errorMsg && (
-                    <div className="bg-red-500/10 border border-red-500/50 p-3 rounded-lg flex items-center gap-2 text-red-400 text-xs">
-                    <AlertTriangle size={14} /> {errorMsg}
+                    <div className="bg-red-900/30 border border-red-500/50 p-3 rounded-lg flex items-center gap-2 text-red-200 text-xs">
+                    <AlertTriangle size={14} className="text-red-400" /> {errorMsg}
                     </div>
                 )}
 
                 <button 
                     type="submit" 
                     disabled={isLoading}
-                    className="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-black py-4 rounded-xl shadow-lg shadow-emerald-500/20 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-wait"
+                    className="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-black py-4 rounded-xl shadow-lg shadow-emerald-900/40 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-wait"
                 >
                     {isLoading ? (
                     <span className="animate-pulse">{t('auth.sending')}</span>
@@ -222,7 +222,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLogin, onRegister, o
                 </form>
             )}
 
-            <div className="text-center pt-4 border-t border-gray-800">
+            <div className="text-center pt-4 border-t border-white/10">
                 {viewState === 'RESET' ? (
                     <button 
                         type="button"

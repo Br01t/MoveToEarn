@@ -44,7 +44,7 @@ const SuggestionPage: React.FC<SuggestionPageProps> = ({ onSubmit }) => {
       <p className="text-gray-400">{t('suggest.subtitle')}</p>
 
       {isSubmitted ? (
-          <div className="bg-yellow-900/20 border border-yellow-500 rounded-xl p-8 text-center animate-fade-in relative overflow-hidden">
+          <div className="bg-yellow-900/20 border border-yellow-500 rounded-xl p-8 text-center animate-fade-in relative overflow-hidden backdrop-blur-sm">
               <div className="absolute top-0 right-0 p-4 opacity-10"><Sparkles size={100} /></div>
               <div className="w-16 h-16 bg-yellow-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-yellow-500/50">
                   <CheckCircle size={32} className="text-yellow-400" />
@@ -59,12 +59,12 @@ const SuggestionPage: React.FC<SuggestionPageProps> = ({ onSubmit }) => {
               </button>
           </div>
       ) : (
-          <form onSubmit={handleSubmit} className="bg-gray-800 rounded-xl p-8 border border-gray-700 space-y-6">
+          <form onSubmit={handleSubmit} className="glass-panel rounded-xl p-8 space-y-6">
               <div>
                   <label className="block text-sm font-bold text-gray-400 uppercase mb-2">{t('suggest.title_label')}</label>
                   <input 
                       type="text"
-                      className="w-full bg-gray-900 border border-gray-600 rounded-xl p-4 text-white focus:border-yellow-500 focus:outline-none"
+                      className="w-full bg-black/40 border border-gray-600 rounded-xl p-4 text-white focus:border-yellow-500 focus:outline-none"
                       placeholder={t('suggest.title_placeholder')}
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
@@ -75,7 +75,7 @@ const SuggestionPage: React.FC<SuggestionPageProps> = ({ onSubmit }) => {
               <div>
                   <label className="block text-sm font-bold text-gray-400 uppercase mb-2">{t('suggest.desc_label')}</label>
                   <textarea 
-                      className="w-full bg-gray-900 border border-gray-600 rounded-xl p-4 text-white focus:border-yellow-500 focus:outline-none min-h-[150px]"
+                      className="w-full bg-black/40 border border-gray-600 rounded-xl p-4 text-white focus:border-yellow-500 focus:outline-none min-h-[150px]"
                       placeholder={t('suggest.desc_placeholder')}
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}

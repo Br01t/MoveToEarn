@@ -42,7 +42,7 @@ const ProviderSection = ({
     const { t } = useLanguage();
 
     return (
-        <div id={id} className={`scroll-mt-24 rounded-xl border ${borderClass} overflow-hidden bg-gray-800`}> 
+        <div id={id} className={`scroll-mt-24 rounded-xl border ${borderClass} overflow-hidden glass-panel`}> 
             <div className={`p-4 border-b ${borderClass} ${bgClass}`}>
                 <h2 className={`text-xl font-bold ${colorClass}`}>{title}</h2>
                 <p className="text-sm text-gray-300 mt-1">{desc}</p>
@@ -50,9 +50,9 @@ const ProviderSection = ({
             
             <div className="p-4 md:p-6 space-y-6">
                 
-                <div className="overflow-x-auto rounded-lg border border-gray-700 bg-gray-900/50">
+                <div className="overflow-x-auto rounded-lg border border-gray-700/50 bg-black/40">
                     <table className="w-full text-left text-xs md:text-sm">
-                        <thead className="bg-gray-700 text-gray-300 uppercase font-bold text-[10px]">
+                        <thead className="bg-gray-900/80 text-gray-300 uppercase font-bold text-[10px]">
                             <tr>
                                 <th className="p-3">{t('htp.table.func')}</th>
                                 <th className="p-3">{t('htp.table.device')}</th>
@@ -60,7 +60,7 @@ const ProviderSection = ({
                                 <th className="p-3">{t('htp.table.notes')}</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-700">
+                        <tbody className="divide-y divide-gray-700/50">
                             <tr>
                                 <td className="p-3 font-bold text-white whitespace-nowrap">{t('htp.single_run')}</td>
                                 <td className="p-3 text-gray-300">{recommendedDeviceSingle}</td>
@@ -85,7 +85,7 @@ const ProviderSection = ({
                             </h3>
                             <ul className="space-y-2">
                                 {singleSteps.map((step, idx) => (
-                                    <li key={idx} className="flex gap-3 text-sm text-gray-400 bg-gray-900/30 p-3 rounded-lg border border-gray-700/30">
+                                    <li key={idx} className="flex gap-3 text-sm text-gray-400 bg-black/20 p-3 rounded-lg border border-gray-700/30">
                                         <span className={`flex-shrink-0 w-5 h-5 rounded-full ${bgClass} ${colorClass} flex items-center justify-center text-xs font-bold`}>
                                             {idx + 1}
                                         </span>
@@ -103,7 +103,7 @@ const ProviderSection = ({
                             </h3>
                             <ul className="space-y-2">
                                 {bulkSteps.map((step, idx) => (
-                                    <li key={idx} className="flex gap-3 text-sm text-gray-400 bg-gray-900/30 p-3 rounded-lg border border-gray-700/30">
+                                    <li key={idx} className="flex gap-3 text-sm text-gray-400 bg-black/20 p-3 rounded-lg border border-gray-700/30">
                                         <span className={`flex-shrink-0 w-5 h-5 rounded-full ${bgClass} ${colorClass} flex items-center justify-center text-xs font-bold`}>
                                             {idx + 1}
                                         </span>

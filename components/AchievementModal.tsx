@@ -39,26 +39,28 @@ const AchievementModal: React.FC<AchievementModalProps> = ({ data, onClose, onCl
   
   // Theme colors based on type
   const themeColor = isMission ? 'emerald' : 'yellow';
-  const borderColor = isMission ? 'border-emerald-500' : 'border-yellow-500';
-  const glowColor = isMission ? 'shadow-[0_0_50px_rgba(16,185,129,0.4)]' : 'shadow-[0_0_50px_rgba(234,179,8,0.4)]';
-  const bgGradient = isMission ? 'from-emerald-900/80 to-gray-900' : 'from-yellow-900/80 to-gray-900';
+  const glowColor = isMission ? 'shadow-[0_0_60px_rgba(16,185,129,0.3)]' : 'shadow-[0_0_60px_rgba(234,179,8,0.3)]';
+  // Background refined to match HUD style but keep burst intent
+  const bgGradient = isMission 
+    ? 'from-emerald-900/40 to-transparent' 
+    : 'from-yellow-900/40 to-transparent';
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
       <div 
-        className={`relative w-full max-w-sm rounded-2xl border-2 ${borderColor} bg-gradient-to-b ${bgGradient} p-1 shadow-2xl transition-all duration-300 transform ${isVisible ? 'scale-100 opacity-100' : 'scale-90 opacity-0'}`}
+        className={`relative w-full max-w-sm glass-panel-heavy rounded-2xl p-1 ${glowColor} transition-all duration-300 transform ${isVisible ? 'scale-100 opacity-100' : 'scale-90 opacity-0'}`}
       >
-        {/* Glow Effect behind */}
-        <div className={`absolute inset-0 z-[-1] rounded-2xl ${glowColor}`}></div>
+        {/* Inner Gradient Layer for burst effect */}
+        <div className={`absolute inset-0 z-0 bg-gradient-to-b ${bgGradient} rounded-2xl opacity-50`}></div>
 
         {/* Confetti / Sparkles decoration */}
         <div className="absolute -top-6 -left-6 text-white/20 animate-bounce delay-100"><Sparkles size={40} /></div>
         <div className="absolute -bottom-6 -right-6 text-white/20 animate-bounce delay-300"><Sparkles size={40} /></div>
 
-        <div className="bg-gray-900/90 rounded-xl p-6 flex flex-col items-center text-center relative overflow-hidden">
+        <div className="relative z-10 p-6 flex flex-col items-center text-center overflow-hidden">
             
             {/* Header Badge */}
-            <div className={`mb-6 p-4 rounded-full border-2 ${borderColor} bg-gray-800 relative group`}>
+            <div className={`mb-6 p-4 rounded-full border-2 border-${themeColor}-500/50 bg-black/40 relative group`}>
                 <div className={`absolute inset-0 rounded-full opacity-20 bg-${themeColor}-500 animate-pulse`}></div>
                 {isMission ? (
                     <Target size={48} className="text-emerald-400" />
@@ -81,7 +83,7 @@ const AchievementModal: React.FC<AchievementModalProps> = ({ data, onClose, onCl
 
             {/* Reward Box */}
             {(rewardRun > 0 || rewardGov > 0) && (
-                <div className="mb-6 bg-gray-800/50 border border-gray-700 px-6 py-3 rounded-lg flex flex-col items-center gap-1">
+                <div className="mb-6 bg-black/40 border border-white/10 px-6 py-3 rounded-lg flex flex-col items-center gap-1 w-full">
                     <span className="text-[10px] text-gray-500 uppercase font-bold">{t('ach.reward_claimed')}</span>
                     {rewardRun > 0 && (
                         <span className="text-2xl font-mono font-bold text-emerald-400 flex items-center gap-2">
@@ -97,7 +99,7 @@ const AchievementModal: React.FC<AchievementModalProps> = ({ data, onClose, onCl
             )}
 
             {!(rewardRun > 0 || rewardGov > 0) && !isMission && (
-                 <div className="mb-6 bg-gray-800/50 border border-gray-700 px-6 py-3 rounded-lg flex flex-col items-center">
+                 <div className="mb-6 bg-black/40 border border-white/10 px-6 py-3 rounded-lg flex flex-col items-center w-full">
                     <span className="text-[10px] text-gray-500 uppercase font-bold">{t('ach.status')}</span>
                     <span className="text-lg font-bold text-yellow-400 flex items-center gap-2">
                         {t('ach.prestige')}
@@ -117,7 +119,7 @@ const AchievementModal: React.FC<AchievementModalProps> = ({ data, onClose, onCl
             {remainingCount > 0 && (
                 <button 
                     onClick={handleClaimAll}
-                    className="mt-4 flex items-center gap-2 text-xs text-gray-400 hover:text-white transition-colors group px-4 py-2 hover:bg-gray-800 rounded-lg"
+                    className="mt-4 flex items-center gap-2 text-xs text-gray-400 hover:text-white transition-colors group px-4 py-2 hover:bg-white/5 rounded-lg"
                 >
                     <Layers size={14} className="group-hover:text-emerald-400 transition-colors" />
                     <span>{t('ach.claim_all')} ({remainingCount} {t('ach.pending')})</span>
