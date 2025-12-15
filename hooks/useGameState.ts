@@ -206,21 +206,17 @@ export const useGameState = () => {
               const dbValue = lastBurnRes.data.timestamp;
               
               if (typeof dbValue === 'string') {
-                  // Caso più probabile: Timestamp salvato come stringa ISO (TIMESTAMPTZ)
                   const ms = new Date(dbValue).getTime();
-                  // Controllo di validità post-conversione
                   if (!isNaN(ms) && ms > 1000000000000) {
                       timestampValue = ms;
                   }
               } else if (typeof dbValue === 'number' && dbValue > 1000000000000) {
-                  // Caso in cui il DB ha salvato i millisecondi (numero grande)
                   timestampValue = dbValue;
               }
           }
           
           setLastBurnTimestamp(timestampValue);
           console.log(`[DEBUG LOG] lastBurnTimestamp aggiornato: ${timestampValue}`);
-          // --- FINE SEZIONE CRITICA ---
 
       } catch (err) {
           console.error("❌ [GAME STATE] Critical error fetching data:", err);
@@ -266,8 +262,7 @@ export const useGameState = () => {
               setTransactions(mappedTxs);
           }
 
-          // 4. FETCH RUN HISTORY (Critical Fix)
-          // Fetch from 'runs' table, as 'profiles.run_history' is deprecated
+          // 4. FETCH RUN HISTORY
           const { data: runRows } = await supabase
               .from('runs')
               .select('*')
@@ -277,7 +272,6 @@ export const useGameState = () => {
           let runHistory: RunEntry[] = [];
           if (runRows) {
               runHistory = runRows.map((r: any) => {
-                  // Robust parsing for involved_zones
                   let involvedZones: string[] = [];
                   if (Array.isArray(r.involved_zones)) {
                       involvedZones = r.involved_zones;
@@ -290,7 +284,6 @@ export const useGameState = () => {
                       }
                   }
 
-                  // Robust parsing for zone_breakdown
                   let zoneBreakdown: Record<string, number> = {};
                   if (typeof r.zone_breakdown === 'object' && r.zone_breakdown !== null) {
                       zoneBreakdown = r.zone_breakdown;
@@ -319,7 +312,6 @@ export const useGameState = () => {
               });
           }
 
-          // Calculate precise total KM from history
           const dynamicTotalKm = runHistory.reduce((acc, curr) => acc + (Number(curr.km) || 0), 0);
 
           setUser({
@@ -329,11 +321,11 @@ export const useGameState = () => {
               avatar: data.avatar_url || data.avatar || 'https://via.placeholder.com/150',
               runBalance: data.run_balance || 0,
               govBalance: data.gov_balance || 0,
-              totalKm: dynamicTotalKm, // Use calculated KM instead of potentially stale DB value
+              totalKm: dynamicTotalKm, 
               isPremium: data.is_premium || false,
               isAdmin: data.is_admin || false,
               inventory: builtInventory,
-              runHistory: runHistory, // Use fetched runs
+              runHistory: runHistory, 
               missionLog: data.mission_log || [],
               badgeLog: data.badge_log || [],
               completedMissionIds: (data.mission_log || []).map((l: any) => l.id),
@@ -342,65 +334,103 @@ export const useGameState = () => {
           });
       }
   };
-  // --- FETCH ZONE LEADERBOARD (REAL DATA) ---
+  
+  // --- FETCH ZONE LEADERBOARD (ROBUST DATA FETCH) ---
   const fetchZoneLeaderboard = async (zoneId: string) => {
+      console.log(`[Leaderboard Debug] 🔍 Fetching for Zone ID: ${zoneId}`);
       try {
-          // Get all runs that involved this zone (by ID)
-          // Ensure we select the new zone_breakdown column
-          const { data, error } = await supabase
-              .from('runs')
-              .select('user_id, km, involved_zones, zone_breakdown')
-              .contains('involved_zones', [zoneId]);
+          // --- ATTEMPT 1: RPC CALL (Best Performance & Security) ---
+          // This requires the function 'get_zone_leaderboard' to be created in Supabase.
+          // The SQL is provided in the instructions.
+          const { data: rpcData, error: rpcError } = await supabase.rpc('get_zone_leaderboard', { target_zone_id: zoneId });
 
-          if (error) throw error;
-
-          if (!data || data.length === 0) return [];
-
-          // Aggregate KM by User ID
-          const userTotals: Record<string, number> = {};
-          data.forEach((run: any) => {
-              let kmForThisZone = 0;
+          if (!rpcError && rpcData) {
+              console.log(`[Leaderboard Debug] ⚡ RPC Success: ${rpcData.length} rows`);
               
-              // 1. Try Precise Breakdown
-              let breakdown = run.zone_breakdown || {};
+              // Enrich with profile data
+              const userIds = rpcData.map((r: any) => r.user_id);
+              const { data: profiles } = await supabase.from('profiles').select('id, name, avatar').in('id', userIds);
+              
+              return rpcData.map((row: any) => {
+                  const profile = profiles?.find(p => p.id === row.user_id);
+                  const fallbackName = allUsers[row.user_id] ? allUsers[row.user_id].name : 'Runner';
+                  const fallbackAvatar = allUsers[row.user_id] ? allUsers[row.user_id].avatar : null;
+                  
+                  return {
+                      id: row.user_id,
+                      name: profile?.name || fallbackName,
+                      avatar: profile?.avatar || fallbackAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${row.user_id}`,
+                      km: Number(row.km)
+                  };
+              });
+          }
+
+          console.warn("[Leaderboard Debug] RPC failed or not found, falling back to Client-Side Fetch. (Check Database RLS Policies if empty!)");
+
+          // --- ATTEMPT 2: CLIENT-SIDE FETCH (Fallback) ---
+          // NOTE: This will return EMPTY if RLS policies on 'runs' table are not set to public read.
+          
+          const { data: rawRuns, error } = await supabase
+              .from('runs')
+              .select('id, user_id, km, zone_breakdown, involved_zones')
+              .contains('involved_zones', [zoneId]) // Use proper JSONB containment
+              .limit(1000); // Higher limit to capture history
+
+          if (error) {
+              console.error("[Leaderboard Debug] ❌ DB Error:", error.message);
+              return [];
+          }
+
+          if (!rawRuns || rawRuns.length === 0) {
+              console.log("[Leaderboard Debug] No runs found. If you are not Admin, this is likely an RLS issue.");
+              return [];
+          }
+
+          // Aggregate locally
+          const userStats: Record<string, number> = {};
+          
+          rawRuns.forEach((run: any) => {
+              let zoneKm = 0;
+              let breakdown = run.zone_breakdown;
               if (typeof breakdown === 'string') {
-                  try { breakdown = JSON.parse(breakdown); } catch {}
+                  try { breakdown = JSON.parse(breakdown); } catch (e) { breakdown = {}; }
               }
 
               if (breakdown && breakdown[zoneId]) {
-                  kmForThisZone = Number(breakdown[zoneId]);
-              }
-              // 2. Fallback to Even Split if breakdown missing/invalid
-              else {
-                  let zones = run.involved_zones;
-                  if (typeof zones === 'string') try { zones = JSON.parse(zones); } catch {}
-                  
-                  const zoneCount = Array.isArray(zones) ? zones.length : 1;
-                  kmForThisZone = run.km / (zoneCount > 0 ? zoneCount : 1);
+                  zoneKm = Number(breakdown[zoneId]);
+              } else {
+                  // Fallback: Even split
+                  const count = Array.isArray(run.involved_zones) ? run.involved_zones.length : 1;
+                  zoneKm = Number(run.km) / count;
               }
               
-              userTotals[run.user_id] = (userTotals[run.user_id] || 0) + kmForThisZone;
+              if (zoneKm > 0) {
+                  userStats[run.user_id] = (userStats[run.user_id] || 0) + zoneKm;
+              }
           });
 
-          // Map to Leaderboard Entry format and Filter 0 KM
-          const leaderboard = Object.entries(userTotals)
-              .map(([userId, totalKm]) => {
-                  const profile = allUsers[userId] || { name: 'Unknown Runner', avatar: null };
-                  return {
-                      id: userId,
-                      name: profile.name,
-                      avatar: profile.avatar,
-                      km: totalKm
-                  };
-              })
-              .filter(entry => entry.km > 0.01) // Strict filter: Must have run > 0
-              .sort((a, b) => b.km - a.km) // Descending Order
-              .slice(0, 10); // Top 10
+          // Sort & Top 10
+          const sortedUserIds = Object.keys(userStats).sort((a, b) => userStats[b] - userStats[a]).slice(0, 10);
+          
+          const { data: profilesData } = await supabase.from('profiles').select('id, name, avatar').in('id', sortedUserIds);
 
-          return leaderboard;
+          const result = sortedUserIds.map(userId => {
+              const profile = profilesData?.find(p => p.id === userId);
+              const fallbackName = allUsers[userId] ? allUsers[userId].name : 'Runner';
+              const fallbackAvatar = allUsers[userId] ? allUsers[userId].avatar : null;
+
+              return {
+                  id: userId,
+                  name: profile?.name || fallbackName, 
+                  avatar: profile?.avatar || fallbackAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userId}`,
+                  km: userStats[userId]
+              };
+          });
+          
+          return result;
 
       } catch (err) {
-          console.error("Error fetching zone leaderboard:", err);
+          console.error("Error calculating zone leaderboard:", err);
           return [];
       }
   };
@@ -426,8 +456,6 @@ export const useGameState = () => {
     initSession();
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      // HANDLE PASSWORD RECOVERY EVENT
-      // This happens when the user clicks the link in the email and is redirected back to the app
       if (event === 'PASSWORD_RECOVERY') {
           console.log("🔄 Recovery mode activated");
           setRecoveryMode(true);
@@ -447,19 +475,14 @@ export const useGameState = () => {
   const resetPassword = async (email: string) => {
       const productionUrl = (import.meta as any).env.VITE_SITE_URL;
       const redirectTo = productionUrl || window.location.origin;
-      
-      console.log(`📧 Sending reset email. Redirecting to: ${redirectTo}`);
-
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: redirectTo,
-      });
+      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
       return { error };
   };
 
   const updatePassword = async (newPassword: string) => {
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (!error) {
-          setRecoveryMode(false); // Exit recovery mode on success
+          setRecoveryMode(false); 
           alert("Password updated successfully!");
       }
       return { error };
@@ -510,8 +533,6 @@ export const useGameState = () => {
       updatedZones: Zone[] 
   ) => {
       try {
-          // 1. Insert Run
-          // Now writing explicitly to 'zone_breakdown' column
           const { error: runError } = await supabase.from('runs').insert({
               id: runData.id, 
               user_id: userId,
@@ -525,34 +546,27 @@ export const useGameState = () => {
               elevation: runData.elevation,
               timestamp: runData.timestamp,
               involved_zones: runData.involvedZones,
-              // Saving JSON breakdown properly
               zone_breakdown: runData.zoneBreakdown || {}
           });
 
           if (runError) throw runError;
 
-          // 2. Update Profile Stats (RECALCULATE TOTAL KM FROM SOURCE OF TRUTH)
           const { data: currentProfile } = await supabase.from('profiles').select('run_balance').eq('id', userId).single();
-          
-          // Re-fetch ALL runs to ensure total_km is mathematically correct and not drifting
           const { data: userRuns } = await supabase.from('runs').select('km').eq('user_id', userId);
           const exactTotalKm = userRuns ? userRuns.reduce((sum, r) => sum + (Number(r.km) || 0), 0) : 0;
 
           if (currentProfile) {
               await supabase.from('profiles').update({
-                  total_km: exactTotalKm, // Update with the true sum
-                  run_balance: currentProfile.run_balance + runData.runEarned // Balance is harder to sum history without full ledger, keep incremental
+                  total_km: exactTotalKm, 
+                  run_balance: currentProfile.run_balance + runData.runEarned 
               }).eq('id', userId);
           }
 
-          // 3. Update Zones (Batch Upsert)
           if (updatedZones.length > 0) {
               const { error: zoneError } = await supabase.from('zones').upsert(
                   updatedZones.map(z => ({
                       id: z.id,
                       name: z.name,
-                      // FIXED: Sending WKT geometry for 'location' column (Point format)
-                      // This resolves "parse error - invalid geometry"
                       location: `POINT(${z.lng} ${z.lat})`,
                       owner_id: z.ownerId,
                       x: z.x,
@@ -564,19 +578,17 @@ export const useGameState = () => {
                       interest_rate: z.interestRate,
                       interest_pool: z.interestPool,
                       last_distribution_time: z.lastDistributionTime || null,
-                      boost_expires_at: z.boostExpiresAt || null,
-                      shield_expires_at: z.shieldExpiresAt || null
+                      boost_expires_at: z.boostExpiresAt,
+                      shield_expires_at: z.shieldExpiresAt
                   }))
               );
               
               if (zoneError) {
-                  // Enhanced logging for debugging
                   console.error("❌ [ZONE UPSERT FAILED]:", zoneError);
                   throw zoneError;
               }
           }
 
-          // 4. Log Transaction
           if (runData.runEarned > 0) {
               await logTransaction(userId, 'IN', 'RUN', runData.runEarned, `Run Reward: ${runData.location}`);
           }
@@ -596,14 +608,12 @@ export const useGameState = () => {
       const zone = zones.find(z => z.id === zoneId);
       if (!zone) return;
 
-      // Optimistic
       const updatedUser = { ...user, runBalance: user.runBalance - CONQUEST_COST, govBalance: user.govBalance + CONQUEST_REWARD_GOV };
       const updatedZones = zones.map(z => z.id === zoneId ? { ...z, ownerId: user.id, recordKm: 0, defenseLevel: 1 } : z); 
       
       setUser(updatedUser);
       setZones(updatedZones);
 
-      // DB
       await logTransaction(user.id, 'OUT', 'RUN', CONQUEST_COST, `Conquest: ${zone.name}`);
       await logTransaction(user.id, 'IN', 'GOV', CONQUEST_REWARD_GOV, `Conquest Reward: ${zone.name}`);
       await supabase.from('profiles').update({ run_balance: updatedUser.runBalance, gov_balance: updatedUser.govBalance }).eq('id', user.id);
@@ -617,16 +627,11 @@ export const useGameState = () => {
           return;
       }
 
-      // Snapshot for Rollback
       const previousUser = { ...user };
-
-      // 1. Calculate new balance
       const newRunBalance = parseFloat((user.runBalance - item.priceRun).toFixed(2));
 
-      // 2. Handle Currency (Flash Drop)
       if (item.type === 'CURRENCY') {
           const newGovBalance = parseFloat((user.govBalance + item.effectValue).toFixed(2));
-          
           setUser({ ...user, runBalance: newRunBalance, govBalance: newGovBalance });
           
           await logTransaction(user.id, 'OUT', 'RUN', item.priceRun, `Market: ${item.name}`);
@@ -638,23 +643,18 @@ export const useGameState = () => {
           }).eq('id', user.id);
 
           if (error) {
-              console.error("Currency Purchase Failed:", error);
               alert("Transaction failed. Rolling back.");
               setUser(previousUser);
               return;
           }
-          
-          // Update Stock
           const newQty = item.quantity - 1;
           await supabase.from('items').update({ quantity: newQty }).eq('id', item.id);
           setMarketItems(prev => prev.map(i => i.id === item.id ? { ...i, quantity: newQty } : i));
           return;
       }
 
-      // 3. Handle Standard Item (Inventory Table)
       const currentInventory = user.inventory || [];
       const existingItemIndex = currentInventory.findIndex(i => i.id === item.id);
-      
       let newInventory: InventoryItem[];
 
       if (existingItemIndex >= 0) {
@@ -678,24 +678,17 @@ export const useGameState = () => {
           newInventory = [...currentInventory, newItem];
       }
 
-      // Optimistic Update
       setUser({ ...user, runBalance: newRunBalance, inventory: newInventory });
-
       await logTransaction(user.id, 'OUT', 'RUN', item.priceRun, `Market: ${item.name}`);
       
-      // DB UPDATE 1: Profile Balance
-      const { error: profileError } = await supabase.from('profiles').update({ 
-          run_balance: newRunBalance
-      }).eq('id', user.id);
+      const { error: profileError } = await supabase.from('profiles').update({ run_balance: newRunBalance }).eq('id', user.id);
 
       if (profileError) {
-          console.error("Critical: Balance save failed", profileError);
           alert(`Purchase failed: ${profileError.message}. Rolling back.`);
           setUser(previousUser);
           return;
       }
 
-      // DB UPDATE 2: Inventory Table (Upsert)
       const { data: existingRows } = await supabase.from('inventory').select('*').eq('user_id', user.id).eq('item_id', item.id);
       const existingRow = existingRows?.[0];
 
@@ -709,19 +702,12 @@ export const useGameState = () => {
       }
 
       if (invError) {
-          console.error("Critical: Inventory save failed", invError);
           alert(`Error saving item: ${invError.message}. Rolling back funds.`);
-          
-          // ROLLBACK FUNDS (Refund the RUN spent)
-          await supabase.from('profiles').update({ 
-              run_balance: user.runBalance // Restore original balance (from closure snapshot before update)
-          }).eq('id', user.id);
-          
-          setUser(previousUser); // Reset local state
+          await supabase.from('profiles').update({ run_balance: user.runBalance }).eq('id', user.id);
+          setUser(previousUser); 
           return;
       }
       
-      // Update Global Stock
       const newQty = item.quantity - 1;
       supabase.from('items').update({ quantity: newQty }).eq('id', item.id);
       setMarketItems(prev => prev.map(i => i.id === item.id ? { ...i, quantity: newQty } : i));
@@ -734,12 +720,9 @@ export const useGameState = () => {
 
       const duration = ITEM_DURATION_SEC * 1000;
       const now = Date.now();
-
-      // Snapshot for Rollback
       const previousInventory = [...user.inventory];
       const previousZones = [...zones];
 
-      // 1. Optimistic Update (UI)
       const updatedZones = zones.map(z => {
           if (z.id === targetZoneId) {
               if (item.type === 'BOOST') return { ...z, boostExpiresAt: now + duration };
@@ -757,7 +740,6 @@ export const useGameState = () => {
 
       await logTransaction(user.id, 'OUT', 'ITEM', 1, `Used ${item.name} on ${zone.name}`);
       
-      // 2. DB Update: Inventory (Decrease Quantity)
       const { data: existingRows } = await supabase.from('inventory').select('*').eq('user_id', user.id).eq('item_id', item.id);
       const existingRow = existingRows?.[0];
 
@@ -768,13 +750,10 @@ export const useGameState = () => {
               await supabase.from('inventory').delete().eq('id', existingRow.id);
           }
       } else {
-          console.warn("Item not found in DB inventory, sync issue?");
-          setUser({ ...user, inventory: previousInventory }); // Revert
+          setUser({ ...user, inventory: previousInventory });
           return;
       }
       
-      // 3. DB Update: Zone (Apply Effect)
-      // IMPORTANT: Sending Numeric timestamp (BigInt) as per DB schema, NOT string.
       let zoneUpdateError = null;
       try {
           if (item.type === 'BOOST') {
@@ -788,19 +767,13 @@ export const useGameState = () => {
           zoneUpdateError = err;
       }
 
-      // 4. Rollback if Zone Update Failed
       if (zoneUpdateError) {
-          console.error("Zone Update Failed (likely schema mismatch):", zoneUpdateError);
           alert(`Failed to apply item effect. Error: ${zoneUpdateError.message || 'Unknown DB Error'}. Refunded item.`);
-          
-          // Revert Inventory in DB (Add +1 back)
           if (existingRow) {
                await supabase.from('inventory').update({ quantity: existingRow.quantity }).eq('id', existingRow.id);
           } else {
                await supabase.from('inventory').insert({ user_id: user.id, item_id: item.id, quantity: 1 });
           }
-
-          // Revert Local State
           setUser({ ...user, inventory: previousInventory });
           setZones(previousZones);
       }
@@ -808,8 +781,7 @@ export const useGameState = () => {
 
   const buyFiatGov = async (amount: number) => {
       if (!user) return;
-      // Mock Fiat Purchase
-      const govAmount = amount * 10; // 1 EUR = 10 GOV
+      const govAmount = amount * 10; 
       const updatedUser = { ...user, govBalance: user.govBalance + govAmount };
       setUser(updatedUser);
       
@@ -835,48 +807,21 @@ export const useGameState = () => {
       }).eq('id', user.id);
   };
 
-  // --- GLOBAL BURN ACTION ---
   const triggerGlobalBurn = async () => {
       if (!user || !user.isAdmin) return { success: false, message: "Unauthorized" };
-      
       const now = Date.now();
       const DAYS_30 = 30 * 24 * 60 * 60 * 1000;
-      
       if (lastBurnTimestamp > 0 && (now - lastBurnTimestamp < DAYS_30)) {
-          console.warn("Burn Protocol Cooldown Active.");
-          return { success: false, message: "Cooldown Active: 30 days not passed." };
+          return { success: false, message: "Cooldown Active." };
       }
-
-      console.log("🔥 Initiating Global Burn Protocol via RPC...");
-      
-      // CALL RPC FUNCTION (Pass admin UUID to avoid UUID syntax errors)
-      const { data, error } = await supabase.rpc('trigger_global_burn', { 
-          admin_uuid: user.id 
-      });
-
-      if (error) {
-          console.error("Burn RPC Error:", error);
-          if (error.message?.includes('does not exist')) {
-              return { success: false, message: "Database Error: RPC 'trigger_global_burn' signature mismatch. Run the update script." };
-          }
-          return { success: false, message: `Database Error: ${error.message}` };
-      }
-
-      // Success
+      const { data, error } = await supabase.rpc('trigger_global_burn', { admin_uuid: user.id });
+      if (error) return { success: false, message: `Database Error: ${error.message}` };
       setLastBurnTimestamp(Date.now());
-      // Refresh profile to see transaction and updated balance
       await fetchUserProfile(user.id);
       await fetchGameData();
-      
-      return { 
-          success: true, 
-          totalBurned: data?.total_burned || 0, 
-          count: data?.users_affected || 0 
-      };
+      return { success: true, totalBurned: data?.total_burned || 0, count: data?.users_affected || 0 };
   };
 
-  // --- ADMIN ACTIONS ---
-  
   const addItem = async (item: Item) => {
       const { error } = await supabase.from('items').insert({
           name: item.name, description: item.description, price_run: item.priceRun,
@@ -952,26 +897,20 @@ export const useGameState = () => {
   };
 
   const updateZone = async (id: string, updates: Partial<Zone>) => {
-      // 1. Optimistic Update (Immediate Feedback)
       setZones(prev => prev.map(z => z.id === id ? { ...z, ...updates } : z));
-
       const dbUpdates: any = {};
       if (updates.name !== undefined) dbUpdates.name = updates.name;
       if (updates.interestRate !== undefined) dbUpdates.interest_rate = updates.interestRate;
-
       const { data, error } = await supabase.from('zones').update(dbUpdates).eq('id', id).select();
-      
       if (error) {
-          console.error("❌ Zone update error:", error);
           await fetchGameData();
           return { error: error.message, success: false };
       }
-
       if (data && data.length > 0) {
           return { success: true };
       } else {
           await fetchGameData();
-          return { error: "Permission Denied (RLS policy blocks update)", success: false };
+          return { error: "Permission Denied", success: false };
       }
   };
 
@@ -983,43 +922,23 @@ export const useGameState = () => {
 
   const distributeZoneRewards = async () => {
       const { error } = await supabase.rpc('distribute_zone_rewards');
-      if (error) {
-          console.error("Distribution failed:", error);
-          alert("Distribution Failed: " + error.message);
-      } else {
+      if (error) alert("Distribution Failed: " + error.message);
+      else {
           alert("Rewards Distributed Successfully via RPC!");
           await fetchGameData();
       }
   };
 
-  // Helper: Upload file to Supabase Storage - STRICTLY BUCKET 'images'
   const uploadFile = async (file: File, context: string): Promise<string | null> => {
       try {
           const fileExt = file.name.split('.').pop();
           const cleanExt = fileExt ? fileExt.replace(/[^a-z0-9]/gi, '') : 'jpg';
-          // Add timestamp for uniqueness
           const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${cleanExt}`;
-          
-          // MAP CONTEXT TO FOLDER
-          // User Requirement: Bucket 'images' -> folders 'avatars' & 'bugs'
           const bucketName = 'images'; 
-          let folder = '';
-          
-          if (context === 'avatars') folder = 'avatars';
-          else if (context === 'reports') folder = 'bugs'; // Map 'reports' logic to 'bugs' folder
-          else folder = context; // Fallback
-
+          let folder = context === 'avatars' ? 'avatars' : (context === 'reports' ? 'bugs' : context);
           const filePath = `${folder}/${fileName}`;
-
-          const { error: uploadError } = await supabase.storage
-              .from(bucketName)
-              .upload(filePath, file, { upsert: false });
-
-          if (uploadError) {
-              console.error(`Supabase Storage Error (${bucketName}/${filePath}):`, uploadError);
-              throw uploadError;
-          }
-
+          const { error: uploadError } = await supabase.storage.from(bucketName).upload(filePath, file, { upsert: false });
+          if (uploadError) throw uploadError;
           const { data } = supabase.storage.from(bucketName).getPublicUrl(filePath);
           return data.publicUrl;
       } catch (error) {
@@ -1031,139 +950,103 @@ export const useGameState = () => {
   const reportBug = async (description: string, screenshot?: File) => {
       if (!user) return false;
       let screenshotUrl = null;
-      
-      if (screenshot) {
-          screenshotUrl = await uploadFile(screenshot, 'reports');
-          // If screenshot fails but text exists, report is still valid?
-          // For now, if upload returns null, we might log it but proceed
-          if (!screenshotUrl) console.warn("Screenshot upload failed, sending report without image.");
-      }
-
+      if (screenshot) screenshotUrl = await uploadFile(screenshot, 'reports');
       const { error } = await supabase.from('bug_reports').insert({
-          user_id: user.id,
-          user_name: user.name,
-          description,
-          screenshot: screenshotUrl,
-          status: 'OPEN',
-          timestamp: Date.now()
+          user_id: user.id, user_name: user.name, description, screenshot: screenshotUrl, status: 'OPEN', timestamp: Date.now()
       });
       return !error;
   };
 
   const updateBugStatus = async (id: string, status: string) => {
       const { error } = await supabase.from('bug_reports').update({ status }).eq('id', id);
-      if (!error) {
-          setBugReports(prev => prev.map(b => b.id === id ? { ...b, status: status as any } : b));
-      }
+      if (!error) setBugReports(prev => prev.map(b => b.id === id ? { ...b, status: status as any } : b));
       return { success: !error, error: error?.message };
   };
 
   const deleteBugReport = async (id: string) => {
       const { error } = await supabase.from('bug_reports').delete().eq('id', id);
-      if (!error) {
-          setBugReports(prev => prev.filter(b => b.id !== id));
-      }
+      if (!error) setBugReports(prev => prev.filter(b => b.id !== id));
       return { success: !error, error: error?.message };
   };
 
   const submitSuggestion = async (title: string, description: string) => {
       if (!user) return false;
       const { error } = await supabase.from('suggestions').insert({
-          user_id: user.id,
-          user_name: user.name,
-          title,
-          description,
-          timestamp: Date.now()
+          user_id: user.id, user_name: user.name, title, description, timestamp: Date.now()
       });
       return !error;
   };
 
   const deleteSuggestion = async (id: string) => {
       const { error } = await supabase.from('suggestions').delete().eq('id', id);
-      if (!error) {
-          setSuggestions(prev => prev.filter(s => s.id !== id));
-      }
+      if (!error) setSuggestions(prev => prev.filter(s => s.id !== id));
       return { success: !error, error: error?.message };
   };
 
-  // --- PROFILE UPDATE ---
   const updateUser = async (updates: Partial<User>) => {
       if (!user) return;
-
-      // CLEANUP: Delete old avatar from storage if a new one is being set
       if (updates.avatar && user.avatar && updates.avatar !== user.avatar) {
-          // Check if it's a Supabase storage URL (and not a default DiceBear URL)
-          // We assume our bucket structure is /images/
           if (user.avatar.includes('/storage/v1/object/public/images/')) {
               try {
-                  // Extract path relative to bucket: .../images/avatars/filename.jpg -> avatars/filename.jpg
                   const path = user.avatar.split('/images/')[1];
-                  if (path) {
-                      const { error: deleteError } = await supabase.storage
-                          .from('images')
-                          .remove([decodeURIComponent(path)]);
-                      
-                      if (deleteError) {
-                          console.warn("Failed to delete old avatar:", deleteError);
-                      } else {
-                          console.log("Deleted old avatar:", path);
-                      }
-                  }
-              } catch (cleanupErr) {
-                  console.error("Error cleaning up old avatar:", cleanupErr);
-              }
+                  if (path) await supabase.storage.from('images').remove([decodeURIComponent(path)]);
+              } catch (cleanupErr) { console.error("Error cleaning up old avatar:", cleanupErr); }
           }
       }
-
       const dbUpdates: any = {};
       if (updates.name) dbUpdates.name = updates.name;
       if (updates.email) dbUpdates.email = updates.email;
       if (updates.avatar) dbUpdates.avatar = updates.avatar;
       if (updates.favoriteBadgeId !== undefined) dbUpdates.favorite_badge_id = updates.favoriteBadgeId;
-
       const { error } = await supabase.from('profiles').update(dbUpdates).eq('id', user.id);
-      
       if (!error) {
           setUser({ ...user, ...updates });
-          // Also update allUsers locally for UI consistency
-          setAllUsers(prev => ({
-              ...prev,
-              [user.id]: { ...prev[user.id], ...updates }
-          }));
+          setAllUsers(prev => ({ ...prev, [user.id]: { ...prev[user.id], ...updates } }));
       }
   };
 
   const upgradePremium = async () => {
       if (!user) return;
-      if (user.govBalance < PREMIUM_COST) {
-          alert(`Insufficient GOV. Cost: ${PREMIUM_COST}`);
+      if (user.isPremium) {
+          alert("Already Premium!");
           return;
       }
+      if (user.govBalance < PREMIUM_COST) {
+          alert(`Insufficient GOV. Cost: ${PREMIUM_COST} GOV`);
+          return;
+      }
+
+      const newGovBalance = user.govBalance - PREMIUM_COST;
+      const updatedUser = { ...user, isPremium: true, govBalance: newGovBalance };
       
-      const newGov = user.govBalance - PREMIUM_COST;
+      setUser(updatedUser);
+      setAllUsers(prev => ({ 
+          ...prev, 
+          [user.id]: { 
+              ...prev[user.id], 
+              isPremium: true, 
+              govBalance: newGovBalance 
+          } 
+      }));
+
+      await logTransaction(user.id, 'OUT', 'GOV', PREMIUM_COST, 'Premium Upgrade');
+      
       const { error } = await supabase.from('profiles').update({ 
-          is_premium: true,
-          gov_balance: newGov
+          is_premium: true, 
+          gov_balance: newGovBalance 
       }).eq('id', user.id);
 
-      if (!error) {
-          setUser({ ...user, isPremium: true, govBalance: newGov });
-          await logTransaction(user.id, 'OUT', 'GOV', PREMIUM_COST, 'Premium Upgrade');
-          alert("Welcome to Premium, Agent.");
+      if (error) {
+          console.error("Upgrade failed:", error);
+          alert("Upgrade failed. Reverting.");
+          await fetchUserProfile(user.id);
       }
   };
 
-  // --- LEADERBOARDS CRUD ---
   const addLeaderboard = async (config: LeaderboardConfig) => {
       const { error } = await supabase.from('leaderboards').insert({
-          title: config.title,
-          description: config.description,
-          metric: config.metric,
-          type: config.type,
-          start_time: config.startTime,
-          end_time: config.endTime,
-          reward_pool: config.rewardPool,
-          reward_currency: config.rewardCurrency
+          title: config.title, description: config.description, metric: config.metric, type: config.type,
+          start_time: config.startTime, end_time: config.endTime, reward_pool: config.rewardPool, reward_currency: config.rewardCurrency
       });
       if (!error) await fetchGameData();
       return { error: error?.message, success: !error };
@@ -1171,14 +1054,8 @@ export const useGameState = () => {
 
   const updateLeaderboard = async (config: LeaderboardConfig) => {
       const { error } = await supabase.from('leaderboards').update({
-          title: config.title,
-          description: config.description,
-          metric: config.metric,
-          type: config.type,
-          start_time: config.startTime,
-          end_time: config.endTime,
-          reward_pool: config.rewardPool,
-          reward_currency: config.rewardCurrency
+          title: config.title, description: config.description, metric: config.metric, type: config.type,
+          start_time: config.startTime, end_time: config.endTime, reward_pool: config.rewardPool, reward_currency: config.rewardCurrency
       }).eq('id', config.id);
       if (!error) await fetchGameData();
       return { error: error?.message, success: !error };
@@ -1191,20 +1068,14 @@ export const useGameState = () => {
   };
 
   const resetLeaderboard = async (id: string) => {
-      const { error } = await supabase.from('leaderboards').update({
-          last_reset_timestamp: Date.now()
-      }).eq('id', id);
+      const { error } = await supabase.from('leaderboards').update({ last_reset_timestamp: Date.now() }).eq('id', id);
       if (!error) await fetchGameData();
       return { error: error?.message, success: !error };
   };
 
-  // --- LEVELS CRUD ---
   const addLevel = async (level: LevelConfig) => {
       const { error } = await supabase.from('levels').insert({
-          level: level.level,
-          min_km: level.minKm,
-          title: level.title,
-          icon: level.icon
+          level: level.level, min_km: level.minKm, title: level.title, icon: level.icon
       });
       if (!error) await fetchGameData();
       return { error: error?.message, success: !error };
@@ -1212,10 +1083,7 @@ export const useGameState = () => {
 
   const updateLevel = async (level: LevelConfig) => {
       const { error } = await supabase.from('levels').update({
-          level: level.level,
-          min_km: level.minKm,
-          title: level.title,
-          icon: level.icon
+          level: level.level, min_km: level.minKm, title: level.title, icon: level.icon
       }).eq('id', level.id);
       if (!error) await fetchGameData();
       return { error: error?.message, success: !error };
@@ -1227,14 +1095,10 @@ export const useGameState = () => {
       return { error: error?.message, success: !error };
   };
 
-  // --- USER MANAGEMENT (ADMIN) ---
   const revokeUserAchievement = async (userId: string, type: 'MISSION' | 'BADGE', idToRemove: string) => {
-      // 1. Fetch current logs
       const { data: profile } = await supabase.from('profiles').select('mission_log, badge_log').eq('id', userId).single();
       if (!profile) return { success: false, error: "User not found" };
-
       let updates: any = {};
-      
       if (type === 'MISSION') {
           const newLog = (profile.mission_log || []).filter((entry: AchievementLog) => entry.id !== idToRemove);
           updates.mission_log = newLog;
@@ -1242,50 +1106,33 @@ export const useGameState = () => {
           const newLog = (profile.badge_log || []).filter((entry: AchievementLog) => entry.id !== idToRemove);
           updates.badge_log = newLog;
       }
-
       const { error } = await supabase.from('profiles').update(updates).eq('id', userId);
-      
-      if (!error) {
-          // Update local cache
-          if (allUsers[userId]) {
-              const prevUser = allUsers[userId];
-              setAllUsers(prev => ({
-                  ...prev,
-                  [userId]: {
-                      ...prevUser,
-                      missionLog: type === 'MISSION' ? updates.mission_log : prevUser.missionLog,
-                      badgeLog: type === 'BADGE' ? updates.badge_log : prevUser.badgeLog,
-                      // Derive IDs for compatibility
-                      completedMissionIds: type === 'MISSION' ? updates.mission_log.map((x: any) => x.id) : prevUser.completedMissionIds,
-                      earnedBadgeIds: type === 'BADGE' ? updates.badge_log.map((x: any) => x.id) : prevUser.earnedBadgeIds
-                  }
-              }));
-          }
+      if (!error && allUsers[userId]) {
+          const prevUser = allUsers[userId];
+          setAllUsers(prev => ({
+              ...prev,
+              [userId]: {
+                  ...prevUser,
+                  missionLog: type === 'MISSION' ? updates.mission_log : prevUser.missionLog,
+                  badgeLog: type === 'BADGE' ? updates.badge_log : prevUser.badgeLog,
+                  completedMissionIds: type === 'MISSION' ? updates.mission_log.map((x: any) => x.id) : prevUser.completedMissionIds,
+                  earnedBadgeIds: type === 'BADGE' ? updates.badge_log.map((x: any) => x.id) : prevUser.earnedBadgeIds
+              }
+          }));
       }
       return { success: !error, error: error?.message };
   };
 
   const adjustUserBalance = async (userId: string, runChange: number, govChange: number) => {
-      // Using RPC is safer for balance updates to avoid race conditions, but direct update for MVP admin tool is acceptable
       const { data: profile } = await supabase.from('profiles').select('run_balance, gov_balance').eq('id', userId).single();
       if (!profile) return { success: false, error: "User not found" };
-
       const newRun = (profile.run_balance || 0) + runChange;
       const newGov = (profile.gov_balance || 0) + govChange;
-
-      const { error } = await supabase.from('profiles').update({
-          run_balance: newRun,
-          gov_balance: newGov
-      }).eq('id', userId);
-
+      const { error } = await supabase.from('profiles').update({ run_balance: newRun, gov_balance: newGov }).eq('id', userId);
       if (!error) {
           await logTransaction(userId, runChange >= 0 ? 'IN' : 'OUT', 'RUN', Math.abs(runChange), 'Admin Adjustment');
           await logTransaction(userId, govChange >= 0 ? 'IN' : 'OUT', 'GOV', Math.abs(govChange), 'Admin Adjustment');
-          
-          setAllUsers(prev => ({
-              ...prev,
-              [userId]: { ...prev[userId], runBalance: newRun, govBalance: newGov }
-          }));
+          setAllUsers(prev => ({ ...prev, [userId]: { ...prev[userId], runBalance: newRun, govBalance: newGov } }));
       }
       return { success: !error, error: error?.message };
   };
@@ -1311,6 +1158,6 @@ export const useGameState = () => {
     addLevel, updateLevel, deleteLevel,
     revokeUserAchievement, adjustUserBalance,
     refreshData: fetchGameData,
-    fetchZoneLeaderboard // Exported for Dashboard usage
+    fetchZoneLeaderboard
   };
 };

@@ -189,9 +189,9 @@ const AppContent: React.FC = () => {
       setGameToast({ message: `${t('alert.item_used')} ${item.name}`, type: 'DEFENSE' });
   };
 
-  const handleLogout = () => {
-      gameState.logout();
-      setCurrentView("LANDING");
+  const handleLogout = async () => {
+      await gameState.logout();
+      window.location.reload(); // Forces reload to clear state and return to Landing
   };
 
   // Auth Handlers

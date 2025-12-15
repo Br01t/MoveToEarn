@@ -78,7 +78,13 @@ const HexMap = forwardRef<SVGSVGElement, HexMapProps>(({
 
   return (
     <div 
-        className="absolute inset-0 cursor-move bg-[radial-gradient(#1f2937_1px,transparent_1px)] [background-size:20px_20px] touch-none"
+        className="absolute inset-0 cursor-move touch-none"
+        style={{
+            // Hexagonal Grid Background Pattern
+            // Matches Landing Page size (56px 98px) but keeps dashboard subtle contrast color (#1f2937)
+            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='98' viewBox='0 0 56 98'%3E%3Cpath d='M28 66L0 50L0 16L28 0L56 16L56 50L28 66L28 100' fill='none' stroke='%231f2937' stroke-width='1' /%3E%3C/svg%3E")`,
+            backgroundSize: '56px 98px'
+        }}
         onMouseDown={onMouseDown}
         onMouseMove={onMouseMove}
         onMouseUp={onMouseUp}
