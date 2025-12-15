@@ -1,5 +1,5 @@
 
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useEffect, useState, useRef } from 'react';
 import { Zone, User } from '../../types';
 import { getHexPixelPosition } from '../../utils/geo';
 import { Zap, Shield } from 'lucide-react';
@@ -31,6 +31,39 @@ const HexMap = forwardRef<SVGSVGElement, HexMapProps>(({
     onMouseDown, onMouseMove, onMouseUp, onTouchStart, onTouchMove, onTouchEnd
 }, ref) => {
   
+  const [recentlyClaimed, setRecentlyClaimed] = useState<Set<string>>(new Set());
+  const prevOwnersRef = useRef<Record<string, string | null>>({});
+
+  // Detect Ownership Changes for Animation
+  useEffect(() => {
+    const newClaims = new Set<string>();
+    zones.forEach(z => {
+      const prev = prevOwnersRef.current[z.id];
+      // If we had a previous record, and owner changed
+      if (prev !== undefined && prev !== z.ownerId) {
+        newClaims.add(z.id);
+      }
+      prevOwnersRef.current[z.id] = z.ownerId;
+    });
+
+    if (newClaims.size > 0) {
+      setRecentlyClaimed(prev => {
+          const next = new Set(prev);
+          newClaims.forEach(id => next.add(id));
+          return next;
+      });
+      
+      // Remove animation class after 2 seconds
+      setTimeout(() => {
+        setRecentlyClaimed(prev => {
+            const next = new Set(prev);
+            newClaims.forEach(id => next.delete(id));
+            return next;
+        });
+      }, 2000);
+    }
+  }, [zones]);
+
   // Helper functions internal to rendering
   const getHexPoints = () => {
     const angles = [30, 90, 150, 210, 270, 330];
@@ -116,6 +149,25 @@ const HexMap = forwardRef<SVGSVGElement, HexMapProps>(({
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
     >
+      <style>
+        {`
+          @keyframes dash-spin {
+            to { stroke-dashoffset: 0; }
+          }
+          .animate-dash {
+            stroke-dasharray: 10;
+            stroke-dashoffset: 100;
+            animation: dash-spin 3s linear infinite;
+          }
+          @keyframes icon-float {
+            0%, 100% { transform: translate(-14px, 28px); }
+            50% { transform: translate(-14px, 24px); }
+          }
+          .animate-icon-float {
+            animation: icon-float 2s ease-in-out infinite;
+          }
+        `}
+      </style>
       <svg 
         ref={ref}
         width="100%" 
@@ -144,6 +196,7 @@ const HexMap = forwardRef<SVGSVGElement, HexMapProps>(({
               const shielded = isShieldActive(zone);
               const strokeColor = getStrokeColor(zone);
               const fillUrl = getFillId(zone);
+              const isJustClaimed = recentlyClaimed.has(zone.id);
 
               // --- Filtering Logic ---
               let isMatch = true;
@@ -174,8 +227,14 @@ const HexMap = forwardRef<SVGSVGElement, HexMapProps>(({
                   className={`transition-all duration-300 group ${isMatch ? 'cursor-pointer' : 'pointer-events-none'}`}
                   style={{ opacity: isMatch ? (isSelected ? 1 : 0.9) : 0.05, filter: isMatch ? 'none' : 'grayscale(100%)' }}
                 >
+                  {/* Selected Glow Effect */}
                   {isSelected && isMatch && (
-                    <polygon points={getHexPoints()} fill={strokeColor} opacity="0.2" filter="blur(20px)" transform="scale(1.2)"/>
+                    <polygon points={getHexPoints()} fill={strokeColor} opacity="0.3" filter="blur(20px)" transform="scale(1.2)" className="animate-pulse" />
+                  )}
+
+                  {/* Just Claimed Explosion Effect */}
+                  {isJustClaimed && isMatch && (
+                    <polygon points={getHexPoints()} fill="none" stroke="white" strokeWidth="4" className="animate-ping" style={{ transformOrigin: 'center', animationDuration: '1.5s' }} />
                   )}
 
                   {/* Pulsing Outer Rings for Items (Matches Border Color logic) */}
@@ -200,39 +259,39 @@ const HexMap = forwardRef<SVGSVGElement, HexMapProps>(({
                   <polygon points={getHexPoints()} fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="1" transform="scale(0.85)" className="transition-all duration-300 opacity-50 group-hover:opacity-100 group-hover:stroke-white/40"/>
                   
                   <g pointerEvents="none">
-                      {/* 1. Zone Name (City First) */}
+                      {/* 1. Zone Name (City First) - Scaled Up */}
                       <text 
                           x="0" 
-                          y="-20" 
+                          y="-28" 
                           textAnchor="middle" 
                           dominantBaseline="middle"
                           fill="white"
-                          fontSize="11"
+                          fontSize="16"
                           fontWeight="900"
                           style={{ textShadow: '0 2px 3px rgba(0,0,0,0.9)', letterSpacing: '0.02em' }}
                       >
                           {displayName}
                       </text>
 
-                      {/* 2. Pool Badge */}
-                      <g transform="translate(-27, -5)">
+                      {/* 2. Pool Badge - Scaled Up */}
+                      <g transform="translate(-40, -5)">
                           <rect 
                               x="0" 
                               y="0" 
-                              width="56" 
-                              height="20" 
-                              rx="6" 
+                              width="80" 
+                              height="26" 
+                              rx="8" 
                               fill={getBadgeColor(zone, boosted, shielded)}
                               fillOpacity="0.9"
                               stroke={getBadgeStroke(zone, boosted, shielded)}
                               strokeWidth="1"
                           />
                           <text 
-                              x="28" 
-                              y="14" 
+                              x="40" 
+                              y="17" 
                               textAnchor="middle" 
                               fill="white"
-                              fontSize="10"
+                              fontSize="14"
                               fontWeight="bold"
                               style={{ fontFamily: 'monospace' }}
                           >
@@ -240,14 +299,14 @@ const HexMap = forwardRef<SVGSVGElement, HexMapProps>(({
                           </text>
                       </g>
 
-                      {/* 3. Status Icons */}
+                      {/* 3. Status Icons - Animated Float */}
                       {(shielded || boosted) && (
-                          <g transform="translate(-10, 22)">
+                          <g className="animate-icon-float">
                               {shielded && !boosted && (
-                                  <Shield size={20} color="#67e8f9" fill="rgba(8, 145, 178, 0.5)" />
+                                  <Shield size={28} color="#67e8f9" fill="rgba(8, 145, 178, 0.5)" />
                               )}
                               {boosted && (
-                                  <Zap size={20} color="#fbbf24" fill="rgba(217, 119, 6, 0.5)" />
+                                  <Zap size={28} color="#fbbf24" fill="rgba(217, 119, 6, 0.5)" />
                               )}
                           </g>
                       )}
