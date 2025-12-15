@@ -10,7 +10,7 @@ interface RunWorkflowProps {
     zones: Zone[];
     setUser: React.Dispatch<React.SetStateAction<User | null>>;
     setZones: React.Dispatch<React.SetStateAction<Zone[]>>;
-    logTransaction: (userId: string, type: 'IN' | 'OUT', token: 'RUN' | 'GOV', amount: number, description: string) => Promise<void>;
+    logTransaction: (userId: string, type: 'IN' | 'OUT', token: 'RUN' | 'GOV' | 'ITEM', amount: number, description: string) => Promise<void>;
     recordRun?: (userId: string, runData: RunEntry, updatedZones: Zone[]) => Promise<{ success: boolean; error?: string }>;
 }
 
@@ -38,7 +38,7 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction,
       isReinforced: boolean;
   } | null>(null);
 
-  // Temporary storage for zones created in this session (to ensure adjacency)
+  // Temporary storage for zones created in this session (to ensure adjacency logic works immediately)
   const sessionCreatedZonesRef = useRef<Zone[]>([]);
   
   // Accumulator for batch stats
@@ -84,6 +84,7 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction,
   // --- LOGIC: Check if new zones are needed ---
   const analyzeForNewZones = (data: RunAnalysisData) => {
     const { startPoint, endPoint } = data;
+    // Use both global zones and session zones for checking overlap
     const allZones = [...zones, ...sessionCreatedZonesRef.current];
 
     let startZone = allZones.find(z => getDistanceFromLatLonInKm(startPoint.lat, startPoint.lng, z.lat, z.lng) < 1.0);
@@ -121,16 +122,18 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction,
   // --- LOGIC: Commit Run Data ---
   const finalizeRun = async (data: RunAnalysisData, currentUser: User, currentZones: Zone[]) => {
       // Merge global zones + session zones for accurate reward calculation
+      // This is vital: It ensures the user gets rewards for zones they JUST created in this batch
       const allZonesMap = new Map<string, Zone>();
       currentZones.forEach(z => allZonesMap.set(z.id, z));
       sessionCreatedZonesRef.current.forEach(z => allZonesMap.set(z.id, z));
+      
       const fullZoneList = Array.from(allZonesMap.values());
 
       // Result includes updated zones with new Interest Pool values and split rewards
       const result = processRunRewards(data, currentUser, fullZoneList);
 
       const newRun: RunEntry = {
-          id: crypto.randomUUID(), // Use standard UUID for DB compatibility
+          id: crypto.randomUUID(), 
           location: result.locationName,
           km: data.totalKm,
           timestamp: data.startTime, 
@@ -140,11 +143,9 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction,
           maxSpeed: data.maxSpeed,
           avgSpeed: data.avgSpeed,
           involvedZones: result.involvedZoneIds,
-          // CRITICAL: Include precise breakdown for DB saving
           zoneBreakdown: result.zoneBreakdown 
       };
 
-      // Optimistic Update for UI
       const finalUser = {
           ...currentUser,
           runHistory: [newRun, ...currentUser.runHistory],
@@ -153,39 +154,36 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction,
       };
 
       // Identify modified zones to update in DB
-      // IMPORTANT: We must include any zones created in this session (INSERT)
-      // AND any existing zones that were modified (UPDATE)
+      // We must include any zones created in this session (INSERT)
+      // AND any existing zones that were modified (UPDATE) during reward processing
       const modifiedZones = result.zoneUpdates.filter(u => {
-          // 1. Is it a new zone created just now?
           const isNew = sessionCreatedZonesRef.current.some(nz => nz.id === u.id);
           if (isNew) return true;
 
-          // 2. Is it an existing zone that changed?
           const original = allZonesMap.get(u.id);
+          // Check if stats changed from what we knew before this run
           return original && (original.recordKm !== u.recordKm || original.interestPool !== u.interestPool);
       });
 
-      // DB SAVE (Atomic) - CRITICAL FIX HERE
-      // We explicitly check result. If DB fails, we DO NOT update local state.
+      // DB SAVE (Atomic)
       if (recordRun) {
           const dbResult = await recordRun(currentUser.id, newRun, modifiedZones);
           if (!dbResult.success) {
               alert(`Sync Failed: ${dbResult.error || 'Database error'}. Local state not updated.`);
-              return; // STOP EXECUTION - Do not update setZones or setUser
+              return; 
           }
       } else if (result.totalRunEarned > 0) {
           // Fallback legacy logging if recordRun not available
           logTransaction(currentUser.id, 'IN', 'RUN', result.totalRunEarned, `Run Reward: ${result.locationName}`);
       }
 
-      // Update State (Only happens if DB Sync was successful)
+      // Update State
       setZones(result.zoneUpdates);
       setUser(finalUser);
       
       batchStatsRef.current.totalKm += data.totalKm;
       batchStatsRef.current.duration += data.durationMinutes;
       batchStatsRef.current.runEarned += result.totalRunEarned;
-      // Note: involvedZoneNames are still used for the UI Summary Modal
       batchStatsRef.current.involvedZoneNames.push(...result.involvedZoneNames);
       if (result.isReinforced) batchStatsRef.current.reinforcedCount++;
 
@@ -208,11 +206,12 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction,
       const finalName = hasCountryCode ? customName : `${customName} - XX`;
 
       // Calculate Position - Nearest Neighbor logic
+      // We pass ALL zones (existing + session created) to find the right neighbor to snap to.
       const currentAllZones = [...zones, ...sessionCreatedZonesRef.current];
       const hexPos = calculateHexPosition(null, pendingZone.lat, pendingZone.lng, "XX", currentAllZones);
 
       const newZone: Zone = {
-          id: crypto.randomUUID(), // Standard UUID
+          id: crypto.randomUUID(),
           x: hexPos.x,
           y: hexPos.y,
           lat: pendingZone.lat,
@@ -221,9 +220,8 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction,
           name: finalName,
           defenseLevel: 1,
           recordKm: 0, 
-          interestRate: DEFAULT_ZONE_INTEREST_RATE, // Set to default 2.0%
+          interestRate: DEFAULT_ZONE_INTEREST_RATE,
           interestPool: 0,
-          // AUTO SHIELD: New zones get 24h protection
           shieldExpiresAt: Date.now() + (ITEM_DURATION_SEC * 1000) 
       };
 
@@ -233,8 +231,11 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction,
           govBalance: user.govBalance + MINT_REWARD_GOV 
       };
       
+      // Add to session ref so subsequent runs/creations in this batch see it
       sessionCreatedZonesRef.current.push(newZone);
+      
       setUser(updatedUser);
+      // Immediately update zones in state so dashboard reflects it (even though it's optimistic until finalizeRun commits it)
       setZones(prev => [...prev, newZone]); 
 
       proceedQueue(updatedUser, [...zones, newZone]);
@@ -259,7 +260,6 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction,
       confirmZoneCreation,
       discardZoneCreation,
       closeSummary: () => setRunSummary(null),
-      // State exposed to UI
       zoneCreationQueue,
       runSummary,
       isProcessing: pendingRunsQueue.length > 0

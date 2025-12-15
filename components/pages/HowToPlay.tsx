@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { ArrowLeft, Download, Monitor, Smartphone, FileText, Database, CheckCircle, ExternalLink, Map, Activity, Zap, Apple } from 'lucide-react'; 
+import { ArrowLeft, Download, Monitor, Smartphone, FileText, Database, CheckCircle, ExternalLink, Map, Activity, Zap, Apple, Watch } from 'lucide-react'; 
 import { useLanguage } from '../../LanguageContext';
 
 interface HowToPlayProps {
@@ -20,6 +21,7 @@ const SUPPORTED_APPS: AppFilter[] = [
     { id: 'garmin', icon: Map, t_key: 'app.garmin', color: 'text-[#00AACE]', hoverBg: 'hover:bg-[#00AACE]', name: 'Garmin' },
     { id: 'adidas', icon: Zap, t_key: 'app.adidas', color: 'text-yellow-400', hoverBg: 'hover:bg-yellow-500', name: 'Adidas Running' },
     { id: 'apple', icon: Apple, t_key: 'app.apple', color: 'text-gray-200', hoverBg: 'hover:bg-gray-500', name: 'Apple Fitness' },
+    { id: 'fitbit', icon: Watch, t_key: 'app.fitbit', color: 'text-[#00B0B9]', hoverBg: 'hover:bg-[#00B0B9]', name: 'Fitbit' },
 ];
 
 const ProviderSection = ({ 
@@ -258,6 +260,35 @@ const HowToPlay: React.FC<HowToPlayProps> = ({ onBack }) => {
                   t('htp.apple.step_2'),
                   t('htp.apple.step_3'),
                   t('htp.apple.step_4')
+              ]}
+          />
+
+          <ProviderSection 
+              id="fitbit" 
+              title={t('htp.fitbit.title')}
+              desc={t('htp.fitbit.desc')}
+              colorClass="text-[#00B0B9]"
+              borderClass="border-[#00B0B9]/30"
+              bgClass="bg-[#00B0B9]/10"
+              singleNote={t('htp.fitbit.single_note')}
+              bulkNote={t('htp.fitbit.bulk_note')}
+              recommendedDeviceSingle={t('htp.mobile_app')}
+              recommendedDeviceBulk={t('htp.pc_mobile_web')}
+              formatSingle=".TCX"
+              formatBulk=".JSON, .CSV"
+              singleStepsTitle={t('htp.fitbit.single_step_title')}
+              singleSteps={[
+                  t('htp.fitbit.single_step_1'),
+                  t('htp.fitbit.single_step_2'),
+                  t('htp.fitbit.single_step_3'),
+                  t('htp.fitbit.single_step_4')
+              ]}
+              bulkStepsTitle={t('htp.fitbit.bulk_step_title')}
+              bulkSteps={[
+                  t('htp.fitbit.bulk_step_1'),
+                  t('htp.fitbit.bulk_step_2'),
+                  t('htp.fitbit.bulk_step_3'),
+                  t('htp.fitbit.bulk_step_4')
               ]}
           />
 
