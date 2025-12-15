@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { User, Zone, Mission, Badge, Rarity, LevelConfig, LeaderboardConfig, BugReport, Suggestion } from '../types';
-import { Award, History, Coins, BarChart3, Shield, Trophy, MapPin, ChevronUp, ChevronDown, Users, X, Medal, Crown, Zap } from 'lucide-react';
+import { Award, History, Coins, BarChart3, Shield, Trophy, MapPin, ChevronUp, ChevronDown, Users, X, Medal, Crown, Zap, Search } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 import Pagination from './Pagination';
 import ZoneStatsModal from './profile/ZoneStatsModal';
@@ -43,6 +43,7 @@ const Profile: React.FC<ProfileProps> = ({
   
   // Local states for history/zones that remain in parent for now or can be extracted further
   const [runPage, setRunPage] = useState(1);
+  const [historySearch, setHistorySearch] = useState(''); // NEW: Search state for history
   const [zonePage, setZonePage] = useState(1);
   const [sortConfig, setSortConfig] = useState<{ key: 'rank' | 'count' | 'km'; direction: 'asc' | 'desc' }>({ key: 'km', direction: 'desc' });
   const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
@@ -239,7 +240,26 @@ const Profile: React.FC<ProfileProps> = ({
   }, [validHistory, sortConfig, zones, user.id, myZones]);
 
   const currentZoneStats = sortedZoneStats.slice((zonePage - 1) * ZONES_PER_PAGE, zonePage * ZONES_PER_PAGE);
-  const currentRuns = validHistory.slice((runPage - 1) * RUNS_PER_PAGE, runPage * RUNS_PER_PAGE);
+
+  // --- FILTERED HISTORY LOGIC ---
+  const filteredRuns = useMemo(() => {
+      return validHistory.filter(run => {
+          if (!historySearch) return true;
+          const searchLower = historySearch.toLowerCase();
+          
+          // Resolve location string for searching (to match what user sees)
+          const locationDisplay = (run.involvedZones && run.involvedZones.length > 0)
+              ? run.involvedZones.map(id => zones.find(z => z.id === id)?.name).filter(Boolean).join(', ')
+              : run.location;
+          
+          const dateStr = new Date(run.timestamp).toLocaleDateString();
+
+          return (locationDisplay || '').toLowerCase().includes(searchLower) || dateStr.includes(searchLower);
+      });
+  }, [validHistory, historySearch, zones]);
+
+  const currentRuns = filteredRuns.slice((runPage - 1) * RUNS_PER_PAGE, runPage * RUNS_PER_PAGE);
+  const totalRunPages = Math.ceil(filteredRuns.length / RUNS_PER_PAGE);
 
   // --- LEADERBOARD LOGIC ---
   const getLeaderboardRank = (board: LeaderboardConfig) => {
@@ -493,30 +513,57 @@ const Profile: React.FC<ProfileProps> = ({
                               <div className="text-center py-20 text-gray-500"><History size={48} className="mx-auto mb-4 opacity-20" /><p>{t('profile.no_runs')}</p></div>
                           ) : (
                               <>
+                                {/* SEARCH BAR */}
+                                <div className="relative mb-2">
+                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" size={16} />
+                                    <input 
+                                        type="text" 
+                                        placeholder="Search history by location or date..." 
+                                        className="w-full bg-gray-900 border border-gray-600 rounded-lg pl-9 pr-8 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
+                                        value={historySearch}
+                                        onChange={(e) => {
+                                            setHistorySearch(e.target.value);
+                                            setRunPage(1); // Reset to page 1 on search
+                                        }}
+                                    />
+                                    {historySearch && (
+                                        <button 
+                                            onClick={() => { setHistorySearch(''); setRunPage(1); }}
+                                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-white"
+                                        >
+                                            <X size={14} />
+                                        </button>
+                                    )}
+                                </div>
+
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-left">
                                         <thead className="text-[10px] uppercase font-bold text-gray-500 border-b border-gray-700">
                                             <tr><th className="pb-3 pl-2">{t('profile.date')}</th><th className="pb-3">{t('profile.location')}</th><th className="pb-3 text-right">Dist</th><th className="pb-3 text-right pr-2">{t('profile.rewards')}</th></tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-700/50 text-sm">
-                                            {currentRuns.map(run => {
-                                                const locationDisplay = (run.involvedZones && run.involvedZones.length > 0)
-                                                    ? run.involvedZones.map(id => zones.find(z => z.id === id)?.name).filter(Boolean).join(', ')
-                                                    : run.location;
+                                            {filteredRuns.length === 0 ? (
+                                                <tr><td colSpan={4} className="py-8 text-center text-gray-500 italic">No runs found matching search.</td></tr>
+                                            ) : (
+                                                currentRuns.map(run => {
+                                                    const locationDisplay = (run.involvedZones && run.involvedZones.length > 0)
+                                                        ? run.involvedZones.map(id => zones.find(z => z.id === id)?.name).filter(Boolean).join(', ')
+                                                        : run.location;
 
-                                                return (
-                                                    <tr key={run.id} className="hover:bg-gray-750 transition-colors">
-                                                        <td className="py-3 pl-2 text-gray-400 text-xs">{new Date(run.timestamp).toLocaleDateString()}</td>
-                                                        <td className="py-3 font-medium text-white">{locationDisplay}</td>
-                                                        <td className="py-3 text-right font-mono text-emerald-400">{run.km.toFixed(2)} km</td>
-                                                        <td className="py-3 text-right pr-2"><div className="flex flex-col items-end"><span className="text-xs font-bold text-white">+{run.runEarned} RUN</span>{run.govEarned && <span className="text-[10px] text-cyan-400">+{run.govEarned} GOV</span>}</div></td>
-                                                    </tr>
-                                                );
-                                            })}
+                                                    return (
+                                                        <tr key={run.id} className="hover:bg-gray-750 transition-colors">
+                                                            <td className="py-3 pl-2 text-gray-400 text-xs">{new Date(run.timestamp).toLocaleDateString()}</td>
+                                                            <td className="py-3 font-medium text-white">{locationDisplay}</td>
+                                                            <td className="py-3 text-right font-mono text-emerald-400">{run.km.toFixed(2)} km</td>
+                                                            <td className="py-3 text-right pr-2"><div className="flex flex-col items-end"><span className="text-xs font-bold text-white">+{run.runEarned} RUN</span>{run.govEarned && <span className="text-[10px] text-cyan-400">+{run.govEarned} GOV</span>}</div></td>
+                                                        </tr>
+                                                    );
+                                                })
+                                            )}
                                         </tbody>
                                     </table>
                                 </div>
-                                <Pagination currentPage={runPage} totalPages={Math.ceil(validHistory.length / RUNS_PER_PAGE)} onPageChange={setRunPage} />
+                                <Pagination currentPage={runPage} totalPages={totalRunPages} onPageChange={setRunPage} />
                               </>
                           )}
                       </div>
