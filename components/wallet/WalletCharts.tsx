@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState } from 'react';
 import { Activity, Lock, TrendingUp, Flame } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, Tooltip, YAxis, XAxis, CartesianGrid, BarChart, Bar, Legend } from 'recharts';
@@ -14,6 +13,14 @@ interface WalletChartsProps {
 const WalletCharts: React.FC<WalletChartsProps> = ({ transactions, runBalance, govBalance }) => {
   const { t } = useLanguage();
   const [runChartType, setRunChartType] = useState<'BALANCE' | 'BURNED'>('BALANCE');
+
+  const formatBalance = (num: number) => {
+      return num.toLocaleString('en-US', {
+          useGrouping: false,
+          minimumFractionDigits: 0, 
+          maximumFractionDigits: 2
+      });
+  };
 
   // BACKWARDS CALCULATION ALGORITHM (Balance History)
   const { runData, govData } = useMemo(() => {
@@ -83,7 +90,12 @@ const WalletCharts: React.FC<WalletChartsProps> = ({ transactions, runBalance, g
       };
   }, [transactions, runBalance, govBalance]);
 
-  // BURNED (SPENT) HISTOGRAM DATA
+  const validBurnDescriptions = useMemo(() => ([
+    'Global Burn Protocol', 
+    'Global Burn: SYSTEM TOTAL', 
+    'Global Burn Protocol (System)'
+  ]), []);
+
   // Aggregates 'OUT' transactions of type RUN by day
   const runBurnData = useMemo(() => {
     const burnMap: Record<string, number> = {};
@@ -93,10 +105,9 @@ const WalletCharts: React.FC<WalletChartsProps> = ({ transactions, runBalance, g
         if (
             tx.token === 'RUN' && 
             tx.type === 'OUT' &&
-            tx.description === 'Global Burn Protocol' 
+            validBurnDescriptions.includes(tx.description) 
         ) {
             const d = new Date(tx.timestamp);
-            // Use ISO date string (YYYY-MM-DD) for sorting key, but display simplified label
             const dateKey = d.toISOString().split('T')[0]; 
             const label = `${d.getDate()}/${d.getMonth()+1}`;
             
@@ -119,7 +130,18 @@ const WalletCharts: React.FC<WalletChartsProps> = ({ transactions, runBalance, g
     if (result.length === 0) return [{ date: 'Today', fullDate: new Date().toISOString().split('T')[0], amount: 0 }];
 
     return result;
-}, [transactions]);
+  }, [transactions, validBurnDescriptions]);
+
+  const totalFilteredBurn = useMemo(() => {
+    return transactions
+        .filter(t => 
+            t.token === 'RUN' && 
+            t.type === 'OUT' && 
+            validBurnDescriptions.includes(t.description)
+        )
+        .reduce((acc, t) => acc + t.amount, 0);
+  }, [transactions, validBurnDescriptions]); 
+
 
   // Format numbers for axis (e.g. 1500 -> 1.5k)
   const formatYAxis = (num: number) => {
@@ -142,13 +164,13 @@ const WalletCharts: React.FC<WalletChartsProps> = ({ transactions, runBalance, g
                     </h3>
                     <div className="flex items-baseline gap-2 mt-1">
                         <span className={`text-3xl font-mono font-bold ${runChartType === 'BALANCE' ? 'text-emerald-400' : 'text-orange-500'}`}>
-                            {runChartType === 'BALANCE' 
-                                ? runBalance.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 1})
-                                : transactions.filter(t => t.token === 'RUN' && t.type === 'OUT').reduce((acc, t) => acc + t.amount, 0).toLocaleString(undefined, {maximumFractionDigits: 0})
+                            {runChartType === 'BALANCE'
+                                ? formatBalance(runBalance) // Formattazione aggiornata
+                                : totalFilteredBurn.toLocaleString(undefined, {maximumFractionDigits: 0}) // Totale filtrato aggiornato
                             }
                         </span>
                         <span className="text-xs text-gray-400 uppercase font-bold tracking-wider">
-                            {runChartType === 'BALANCE' ? 'Current' : 'Total Spent'}
+                            {runChartType === 'BALANCE' ? 'Current' : 'Total Burned'}
                         </span>
                     </div>
                 </div>
