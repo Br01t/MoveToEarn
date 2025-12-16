@@ -491,10 +491,10 @@ export const it = {
     "rules.whitepaper_link": "Cerchi la Tokenomics? Leggi il Whitepaper",
     "rules.export_guide_link": "Serve aiuto col sync? Leggi la Guida Export",
     "rules.intro.title": "La Gamification della Corsa",
-    "rules.intro.body": "Gli utenti creano intrattenimento e condivisione con poco impegno e nessun costo semplicemente correndo e caricando i loro dati, dando valore a dei semplici dati proof-of-run. Verrai premiato in RUN in base ai km validati e a quanto espandi la mappa virtuale. Prima inizi più è facile accumulare. Tuttavia, il vero valore dell'ecosistema è il GOV, il secondo token, che potrà essere ottenuto giocando e compiendo azioni strategiche.",
+    "rules.intro.body": "Gli utenti creano intrattenimento e condivisione con poco impegno e nessun costo semplicemente correndo e caricando i loro dati, dando valore a dei semplici dati <b>Proof-of-run</b>. Verrai premiato in <b>RUN</b> in base ai km validati e a quanto espandi la <b>mappa virtuale</b>. Prima inizi più è facile accumulare. Tuttavia, il vero valore dell'ecosistema è il <b>GOV</b>, il secondo token, che potrà essere ottenuto giocando e compiendo azioni strategiche.",
     "rules.gameplay.title": "Meccaniche di Gioco",
     "rules.mech.move_title": "1. Muoviti & Sincronizza",
-    "rules.mech.move_desc": "Vai a correre o camminare nella realtà. Registra con Strava o qualsiasi app GPS. Esporta il GPX e caricalo qui. Il gioco verifica velocità e posizione.",
+    "rules.mech.move_desc": "Vai a <b>correre o camminare</b> nella realtà. Registra con <b>Strava</b> o <b>qualsiasi app GPS</b>. Esporta il file per le tue attività (GPX, ...) e <b>caricalo</b> qui. Il gioco verifica velocità e posizione.",
     "rules.mech.mint_title": "2. Esplora & Conia",
     "rules.mech.mint_desc": "Se corri in un'area non reclamata, puoi pagare RUN per coniare una nuova Zona. Diventi il proprietario e guadagni subito GOV.",
     "rules.mech.conquer_title": "3. Conquista Rivali",
@@ -521,7 +521,7 @@ export const it = {
     // WHITEPAPER (Full Structure)
     "wp.nav.intro": "0. Introduzione",
     "wp.nav.overview": "1. Panoramica",
-    "wp.nav.goals": "2. Roadmap",
+    "wp.nav.goals": "2. Obiettivi",
     "wp.nav.tokenomics": "3. Tokenomics",
     "wp.nav.economy": "4. Economia",
     "wp.nav.gameplay": "5. Gameplay",
@@ -560,7 +560,7 @@ export const it = {
     "wp.tokenomics.title": "3. Strategia di Allocazione (Post-Launch)",
     "wp.tokenomics.supply": "Supply Totale (Disponibile)",
     "wp.tokenomics.note_title": "Nota sul Fair Launch",
-    "wp.tokenomics.note_body": "La totalità dei GOV (100% della Supply) viene lanciata sulla bonding curve di Pump.fun. Il prezzo è determinato dal mercato. Il team di sviluppo parteciperà all'acquisto iniziale di GOV, come qualsiasi altro utente, utilizzando fondi propri esclusivamente per costituire la riserva di Governance (Dev Fund/Treasury). Le riserve per lo Swap, le ricompense ai Tester e la Liquidità Operativa (LP) saranno rifornite tramite il meccanismo di Buyback Automatico (Punto 9), utilizzando i SOL generati dalle fee di transazione del token.",
+    "wp.tokenomics.note_body": "La totalità dei GOV (100% della Supply) viene lanciata sulla bonding curve di Pump.fun. Il prezzo è determinato dal mercato. Il team di sviluppo parteciperà all'acquisto iniziale di GOV, come qualsiasi altro utente, utilizzando fondi propri esclusivamente per costituire la riserva di (Dev Fund/Treasury). Le riserve per lo Swap e la Liquidità Operativa (LP) saranno rifornite tramite il meccanismo di Buyback Automatico (Punto 9), utilizzando i SOL generati dalle fee di transazione del token.",
     "wp.tokenomics.col_area": "Area",
     "wp.tokenomics.col_desc": "Funzione",
     "wp.tokenomics.row1": "Dev Fund / Treasury",
@@ -572,11 +572,20 @@ export const it = {
     
     "wp.economy.title": "4. Economia RUN ↔ GOV",
     "wp.economy.run": "RUN (Valuta Interna)",
-    "wp.economy.run_desc": "Generato correndo. Inflazionario e illimitato. Usato per azioni operative: Minting zone, Attacchi, Shield, Boost. Completamente centralizzato nel database di gioco.",
+    "wp.economy.run_desc": "Generato correndo. Inflazionario e illimitato. Usato per azioni operative: Minting zone, Attacchi, Shield, Boost. Può essere speso per guadagnare GOV (tramite Swap, Sezione 7). Completamente centralizzato nel database di gioco.",
     "wp.economy.gov": "GOV (Crypto Token)",
-    "wp.economy.gov_desc": "Quantità fissa (Hard Cap). Ottenibile solo tramite achievement strategici: Conquiste, Missioni rare, Swap. Scambiabile su blockchain e in futuro per governance.",
-    "wp.gameplay.title": "5. Reward e Gameplay",
-    "wp.gameplay.desc": "Il core loop è semplice: Running → RUN. La generazione di RUN dipende dalla distanza (km), dalla frequenza settimanale e dai bonus consecutivi.",
+    "wp.economy.gov_desc": "Quantità fissa (Hard Cap). Ottenibile solo tramite achievement strategici: Conquiste, Missioni rare, Swap. Può essere bruciato per ottenere RUN nel wallet interno. Scambiabile su blockchain e in futuro per governance.",
+    
+    // UPDATED SECTION 5: GAMEPLAY DETAILS
+    "wp.gameplay.title": "5. Gameplay & Meccaniche di Ricompensa",
+    "wp.gameplay.intro": "Il protocollo ZoneRun trasforma l'energia cinetica in asset digitali. Non è un semplice contapassi: è un sistema economico basato sulla Proof-of-Movement.",
+    "wp.gameplay.mining_title": "5.1 Mining (Generazione RUN)",
+    "wp.gameplay.mining_desc": "La corsa è l'unica fonte di emissione di RUN. Tasso Base: 1 KM = 12 RUN. Moltiplicatori: possesso Zona, Boost Item (+50%).",
+    "wp.gameplay.strat_title": "5.2 Strategia Territoriale",
+    "wp.gameplay.strat_desc": "La posizione geografica determina il tipo di ricompensa. Corsa in Terra Nullius = Minting (GOV). Corsa in Territorio Nemico = Attacco (Indebolimento difesa). Corsa in Territorio Alleato = Rinforzo (Aumento APY).",
+    "wp.gameplay.ac_title": "5.3 Oracolo Anti-Cheat",
+    "wp.gameplay.ac_desc": "Un sistema a triplo livello analizza i dati biometrici e GPS. 1. Velocità (Max 25km/h). 2. Telemetria (Analisi pattern non umani). 3. Duplicati (Hash check sui file).",
+
     "wp.zones.title": "6. Sistema Zone",
     "wp.zones.subtitle": "Le Zone sono l'asset centrale. Ogni zona genera interessi, può essere potenziata e cambiare proprietario.",
     "wp.zones.gen_title": "6.1 Genesi della Mappa (Geolocalizzazione)",
@@ -600,7 +609,7 @@ export const it = {
     "wp.zones.eff_boost": "+50% interessi zona per 24h.",
     "wp.swap.title": "7. Swap RUN → GOV",
     "wp.swap.desc": "Un sistema controllato per garantire la sostenibilità del prezzo del token GOV.",
-    "wp.swap.freq": "Ogni 30 Giorni in quantità limitata.",
+    "wp.swap.freq": "Ogni 30 giorni in quantità limitata.",
     "wp.swap.window": "Finestra 24h",
     "wp.swap.rate": "2000 RUN = 1 GOV",
     "wp.swap.pool": "Pool Max: 40k GOV",
@@ -611,8 +620,8 @@ export const it = {
     "wp.missions.first_zone": "Prima Zona Creata",
     "wp.missions.first_conq": "Prima Conquista",
     "wp.missions.badge_carto": "Badge: Cartographer (10 Zone)",
-
-    // NEW SECTION 9 BUYBACK
+    
+    // NEW SECTION 9 -buyY
     "wp.rebuy.title": "9. Buyback Automatico e Sostenibilità",
     "wp.rebuy.desc": "Le fee (commissioni) generate dalle transazioni di acquisto e vendita di GOV (dopo il lancio su Pump.fun) vengono raccolte in SOL. Queste entrate in SOL vengono automaticamente riallocate per sostenere l'ecosistema secondo la seguente ripartizione.",
     

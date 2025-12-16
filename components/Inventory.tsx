@@ -11,7 +11,7 @@ interface InventoryProps {
 }
 
 const Inventory: React.FC<InventoryProps> = ({ user, zones, onUseItem }) => {
-  const { t } = useLanguage();
+  const { t, tRich } = useLanguage();
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   const [now, setNow] = useState(Date.now());
 
@@ -65,7 +65,7 @@ const Inventory: React.FC<InventoryProps> = ({ user, zones, onUseItem }) => {
                <Package size={48} className="opacity-40" />
            </div>
            <h3 className="text-xl font-bold text-white uppercase tracking-wide mb-2">{t('inv.empty_title')}</h3>
-           <p className="text-sm max-w-md">{t('inv.empty_desc')}</p>
+           <p className="text-sm max-w-md">{tRich('inv.empty_desc')}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -250,7 +250,7 @@ const Inventory: React.FC<InventoryProps> = ({ user, zones, onUseItem }) => {
             
             <div className="p-4 bg-black/40 border-t border-white/5 text-center">
                <p className="text-[10px] text-gray-500 uppercase tracking-wide">
-                   <span className="text-red-400 font-bold">Warning:</span> {t('inv.consume_warn')}
+                   <span className="text-red-400 font-bold">Warning:</span> {tRich('inv.consume_warn')}
                </p>
             </div>
           </div>

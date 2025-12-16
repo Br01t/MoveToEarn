@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   ArrowLeft, Scroll, Globe, Target, Scale, Activity, Map as MapIcon, 
   RefreshCw, Award, Flame, Menu, X, Terminal, Cpu, Layers, MousePointerClick,
-  Download, FileDown, Info, Milestone
+  Download, FileDown, Info, Milestone, Zap, ShieldAlert, Crosshair
 } from 'lucide-react';
 import { ViewState } from '../../types';
 import { useLanguage } from '../../LanguageContext';
@@ -15,7 +15,7 @@ interface WhitepaperProps {
 }
 
 export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAuthenticated = false }) => {
-  const { t } = useLanguage();
+  const { t, tRich } = useLanguage();
   const [activeSection, setActiveSection] = useState<string>('intro');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -50,7 +50,7 @@ export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAu
   const sections = [
     { id: 'intro', title: t('wp.nav.intro'), icon: Terminal },
     { id: 'overview', title: t('wp.nav.overview'), icon: Globe },
-    { id: 'roadmap', title: t('wp.nav.goals'), icon: Milestone },
+    { id: 'roadmap', title: t('wp.nav.goals'), icon: Milestone }, // Changed ID from goals to roadmap
     { id: 'tokenomics', title: t('wp.nav.tokenomics'), icon: Scale },
     { id: 'economy', title: t('wp.nav.economy'), icon: Activity },
     { id: 'gameplay', title: t('wp.nav.gameplay'), icon: Layers },
@@ -110,7 +110,7 @@ export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAu
 
         {/* MOBILE NAVIGATION MENU */}
         {isMobileMenuOpen && (
-          <div className={`fixed inset-0 z-30 bg-gray-950 px-6 overflow-y-auto md:hidden animate-fade-in ${isAuthenticated ? 'pt-36' : 'pt-20'}`}>
+          <div className={`fixed inset-0 z-30 bg-gray-950 px-6 overflow-y-auto md:hidden ${isAuthenticated ? 'pt-36' : 'pt-20'}`}>
             <nav className="space-y-2">
               {sections.map((section) => (
                 <button
@@ -135,7 +135,7 @@ export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAu
                 <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none"><Terminal size={120} /></div>
                 <h1 className="text-4xl md:text-5xl font-black text-white mb-6 tracking-tight">ZoneRun <span className="text-emerald-400">Protocol</span></h1>
                 <p className="text-lg leading-relaxed text-gray-300">
-                  {t('wp.intro.body')}
+                  {tRich('wp.intro.body')}
                 </p>
                 <div className="mt-6 flex flex-wrap gap-3">
                   <span className="px-3 py-1 bg-emerald-500/10 text-emerald-400 rounded-full text-xs font-bold border border-emerald-500/20">RUN (Utility)</span>
@@ -151,13 +151,13 @@ export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAu
             </h2>
             <div className="prose prose-invert max-w-none text-gray-400">
               <p>
-                {t('wp.overview.body')}
+                {tRich('wp.overview.body')}
               </p>
               <ul className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-                <li className="bg-gray-900 p-4 rounded-xl border border-gray-800">🏃 <strong>{t('wp.overview.move')}:</strong> {t('wp.overview.move_desc')}</li>
-                <li className="bg-gray-900 p-4 rounded-xl border border-gray-800">🗺️ <strong>{t('wp.overview.expand')}:</strong> {t('wp.overview.expand_desc')}</li>
-                <li className="bg-gray-900 p-4 rounded-xl border border-gray-800">⚔️ <strong>{t('wp.overview.conquer')}:</strong> {t('wp.overview.conquer_desc')}</li>
-                <li className="bg-gray-900 p-4 rounded-xl border border-gray-800">🗳️ <strong>{t('wp.overview.govern')}:</strong> {t('wp.overview.govern_desc')}</li>
+                <li className="bg-gray-900 p-4 rounded-xl border border-gray-800">🏃 <strong>{t('wp.overview.move')}:</strong> {tRich('wp.overview.move_desc')}</li>
+                <li className="bg-gray-900 p-4 rounded-xl border border-gray-800">🗺️ <strong>{t('wp.overview.expand')}:</strong> {tRich('wp.overview.expand_desc')}</li>
+                <li className="bg-gray-900 p-4 rounded-xl border border-gray-800">⚔️ <strong>{t('wp.overview.conquer')}:</strong> {tRich('wp.overview.conquer_desc')}</li>
+                <li className="bg-gray-900 p-4 rounded-xl border border-gray-800">🗳️ <strong>{t('wp.overview.govern')}:</strong> {tRich('wp.overview.govern_desc')}</li>
               </ul>
             </div>
           </section>
@@ -176,7 +176,7 @@ export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAu
                     <span className="absolute -top-3 right-4 bg-emerald-500 text-black text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-wider">Current</span>
                     <h3 className="text-xl font-bold text-white mb-2">{t('wp.roadmap.phase1_title')}</h3>
                     <p className="text-gray-400 text-sm leading-relaxed">
-                        {t('wp.roadmap.phase1_desc')}
+                        {tRich('wp.roadmap.phase1_desc')}
                     </p>
                 </div>
               </div>
@@ -187,7 +187,7 @@ export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAu
                 <div className="bg-gray-900/50 border border-gray-700 p-6 rounded-xl">
                     <h3 className="text-xl font-bold text-gray-200 mb-2">{t('wp.roadmap.phase2_title')}</h3>
                     <p className="text-gray-500 text-sm leading-relaxed">
-                        {t('wp.roadmap.phase2_desc')}
+                        {tRich('wp.roadmap.phase2_desc')}
                     </p>
                 </div>
               </div>
@@ -198,7 +198,7 @@ export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAu
                 <div className="bg-gray-900/50 border border-gray-700 p-6 rounded-xl">
                     <h3 className="text-xl font-bold text-gray-200 mb-2">{t('wp.roadmap.phase3_title')}</h3>
                     <p className="text-gray-500 text-sm leading-relaxed">
-                        {t('wp.roadmap.phase3_desc')}
+                        {tRich('wp.roadmap.phase3_desc')}
                     </p>
                 </div>
               </div>
@@ -209,7 +209,7 @@ export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAu
                 <div className="bg-gray-900/50 border border-gray-700 p-6 rounded-xl">
                     <h3 className="text-xl font-bold text-gray-200 mb-2">{t('wp.roadmap.phase4_title')}</h3>
                     <p className="text-gray-500 text-sm leading-relaxed">
-                        {t('wp.roadmap.phase4_desc')}
+                        {tRich('wp.roadmap.phase4_desc')}
                     </p>
                 </div>
               </div>
@@ -233,7 +233,7 @@ export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAu
                     <Info size={18} className="text-emerald-400" /> {t('wp.tokenomics.note_title')}
                 </h3>
                 <p className="text-sm text-gray-300 leading-relaxed">
-                    {t('wp.tokenomics.note_body')}
+                    {tRich('wp.tokenomics.note_body')}
                 </p>
             </div>
 
@@ -248,15 +248,15 @@ export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAu
                 <tbody className="divide-y divide-gray-800">
                   <tr>
                     <td className="px-6 py-4 font-bold text-white">{t('wp.tokenomics.row1')}</td>
-                    <td className="px-6 py-4">{t('wp.tokenomics.row1_desc')}</td>
+                    <td className="px-6 py-4">{tRich('wp.tokenomics.row1_desc')}</td>
                   </tr>
                   <tr>
                     <td className="px-6 py-4 font-bold text-white">{t('wp.tokenomics.row2')}</td>
-                    <td className="px-6 py-4">{t('wp.tokenomics.row2_desc')}</td>
+                    <td className="px-6 py-4">{tRich('wp.tokenomics.row2_desc')}</td>
                   </tr>
                   <tr>
                     <td className="px-6 py-4 font-bold text-white">{t('wp.tokenomics.row3')}</td>
-                    <td className="px-6 py-4">{t('wp.tokenomics.row3_desc')}</td>
+                    <td className="px-6 py-4">{tRich('wp.tokenomics.row3_desc')}</td>
                   </tr>
                 </tbody>
               </table>
@@ -274,7 +274,7 @@ export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAu
                   <Layers size={20}/> {t('wp.economy.run')}
                 </div>
                 <p className="text-sm text-gray-400 leading-relaxed">
-                  {t('wp.economy.run_desc')}
+                  {tRich('wp.economy.run_desc')}
                 </p>
               </div>
               <div className="bg-gray-900 p-6 rounded-2xl border border-gray-800">
@@ -282,20 +282,52 @@ export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAu
                   <Award size={20}/> {t('wp.economy.gov')}
                 </div>
                 <p className="text-sm text-gray-400 leading-relaxed">
-                  {t('wp.economy.gov_desc')}
+                  {tRich('wp.economy.gov_desc')}
                 </p>
               </div>
             </div>
           </section>
 
-          {/* 5. GAMEPLAY */}
+          {/* 5. GAMEPLAY (UPDATED - STATIC) */}
           <section id="gameplay" className="scroll-mt-36">
             <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3 pb-2 border-b border-gray-800">
               <Layers className="text-emerald-400" /> {t('wp.gameplay.title')}
             </h2>
-            <p className="text-gray-400 mb-4">
-              {t('wp.gameplay.desc')}
+            <p className="text-gray-400 mb-8 italic">
+              {tRich('wp.gameplay.intro')}
             </p>
+
+            <div className="space-y-6">
+                <div className="bg-gray-900/50 p-6 rounded-xl border border-gray-700">
+                    <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
+                        <Zap className="text-yellow-400" size={20}/> 
+                        {t('wp.gameplay.mining_title')}
+                    </h3>
+                    <p className="text-sm text-gray-400 leading-relaxed">
+                        {tRich('wp.gameplay.mining_desc')}
+                    </p>
+                </div>
+
+                <div className="bg-gray-900/50 p-6 rounded-xl border border-gray-700">
+                    <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
+                        <Crosshair className="text-purple-400" size={20}/> 
+                        {t('wp.gameplay.strat_title')}
+                    </h3>
+                    <p className="text-sm text-gray-400 leading-relaxed">
+                        {tRich('wp.gameplay.strat_desc')}
+                    </p>
+                </div>
+
+                <div className="bg-gray-900/50 p-6 rounded-xl border border-gray-700">
+                    <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
+                        <ShieldAlert className="text-red-400" size={20}/> 
+                        {t('wp.gameplay.ac_title')}
+                    </h3>
+                    <p className="text-sm text-gray-400 leading-relaxed">
+                        {tRich('wp.gameplay.ac_desc')}
+                    </p>
+                </div>
+            </div>
           </section>
 
           {/* 6. SISTEMA ZONE */}
@@ -311,7 +343,7 @@ export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAu
                 </h3>
                 <div className="text-sm text-gray-300 space-y-3 relative z-10 leading-relaxed">
                     <p>
-                        {t('wp.zones.gen_body')}
+                        {tRich('wp.zones.gen_body')}
                     </p>
                 </div>
             </div>
@@ -320,19 +352,19 @@ export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAu
                 <div>
                     <h3 className="text-lg font-bold text-white mb-3">{t('wp.zones.pool_title')}</h3>
                     <p className="text-sm text-gray-400 mb-4">
-                        {t('wp.zones.pool_desc')}
+                        {tRich('wp.zones.pool_desc')}
                     </p>
                     <div className="grid md:grid-cols-2 gap-4">
                         <div className="bg-red-900/20 p-4 rounded-xl border border-red-500/30">
                             <h4 className="font-bold text-red-400 text-sm uppercase mb-2">{t('wp.zones.case_a')}</h4>
                             <p className="text-xs text-gray-300">
-                                {t('wp.zones.case_a_desc')}
+                                {tRich('wp.zones.case_a_desc')}
                             </p>
                         </div>
                         <div className="bg-emerald-900/20 p-4 rounded-xl border border-emerald-500/30">
                             <h4 className="font-bold text-emerald-400 text-sm uppercase mb-2">{t('wp.zones.case_b')}</h4>
                             <p className="text-xs text-gray-300">
-                                {t('wp.zones.case_b_desc')}
+                                {tRich('wp.zones.case_b_desc')}
                             </p>
                         </div>
                     </div>
@@ -354,19 +386,19 @@ export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAu
                                 <td className="px-4 py-3 font-bold text-white">{t('wp.zones.act_mint')}</td>
                                 <td className="px-4 py-3 font-mono text-red-400">150 RUN</td>
                                 <td className="px-4 py-3 font-mono text-cyan-400">15 GOV</td>
-                                <td className="px-4 py-3">{t('wp.zones.eff_mint')}</td>
+                                <td className="px-4 py-3">{tRich('wp.zones.eff_mint')}</td>
                             </tr>
                             <tr>
                                 <td className="px-4 py-3 font-bold text-white">{t('wp.zones.act_conq')}</td>
                                 <td className="px-4 py-3 font-mono text-red-400">350 RUN</td>
                                 <td className="px-4 py-3 font-mono text-cyan-400">25 GOV</td>
-                                <td className="px-4 py-3">{t('wp.zones.eff_conq')}</td>
+                                <td className="px-4 py-3">{tRich('wp.zones.eff_conq')}</td>
                             </tr>
                             <tr>
                                 <td className="px-4 py-3 font-bold text-white">{t('wp.zones.act_boost')}</td>
                                 <td className="px-4 py-3 font-mono text-red-400">~100 RUN</td>
                                 <td className="px-4 py-3">-</td>
-                                <td className="px-4 py-3">{t('wp.zones.eff_boost')}</td>
+                                <td className="px-4 py-3">{tRich('wp.zones.eff_boost')}</td>
                             </tr>
                         </tbody>
                     </table>
@@ -380,7 +412,7 @@ export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAu
               <RefreshCw className="text-emerald-400" /> {t('wp.swap.title')}
             </h2>
             <div className="bg-gray-800 p-6 rounded-2xl border border-gray-700">
-                <p className="text-gray-400 mb-4">{t('wp.swap.desc')}</p>
+                <p className="text-gray-400 mb-4">{tRich('wp.swap.desc')}</p>
                 <div className="flex flex-wrap gap-4 text-sm font-mono font-bold">
                     <span className="bg-black/40 px-3 py-1 rounded text-white">⏳ {t('wp.swap.freq')}</span>
                     <span className="bg-black/40 px-3 py-1 rounded text-white">⏱️ {t('wp.swap.window')}</span>
@@ -398,7 +430,7 @@ export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAu
             
             <div className="bg-yellow-900/20 border border-yellow-500/30 p-4 rounded-xl mb-6">
                 <p className="text-gray-300 text-sm leading-relaxed">
-                    {t('wp.missions.desc')}
+                    {tRich('wp.missions.desc')}
                 </p>
             </div>
 
@@ -425,7 +457,7 @@ export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAu
             </h2>
             
             <p className="text-gray-400 mb-8 max-w-2xl">
-                {t('wp.rebuy.desc')}
+                {tRich('wp.rebuy.desc')}
             </p>
 
             <div className="grid md:grid-cols-2 gap-8">
@@ -434,7 +466,7 @@ export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAu
                 <div className="bg-gray-900/50 border border-gray-700 rounded-xl overflow-hidden">
                     <div className="p-4 bg-gray-800 border-b border-gray-700">
                         <h3 className="font-bold text-white">{t('wp.rebuy.phase1_title')}</h3>
-                        <p className="text-xs text-gray-400 mt-1">{t('wp.rebuy.phase1_desc')}</p>
+                        <p className="text-xs text-gray-400 mt-1">{tRich('wp.rebuy.phase1_desc')}</p>
                     </div>
                     <div className="p-4 space-y-4">
                         <div>
@@ -442,14 +474,14 @@ export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAu
                                 <span className="text-sm font-bold text-emerald-400">{t('wp.rebuy.row1_title')}</span>
                                 <span className="text-xs font-mono bg-black/40 px-2 py-0.5 rounded">60%</span>
                             </div>
-                            <p className="text-xs text-gray-500">{t('wp.rebuy.row1_desc')}</p>
+                            <p className="text-xs text-gray-500">{tRich('wp.rebuy.row1_desc')}</p>
                         </div>
                         <div className="pt-4 border-t border-gray-800">
                             <div className="flex justify-between items-center mb-1">
                                 <span className="text-sm font-bold text-yellow-400">{t('wp.rebuy.row2_title')}</span>
                                 <span className="text-xs font-mono bg-black/40 px-2 py-0.5 rounded">40%</span>
                             </div>
-                            <p className="text-xs text-gray-500">{t('wp.rebuy.row2_desc')}</p>
+                            <p className="text-xs text-gray-500">{tRich('wp.rebuy.row2_desc')}</p>
                         </div>
                     </div>
                 </div>
@@ -458,7 +490,7 @@ export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAu
                 <div className="bg-gray-900/50 border border-gray-700 rounded-xl overflow-hidden">
                     <div className="p-4 bg-gray-800 border-b border-gray-700">
                         <h3 className="font-bold text-white">{t('wp.rebuy.phase2_title')}</h3>
-                        <p className="text-xs text-gray-400 mt-1">{t('wp.rebuy.phase2_desc')}</p>
+                        <p className="text-xs text-gray-400 mt-1">{tRich('wp.rebuy.phase2_desc')}</p>
                     </div>
                     <div className="p-4 space-y-4">
                         <div>
@@ -466,14 +498,14 @@ export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAu
                                 <span className="text-sm font-bold text-emerald-400">{t('wp.rebuy.row3_title')}</span>
                                 <span className="text-xs font-mono bg-black/40 px-2 py-0.5 rounded">60%</span>
                             </div>
-                            <p className="text-xs text-gray-500">{t('wp.rebuy.row3_desc')}</p>
+                            <p className="text-xs text-gray-500">{tRich('wp.rebuy.row3_desc')}</p>
                         </div>
                         <div className="pt-4 border-t border-gray-800">
                             <div className="flex justify-between items-center mb-1">
                                 <span className="text-sm font-bold text-cyan-400">{t('wp.rebuy.row4_title')}</span>
                                 <span className="text-xs font-mono bg-black/40 px-2 py-0.5 rounded">40%</span>
                             </div>
-                            <p className="text-xs text-gray-500">{t('wp.rebuy.row4_desc')}</p>
+                            <p className="text-xs text-gray-500">{tRich('wp.rebuy.row4_desc')}</p>
                         </div>
                     </div>
                 </div>
@@ -489,7 +521,7 @@ export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAu
             <div className="bg-gray-900 p-8 rounded-2xl border border-gray-800 text-center flex flex-col items-center">
                 <FileDown size={48} className="text-gray-600 mb-4" />
                 <p className="text-gray-400 mb-6 max-w-lg">
-                    {t('wp.download.desc')}
+                    {tRich('wp.download.desc')}
                 </p>
                 <button 
                     disabled

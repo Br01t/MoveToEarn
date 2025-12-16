@@ -34,8 +34,8 @@ const ProviderSection = ({
 }: {
     title: string; desc: string; colorClass: string; borderClass: string; bgClass: string; id: string; 
     singleNote: string; bulkNote: string;
-    singleStepsTitle?: string; singleSteps?: string[];
-    bulkStepsTitle?: string; bulkSteps?: string[];
+    singleStepsTitle?: string; singleSteps?: React.ReactNode[];
+    bulkStepsTitle?: string; bulkSteps?: React.ReactNode[];
     recommendedDeviceSingle: string; recommendedDeviceBulk: string;
     formatSingle: string; formatBulk: string;
 }) => {
@@ -138,7 +138,7 @@ const AppFilters = () => (
 );
 
 const HowToPlay: React.FC<HowToPlayProps> = ({ onBack }) => {
-  const { t } = useLanguage();
+  const { t, tRich } = useLanguage();
 
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-8 space-y-8 pb-24">
@@ -177,17 +177,17 @@ const HowToPlay: React.FC<HowToPlayProps> = ({ onBack }) => {
               formatBulk=".FIT, .GPX"
               singleStepsTitle={t('htp.strava.single_step_title')}
               singleSteps={[
-                  t('htp.strava.single_step_1'),
-                  t('htp.strava.single_step_2'),
-                  t('htp.strava.single_step_3'),
-                  t('htp.strava.single_step_4')
+                  tRich('htp.strava.single_step_1'),
+                  tRich('htp.strava.single_step_2'),
+                  tRich('htp.strava.single_step_3'),
+                  tRich('htp.strava.single_step_4')
               ]}
               bulkStepsTitle={t('htp.strava.bulk_step_title')}
               bulkSteps={[
-                  t('htp.strava.bulk_step_1'),
-                  t('htp.strava.bulk_step_2'),
-                  t('htp.strava.bulk_step_3'),
-                  t('htp.strava.bulk_step_4')
+                  tRich('htp.strava.bulk_step_1'),
+                  tRich('htp.strava.bulk_step_2'),
+                  tRich('htp.strava.bulk_step_3'),
+                  tRich('htp.strava.bulk_step_4')
               ]}
           />
 
@@ -206,16 +206,16 @@ const HowToPlay: React.FC<HowToPlayProps> = ({ onBack }) => {
               formatBulk=".FIT (Original)"
               singleStepsTitle={t('htp.garmin.single_step_title')}
               singleSteps={[
-                  t('htp.garmin.single_step_1'),
-                  t('htp.garmin.single_step_2'),
-                  t('htp.garmin.single_step_3'),
-                  t('htp.garmin.single_step_4')
+                  tRich('htp.garmin.single_step_1'),
+                  tRich('htp.garmin.single_step_2'),
+                  tRich('htp.garmin.single_step_3'),
+                  tRich('htp.garmin.single_step_4')
               ]}
               bulkStepsTitle={t('htp.garmin.bulk_step_title')}
               bulkSteps={[
-                  t('htp.garmin.bulk_step_1'),
-                  t('htp.garmin.bulk_step_2'),
-                  t('htp.garmin.bulk_step_3')
+                  tRich('htp.garmin.bulk_step_1'),
+                  tRich('htp.garmin.bulk_step_2'),
+                  tRich('htp.garmin.bulk_step_3')
               ]}
           />
 
@@ -234,10 +234,10 @@ const HowToPlay: React.FC<HowToPlayProps> = ({ onBack }) => {
               formatBulk=".JSON (Raw)"
               bulkStepsTitle={t('htp.adidas.bulk_step_title')}
               bulkSteps={[
-                  t('htp.adidas.bulk_step_1'),
-                  t('htp.adidas.bulk_step_2'),
-                  t('htp.adidas.bulk_step_3'),
-                  t('htp.adidas.bulk_step_4')
+                  tRich('htp.adidas.bulk_step_1'),
+                  tRich('htp.adidas.bulk_step_2'),
+                  tRich('htp.adidas.bulk_step_3'),
+                  tRich('htp.adidas.bulk_step_4')
               ]}
           />
 
@@ -256,10 +256,10 @@ const HowToPlay: React.FC<HowToPlayProps> = ({ onBack }) => {
               formatBulk=".GPX, .FIT"
               singleStepsTitle={t('htp.apple.step_title')}
               singleSteps={[
-                  t('htp.apple.step_1'),
-                  t('htp.apple.step_2'),
-                  t('htp.apple.step_3'),
-                  t('htp.apple.step_4')
+                  tRich('htp.apple.step_1'),
+                  tRich('htp.apple.step_2'),
+                  tRich('htp.apple.step_3'),
+                  tRich('htp.apple.step_4')
               ]}
           />
 
@@ -278,17 +278,17 @@ const HowToPlay: React.FC<HowToPlayProps> = ({ onBack }) => {
               formatBulk=".JSON, .CSV"
               singleStepsTitle={t('htp.fitbit.single_step_title')}
               singleSteps={[
-                  t('htp.fitbit.single_step_1'),
-                  t('htp.fitbit.single_step_2'),
-                  t('htp.fitbit.single_step_3'),
-                  t('htp.fitbit.single_step_4')
+                  tRich('htp.fitbit.single_step_1'),
+                  tRich('htp.fitbit.single_step_2'),
+                  tRich('htp.fitbit.single_step_3'),
+                  tRich('htp.fitbit.single_step_4')
               ]}
               bulkStepsTitle={t('htp.fitbit.bulk_step_title')}
               bulkSteps={[
-                  t('htp.fitbit.bulk_step_1'),
-                  t('htp.fitbit.bulk_step_2'),
-                  t('htp.fitbit.bulk_step_3'),
-                  t('htp.fitbit.bulk_step_4')
+                  tRich('htp.fitbit.bulk_step_1'),
+                  tRich('htp.fitbit.bulk_step_2'),
+                  tRich('htp.fitbit.bulk_step_3'),
+                  tRich('htp.fitbit.bulk_step_4')
               ]}
           />
 
@@ -304,7 +304,7 @@ const HowToPlay: React.FC<HowToPlayProps> = ({ onBack }) => {
                   <div className="bg-gray-900/50 p-4 rounded-lg border border-emerald-500/20">
                       <strong className="text-emerald-400 block mb-1 text-sm uppercase tracking-wide">{t('htp.upload.guarantee_title')}</strong>
                       <p className="text-gray-400 text-xs">
-                          {t('htp.upload.guarantee_desc')}
+                          {tRich('htp.upload.guarantee_desc')}
                       </p>
                   </div>
               </div>

@@ -8,6 +8,7 @@ interface LanguageContextType {
   language: Language;
   toggleLanguage: () => void;
   t: (key: string) => string;
+  tRich: (key: string) => ReactNode; // New helper for Rich Text (Bold)
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -24,8 +25,24 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
     return translation || key;
   };
 
+  // Parses string for <b>tags</b> and renders them as bold React elements
+  const tRich = (key: string): ReactNode => {
+    const text = t(key);
+    // Regex splits by <b>...</b> keeping the delimiter for processing
+    const parts = text.split(/(<b>.*?<\/b>)/g);
+
+    return parts.map((part, index) => {
+      if (part.startsWith('<b>') && part.endsWith('</b>')) {
+        // Remove the tags and wrap in a styled span/b
+        const content = part.replace(/<\/?b>/g, '');
+        return <b key={index} className="text-white font-extrabold">{content}</b>;
+      }
+      return part;
+    });
+  };
+
   return (
-    <LanguageContext.Provider value={{ language, toggleLanguage, t }}>
+    <LanguageContext.Provider value={{ language, toggleLanguage, t, tRich }}>
       {children}
     </LanguageContext.Provider>
   );

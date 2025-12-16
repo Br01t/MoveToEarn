@@ -12,7 +12,7 @@ interface AchievementModalProps {
 }
 
 const AchievementModal: React.FC<AchievementModalProps> = ({ data, onClose, onClaimAll, remainingCount }) => {
-  const { t } = useLanguage();
+  const { t, tRich } = useLanguage();
   const { type, item } = data;
   const [isVisible, setIsVisible] = useState(false);
 
@@ -102,7 +102,7 @@ const AchievementModal: React.FC<AchievementModalProps> = ({ data, onClose, onCl
                  <div className="mb-6 bg-black/40 border border-white/10 px-6 py-3 rounded-lg flex flex-col items-center w-full">
                     <span className="text-[10px] text-gray-500 uppercase font-bold">{t('ach.status')}</span>
                     <span className="text-lg font-bold text-yellow-400 flex items-center gap-2">
-                        {t('ach.prestige')}
+                        {tRich('ach.prestige')}
                     </span>
                 </div>
             )}
