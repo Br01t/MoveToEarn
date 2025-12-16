@@ -12,7 +12,7 @@ interface MarketplaceProps {
 }
 
 const Marketplace: React.FC<MarketplaceProps> = ({ user, items, onBuy }) => {
-  const { t } = useLanguage();
+  const { t, tRich } = useLanguage();
   const { triggerParticles } = useGlobalUI();
   const [confirmItem, setConfirmItem] = useState<Item | null>(null);
 
@@ -59,7 +59,7 @@ const Marketplace: React.FC<MarketplaceProps> = ({ user, items, onBuy }) => {
                <div>
                    <h4 className="font-bold text-white text-lg mb-1 uppercase tracking-wide">{t('market.flash_active')}</h4>
                    <p className="text-gray-300 text-sm max-w-2xl leading-relaxed">
-                       {t('market.flash_desc')}
+                       {tRich('market.flash_desc')}
                        <span className="text-yellow-400 font-bold block mt-1">{t('market.flash_warn')}</span>
                    </p>
                </div>
@@ -71,7 +71,7 @@ const Marketplace: React.FC<MarketplaceProps> = ({ user, items, onBuy }) => {
         <div className="text-center py-12 glass-panel rounded-xl">
           <Package className="mx-auto h-12 w-12 text-gray-600 mb-4" />
           <h3 className="text-xl font-bold text-white uppercase tracking-wide">{t('market.empty')}</h3>
-          <p className="text-gray-400">{t('market.empty_desc')}</p>
+          <p className="text-gray-400">{tRich('market.empty_desc')}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -162,7 +162,7 @@ const Marketplace: React.FC<MarketplaceProps> = ({ user, items, onBuy }) => {
                    <AlertTriangle className="text-yellow-500 shrink-0" size={18} />
                    <p className="text-xs text-yellow-200">
                      {t('market.confirm_warn')} <strong>{confirmItem.priceRun} RUN</strong>?
-                     <br/>{t('market.undo_warning')}
+                     <br/>{tRich('market.undo_warning')}
                    </p>
                 </div>
                 {confirmItem.type === 'CURRENCY' && (

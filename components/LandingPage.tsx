@@ -14,7 +14,7 @@ interface LandingPageProps {
 type FeatureKey = 'earn_run' | 'earn_gov' | 'spend' | 'burn';
 
 const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
-  const { t, language, toggleLanguage } = useLanguage();
+  const { t, tRich, language, toggleLanguage } = useLanguage();
   const { isMuted, toggleMute } = useGlobalUI();
   const [activeFeature, setActiveFeature] = useState<FeatureKey | null>(null);
 
@@ -29,7 +29,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
       if (!key) return null;
       return {
           title: t(`landing.modal.${key}_title`),
-          body: t(`landing.modal.${key}_body`)
+          body: tRich(`landing.modal.${key}_body`)
       };
   };
 
@@ -107,12 +107,12 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
           <h1 className="text-5xl md:text-7xl font-black text-white tracking-widest uppercase leading-[0.9] drop-shadow-2xl relative z-10">
             Run. Conquer. <br/>
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-cyan-300 to-emerald-400 animate-gradient bg-300%">
-                {t('landing.title_suffix')}
+                {tRich('landing.title_suffix')}
             </span>
           </h1>
           
           <p className="text-lg md:text-2xl text-gray-400 max-w-2xl mx-auto leading-relaxed font-bold tracking-wide">
-            {t('landing.subtitle')}
+            {tRich('landing.subtitle')}
           </p>
           
           {/* ACTION BUTTONS */}
@@ -158,7 +158,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
                 <FeatureCard 
                   icon={feature.icon}
                   title={t(`landing.card.${feature.key}`)}
-                  description={t(`landing.card.${feature.key}_desc`)}
+                  description={tRich(`landing.card.${feature.key}_desc`)}
                   color={feature.color}
                   onClick={() => setActiveFeature(feature.key)}
                 />
@@ -216,7 +216,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
 };
 
 // Reusable Feature Card Component
-const FeatureCard = ({ icon, title, description, color, onClick }: { icon: any, title: string, description: string, color: string, onClick: () => void }) => {
+const FeatureCard = ({ icon, title, description, color, onClick }: { icon: any, title: string, description: React.ReactNode, color: string, onClick: () => void }) => {
     const borderClass = {
         emerald: 'hover:border-emerald-500/50',
         cyan: 'hover:border-cyan-500/50',

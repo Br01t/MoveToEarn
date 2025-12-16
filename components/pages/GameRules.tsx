@@ -10,7 +10,7 @@ interface GameRulesProps {
 }
 
 export const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate }) => {
-  const { t } = useLanguage();
+  const { t, tRich } = useLanguage();
 
   const SectionHeader = ({ icon: Icon, title }: { icon: any, title: string }) => (
       <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 flex items-center gap-3 border-b border-gray-700/50 pb-4 mt-16 first:mt-0">
@@ -19,7 +19,7 @@ export const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate }) => {
   );
 
   // Helper for the clean interface cards
-  const InterfaceCard = ({ icon: Icon, title, desc, className = "" }: { icon: any, title: string, desc: string, className?: string }) => (
+  const InterfaceCard = ({ icon: Icon, title, desc, className = "" }: { icon: any, title: string, desc: React.ReactNode, className?: string }) => (
     <div className={`glass-panel rounded-2xl p-6 transition-all duration-300 group ${className}`}>
         <div className="flex items-center gap-4 mb-3">
             <div className="w-10 h-10 rounded-lg bg-gray-800/50 flex items-center justify-center text-emerald-400 group-hover:bg-emerald-500 group-hover:text-white transition-colors duration-300">
@@ -82,7 +82,7 @@ export const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate }) => {
             <div className="mt-12 text-left glass-panel p-8 rounded-2xl relative overflow-hidden shadow-2xl">
                 <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-emerald-500 to-cyan-500"></div>
                 <h3 className="text-2xl font-bold text-white mb-4">{t('rules.intro.title')}</h3>
-                <p className="text-gray-300 text-lg leading-relaxed">{t('rules.intro.body')}</p>
+                <p className="text-gray-300 text-lg leading-relaxed">{tRich('rules.intro.body')}</p>
             </div>
 
             {/* Links Block */}
@@ -121,7 +121,7 @@ export const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate }) => {
                             <h3 className="text-2xl font-black text-white italic">{t('rules.mech.move_title')}</h3>
                             <Activity size={32} className="text-emerald-500" />
                         </div>
-                        <p className="text-gray-300 leading-relaxed font-medium">{t('rules.mech.move_desc')}</p>
+                        <p className="text-gray-300 leading-relaxed font-medium">{tRich('rules.mech.move_desc')}</p>
                     </div>
 
                     {/* 2. MINT */}
@@ -131,7 +131,7 @@ export const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate }) => {
                             <h3 className="text-2xl font-black text-white italic">{t('rules.mech.mint_title')}</h3>
                             <MapIcon size={32} className="text-purple-500" />
                         </div>
-                        <p className="text-gray-300 leading-relaxed font-medium">{t('rules.mech.mint_desc')}</p>
+                        <p className="text-gray-300 leading-relaxed font-medium">{tRich('rules.mech.mint_desc')}</p>
                     </div>
 
                     {/* 3. CONQUER */}
@@ -141,7 +141,7 @@ export const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate }) => {
                             <h3 className="text-2xl font-black text-white italic">{t('rules.mech.conquer_title')}</h3>
                             <Swords size={32} className="text-red-500" />
                         </div>
-                        <p className="text-gray-300 leading-relaxed font-medium">{t('rules.mech.conquer_desc')}</p>
+                        <p className="text-gray-300 leading-relaxed font-medium">{tRich('rules.mech.conquer_desc')}</p>
                     </div>
 
                     {/* 4. EARN */}
@@ -151,7 +151,7 @@ export const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate }) => {
                             <h3 className="text-2xl font-black text-white italic">{t('rules.mech.earn_title')}</h3>
                             <Coins size={32} className="text-yellow-500" />
                         </div>
-                        <p className="text-gray-300 leading-relaxed font-medium">{t('rules.mech.earn_desc')}</p>
+                        <p className="text-gray-300 leading-relaxed font-medium">{tRich('rules.mech.earn_desc')}</p>
                     </div>
                 </div>
             </section>
@@ -173,25 +173,25 @@ export const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate }) => {
                     <InterfaceCard 
                         icon={MapIcon} 
                         title={t('rules.nav.dash')} 
-                        desc={t('rules.nav.dash_desc')}
+                        desc={tRich('rules.nav.dash_desc')}
                         className="lg:col-span-3"
                     />
                     <InterfaceCard 
                         icon={ShoppingBag} 
                         title={t('rules.nav.market')} 
-                        desc={t('rules.nav.market_desc')}
+                        desc={tRich('rules.nav.market_desc')}
                         className="lg:col-span-3"
                     />
                     <InterfaceCard 
                         icon={Package} 
                         title={t('rules.nav.inv')} 
-                        desc={t('rules.nav.inv_desc')}
+                        desc={tRich('rules.nav.inv_desc')}
                         className="lg:col-span-3"
                     />
                     <InterfaceCard 
                         icon={Target} 
                         title={t('rules.nav.miss')} 
-                        desc={t('rules.nav.miss_desc')}
+                        desc={tRich('rules.nav.miss_desc')}
                         className="lg:col-span-3"
                     />
 
@@ -199,13 +199,13 @@ export const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate }) => {
                     <InterfaceCard 
                         icon={Trophy} 
                         title={t('rules.nav.rank')} 
-                        desc={t('rules.nav.rank_desc')}
+                        desc={tRich('rules.nav.rank_desc')}
                         className="lg:col-span-4"
                     />
                     <InterfaceCard 
                         icon={Wallet} 
                         title={t('rules.nav.wallet')} 
-                        desc={t('rules.nav.wallet_desc')}
+                        desc={tRich('rules.nav.wallet_desc')}
                         className="lg:col-span-4"
                     />
                     
@@ -213,7 +213,7 @@ export const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate }) => {
                     <InterfaceCard 
                         icon={UserIcon} 
                         title={t('rules.nav.profile')} 
-                        desc={t('rules.nav.profile_desc')}
+                        desc={tRich('rules.nav.profile_desc')}
                         className="md:col-span-2 lg:col-span-4" 
                     />
                 </div>

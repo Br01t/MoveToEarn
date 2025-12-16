@@ -4,7 +4,7 @@ import { Lock, Eye, MapPin, Database, User, ShieldCheck, Trash2, KeyRound } from
 import { useLanguage } from '../../LanguageContext';
 
 const Privacy: React.FC = () => {
-  const { t } = useLanguage();
+  const { t, tRich } = useLanguage();
 
   const Section = ({ title, icon: Icon, children }: { title: string; icon: any; children: React.ReactNode }) => (
     <div className="border-b border-gray-700/50 pb-8 last:border-0">
@@ -33,42 +33,42 @@ const Privacy: React.FC = () => {
 
         {/* Intro */}
         <div className="glass-panel p-6 rounded-2xl text-gray-300 text-sm leading-relaxed">
-            {t('page.privacy.intro')}
+            {tRich('page.privacy.intro')}
         </div>
 
         {/* Main Content */}
         <div className="glass-panel rounded-2xl p-8 space-y-8 shadow-2xl">
             
             <Section title={t('page.privacy.sec1.title')} icon={Database}>
-                <p><strong>{t('page.privacy.sec1.p1_title')}</strong> {t('page.privacy.sec1.p1_body')}</p>
-                <p><strong>{t('page.privacy.sec1.p2_title')}</strong> {t('page.privacy.sec1.p2_body')}</p>
-                <p><strong>{t('page.privacy.sec1.p3_title')}</strong> {t('page.privacy.sec1.p3_body')}</p>
+                <p><strong>{t('page.privacy.sec1.p1_title')}</strong> {tRich('page.privacy.sec1.p1_body')}</p>
+                <p><strong>{t('page.privacy.sec1.p2_title')}</strong> {tRich('page.privacy.sec1.p2_body')}</p>
+                <p><strong>{t('page.privacy.sec1.p3_title')}</strong> {tRich('page.privacy.sec1.p3_body')}</p>
             </Section>
 
             <Section title={t('page.privacy.sec2.title')} icon={MapPin}>
-                <p>{t('page.privacy.sec2.body')}</p>
+                <p>{tRich('page.privacy.sec2.body')}</p>
                 <ul className="list-disc pl-5 space-y-1 mt-2">
-                    <li>{t('page.privacy.sec2.li1')}</li>
-                    <li>{t('page.privacy.sec2.li2')}</li>
-                    <li>{t('page.privacy.sec2.li3')}</li>
+                    <li>{tRich('page.privacy.sec2.li1')}</li>
+                    <li>{tRich('page.privacy.sec2.li2')}</li>
+                    <li>{tRich('page.privacy.sec2.li3')}</li>
                 </ul>
             </Section>
 
             <Section title={t('page.privacy.sec3.title')} icon={Eye}>
-                <p><strong>{t('page.privacy.sec3.p1_title')}</strong> {t('page.privacy.sec3.p1_body')}</p>
-                <p><strong>{t('page.privacy.sec3.p2_title')}</strong> {t('page.privacy.sec3.p2_body')}</p>
+                <p><strong>{t('page.privacy.sec3.p1_title')}</strong> {tRich('page.privacy.sec3.p1_body')}</p>
+                <p><strong>{t('page.privacy.sec3.p2_title')}</strong> {tRich('page.privacy.sec3.p2_body')}</p>
             </Section>
 
             <Section title={t('page.privacy.sec4.title')} icon={KeyRound}>
-                <p>{t('page.privacy.sec4.body')}</p>
+                <p>{tRich('page.privacy.sec4.body')}</p>
             </Section>
 
             <Section title={t('page.privacy.sec5.title')} icon={ShieldCheck}>
-                <p>{t('page.privacy.sec5.body')}</p>
+                <p>{tRich('page.privacy.sec5.body')}</p>
             </Section>
 
             <Section title={t('page.privacy.sec6.title')} icon={Trash2}>
-                <p>{t('page.privacy.sec6.body')}</p>
+                <p>{tRich('page.privacy.sec6.body')}</p>
             </Section>
 
         </div>

@@ -4,7 +4,7 @@ import { Users, MessageCircle, Twitter, Globe } from 'lucide-react';
 import { useLanguage } from '../../LanguageContext';
 
 const Community: React.FC = () => {
-  const { t } = useLanguage();
+  const { t, tRich } = useLanguage();
   return (
     <div className="max-w-4xl mx-auto p-8 space-y-8">
       <h1 className="text-4xl font-bold text-white mb-6 flex items-center gap-3">

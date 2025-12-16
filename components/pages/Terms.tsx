@@ -9,7 +9,7 @@ interface TermsProps {
 }
 
 const Terms: React.FC<TermsProps> = ({ onNavigate }) => {
-  const { t } = useLanguage();
+  const { t, tRich } = useLanguage();
 
   const Section = ({ title, icon: Icon, children }: { title: string; icon: any; children: React.ReactNode }) => (
     <div className="border-b border-gray-700/50 pb-8 last:border-0">
@@ -42,7 +42,7 @@ const Terms: React.FC<TermsProps> = ({ onNavigate }) => {
           <div>
               <h4 className="text-red-400 font-bold text-lg mb-2">{t('page.terms.disclaimer.title')}</h4>
               <p className="text-red-200/80 text-sm leading-relaxed">
-                  {t('page.terms.disclaimer.body')}
+                  {tRich('page.terms.disclaimer.body')}
               </p>
           </div>
       </div>
@@ -52,71 +52,71 @@ const Terms: React.FC<TermsProps> = ({ onNavigate }) => {
         
         <Section title={t('page.terms.sec1.title')} icon={Scale}>
             <p>
-                {t('page.terms.sec1.body')}
+                {tRich('page.terms.sec1.body')}
             </p>
         </Section>
 
         <Section title={t('page.terms.sec2.title')} icon={Activity}>
             <p>
-                <strong>{t('page.terms.sec2.p1_title')}</strong> {t('page.terms.sec2.p1_body')}
+                <strong>{t('page.terms.sec2.p1_title')}</strong> {tRich('page.terms.sec2.p1_body')}
             </p>
             <p>
-                <strong>{t('page.terms.sec2.p2_title')}</strong> {t('page.terms.sec2.p2_body')}
+                <strong>{t('page.terms.sec2.p2_title')}</strong> {tRich('page.terms.sec2.p2_body')}
             </p>
             <p>
-                <strong>{t('page.terms.sec2.p3_title')}</strong> {t('page.terms.sec2.p3_body')}
+                <strong>{t('page.terms.sec2.p3_title')}</strong> {tRich('page.terms.sec2.p3_body')}
             </p>
         </Section>
 
         <Section title={t('page.terms.sec3.title')} icon={ShieldAlert}>
             <p>
-                <strong>{t('page.terms.sec3.p1_title')}</strong> {t('page.terms.sec3.p1_body')}
+                <strong>{t('page.terms.sec3.p1_title')}</strong> {tRich('page.terms.sec3.p1_body')}
             </p>
             <p>
-                <strong>{t('page.terms.sec3.p2_title')}</strong> {t('page.terms.sec3.p2_body')}
+                <strong>{t('page.terms.sec3.p2_title')}</strong> {tRich('page.terms.sec3.p2_body')}
             </p>
             <p>
-                <strong>{t('page.terms.sec3.p3_title')}</strong> {t('page.terms.sec3.p3_body')}
+                <strong>{t('page.terms.sec3.p3_title')}</strong> {tRich('page.terms.sec3.p3_body')}
             </p>
         </Section>
 
         <Section title={t('page.terms.sec4.title')} icon={Ban}>
             <p>
-                {t('page.terms.sec4.intro')}
+                {tRich('page.terms.sec4.intro')}
             </p>
             <ul className="list-disc pl-5 space-y-1 text-gray-400">
-                <li><strong>{t('page.terms.sec4.li1_title')}</strong> {t('page.terms.sec4.li1_body')}</li>
-                <li><strong>{t('page.terms.sec4.li2_title')}</strong> {t('page.terms.sec4.li2_body')}</li>
-                <li><strong>{t('page.terms.sec4.li3_title')}</strong> {t('page.terms.sec4.li3_body')}</li>
-                <li><strong>{t('page.terms.sec4.li4_title')}</strong> {t('page.terms.sec4.li4_body')}</li>
-                <li><strong>{t('page.terms.sec4.li5_title')}</strong> {t('page.terms.sec4.li5_body')}</li>
+                <li><strong>{t('page.terms.sec4.li1_title')}</strong> {tRich('page.terms.sec4.li1_body')}</li>
+                <li><strong>{t('page.terms.sec4.li2_title')}</strong> {tRich('page.terms.sec4.li2_body')}</li>
+                <li><strong>{t('page.terms.sec4.li3_title')}</strong> {tRich('page.terms.sec4.li3_body')}</li>
+                <li><strong>{t('page.terms.sec4.li4_title')}</strong> {tRich('page.terms.sec4.li4_body')}</li>
+                <li><strong>{t('page.terms.sec4.li5_title')}</strong> {tRich('page.terms.sec4.li5_body')}</li>
             </ul>
         </Section>
 
         <Section title={t('page.terms.sec5.title')} icon={Lock}>
             <p>
-                <strong>{t('page.terms.sec5.p1_title')}</strong> {t('page.terms.sec5.p1_body')}
+                <strong>{t('page.terms.sec5.p1_title')}</strong> {tRich('page.terms.sec5.p1_body')}
             </p>
             <p>
-                <strong>{t('page.terms.sec5.p2_title')}</strong> {t('page.terms.sec5.p2_body')} <span onClick={() => onNavigate?.('PRIVACY')} className="text-emerald-400 hover:underline cursor-pointer">{t('page.privacy.title')}</span>.
+                <strong>{t('page.terms.sec5.p2_title')}</strong> {tRich('page.terms.sec5.p2_body')} <span onClick={() => onNavigate?.('PRIVACY')} className="text-emerald-400 hover:underline cursor-pointer">{t('page.privacy.title')}</span>.
             </p>
         </Section>
 
         <Section title={t('page.terms.sec6.title')} icon={AlertTriangle}>
             <p>
-                {t('page.terms.sec6.body')}
+                {tRich('page.terms.sec6.body')}
             </p>
             <ul className="list-disc pl-5 space-y-1 mt-2">
-                <li>{t('page.terms.sec6.li1')}</li>
-                <li>{t('page.terms.sec6.li2')}</li>
-                <li>{t('page.terms.sec6.li3')}</li>
-                <li>{t('page.terms.sec6.li4')}</li>
+                <li>{tRich('page.terms.sec6.li1')}</li>
+                <li>{tRich('page.terms.sec6.li2')}</li>
+                <li>{tRich('page.terms.sec6.li3')}</li>
+                <li>{tRich('page.terms.sec6.li4')}</li>
             </ul>
         </Section>
 
         <Section title={t('page.terms.sec7.title')} icon={Users}>
             <p>
-                {t('page.terms.sec7.body')}
+                {tRich('page.terms.sec7.body')}
             </p>
         </Section>
 

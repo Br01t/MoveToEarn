@@ -22,7 +22,7 @@ interface WalletProps {
 const TRANSACTIONS_PER_PAGE = 7;
 
 const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuyFiat, onSwapGovToRun, lastBurnTimestamp, totalBurned }) => {
-  const { t } = useLanguage();
+  const { t, tRich } = useLanguage();
   const [isWalletConnected, setIsWalletConnected] = useState(false);
   
   // History Modal State
@@ -125,7 +125,7 @@ const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuy
             <h1 className="text-3xl font-bold uppercase tracking-widest text-white flex items-center gap-2">
                <WalletIcon className="text-emerald-400" size={32} /> {t('wallet.title')}
             </h1>
-            <p className="text-gray-400 text-sm">{t('wallet.subtitle')}</p>
+            <p className="text-gray-400 text-sm">{tRich('wallet.subtitle')}</p>
          </div>
          
          {/* External Wallet Connect */}
@@ -150,7 +150,7 @@ const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuy
               <div>
                   <p className="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">{t('wallet.available_run')}</p>
                   <h2 className="text-3xl font-mono font-bold text-emerald-400">{user.runBalance.toFixed(2)}</h2>
-                  <p className="text-xs text-gray-500 mt-1">{t('wallet.utility_token')}</p>
+                  <p className="text-xs text-gray-500 mt-1">{tRich('wallet.utility_token')}</p>
               </div>
               <div className="bg-emerald-500/10 p-4 rounded-full text-emerald-400 border border-emerald-500/20">
                   <Activity size={32} />
@@ -164,7 +164,7 @@ const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuy
               <div>
                   <p className="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">{t('wallet.available_gov')}</p>
                   <h2 className="text-3xl font-mono font-bold text-cyan-400">{user.govBalance.toFixed(2)}</h2>
-                  <p className="text-xs text-gray-500 mt-1">{t('wallet.gov_token')}</p>
+                  <p className="text-xs text-gray-500 mt-1">{tRich('wallet.gov_token')}</p>
               </div>
                <div className="bg-cyan-500/10 p-4 rounded-full text-cyan-400 border border-cyan-500/20">
                   <Crown size={32} />
@@ -261,7 +261,7 @@ const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuy
              </div>
              <div>
                 <h3 className="text-lg font-bold text-white uppercase tracking-wide">{t('wallet.burn_event')}</h3>
-                <p className="text-gray-400 text-sm">{t('wallet.next_burn')} <span className="text-white font-mono">{formatTime(timeLeft)}</span></p>
+                <p className="text-gray-400 text-sm">{tRich('wallet.next_burn')} <span className="text-white font-mono">{formatTime(timeLeft)}</span></p>
              </div>
           </div>
 
