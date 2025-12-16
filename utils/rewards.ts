@@ -135,7 +135,6 @@ export const processRunRewards = (
 } => {
     
     // 1. Identify Involved Zones
-    // We detect ALL zones the user interacted with (using Nearest Neighbor logic on points).
     const involvedZoneIds = new Set<string>();
     const points = data.points;
 
@@ -152,7 +151,6 @@ export const processRunRewards = (
                 }
             }
 
-            // Capture Radius: 10km (Generous radius to ensure zones are detected)
             if (closestZone && minDistance < 10.0) {
                 involvedZoneIds.add(closestZone.id);
             }
@@ -162,10 +160,6 @@ export const processRunRewards = (
     const involvedZonesList = Array.from(involvedZoneIds);
     const zoneCount = involvedZonesList.length;
     
-    // REMOVED: Global inventory check. Boost rate is now strictly zone-dependent.
-    // const boostItem = user.inventory.find(i => i.type === 'BOOST');
-    // const baseRate = boostItem ? RUN_RATE_BOOST : RUN_RATE_BASE;
-
     let totalGrossRun = 0;
     const zoneBreakdown: Record<string, number> = {};
     const involvedZoneNames: string[] = [];
@@ -173,11 +167,9 @@ export const processRunRewards = (
     let updatedZones: Zone[] = [];
 
     // 2. EVEN SPLIT LOGIC
-    // If multiple zones are involved, we split the total KM and rewards equally among them.
     if (zoneCount > 0) {
         const kmPerZone = data.totalKm / zoneCount;
 
-        // Populate Breakdown for DB
         involvedZonesList.forEach(id => {
             zoneBreakdown[id] = parseFloat(kmPerZone.toFixed(4));
         });
@@ -186,26 +178,17 @@ export const processRunRewards = (
             if (involvedZoneIds.has(z.id)) {
                 involvedZoneNames.push(z.name);
                 
-                // UPDATED CALCULATION:
-                // Check if THIS SPECIFIC ZONE has an active boost.
-                // It does NOT depend on user holding an item, but on the zone state (consumed item).
                 const isBoostActive = z.boostExpiresAt ? z.boostExpiresAt > Date.now() : false;
                 const effectiveRate = isBoostActive ? RUN_RATE_BOOST : RUN_RATE_BASE;
 
-                // Gross Earnings = Distance Portion * Effective Rate.
                 const zoneEarnings = kmPerZone * effectiveRate;
                 totalGrossRun += zoneEarnings;
 
-                // Pool Contribution: 2% of earnings generated in this zone context
-                // This 2% is taken FROM the gross earnings (subtracted from user share later)
                 const poolContribution = zoneEarnings * REWARD_SPLIT_POOL;
 
                 let newZone = { ...z };
-                
-                // Update Pool
                 newZone.interestPool = (newZone.interestPool || 0) + poolContribution;
 
-                // Reinforce (Owner only) - Add Even Split KM to record
                 if (z.ownerId === user.id) {
                     isReinforced = true;
                     newZone.recordKm = (newZone.recordKm || 0) + kmPerZone;
@@ -217,19 +200,18 @@ export const processRunRewards = (
                 }
                 return newZone;
             }
-            return z;
+            // CRITICAL: Return original reference for unchanged zones to support equality checks in useRunWorkflow
+            return z; 
         });
     } else {
         // Uncharted Territory (No zones within 10km)
-        // Uses Base Rate as there is no zone to have a boost on.
         totalGrossRun = data.totalKm * RUN_RATE_BASE;
         updatedZones = [...allZones]; // No updates to zones
     }
 
-    // Determine primary location name for the run entry
+    // Determine primary location name
     let locationName = "Unknown Territory";
     if (zoneCount > 0) {
-        // Find the zone closest to the start point to use as the primary name
         const startP = data.startPoint;
         const sortedByProx = involvedZonesList.sort((a,b) => {
             const zA = allZones.find(z => z.id === a)!;
@@ -250,7 +232,6 @@ export const processRunRewards = (
         locationName = "Uncharted Area"; 
     }
 
-    // USER SHARE = Gross * 0.98
     const totalUserRun = totalGrossRun * REWARD_SPLIT_USER;
 
     return {

@@ -627,10 +627,18 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
                     <h4 className={`font-bold text-xs truncate w-full px-1 ${badge.isUnlocked ? style.text : 'text-gray-400'}`}>{badge.name}</h4>
                     
                     {!badge.isUnlocked && (
-                        <div className="w-full px-2 mt-2 text-center">
-                            <span className="text-[9px] text-gray-500 font-mono bg-black/40 px-2 py-0.5 rounded border border-gray-700/50">
-                                {badge.stats.current.toFixed(0)} / {badge.stats.target} {badge.stats.unit}
-                            </span>
+                        <div className="w-full px-2 mt-2 space-y-1">
+                            <div className="text-center">
+                                <span className="text-[9px] text-gray-500 font-mono">
+                                    {badge.stats.current.toFixed(0)} / {badge.stats.target} {badge.stats.unit}
+                                </span>
+                            </div>
+                            <div className="w-full bg-black/40 rounded-full h-1.5 border border-gray-700/50 overflow-hidden">
+                                <div 
+                                    className={`h-full rounded-full transition-all duration-500 ${style.progress}`} 
+                                    style={{ width: `${badge.stats.percent}%` }}
+                                ></div>
+                            </div>
                         </div>
                     )}
                 </div>
