@@ -25,7 +25,8 @@ interface HexMapProps {
 
 const HEX_SIZE = 100;
 
-const HexMap = forwardRef<SVGSVGElement, HexMapProps>(({ 
+// Named component for dev tools and memoization
+const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({ 
     zones, user, view, selectedZoneId, onZoneClick, 
     filterMode, filterCountry, searchTerm,
     onMouseDown, onMouseMove, onMouseUp, onTouchStart, onTouchMove, onTouchEnd
@@ -70,23 +71,18 @@ const HexMap = forwardRef<SVGSVGElement, HexMapProps>(({
       const processedPairs = new Set<string>(); 
 
       // For every zone I own, connect to the 2 nearest zones I also own.
-      // This creates a mesh network that bridges clusters.
       myZones.forEach(startZone => {
           const startPos = getHexPixelPosition(startZone.x, startZone.y, HEX_SIZE);
 
-          // Calculate distances to all other owned zones
           const neighbors = myZones
               .filter(z => z.id !== startZone.id)
               .map(endZone => {
                   const endPos = getHexPixelPosition(endZone.x, endZone.y, HEX_SIZE);
-                  // Euclidean distance in pixels
                   const dist = Math.sqrt(Math.pow(endPos.x - startPos.x, 2) + Math.pow(endPos.y - startPos.y, 2));
                   return { zone: endZone, dist, pos: endPos };
               })
-              .sort((a, b) => a.dist - b.dist); // Sort by closest
+              .sort((a, b) => a.dist - b.dist); 
 
-          // Connect to the top 2 closest (K-Nearest Neighbors = 2)
-          // This ensures continuity without creating a messy spiderweb of everything-to-everything
           const closestNeighbors = neighbors.slice(0, 2);
 
           closestNeighbors.forEach(target => {
@@ -99,8 +95,6 @@ const HexMap = forwardRef<SVGSVGElement, HexMapProps>(({
                   const midX = (startPos.x + endPos.x) / 2;
                   const midY = (startPos.y + endPos.y) / 2;
                   
-                  // Dynamic Altitude: The further the target, the higher the arc
-                  // Base altitude 80px + 10% of distance
                   const altitude = 80 + (target.dist * 0.15); 
                   
                   const controlX = midX;
@@ -190,44 +184,36 @@ const HexMap = forwardRef<SVGSVGElement, HexMapProps>(({
         className="touch-none select-none"
       >
         <defs>
-          {/* 1. TECH PATTERN OVERLAY */}
           <pattern id="tech-dots" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
              <circle cx="2" cy="2" r="1" fill="rgba(255,255,255,0.15)" />
           </pattern>
 
-          {/* 2. GLOW FILTER FOR CONNECTIONS */}
           <filter id="glow-flight" x="-50%" y="-50%" width="200%" height="200%">
             <feGaussianBlur stdDeviation="4" result="blur" />
             <feComposite in="SourceGraphic" in2="blur" operator="over" />
           </filter>
 
-          {/* 3. PURPLE FLIGHT PATH GRADIENT */}
           <linearGradient id="grad-flight-path" x1="0%" y1="0%" x2="100%" y2="0%">
-             <stop offset="0%" style={{ stopColor: '#a855f7', stopOpacity: 0.1 }} /> {/* Purple 500 Fade */}
+             <stop offset="0%" style={{ stopColor: '#a855f7', stopOpacity: 0.1 }} />
              <stop offset="20%" style={{ stopColor: '#a855f7', stopOpacity: 0.8 }} />
-             <stop offset="50%" style={{ stopColor: '#e9d5ff', stopOpacity: 1 }} />   {/* Purple 200 Bright Center */}
-             <stop offset="80%" style={{ stopColor: '#d8b4fe', stopOpacity: 0.8 }} /> {/* Purple 300 */}
+             <stop offset="50%" style={{ stopColor: '#e9d5ff', stopOpacity: 1 }} />
+             <stop offset="80%" style={{ stopColor: '#d8b4fe', stopOpacity: 0.8 }} />
              <stop offset="100%" style={{ stopColor: '#a855f7', stopOpacity: 0.1 }} />
           </linearGradient>
 
-          {/* 4. RADIAL GRADIENTS FOR ZONES (Flat but Deep) */}
-          
-          {/* MY ZONE: Emerald Core */}
           <radialGradient id="grad-my-zone" cx="50%" cy="50%" r="70%" fx="50%" fy="50%">
-            <stop offset="40%" style={{ stopColor: '#059669', stopOpacity: 0.8 }} /> {/* Emerald 600 */}
-            <stop offset="100%" style={{ stopColor: '#064e3b', stopOpacity: 0.9 }} /> {/* Emerald 900 Edge */}
+            <stop offset="40%" style={{ stopColor: '#059669', stopOpacity: 0.8 }} />
+            <stop offset="100%" style={{ stopColor: '#064e3b', stopOpacity: 0.9 }} />
           </radialGradient>
           
-          {/* ENEMY ZONE: Crimson Core */}
           <radialGradient id="grad-enemy-zone" cx="50%" cy="50%" r="70%" fx="50%" fy="50%">
-            <stop offset="40%" style={{ stopColor: '#b91c1c', stopOpacity: 0.8 }} /> {/* Red 700 */}
-            <stop offset="100%" style={{ stopColor: '#450a0a', stopOpacity: 0.9 }} /> {/* Red 950 Edge */}
+            <stop offset="40%" style={{ stopColor: '#b91c1c', stopOpacity: 0.8 }} />
+            <stop offset="100%" style={{ stopColor: '#450a0a', stopOpacity: 0.9 }} />
           </radialGradient>
         </defs>
 
         <g transform={`translate(${view.x},${view.y}) scale(${view.scale})`}>
             
-            {/* LAYER 1: ZONES (Draw First) */}
             {zones.map((zone) => {
               const pos = getHexPixelPosition(zone.x, zone.y, HEX_SIZE);
               const isSelected = selectedZoneId === zone.id;
@@ -236,7 +222,6 @@ const HexMap = forwardRef<SVGSVGElement, HexMapProps>(({
               const isJustClaimed = recentlyClaimed.has(zone.id);
               const isMine = zone.ownerId === user.id;
 
-              // --- Filtering Logic ---
               let isMatch = true;
               if (filterMode === 'MINE' && zone.ownerId !== user.id) isMatch = false;
               if (filterMode === 'ENEMY' && zone.ownerId === user.id) isMatch = false;
@@ -254,7 +239,6 @@ const HexMap = forwardRef<SVGSVGElement, HexMapProps>(({
               const formattedName = formatZoneLabel(zone.name);
               const displayName = formattedName.length > 20 ? formattedName.substring(0, 18) + '..' : formattedName;
               
-              // Border Style
               let strokeColor = isMine ? '#34d399' : '#7f1d1d'; 
               let strokeWidth = isMine ? 2 : 1;
               
@@ -270,12 +254,10 @@ const HexMap = forwardRef<SVGSVGElement, HexMapProps>(({
                   className={`transition-all duration-300 group ${isMatch ? 'cursor-pointer' : 'pointer-events-none'}`}
                   style={{ opacity: isMatch ? (isSelected ? 1 : 0.9) : 0.05, filter: isMatch ? 'none' : 'grayscale(100%)' }}
                 >
-                  {/* Just Claimed Explosion Effect */}
                   {isJustClaimed && isMatch && (
                     <polygon points={getHexPoints()} fill="none" stroke="white" strokeWidth="4" className="animate-ping" style={{ transformOrigin: 'center', animationDuration: '1.5s' }} />
                   )}
 
-                  {/* FLAT HEX BODY */}
                   <polygon
                     points={getHexPoints()}
                     fill={getFillId(zone)}
@@ -286,7 +268,6 @@ const HexMap = forwardRef<SVGSVGElement, HexMapProps>(({
                     style={{ filter: isSelected ? 'drop-shadow(0 0 15px rgba(255,255,255,0.4))' : 'drop-shadow(0 4px 6px rgba(0,0,0,0.5))' }}
                   />
 
-                  {/* TECH PATTERN OVERLAY */}
                   <polygon 
                     points={getHexPoints()}
                     fill="url(#tech-dots)"
@@ -295,7 +276,6 @@ const HexMap = forwardRef<SVGSVGElement, HexMapProps>(({
                     transform="scale(0.95)"
                   />
                   
-                  {/* INNER HIGHLIGHT RING */}
                   <polygon 
                     points={getHexPoints()} 
                     fill="none" 
@@ -305,9 +285,7 @@ const HexMap = forwardRef<SVGSVGElement, HexMapProps>(({
                     className="transition-all duration-300 group-hover:stroke-white/40"
                   />
                   
-                  {/* CONTENT LAYER */}
                   <g pointerEvents="none">
-                      {/* Zone Name */}
                       <text 
                           x="0" 
                           y="-28" 
@@ -321,7 +299,6 @@ const HexMap = forwardRef<SVGSVGElement, HexMapProps>(({
                           {displayName}
                       </text>
 
-                      {/* Pool Badge */}
                       <g transform="translate(-40, -5)">
                           <rect 
                               x="0" 
@@ -346,7 +323,6 @@ const HexMap = forwardRef<SVGSVGElement, HexMapProps>(({
                           </text>
                       </g>
 
-                      {/* Status Icons - Animated Float */}
                       {(shielded || boosted) && (
                           <g className="animate-icon-float">
                               {shielded && !boosted && (
@@ -362,7 +338,6 @@ const HexMap = forwardRef<SVGSVGElement, HexMapProps>(({
               );
             })}
 
-            {/* LAYER 2: FLIGHT PATHS (Rendered ON TOP of zones) */}
             <g className="connections-layer" style={{ filter: 'url(#glow-flight)', pointerEvents: 'none' }}>
                 {flightPaths.map(conn => (
                     <path 
@@ -382,4 +357,18 @@ const HexMap = forwardRef<SVGSVGElement, HexMapProps>(({
   );
 });
 
-export default HexMap;
+// MEMOIZATION OPTIMIZATION
+// Prevents re-renders of the heavy map unless crucial data changes
+export default React.memo(HexMapComponent, (prevProps, nextProps) => {
+    return (
+        prevProps.zones === nextProps.zones &&
+        prevProps.view.x === nextProps.view.x &&
+        prevProps.view.y === nextProps.view.y &&
+        prevProps.view.scale === nextProps.view.scale &&
+        prevProps.selectedZoneId === nextProps.selectedZoneId &&
+        prevProps.filterMode === nextProps.filterMode &&
+        prevProps.filterCountry === nextProps.filterCountry &&
+        prevProps.searchTerm === nextProps.searchTerm &&
+        prevProps.user.id === nextProps.user.id
+    );
+});

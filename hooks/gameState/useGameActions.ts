@@ -22,7 +22,9 @@ export const useGameActions = ({
   const { showToast } = useGlobalUI();
 
   const logTransaction = async (userId: string, type: 'IN' | 'OUT', token: 'RUN' | 'GOV' | 'ITEM', amount: number, description: string) => {
-      if (amount <= 0) return;
+      // Security Check: Prevent logging invalid amounts
+      if (!amount || amount <= 0 || isNaN(amount)) return;
+      
       const newTx: Transaction = {
           id: crypto.randomUUID(),
           userId, type, token, amount, description, timestamp: Date.now()
@@ -39,6 +41,12 @@ export const useGameActions = ({
 
   const recordRun = async (userId: string, runData: RunEntry, updatedZones: Zone[]) => {
       try {
+          // Security Integrity Check
+          if (runData.runEarned < 0 || isNaN(runData.runEarned) || runData.km < 0) {
+              throw new Error("Invalid Run Data detected.");
+          }
+
+          // 1. Insert the Run Log
           const { error: runError } = await supabase.from('runs').insert({
               id: runData.id, user_id: userId, location_name: runData.location,
               km: runData.km, duration: runData.duration, 
@@ -50,27 +58,38 @@ export const useGameActions = ({
 
           if (runError) throw runError;
 
+          // 2. Update User Profile Totals (Ideally this should be a DB Trigger)
           const { data: currentProfile } = await supabase.from('profiles').select('run_balance').eq('id', userId).single();
           const { data: userRuns } = await supabase.from('runs').select('km').eq('user_id', userId);
           const exactTotalKm = userRuns ? userRuns.reduce((sum, r) => sum + (Number(r.km) || 0), 0) : 0;
 
           if (currentProfile) {
+              const safeBalance = (currentProfile.run_balance || 0) + runData.runEarned;
               await supabase.from('profiles').update({
-                  total_km: exactTotalKm, run_balance: currentProfile.run_balance + runData.runEarned 
+                  total_km: exactTotalKm, run_balance: safeBalance 
               }).eq('id', userId);
           }
 
+          // 3. Batch Update ONLY Modified Zones (Efficient)
           if (updatedZones.length > 0) {
-              const { error: zoneError } = await supabase.from('zones').upsert(
-                  updatedZones.map(z => ({
-                      id: z.id, name: z.name, location: `POINT(${z.lng} ${z.lat})`,
-                      owner_id: z.ownerId, x: z.x, y: z.y, lat: z.lat, lng: z.lng,
-                      defense_level: z.defenseLevel, record_km: z.recordKm,
-                      interest_rate: z.interestRate, interest_pool: z.interestPool,
-                      last_distribution_time: z.lastDistributionTime || null,
-                      boost_expires_at: z.boostExpiresAt, shield_expires_at: z.shieldExpiresAt
-                  }))
-              );
+              const zonePayload = updatedZones.map(z => ({
+                  id: z.id,
+                  // Standard fields for upsert (if new) or update (if existing)
+                  name: z.name,
+                  location: `POINT(${z.lng} ${z.lat})`,
+                  owner_id: z.ownerId,
+                  x: z.x, y: z.y, lat: z.lat, lng: z.lng,
+                  // Dynamic fields modified by gameplay
+                  defense_level: z.defenseLevel,
+                  record_km: z.recordKm,
+                  interest_rate: z.interestRate,
+                  interest_pool: z.interestPool,
+                  last_distribution_time: z.lastDistributionTime || null,
+                  boost_expires_at: z.boostExpiresAt,
+                  shield_expires_at: z.shieldExpiresAt
+              }));
+
+              const { error: zoneError } = await supabase.from('zones').upsert(zonePayload);
               if (zoneError) throw zoneError;
           }
 
@@ -89,6 +108,12 @@ export const useGameActions = ({
       const zone = zones.find(z => z.id === zoneId);
       if (!zone) return;
 
+      // Security: Optimistic update with integrity check
+      if (user.runBalance < CONQUEST_COST) {
+          showToast("Insufficient funds (Server Check)", 'ERROR');
+          return;
+      }
+
       const updatedUser = { ...user, runBalance: user.runBalance - CONQUEST_COST, govBalance: user.govBalance + CONQUEST_REWARD_GOV };
       const updatedZones = zones.map(z => z.id === zoneId ? { ...z, ownerId: user.id, recordKm: 0, defenseLevel: 1 } : z); 
       
@@ -97,8 +122,15 @@ export const useGameActions = ({
 
       await logTransaction(user.id, 'OUT', 'RUN', CONQUEST_COST, `Conquest: ${zone.name}`);
       await logTransaction(user.id, 'IN', 'GOV', CONQUEST_REWARD_GOV, `Conquest Reward: ${zone.name}`);
+      
+      // CRITICAL: We update DB. (Future: Move to RPC 'claim_zone')
       await supabase.from('profiles').update({ run_balance: updatedUser.runBalance, gov_balance: updatedUser.govBalance }).eq('id', user.id);
-      await supabase.from('zones').update({ owner_id: user.id }).eq('id', zoneId);
+      
+      await supabase.from('zones').update({ 
+          owner_id: user.id,
+          record_km: 0,
+          defense_level: 1
+      }).eq('id', zoneId);
   };
 
   const buyItem = async (item: Item) => {
@@ -109,20 +141,22 @@ export const useGameActions = ({
       }
 
       const previousUser = { ...user };
-      const newRunBalance = parseFloat((user.runBalance - item.priceRun).toFixed(2));
+      // Prevent negative balance locally
+      const newRunBalance = Math.max(0, parseFloat((user.runBalance - item.priceRun).toFixed(2)));
 
       if (item.type === 'CURRENCY') {
           const newGovBalance = parseFloat((user.govBalance + item.effectValue).toFixed(2));
           setUser({ ...user, runBalance: newRunBalance, govBalance: newGovBalance });
           await logTransaction(user.id, 'OUT', 'RUN', item.priceRun, `Market: ${item.name}`);
           await logTransaction(user.id, 'IN', 'GOV', item.effectValue, `Opened: ${item.name}`);
+          
           const { error } = await supabase.from('profiles').update({ run_balance: newRunBalance, gov_balance: newGovBalance }).eq('id', user.id);
           if (error) { 
               showToast("Transaction failed.", 'ERROR'); 
               setUser(previousUser); 
               return; 
           }
-          const newQty = item.quantity - 1;
+          const newQty = Math.max(0, item.quantity - 1);
           await supabase.from('items').update({ quantity: newQty }).eq('id', item.id);
           setMarketItems(prev => prev.map(i => i.id === item.id ? { ...i, quantity: newQty } : i));
           showToast(`Purchased ${item.name}!`, 'SUCCESS');
@@ -155,6 +189,7 @@ export const useGameActions = ({
           return; 
       }
 
+      // Inventory Logic
       const { data: existingRows } = await supabase.from('inventory').select('*').eq('user_id', user.id).eq('item_id', item.id);
       const existingRow = existingRows?.[0];
       let invError;
@@ -168,12 +203,13 @@ export const useGameActions = ({
 
       if (invError) { 
           showToast("Error saving item.", 'ERROR'); 
+          // Rollback profile balance
           await supabase.from('profiles').update({ run_balance: user.runBalance }).eq('id', user.id); 
           setUser(previousUser); 
           return; 
       }
       
-      const newQty = item.quantity - 1;
+      const newQty = Math.max(0, item.quantity - 1);
       supabase.from('items').update({ quantity: newQty }).eq('id', item.id);
       setMarketItems(prev => prev.map(i => i.id === item.id ? { ...i, quantity: newQty } : i));
       showToast(`Added ${item.name} to inventory`, 'SUCCESS');
@@ -225,6 +261,7 @@ export const useGameActions = ({
 
       if (zoneUpdateError) {
           showToast(`Failed to apply effect.`, 'ERROR');
+          // Rollback inventory
           if (existingRow) await supabase.from('inventory').update({ quantity: existingRow.quantity }).eq('id', existingRow.id);
           else await supabase.from('inventory').insert({ user_id: user.id, item_id: item.id, quantity: 1 });
           setUser({ ...user, inventory: previousInventory });
@@ -236,6 +273,7 @@ export const useGameActions = ({
 
   const buyFiatGov = async (amount: number) => {
       if (!user) return;
+      if (amount <= 0 || isNaN(amount)) return;
       const govAmount = amount * 10; 
       const updatedUser = { ...user, govBalance: user.govBalance + govAmount };
       setUser(updatedUser);
@@ -245,7 +283,7 @@ export const useGameActions = ({
   };
 
   const swapGovToRun = async (amount: number) => {
-      if (!user || user.govBalance < amount) return;
+      if (!user || user.govBalance < amount || amount <= 0) return;
       const runReceived = amount * govToRunRate;
       const updatedUser = { ...user, govBalance: user.govBalance - amount, runBalance: user.runBalance + runReceived };
       setUser(updatedUser);
@@ -258,7 +296,9 @@ export const useGameActions = ({
       try {
           const fileExt = file.name.split('.').pop();
           const cleanExt = fileExt ? fileExt.replace(/[^a-z0-9]/gi, '') : 'jpg';
-          const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${cleanExt}`;
+          // Sanitize filename to prevent path traversal
+          const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+          const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}_${safeName}.${cleanExt}`;
           const bucketName = 'images'; 
           let folder = context === 'avatars' ? 'avatars' : (context === 'reports' ? 'bugs' : context);
           const filePath = `${folder}/${fileName}`;
