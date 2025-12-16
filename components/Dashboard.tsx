@@ -46,8 +46,10 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   // Map View State
   const [view, setView] = useState({ x: window.innerWidth / 2, y: window.innerHeight / 2, scale: 0.8 });
-  const [isDragging, setIsDragging] = useState(false);
-  const [lastMousePos, setLastMousePos] = useState({ x: 0, y: 0 });
+  
+  // Dragging State (Refs for performance and to avoid stale closures in memoized child)
+  const isDragging = useRef(false);
+  const lastMousePos = useRef({ x: 0, y: 0 });
   const svgRef = useRef<SVGSVGElement>(null);
 
   // Initialize to 0 to force density centering on mount even if data exists
@@ -169,33 +171,39 @@ const Dashboard: React.FC<DashboardProps> = ({
   // Note: Wheel zoom handler removed to restrict zooming to buttons only.
 
   const handleMouseDown = (e: React.MouseEvent) => {
-    setIsDragging(true);
-    setLastMousePos({ x: e.clientX, y: e.clientY });
+    isDragging.current = true;
+    lastMousePos.current = { x: e.clientX, y: e.clientY };
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging) return;
-    const dx = e.clientX - lastMousePos.x;
-    const dy = e.clientY - lastMousePos.y;
+    if (!isDragging.current) return;
+    const dx = e.clientX - lastMousePos.current.x;
+    const dy = e.clientY - lastMousePos.current.y;
     setView(v => ({ ...v, x: v.x + dx, y: v.y + dy }));
-    setLastMousePos({ x: e.clientX, y: e.clientY });
+    lastMousePos.current = { x: e.clientX, y: e.clientY };
   };
 
-  const handleMouseUp = () => setIsDragging(false);
+  const handleMouseUp = () => {
+      isDragging.current = false;
+  };
 
   const handleTouchStart = (e: React.TouchEvent) => {
       if (e.touches.length === 1) {
-          setIsDragging(true);
-          setLastMousePos({ x: e.touches[0].clientX, y: e.touches[0].clientY });
+          isDragging.current = true;
+          lastMousePos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
       }
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-      if (!isDragging || e.touches.length !== 1) return;
-      const dx = e.touches[0].clientX - lastMousePos.x;
-      const dy = e.touches[0].clientY - lastMousePos.y;
+      if (!isDragging.current || e.touches.length !== 1) return;
+      const dx = e.touches[0].clientX - lastMousePos.current.x;
+      const dy = e.touches[0].clientY - lastMousePos.current.y;
       setView(v => ({ ...v, x: v.x + dx, y: v.y + dy }));
-      setLastMousePos({ x: e.touches[0].clientX, y: e.touches[0].clientY });
+      lastMousePos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  };
+
+  const handleTouchEnd = () => {
+      isDragging.current = false;
   };
 
   const zoomIn = () => setView(v => ({ ...v, scale: Math.min(v.scale + 0.2, 2.5) }));
@@ -274,7 +282,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           onMouseUp={handleMouseUp}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
-          onTouchEnd={() => setIsDragging(false)}
+          onTouchEnd={handleTouchEnd}
       />
 
       {/* ZONE DETAILS PANEL */}

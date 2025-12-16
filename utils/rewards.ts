@@ -164,49 +164,48 @@ export const processRunRewards = (
     const zoneBreakdown: Record<string, number> = {};
     const involvedZoneNames: string[] = [];
     let isReinforced = false;
-    let updatedZones: Zone[] = [];
+    
+    // 2. OPTIMIZED UPDATE LOGIC
+    // We map over ALL zones. 
+    // If a zone is involved, we return a NEW object with updates.
+    // If NOT involved, we return the ORIGINAL object reference.
+    const updatedZones = allZones.map(z => {
+        if (involvedZoneIds.has(z.id)) {
+            involvedZoneNames.push(z.name);
+            const kmPerZone = data.totalKm / zoneCount;
+            zoneBreakdown[z.id] = parseFloat(kmPerZone.toFixed(4));
 
-    // 2. EVEN SPLIT LOGIC
-    if (zoneCount > 0) {
-        const kmPerZone = data.totalKm / zoneCount;
+            const isBoostActive = z.boostExpiresAt ? z.boostExpiresAt > Date.now() : false;
+            const effectiveRate = isBoostActive ? RUN_RATE_BOOST : RUN_RATE_BASE;
 
-        involvedZonesList.forEach(id => {
-            zoneBreakdown[id] = parseFloat(kmPerZone.toFixed(4));
-        });
+            const zoneEarnings = kmPerZone * effectiveRate;
+            totalGrossRun += zoneEarnings;
 
-        updatedZones = allZones.map(z => {
-            if (involvedZoneIds.has(z.id)) {
-                involvedZoneNames.push(z.name);
+            const poolContribution = zoneEarnings * REWARD_SPLIT_POOL;
+
+            let newZone = { ...z };
+            newZone.interestPool = (newZone.interestPool || 0) + poolContribution;
+
+            if (z.ownerId === user.id) {
+                isReinforced = true;
+                newZone.recordKm = (newZone.recordKm || 0) + kmPerZone;
                 
-                const isBoostActive = z.boostExpiresAt ? z.boostExpiresAt > Date.now() : false;
-                const effectiveRate = isBoostActive ? RUN_RATE_BOOST : RUN_RATE_BASE;
-
-                const zoneEarnings = kmPerZone * effectiveRate;
-                totalGrossRun += zoneEarnings;
-
-                const poolContribution = zoneEarnings * REWARD_SPLIT_POOL;
-
-                let newZone = { ...z };
-                newZone.interestPool = (newZone.interestPool || 0) + poolContribution;
-
-                if (z.ownerId === user.id) {
-                    isReinforced = true;
-                    newZone.recordKm = (newZone.recordKm || 0) + kmPerZone;
-                    
-                    if (newZone.recordKm > 50 && newZone.defenseLevel < 2) newZone.defenseLevel = 2;
-                    if (newZone.recordKm > 150 && newZone.defenseLevel < 3) newZone.defenseLevel = 3;
-                    if (newZone.recordKm > 500 && newZone.defenseLevel < 4) newZone.defenseLevel = 4;
-                    if (newZone.recordKm > 1000 && newZone.defenseLevel < 5) newZone.defenseLevel = 5;
-                }
-                return newZone;
+                if (newZone.recordKm > 50 && newZone.defenseLevel < 2) newZone.defenseLevel = 2;
+                if (newZone.recordKm > 150 && newZone.defenseLevel < 3) newZone.defenseLevel = 3;
+                if (newZone.recordKm > 500 && newZone.defenseLevel < 4) newZone.defenseLevel = 4;
+                if (newZone.recordKm > 1000 && newZone.defenseLevel < 5) newZone.defenseLevel = 5;
             }
-            // CRITICAL: Return original reference for unchanged zones to support equality checks in useRunWorkflow
-            return z; 
-        });
-    } else {
+            return newZone;
+        }
+        
+        // CRITICAL: Return original reference for unchanged zones. 
+        // This ensures downstream strict equality checks (z !== oldZ) work correctly.
+        return z; 
+    });
+
+    if (zoneCount === 0) {
         // Uncharted Territory (No zones within 10km)
         totalGrossRun = data.totalKm * RUN_RATE_BASE;
-        updatedZones = [...allZones]; // No updates to zones
     }
 
     // Determine primary location name
@@ -236,7 +235,7 @@ export const processRunRewards = (
 
     return {
         totalRunEarned: parseFloat(totalUserRun.toFixed(2)),
-        zoneUpdates: updatedZones,
+        zoneUpdates: updatedZones, // Contains mix of new objects and old references
         locationName,
         involvedZoneNames,
         involvedZoneIds: involvedZonesList,

@@ -79,7 +79,7 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction,
           // Clear stats to prevent loop
           batchStatsRef.current = { totalKm: 0, duration: 0, runEarned: 0, involvedZoneNames: [], reinforcedCount: 0 };
       }
-  }, [pendingRunsQueue, zoneCreationQueue.length, pendingRunData, runSummary, zones, user]); // Added zones and user to deps to prevent stale closures
+  }, [pendingRunsQueue, zoneCreationQueue.length, pendingRunData, runSummary, zones, user]);
 
   // --- LOGIC: Check if new zones are needed ---
   const analyzeForNewZones = (data: RunAnalysisData) => {
@@ -153,30 +153,18 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction,
           totalKm: currentUser.totalKm + data.totalKm
       };
 
-      // Identify modified zones safely to prevent resetting unrelated zones
+      // OPTIMIZATION: Filter strictly for changes before DB call.
+      // This relies on `processRunRewards` returning strict references for unchanged zones.
       const modifiedZones = result.zoneUpdates.filter(u => {
-          const isNew = sessionCreatedZonesRef.current.some(nz => nz.id === u.id);
-          if (isNew) return true;
-          
           const original = allZonesMap.get(u.id);
-          if (!original) return false;
-
-          // Robust floating point comparison
-          const epsilon = 0.0001;
-          const poolChanged = Math.abs((original.interestPool || 0) - (u.interestPool || 0)) > epsilon;
-          const kmChanged = Math.abs((original.recordKm || 0) - (u.recordKm || 0)) > epsilon;
-          
-          return (
-              kmChanged || 
-              poolChanged || 
-              original.ownerId !== u.ownerId ||
-              original.x !== u.x || 
-              original.y !== u.y ||
-              original.defenseLevel !== u.defenseLevel
-          );
+          // If purely new, keep it
+          if (!original) return true;
+          // If reference is different, it means logic updated it
+          return u !== original;
       });
 
       if (recordRun) {
+          // Send ONLY the actually modified zones to the DB handler
           const dbResult = await recordRun(currentUser.id, newRun, modifiedZones);
           if (!dbResult.success) {
               alert(`Sync Failed: ${dbResult.error || 'Database error'}.`);
@@ -186,9 +174,11 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction,
           logTransaction(currentUser.id, 'IN', 'RUN', result.totalRunEarned, `Run Reward: ${result.locationName}`);
       }
 
+      // Update Local State with the full list (React needs the full picture)
       setZones(result.zoneUpdates);
       setUser(finalUser);
       
+      // Batch Stats Accumulation
       batchStatsRef.current.totalKm += data.totalKm;
       batchStatsRef.current.duration += data.durationMinutes;
       batchStatsRef.current.runEarned += result.totalRunEarned;

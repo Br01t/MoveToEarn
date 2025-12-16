@@ -2,22 +2,31 @@
 // Procedural Audio Synthesizer for Cyberpunk UI
 // Uses Web Audio API to generate sounds without external assets
 
-const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+let audioCtx: AudioContext | null = null;
+
+const getAudioContext = () => {
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    }
+    return audioCtx;
+};
 
 type SoundType = 'CLICK' | 'HOVER' | 'SUCCESS' | 'ERROR' | 'GLITCH' | 'OPEN';
 
 export const playSound = (type: SoundType) => {
-  if (audioCtx.state === 'suspended') {
-    audioCtx.resume();
+  const ctx = getAudioContext();
+  
+  if (ctx.state === 'suspended') {
+    ctx.resume().catch(e => console.warn("Audio Context resume failed", e));
   }
 
-  const osc = audioCtx.createOscillator();
-  const gainNode = audioCtx.createGain();
+  const osc = ctx.createOscillator();
+  const gainNode = ctx.createGain();
 
   osc.connect(gainNode);
-  gainNode.connect(audioCtx.destination);
+  gainNode.connect(ctx.destination);
 
-  const now = audioCtx.currentTime;
+  const now = ctx.currentTime;
 
   switch (type) {
     case 'CLICK':
@@ -46,11 +55,11 @@ export const playSound = (type: SoundType) => {
       const t = now;
       const notes = [440, 554, 659, 880]; // A Major
       notes.forEach((freq, i) => {
-        const o = audioCtx.createOscillator();
-        const g = audioCtx.createGain();
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
         o.type = 'triangle';
         o.connect(g);
-        g.connect(audioCtx.destination);
+        g.connect(ctx.destination);
         o.frequency.value = freq;
         g.gain.setValueAtTime(0, t + i * 0.05);
         g.gain.linearRampToValueAtTime(0.1, t + i * 0.05 + 0.02);

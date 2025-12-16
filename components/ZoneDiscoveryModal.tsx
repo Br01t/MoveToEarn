@@ -77,7 +77,10 @@ const ZoneDiscoveryModal: React.FC<ZoneDiscoveryModalProps> = ({ isOpen, data, o
   if (!isOpen) return null;
 
   const handleSubmit = () => {
-    const nameToSubmit = customName.trim() || data.defaultName;
+    // SECURITY: Sanitize input to allow only alphanumeric, spaces, and basic punctuation
+    // This prevents HTML injection or script execution through zone names
+    const sanitizedInput = customName.replace(/[^a-zA-Z0-9\s,.-]/g, "").trim();
+    const nameToSubmit = sanitizedInput || data.defaultName;
 
     // Validation: Check format "Name, City - CC"
     const isValidFormat = /.+,.+\s-\s[A-Z]{2}$/.test(nameToSubmit);
@@ -175,6 +178,7 @@ const ZoneDiscoveryModal: React.FC<ZoneDiscoveryModalProps> = ({ isOpen, data, o
                          setCustomName(e.target.value);
                          setWarning(null); 
                      }}
+                     maxLength={50} // Prevent long inputs
                      className={`w-full bg-black/40 border-2 rounded-xl px-5 py-4 text-white placeholder-gray-600 focus:outline-none transition-all font-bold text-lg ${warning ? 'border-yellow-500 focus:border-yellow-500' : 'border-gray-700 focus:border-emerald-500'}`}
                   />
                   {warning && <AlertTriangle className="absolute right-4 top-1/2 -translate-y-1/2 text-yellow-500 animate-pulse" size={20} />}
