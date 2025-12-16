@@ -1,11 +1,13 @@
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { User, Zone, Mission, Badge, Rarity, LevelConfig, LeaderboardConfig, BugReport, Suggestion } from '../types';
 import { Award, History, Coins, BarChart3, Shield, Trophy, MapPin, ChevronUp, ChevronDown, Users, X, Medal, Crown, Zap, Search, Package } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 import Pagination from './Pagination';
 import ZoneStatsModal from './profile/ZoneStatsModal';
 import UserSubmissionsModal from './profile/UserSubmissionsModal';
+import LevelUpModal from './profile/LevelUpModal'; // Import new modal
+import { useGlobalUI } from '../contexts/GlobalUIContext'; // Import UI context
 
 // Sub Components
 import ProfileHeader from './profile/ProfileHeader';
@@ -38,6 +40,7 @@ const Profile: React.FC<ProfileProps> = ({
     onUpdateUser, onUpgradePremium, onClaim, onBoost, onDefend, onGetZoneLeaderboard
 }) => {
   const { t } = useLanguage();
+  const { triggerParticles, playSound } = useGlobalUI();
   const [activeTab, setActiveTab] = useState<'ACHIEVEMENTS' | 'HISTORY'>('ACHIEVEMENTS');
   const [showSubmissionsModal, setShowSubmissionsModal] = useState(false);
   
@@ -48,6 +51,9 @@ const Profile: React.FC<ProfileProps> = ({
   const [sortConfig, setSortConfig] = useState<{ key: 'rank' | 'count' | 'km'; direction: 'asc' | 'desc' }>({ key: 'km', direction: 'desc' });
   const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
   const [zoneLeaderboard, setZoneLeaderboard] = useState<any[]>([]);
+  
+  // Level Up State
+  const [showLevelUp, setShowLevelUp] = useState(false);
 
   // --- DERIVED STATS ---
   const myZones = zones.filter(z => z.ownerId === user.id);
@@ -100,6 +106,31 @@ const Profile: React.FC<ProfileProps> = ({
       nextLevelKm = currentLevel * 50;
       progressToNextLevel = ((currentTotalKmVal - ((currentLevel - 1) * 50)) / 50) * 100;
   }
+
+  // --- LEVEL UP EFFECT ---
+  useEffect(() => {
+      const storageKey = `zr_level_${user.id}`;
+      const stored = localStorage.getItem(storageKey);
+      const prevLevel = stored ? parseInt(stored) : 0;
+
+      if (currentLevel > prevLevel) {
+          // If this is the very first load (prevLevel 0), we just sync the storage
+          // to avoid spamming the user. If prevLevel > 0, it's a genuine level up.
+          if (prevLevel !== 0) {
+              setShowLevelUp(true);
+              playSound('SUCCESS');
+              triggerParticles(window.innerWidth / 2, window.innerHeight / 2, '#fbbf24'); // Gold explosion
+          } else {
+              // First time init: save current level silently
+              localStorage.setItem(storageKey, currentLevel.toString());
+          }
+      }
+  }, [currentLevel, user.id, triggerParticles, playSound]);
+
+  const handleLevelUpClose = () => {
+      setShowLevelUp(false);
+      localStorage.setItem(`zr_level_${user.id}`, currentLevel.toString());
+  };
 
   // --- ZONE DATA LOOKUP ---
   const selectedZone = useMemo(() => zones.find(z => z.id === selectedZoneId), [zones, selectedZoneId]);
@@ -558,6 +589,16 @@ const Profile: React.FC<ProfileProps> = ({
               bugReports={myBugReports}
               suggestions={mySuggestions}
               onClose={() => setShowSubmissionsModal(false)}
+          />
+      )}
+
+      {/* LEVEL UP MODAL */}
+      {showLevelUp && (
+          <LevelUpModal 
+              level={currentLevel}
+              title={currentLevelConfig?.title}
+              icon={currentLevelConfig?.icon}
+              onClose={handleLevelUpClose}
           />
       )}
 

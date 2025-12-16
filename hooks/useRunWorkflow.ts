@@ -79,7 +79,7 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction,
           // Clear stats to prevent loop
           batchStatsRef.current = { totalKm: 0, duration: 0, runEarned: 0, involvedZoneNames: [], reinforcedCount: 0 };
       }
-  }, [pendingRunsQueue, zoneCreationQueue.length, pendingRunData, runSummary]);
+  }, [pendingRunsQueue, zoneCreationQueue.length, pendingRunData, runSummary, zones, user]); // Added zones and user to deps to prevent stale closures
 
   // --- LOGIC: Check if new zones are needed ---
   const analyzeForNewZones = (data: RunAnalysisData) => {
@@ -153,21 +153,26 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction,
           totalKm: currentUser.totalKm + data.totalKm
       };
 
-      // Identify modified zones (earnings/defense updates)
-      // Note: We don't need to re-save X/Y here usually, as they are saved during creation,
-      // BUT if creation caused shifting, those shifts must be persisted.
-      // In this flow, we assume `zones` state already has the shifted coordinates from `confirmZoneCreation`.
-      
+      // Identify modified zones safely to prevent resetting unrelated zones
       const modifiedZones = result.zoneUpdates.filter(u => {
           const isNew = sessionCreatedZonesRef.current.some(nz => nz.id === u.id);
           if (isNew) return true;
+          
           const original = allZonesMap.get(u.id);
-          return original && (
-              original.recordKm !== u.recordKm || 
-              original.interestPool !== u.interestPool || 
+          if (!original) return false;
+
+          // Robust floating point comparison
+          const epsilon = 0.0001;
+          const poolChanged = Math.abs((original.interestPool || 0) - (u.interestPool || 0)) > epsilon;
+          const kmChanged = Math.abs((original.recordKm || 0) - (u.recordKm || 0)) > epsilon;
+          
+          return (
+              kmChanged || 
+              poolChanged || 
               original.ownerId !== u.ownerId ||
-              original.x !== u.x || // Check if position shifted
-              original.y !== u.y
+              original.x !== u.x || 
+              original.y !== u.y ||
+              original.defenseLevel !== u.defenseLevel
           );
       });
 
@@ -253,7 +258,6 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction,
       });
 
       // Pass the updated world state to the next step (recursive queue processing)
-      // Note: We need to reconstruct the "currentZones" logic to include the shifts for the immediate next calculation
       const nextZonesState = [...zones, newZone].map(z => {
           const shiftUpdate = placementResult.shiftedZones.find(s => s.id === z.id);
           return shiftUpdate ? { ...z, x: shiftUpdate.x, y: shiftUpdate.y } : z;

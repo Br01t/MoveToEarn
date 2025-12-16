@@ -292,10 +292,11 @@ const AppContent: React.FC = () => {
       </div>
 
       {/* Main Content Wrapper */}
-      <div className="relative z-10 flex flex-col min-h-screen">
+      {/* Added pb-40 when navbar is shown (and not dashboard) to prevent footer occlusion */}
+      <div className={`relative z-10 flex flex-col min-h-screen ${showNavbar && !isDashboard ? "pb-40 md:pb-0" : ""}`}>
           {showNavbar && <Navbar currentView={currentView} onNavigate={setCurrentView} user={user} onLogout={handleLogout} />}
 
-          <main className={`flex-1 relative flex flex-col ${showNavbar && !isDashboard ? "pb-16 md:pb-0" : ""}`}>
+          <main className="flex-1 relative flex flex-col">
             
             {/* PWA Install Prompt */}
             <PWAInstallPrompt 
