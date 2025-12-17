@@ -59,7 +59,7 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
 
     // Calculate the 7-day cutoff timestamp (from now, or strictly from file upload time)
     // 7 days * 24h * 60m * 60s * 1000ms
-    const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+    const SEVEN_DAYS_MS = 15 * 24 * 60 * 60 * 1000;
     const cutoffTimestamp = Date.now() - SEVEN_DAYS_MS;
 
     addLog(`Preparing to process files... Cutoff: ${new Date(cutoffTimestamp).toLocaleDateString()}`);
@@ -73,12 +73,12 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
             tracks.forEach((points, idx) => {
                 // 1. DATE CHECK (7-Day Rule)
                 // Use the start time of the run found in the GPS data
-                if (points.length > 0 && points[0].time.getTime() < cutoffTimestamp) {
-                    ignoredOldCount++;
-                    // Only log if it's not spamming
-                    // addLog(`Skipped (Old): ${fileName} - ${points[0].time.toLocaleDateString()}`);
-                    return;
-                }
+                // if (points.length > 0 && points[0].time.getTime() < cutoffTimestamp) {
+                //     ignoredOldCount++;
+                //     // Only log if it's not spamming
+                //     // addLog(`Skipped (Old): ${fileName} - ${points[0].time.toLocaleDateString()}`);
+                //     return;
+                // }
 
                 const analysis = analyzeRun(points, tracks.length > 1 ? `${fileName} (Track ${idx+1})` : fileName);
                 const result = analysis.result;
