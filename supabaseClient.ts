@@ -7,8 +7,8 @@ const envKey = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY;
 
 // 2. Se non li trova nel .env, usa queste stringhe (INCOLLA QUI LE TUE CHIAVI SE NECESSARIO)
 // Esempio: const manualUrl = 'https://xyz.supabase.co';
-const manualUrl = 'https://fjvmeffshcivnoctaikj.supabase.co'; 
-const manualKey = 'sb_publishable_rrcpVeL90qgmctU7FLIo7w_YOsFSnXs';
+const manualUrl = ''; 
+const manualKey = '';
 
 // Logica di selezione
 const supabaseUrl = envUrl || manualUrl;
