@@ -15,7 +15,7 @@ interface WhitepaperProps {
 }
 
 export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAuthenticated = false }) => {
-  const { t, tRich } = useLanguage();
+  const { t, tRich, language, toggleLanguage } = useLanguage();
   const [activeSection, setActiveSection] = useState<string>('intro');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -77,12 +77,23 @@ export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAu
           </span>
         </div>
         
-        <button 
-          className="md:hidden p-2 text-white"
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        >
-          {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
+        <div className="flex items-center gap-2">
+          {!isAuthenticated && (
+            <button
+              onClick={toggleLanguage}
+              className="p-2 text-xl hover:scale-110 transition-transform bg-gray-800 rounded-lg border border-gray-700 hover:border-gray-500 mr-2"
+              title="Switch Language"
+            >
+              {language === 'en' ? '🇮🇹' : '🇬🇧'}
+            </button>
+          )}
+          <button 
+            className="md:hidden p-2 text-white"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          >
+            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
       </header>
 
       {/* Main Container */}
@@ -396,7 +407,7 @@ export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAu
                             </tr>
                             <tr>
                                 <td className="px-4 py-3 font-bold text-white">{t('wp.zones.act_boost')}</td>
-                                <td className="px-4 py-3 font-mono text-red-400">300 RUN</td>
+                                <td className="px-4 py-3 font-mono text-red-400">~100 RUN</td>
                                 <td className="px-4 py-3">-</td>
                                 <td className="px-4 py-3">{tRich('wp.zones.eff_boost')}</td>
                             </tr>

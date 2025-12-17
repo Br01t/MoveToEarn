@@ -7,10 +7,11 @@ import { useLanguage } from '../../LanguageContext';
 interface GameRulesProps {
   onBack?: () => void;
   onNavigate?: (view: ViewState) => void;
+  isAuthenticated?: boolean;
 }
 
-export const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate }) => {
-  const { t, tRich } = useLanguage();
+export const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate, isAuthenticated = false }) => {
+  const { t, tRich, language, toggleLanguage } = useLanguage();
 
   const SectionHeader = ({ icon: Icon, title }: { icon: any, title: string }) => (
       <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 flex items-center gap-3 border-b border-gray-700/50 pb-4 mt-16 first:mt-0">
@@ -18,7 +19,7 @@ export const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate }) => {
       </h2>
   );
 
-  // Helper for the clean interface cards
+  // Helper for the clean interface cards - Update desc type to ReactNode
   const InterfaceCard = ({ icon: Icon, title, desc, className = "" }: { icon: any, title: string, desc: React.ReactNode, className?: string }) => (
     <div className={`glass-panel rounded-2xl p-6 transition-all duration-300 group ${className}`}>
         <div className="flex items-center gap-4 mb-3">
@@ -54,15 +55,25 @@ export const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate }) => {
       
       <div className="max-w-5xl mx-auto p-6 md:p-8 relative z-10">
         
-        {/* Nav */}
-        <div className="mb-12">
-            {onBack && (
+        {/* Nav row */}
+        <div className="mb-12 flex justify-between items-center">
+            {onBack ? (
               <button 
                 onClick={onBack}
                 className="group flex items-center gap-2 text-gray-400 hover:text-white transition-colors bg-gray-900/80 px-4 py-2 rounded-lg border border-gray-700 hover:border-emerald-500 backdrop-blur-sm"
               >
                 <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" /> 
                 <span className="font-bold text-sm">{t('rules.back')}</span>
+              </button>
+            ) : <div></div>}
+
+            {!isAuthenticated && (
+              <button
+                onClick={toggleLanguage}
+                className="p-2 text-xl hover:scale-110 transition-transform bg-gray-800 rounded-lg border border-gray-700 hover:border-gray-500 shadow-xl"
+                title="Switch Language"
+              >
+                {language === 'en' ? '🇮🇹' : '🇬🇧'}
               </button>
             )}
         </div>

@@ -5,6 +5,7 @@ import { useLanguage } from '../../LanguageContext';
 
 interface HowToPlayProps {
   onBack: () => void;
+  isAuthenticated?: boolean;
 }
 
 interface AppFilter {
@@ -137,17 +138,29 @@ const AppFilters = () => (
     </div>
 );
 
-const HowToPlay: React.FC<HowToPlayProps> = ({ onBack }) => {
-  const { t, tRich } = useLanguage();
+const HowToPlay: React.FC<HowToPlayProps> = ({ onBack, isAuthenticated = false }) => {
+  const { t, tRich, language, toggleLanguage } = useLanguage();
 
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-8 space-y-8 pb-24">
-      <button 
-        onClick={onBack}
-        className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-4 group"
-      >
-        <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" /> {t('htp.back')}
-      </button>
+      <div className="flex justify-between items-center mb-4">
+          <button 
+            onClick={onBack}
+            className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors group"
+          >
+            <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" /> {t('htp.back')}
+          </button>
+
+          {!isAuthenticated && (
+            <button
+                onClick={toggleLanguage}
+                className="p-2 text-xl hover:scale-110 transition-transform bg-gray-800 rounded-lg border border-gray-700 hover:border-gray-500 shadow-lg"
+                title="Switch Language"
+            >
+                {language === 'en' ? '🇮🇹' : '🇬🇧'}
+            </button>
+          )}
+      </div>
 
       <div className="space-y-4">
           <h1 className="text-3xl md:text-4xl font-black text-white flex items-center gap-3">
