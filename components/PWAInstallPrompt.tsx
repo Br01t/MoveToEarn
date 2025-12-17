@@ -17,44 +17,50 @@ const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
 }) => {
   const [showPrompt, setShowPrompt] = useState(false);
 
-  // Logic to Show/Hide Prompt based on Auth Status
   useEffect(() => {
     if (forceShow) {
         setShowPrompt(true);
         return;
     }
 
-    // If already installed or not logged in, hide.
-    if (isStandalone || !isAuthenticated) {
+    // Hide if already in standalone mode
+    if (isStandalone) {
         setShowPrompt(false);
         return;
     }
 
-    // If logged in AND not installed:
-    const timer = setTimeout(() => {
-        // Show if we have a prompt event (Android/PC) OR if it's iOS (manual instructions)
-        if (deferredPrompt || isIOS) {
-            setShowPrompt(true);
-        }
-    }, 3000); // 3s delay for smoother UX
-
-    return () => clearTimeout(timer);
+    // Only show to authenticated users who aren't currently installed
+    if (isAuthenticated && !isStandalone) {
+        const timer = setTimeout(() => {
+            if (deferredPrompt || isIOS) {
+                setShowPrompt(true);
+            }
+        }, 3000);
+        return () => clearTimeout(timer);
+    } else {
+        setShowPrompt(false);
+    }
   }, [isAuthenticated, isStandalone, deferredPrompt, isIOS, forceShow]);
 
   const handleClose = () => {
       setShowPrompt(false);
+      // Save dismissal to localStorage via parent/hook if needed, 
+      // but here we just hide the current instance
       if (onCloseForce) onCloseForce();
+      
+      // Persist dismissal
+      localStorage.setItem('zr_pwa_dismissed_at', Date.now().toString());
   };
 
   if (!showPrompt) return null;
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-[200] p-4 animate-slide-up">
-      <div className="bg-gray-900/95 backdrop-blur-xl border border-emerald-500/50 rounded-2xl shadow-[0_0_40px_rgba(16,185,129,0.3)] p-5 relative overflow-hidden">
-        {/* Background Glow */}
-        <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/20 rounded-full blur-[50px] -mr-10 -mt-10 pointer-events-none"></div>
+      <div className="max-w-md mx-auto bg-gray-900/95 backdrop-blur-xl border border-emerald-500/50 rounded-2xl shadow-[0_0_40px_rgba(16,185,129,0.3)] p-5 relative overflow-hidden">
+        
+        <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-[50px] -mr-10 -mt-10 pointer-events-none"></div>
 
-        <button onClick={handleClose} className="absolute top-3 right-3 text-gray-400 hover:text-white p-1 bg-black/20 rounded-full">
+        <button onClick={handleClose} className="absolute top-3 right-3 text-gray-500 hover:text-white p-1 bg-black/20 rounded-full transition-colors">
           <X size={18} />
         </button>
 
@@ -67,9 +73,9 @@ const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
           </div>
 
           <div className="flex-1">
-            <h3 className="font-bold text-white text-lg leading-tight mb-1">Install ZoneRun</h3>
+            <h3 className="font-bold text-white text-lg leading-tight mb-1">ZoneRun App</h3>
             <p className="text-gray-400 text-xs leading-relaxed">
-              Install the app for the full-screen experience, better performance, and home screen access.
+              Installa l'app per un'esperienza a pieno schermo e accesso rapido dalla home.
             </p>
           </div>
         </div>
@@ -78,10 +84,10 @@ const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
           {isIOS ? (
             <div className="bg-black/30 rounded-xl p-3 border border-gray-700/50 text-sm text-gray-300">
               <p className="flex items-center gap-2 mb-2">
-                1. Tap the <Share size={16} className="text-blue-400" /> <strong>Share</strong> button
+                1. Tocca il tasto <Share size={16} className="text-blue-400" /> <strong>Condividi</strong>
               </p>
               <p className="flex items-center gap-2">
-                2. Select <PlusSquare size={16} className="text-white" /> <strong>Add to Home Screen</strong>
+                2. Seleziona <PlusSquare size={16} className="text-white" /> <strong>Aggiungi alla Home</strong>
               </p>
             </div>
           ) : (
@@ -89,7 +95,7 @@ const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
               onClick={onInstall}
               className="w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-900/20"
             >
-              <Download size={18} /> Install App
+              <Download size={18} /> Installa Ora
             </button>
           )}
         </div>
