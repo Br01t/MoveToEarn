@@ -81,7 +81,7 @@ export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAu
           {!isAuthenticated && (
             <button
               onClick={toggleLanguage}
-              className="p-2 text-xl hover:scale-110 transition-transform bg-gray-800 rounded-lg border border-gray-700 hover:border-gray-500 mr-2"
+              className="p-2 text-xl hover:scale-110 transition-transform bg-gray-800 rounded-lg border border-gray-700 hover:border-gray-500 mr-2 shadow-lg"
               title="Switch Language"
             >
               {language === 'en' ? '🇮🇹' : '🇬🇧'}
@@ -150,7 +150,7 @@ export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAu
                 </p>
                 <div className="mt-6 flex flex-wrap gap-3">
                   <span className="px-3 py-1 bg-emerald-500/10 text-emerald-400 rounded-full text-xs font-bold border border-emerald-500/20">RUN (Utility)</span>
-                  <span className="px-3 py-1 bg-cyan-500/10 text-cyan-400 rounded-full text-xs font-bold border border-cyan-500/20">GOV (Governance)</span>
+                  <span className="px-3 py-1 bg-cyan-500/10 text-cyan-400 rounded-full text-xs font-bold border border-cyan-500/20">GOV (Govern)</span>
                 </div>
             </div>
           </section>
@@ -407,7 +407,7 @@ export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAu
                             </tr>
                             <tr>
                                 <td className="px-4 py-3 font-bold text-white">{t('wp.zones.act_boost')}</td>
-                                <td className="px-4 py-3 font-mono text-red-400">~100 RUN</td>
+                                <td className="px-4 py-3 font-mono text-red-400">300 RUN</td>
                                 <td className="px-4 py-3">-</td>
                                 <td className="px-4 py-3">{tRich('wp.zones.eff_boost')}</td>
                             </tr>
@@ -451,6 +451,7 @@ export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAu
                 </p>
             </div>
 
+            <p className="text-gray-400 mb-4">Example.</p>
             <div className="space-y-4 text-sm text-gray-400">
                 <div className="flex justify-between items-center bg-gray-900 p-3 rounded-lg border border-gray-800">
                     <span>{t('wp.missions.first_zone')}</span>

@@ -572,7 +572,7 @@ export const it = {
     
     "wp.economy.title": "4. Economia RUN ↔ GOV",
     "wp.economy.run": "RUN (Valuta Interna)",
-    "wp.economy.run_desc": "Generato correndo. Inflazionario e illimitato. Usato per azioni operative: Minting zone, Attacchi, Shield, Boost. Può essere speso per guadagnare GOV (tramite Swap, Sezione 7). Completamente centralizzato nel database di gioco.",
+    "wp.economy.run_desc": "Generato correndo. Inflazionario ma controllato da un meccanismo di Burn ricorrente (2% dei token distribuiti). Usato per azioni operative: Minting zone, Attacchi, Shield, Boost. Può essere speso per guadagnare GOV (tramite Swap, Sezione 7). Completamente centralizzato nel database di gioco.",
     "wp.economy.gov": "GOV (Crypto Token)",
     "wp.economy.gov_desc": "Quantità fissa (Hard Cap). Ottenibile solo tramite achievement strategici: Conquiste, Missioni rare, Swap. Può essere bruciato per ottenere RUN nel wallet interno. Scambiabile su blockchain e in futuro per governance.",
     
