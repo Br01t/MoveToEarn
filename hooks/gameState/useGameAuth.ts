@@ -36,9 +36,23 @@ export const useGameAuth = (
   };
 
   const logout = async () => { 
-      await supabase.auth.signOut(); 
-      setUser(null); 
-      setZones([]); // Clear sensitive data
+      try {
+          // Sign out from all devices and clear cookies/localstorage
+          await supabase.auth.signOut({ scope: 'global' }); 
+          
+          // Manual cleanup of any potential leftover Supabase keys in localStorage
+          Object.keys(localStorage).forEach(key => {
+              if (key.includes('supabase.auth.token') || key.startsWith('sb-')) {
+                  localStorage.removeItem(key);
+              }
+          });
+
+          setUser(null); 
+          setZones([]); 
+      } catch (err) {
+          console.error("Sign out failed", err);
+          setUser(null); 
+      }
   };
 
   return { login, register, logout, resetPassword, updatePassword };

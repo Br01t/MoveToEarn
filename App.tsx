@@ -228,8 +228,13 @@ const AppContent: React.FC = () => {
   };
 
   const handleLogout = async () => {
+      setCurrentView("LANDING"); // Reset view immediately to avoid flickering
       await gameState.logout();
-      window.location.reload(); 
+      // Added a slight timeout before any potential hard reload to ensure Supabase finishes clearing local session storage
+      setTimeout(() => {
+          // Hard reload is generally cleaner to ensure all hooks and states reset fully
+          window.location.reload(); 
+      }, 100);
   };
 
   const handleOpenLogin = () => setShowLoginModal(true);
@@ -412,9 +417,9 @@ const AppContent: React.FC = () => {
               )}
 
               <Suspense fallback={<LoadingFallback />}>
-                {currentView === "RULES" && <GameRules onBack={() => setCurrentView(user ? "DASHBOARD" : "LANDING")} onNavigate={setCurrentView} />}
+                {currentView === "RULES" && <GameRules onBack={() => setCurrentView(user ? "DASHBOARD" : "LANDING")} onNavigate={setCurrentView} isAuthenticated={!!user} />}
                 {currentView === "WHITEPAPER" && <Whitepaper onBack={() => setCurrentView(user ? "DASHBOARD" : "LANDING")} onNavigate={setCurrentView} isAuthenticated={!!user} />}
-                {currentView === "HOW_TO_PLAY" && <HowToPlay onBack={() => setCurrentView(user ? "DASHBOARD" : "LANDING")} />}
+                {currentView === "HOW_TO_PLAY" && <HowToPlay onBack={() => setCurrentView(user ? "DASHBOARD" : "LANDING")} isAuthenticated={!!user} />}
                 {currentView === "PRIVACY" && <Privacy />}
                 {currentView === "TERMS" && <Terms onNavigate={setCurrentView} />}
                 {currentView === "COMMUNITY" && <Community />}
@@ -546,15 +551,15 @@ const AppContent: React.FC = () => {
 };
 
 const App: React.FC = () => {
-    return (
-        <LanguageProvider>
-            <GlobalUIProvider>
-                <PrivacyProvider>
-                    <AppContent />
-                </PrivacyProvider>
-            </GlobalUIProvider>
-        </LanguageProvider>
-    );
+  return (
+    <LanguageProvider>
+      <GlobalUIProvider>
+        <PrivacyProvider>
+          <AppContent />
+        </PrivacyProvider>
+      </GlobalUIProvider>
+    </LanguageProvider>
+  );
 };
 
 export default App;
