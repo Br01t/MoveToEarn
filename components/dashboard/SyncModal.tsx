@@ -59,7 +59,7 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
 
     // Calculate the 7-day cutoff timestamp (from now, or strictly from file upload time)
     // 7 days * 24h * 60m * 60s * 1000ms
-    const SEVEN_DAYS_MS = 15 * 24 * 60 * 60 * 1000;
+    const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
     const cutoffTimestamp = Date.now() - SEVEN_DAYS_MS;
 
     addLog(`Preparing to process files... Cutoff: ${new Date(cutoffTimestamp).toLocaleDateString()}`);

@@ -535,7 +535,7 @@ export const it = {
     
     // OVERVIEW KEYS (Restored)
     "wp.overview.title": "1. Panoramica del Progetto",
-    "wp.overview.body": "ZoneRun combina meccaniche di esplorazione territoriale ('Cartografia Sociale'), dinamiche PvP leggere e ricompense basate sull'attività fisica. Non è solo un fitness tracker, it is a dynamic map game that evolves thanks to users.",
+    "wp.overview.body": "ZoneRun combina meccaniche di esplorazione territoriale ('Cartografia Sociale'), dinamiche PvP leggere e ricompense basate sull'attività fisica. Non è solo un fitness tracker, è un gioco dinamico che evolve grazie agli utenti.",
     "wp.overview.move": "Muoviti",
     "wp.overview.move_desc": "Cammina o corri per ottenere ricompense.",
     "wp.overview.expand": "Espandi",
