@@ -396,9 +396,15 @@ export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAu
                             </tr>
                             <tr>
                                 <td className="px-4 py-3 font-bold text-white">{t('wp.zones.act_boost')}</td>
-                                <td className="px-4 py-3 font-mono text-red-400">~100 RUN</td>
+                                <td className="px-4 py-3 font-mono text-red-400">300 RUN</td>
                                 <td className="px-4 py-3">-</td>
                                 <td className="px-4 py-3">{tRich('wp.zones.eff_boost')}</td>
+                            </tr>
+                            <tr>
+                                <td className="px-4 py-3 font-bold text-white">{t('wp.zones.act_shield')}</td>
+                                <td className="px-4 py-3 font-mono text-red-400">500 RUN</td>
+                                <td className="px-4 py-3">-</td>
+                                <td className="px-4 py-3">{tRich('wp.zones.eff_shield')}</td>
                             </tr>
                         </tbody>
                     </table>

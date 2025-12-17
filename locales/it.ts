@@ -578,13 +578,13 @@ export const it = {
     
     // UPDATED SECTION 5: GAMEPLAY DETAILS
     "wp.gameplay.title": "5. Gameplay & Meccaniche di Ricompensa",
-    "wp.gameplay.intro": "Il protocollo ZoneRun trasforma l'energia cinetica in asset digitali. Non è un semplice contapassi: è un sistema economico basato sulla Proof-of-Movement.",
+    "wp.gameplay.intro": "Il protocollo ZoneRun trasforma l'energia spesa nel moto in asset digitali. Non è un semplice contapassi: è un sistema economico basato sulla Proof-of-Movement.",
     "wp.gameplay.mining_title": "5.1 Mining (Generazione RUN)",
     "wp.gameplay.mining_desc": "La corsa è l'unica fonte di emissione di RUN. Tasso Base: 1 KM = 12 RUN. Moltiplicatori: possesso Zona, Boost Item (+50%).",
     "wp.gameplay.strat_title": "5.2 Strategia Territoriale",
     "wp.gameplay.strat_desc": "La posizione geografica determina il tipo di ricompensa. Corsa in Terra Nullius = Minting (GOV). Corsa in Territorio Nemico = Attacco (Indebolimento difesa). Corsa in Territorio Alleato = Rinforzo (Aumento APY).",
     "wp.gameplay.ac_title": "5.3 Oracolo Anti-Cheat",
-    "wp.gameplay.ac_desc": "Un sistema a triplo livello analizza i dati biometrici e GPS. 1. Velocità (Max 25km/h). 2. Telemetria (Analisi pattern non umani). 3. Duplicati (Hash check sui file).",
+    "wp.gameplay.ac_desc": "Un sistema a triplo livello analizza i dati biometrici e GPS. 1. Velocità. 2. Telemetria (Analisi pattern non umani). 3. Durata. 4. Duplicati (Hash check sui file).",
 
     "wp.zones.title": "6. Sistema Zone",
     "wp.zones.subtitle": "Le Zone sono l'asset centrale. Ogni zona genera interessi, può essere potenziata e cambiare proprietario.",
@@ -605,8 +605,10 @@ export const it = {
     "wp.zones.eff_mint": "Crea nuova zona, difesa lvl 1.",
     "wp.zones.act_conq": "Conquista",
     "wp.zones.eff_conq": "Ruba proprietà e Pool accumulata.",
-    "wp.zones.act_boost": "Boost Item",
+    "wp.zones.act_boost": "Oggetto Boost",
     "wp.zones.eff_boost": "+50% interessi zona per 24h.",
+    "wp.zones.act_shield": "Oggetto Scudo",
+    "wp.zones.eff_shield": "Proteggi la tua zona per 24h.",
     "wp.swap.title": "7. Swap RUN → GOV",
     "wp.swap.desc": "Un sistema controllato per garantire la sostenibilità del prezzo del token GOV.",
     "wp.swap.freq": "Ogni 30 giorni in quantità limitata.",
