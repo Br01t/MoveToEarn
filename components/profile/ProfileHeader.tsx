@@ -1,7 +1,7 @@
 
 import React, { useState, useRef } from 'react';
 import { User, Badge, LevelConfig } from '../../types';
-import { Crown, Save, Mail, Camera, CheckCircle, X, Flag, Award, Zap, Mountain, Globe, Home, Landmark, Swords, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users, FileText, Egg, Baby, Activity, MapPin, Smile, Wind, Compass, Navigation, TrendingUp, Move, Target, Watch, Droplets, Shield, Star, BatteryCharging, Flame, Truck, CloudLightning, Hexagon, FastForward, Trophy, Plane, Map, Layers, Briefcase, GraduationCap, Brain, Crosshair, Anchor, Heart, Lock, Disc, Feather, FlagTriangleRight, Globe2, Sparkles, Radio, BookOpen, Waves, Snowflake, CloudRain, ThermometerSnowflake, SunDim, MoonStar, Atom, Sword, Axe, Ghost, Ship, PlusSquare, Skull, ChevronsUp, Orbit, CloudFog, Circle, Infinity, Sparkle, ArrowUpCircle, Clock, Eye, Type, Delete, PenTool, Medal, UploadCloud, Loader2, Edit2, Info, ChevronRight, Image, FileImage } from 'lucide-react';
+import { Crown, Save, Mail, Camera, CheckCircle, X, Flag, Award, Zap, Mountain, Globe, Home, Landmark, Swords, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users, FileText, Egg, Baby, Activity, MapPin, Smile, Wind, Compass, Navigation, TrendingUp, Move, Target, Watch, Droplets, Shield, Star, BatteryCharging, Flame, Truck, CloudLightning, Hexagon, FastForward, Trophy, Plane, Map, Layers, Briefcase, GraduationCap, Brain, Crosshair, Anchor, Heart, Lock, Disc, Feather, FlagTriangleRight, Globe2, Sparkles, Radio, BookOpen, Waves, Snowflake, CloudRain, ThermometerSnowflake, SunDim, MoonStar, Atom, Sword, Axe, Ghost, Ship, PlusSquare, Skull, ChevronsUp, Orbit, CloudFog, Circle, Infinity, Sparkle, ArrowUpCircle, Clock, Eye, Type, Delete, PenTool, Medal, UploadCloud, Loader2, Edit2, Info, ChevronRight, Image, FileImage, ZoomIn } from 'lucide-react';
 import { useLanguage } from '../../LanguageContext';
 import { compressImage } from '../../utils/imageCompression';
 import { useGameState } from '../../hooks/useGameState';
@@ -28,6 +28,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   const { uploadFile } = useGameState();
   const { showToast } = useGlobalUI();
   const [isEditing, setIsEditing] = useState(false);
+  const [isImageExpanded, setIsImageExpanded] = useState(false);
   const [name, setName] = useState(user.name);
   const [email, setEmail] = useState(user.email || '');
   const [avatar, setAvatar] = useState(user.avatar);
@@ -50,6 +51,8 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   const handleAvatarClick = () => {
       if (isEditing && fileInputRef.current) {
           fileInputRef.current.click();
+      } else if (!isEditing) {
+          setIsImageExpanded(true);
       }
   };
 
@@ -210,6 +213,27 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
   return (
       <div className="bg-gray-800 rounded-2xl border border-gray-700 overflow-hidden shadow-xl">
+          {/* FULLSCREEN IMAGE OVERLAY */}
+          {isImageExpanded && (
+                <div 
+                    className="fixed inset-0 z-[250] flex items-center justify-center bg-black/95 backdrop-blur-xl animate-fade-in p-4"
+                    onClick={() => setIsImageExpanded(false)}
+                >
+                    <button className="absolute top-6 right-6 text-white bg-white/10 p-3 rounded-full hover:bg-white/20 transition-colors">
+                        <X size={32} />
+                    </button>
+                    <img 
+                        src={user.avatar} 
+                        alt={user.name} 
+                        className="max-w-full max-h-[85vh] rounded-3xl shadow-2xl border-2 border-white/10 animate-zoom-in"
+                        onClick={(e) => e.stopPropagation()}
+                    />
+                    <div className="absolute bottom-10 left-1/2 -translate-x-1/2 text-white font-bold bg-black/40 px-6 py-2 rounded-full border border-white/10">
+                        {user.name}
+                    </div>
+                </div>
+          )}
+
           <div className="h-32 bg-gradient-to-r from-gray-900 via-emerald-950 to-gray-900 relative">
               <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-30"></div>
               {user.isPremium && (
@@ -221,16 +245,15 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           
           <div className="px-6 md:px-8 pb-6 flex flex-col md:flex-row items-end md:items-start gap-6 -mt-12 relative z-10">
              {/* AVATAR SECTION */}
-             <div className={`relative group ${isEditing ? 'cursor-pointer' : ''}`} onClick={handleAvatarClick}>
-                 <img src={isEditing ? avatar : user.avatar} alt="Avatar" className={`w-32 h-32 rounded-2xl border-4 bg-gray-800 shadow-2xl object-cover ${user.isPremium ? 'border-yellow-500' : 'border-gray-700'}`} />
+             <div className={`relative group/avatar ${isEditing ? 'cursor-pointer' : 'cursor-zoom-in'}`} onClick={handleAvatarClick}>
+                 <img src={isEditing ? avatar : user.avatar} alt="Avatar" className={`w-32 h-32 rounded-2xl border-4 bg-gray-800 shadow-2xl object-cover transition-colors ${user.isPremium ? 'border-yellow-500' : 'border-gray-700'} ${!isEditing ? 'group-hover/avatar:border-emerald-500/50' : ''}`} />
                  
-                 <div className="absolute -bottom-3 -right-3 bg-gray-900 text-white text-xs font-bold px-3 py-1 rounded-lg border border-gray-600 shadow-lg z-20 flex items-center gap-1.5">
+                 <div className="absolute -bottom-3 -right-3 bg-gray-900 text-white text-xs font-bold px-3 py-1 rounded-lg border border-gray-600 shadow-lg z-20 flex items-center gap-1.5 pointer-events-none">
                     {levelIcon ? renderLevelIcon(levelIcon, "w-3 h-3 text-emerald-400") : null}
                     LVL {currentLevel}
                  </div>
                  
-                 {/* Reverted style: Just the icon, no text, but keeping the accept='image/*' fix below */}
-                 {isEditing && (
+                 {isEditing ? (
                      <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center rounded-2xl border-4 border-emerald-500 z-10 transition-opacity hover:bg-black/70 animate-pulse">
                          {isUploading ? (
                              <Loader2 className="text-emerald-400 animate-spin" />
@@ -238,6 +261,10 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                              <Camera size={32} className="text-white" />
                          )}
                      </div>
+                 ) : (
+                     <div className="absolute inset-0 bg-emerald-500/0 group-hover/avatar:bg-emerald-500/10 flex items-center justify-center rounded-2xl transition-all">
+                        <ZoomIn className="text-white opacity-0 group-hover/avatar:opacity-100 transition-opacity" size={32} />
+                    </div>
                  )}
                  <input 
                     type="file" 
