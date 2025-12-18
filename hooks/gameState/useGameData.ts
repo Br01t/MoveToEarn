@@ -399,23 +399,18 @@ export const useGameData = () => {
           const filePath = `${folder}/${fileName}`;
 
           const { error: uploadError } = await supabase.storage
-              .from('zonerun-assets')
+              .from('images')
               .upload(filePath, file);
 
           if (uploadError) throw uploadError;
 
           const { data } = supabase.storage
-              .from('zonerun-assets')
+              .from('images')
               .getPublicUrl(filePath);
 
           return data.publicUrl;
       } catch (err) {
           console.error("Error uploading file:", err);
-          return new Promise((resolve) => {
-              const reader = new FileReader();
-              reader.onloadend = () => resolve(reader.result as string);
-              reader.readAsDataURL(file);
-          });
       }
   };
 
