@@ -6,8 +6,8 @@ import { useLanguage } from '../LanguageContext';
 import Pagination from './Pagination';
 import ZoneStatsModal from './profile/ZoneStatsModal';
 import UserSubmissionsModal from './profile/UserSubmissionsModal';
-import LevelUpModal from './profile/LevelUpModal'; // Import new modal
-import { useGlobalUI } from '../contexts/GlobalUIContext'; // Import UI context
+import LevelUpModal from './profile/LevelUpModal'; 
+import { useGlobalUI } from '../contexts/GlobalUIContext';
 
 // Sub Components
 import ProfileHeader from './profile/ProfileHeader';
@@ -40,7 +40,7 @@ const Profile: React.FC<ProfileProps> = ({
     onUpdateUser, onUpgradePremium, onClaim, onBoost, onDefend, onGetZoneLeaderboard
 }) => {
   const { t } = useLanguage();
-  const { triggerParticles, playSound } = useGlobalUI();
+  const { playSound } = useGlobalUI();
   const [activeTab, setActiveTab] = useState<'ACHIEVEMENTS' | 'HISTORY'>('ACHIEVEMENTS');
   const [showSubmissionsModal, setShowSubmissionsModal] = useState(false);
   
@@ -114,18 +114,15 @@ const Profile: React.FC<ProfileProps> = ({
       const prevLevel = stored ? parseInt(stored) : 0;
 
       if (currentLevel > prevLevel) {
-          // If this is the very first load (prevLevel 0), we just sync the storage
-          // to avoid spamming the user. If prevLevel > 0, it's a genuine level up.
           if (prevLevel !== 0) {
               setShowLevelUp(true);
               playSound('SUCCESS');
-              triggerParticles(window.innerWidth / 2, window.innerHeight / 2, '#fbbf24'); // Gold explosion
+              // Rimossi i confetti come richiesto
           } else {
-              // First time init: save current level silently
               localStorage.setItem(storageKey, currentLevel.toString());
           }
       }
-  }, [currentLevel, user.id, triggerParticles, playSound]);
+  }, [currentLevel, user.id, playSound]);
 
   const handleLevelUpClose = () => {
       setShowLevelUp(false);
