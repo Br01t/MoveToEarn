@@ -435,7 +435,7 @@ export const useGameActions = ({
       const dbUpdates: any = {};
       if (updates.name !== undefined) dbUpdates.name = updates.name;
       if (updates.email !== undefined) dbUpdates.email = updates.email;
-      if (updates.avatar !== undefined) dbUpdates.avatar_url = updates.avatar;
+      if (updates.avatar !== undefined) dbUpdates.avatar = updates.avatar;
       if (updates.favoriteBadgeId !== undefined) dbUpdates.favorite_badge_id = updates.favoriteBadgeId;
 
       const { error } = await supabase.from('profiles').update(dbUpdates).eq('id', user.id);
