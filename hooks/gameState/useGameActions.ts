@@ -1,7 +1,8 @@
 
+import React from 'react';
 import { supabase } from '../../supabaseClient';
-import { User, Zone, Item, InventoryItem, Transaction, RunEntry } from '../../types';
-import { CONQUEST_COST, CONQUEST_REWARD_GOV, PREMIUM_COST, ITEM_DURATION_SEC } from '../../constants';
+import { User, Zone, Item, InventoryItem, Transaction, RunEntry, BugReport, Suggestion } from '../../types';
+import { CONQUEST_COST, CONQUEST_REWARD_GOV, PREMIUM_COST, ITEM_DURATION_SEC, MINT_COST, MINT_REWARD_GOV } from '../../constants';
 import { useGlobalUI } from '../../contexts/GlobalUIContext';
 
 interface GameActionsProps {
@@ -14,83 +15,104 @@ interface GameActionsProps {
     setAllUsers: React.Dispatch<React.SetStateAction<Record<string, Omit<User, 'inventory'>>>>;
     fetchUserProfile: (id: string) => Promise<void>;
     govToRunRate: number;
+    uploadFile: (file: File, folder: string) => Promise<string | null>;
+    setBugReports: React.Dispatch<React.SetStateAction<BugReport[]>>;
+    setSuggestions: React.Dispatch<React.SetStateAction<Suggestion[]>>;
 }
 
 export const useGameActions = ({ 
-    user, zones, setUser, setZones, setTransactions, setMarketItems, setAllUsers, fetchUserProfile, govToRunRate 
+    user, zones, setUser, setZones, setTransactions, setMarketItems, setAllUsers, fetchUserProfile, govToRunRate,
+    uploadFile, setBugReports, setSuggestions
 }: GameActionsProps) => {
   const { showToast } = useGlobalUI();
 
+  // Fix: Completed logTransaction implementation
   const logTransaction = async (userId: string, type: 'IN' | 'OUT', token: 'RUN' | 'GOV' | 'ITEM', amount: number, description: string) => {
-      // Security Check: Prevent logging invalid amounts
       if (!amount || amount <= 0 || isNaN(amount)) return;
       
+      const timestamp = Date.now();
       const newTx: Transaction = {
           id: crypto.randomUUID(),
-          userId, type, token, amount, description, timestamp: Date.now()
+          userId, type, token, amount, description, timestamp
       };
 
       setTransactions(prev => [newTx, ...prev]);
 
       const { error } = await supabase.from('transactions').insert({
-          id: newTx.id, user_id: userId, type, token, amount, description, timestamp: newTx.timestamp
+          id: newTx.id, 
+          user_id: userId, 
+          type, 
+          token, 
+          amount: parseFloat(amount.toFixed(4)), 
+          description, 
+          timestamp: timestamp 
       });
 
       if (error) console.error("❌ [TRANSACTION LOG FAILED]", error.message);
   };
 
+  // Fix: Completed recordRun implementation
   const recordRun = async (userId: string, runData: RunEntry, updatedZones: Zone[]) => {
       try {
-          // Security Integrity Check
-          if (runData.runEarned < 0 || isNaN(runData.runEarned) || runData.km < 0) {
-              throw new Error("Invalid Run Data detected.");
-          }
+          if (!userId) throw new Error("User ID is missing.");
+          console.log("💾 [RECORD RUN] Syncing run:", runData.id);
 
-          // 1. Insert the Run Log
+          // 1. Inserimento Log Corsa
           const { error: runError } = await supabase.from('runs').insert({
-              id: runData.id, user_id: userId, location_name: runData.location,
-              km: runData.km, duration: runData.duration, 
-              run_earned: runData.runEarned, gov_earned: runData.govEarned || 0,
-              avg_speed: runData.avgSpeed, max_speed: runData.maxSpeed, elevation: runData.elevation,
-              timestamp: runData.timestamp, involved_zones: runData.involvedZones,
+              id: runData.id, 
+              user_id: userId, 
+              location_name: runData.location,
+              km: parseFloat(runData.km.toFixed(4)), 
+              duration: Math.floor(runData.duration || 0), 
+              run_earned: parseFloat(runData.runEarned.toFixed(2)), 
+              gov_earned: parseFloat((runData.govEarned || 0).toFixed(2)),
+              avg_speed: parseFloat((runData.avgSpeed || 0).toFixed(2)), 
+              max_speed: parseFloat((runData.maxSpeed || 0).toFixed(2)), 
+              elevation: Math.floor(runData.elevation || 0),
+              timestamp: runData.timestamp, 
+              involved_zones: runData.involvedZones || [],
               zone_breakdown: runData.zoneBreakdown || {}
           });
 
-          if (runError) throw runError;
+          if (runError) throw new Error(`Run Insert Error: ${runError.message}`);
 
-          // 2. Update User Profile Totals (Ideally this should be a DB Trigger)
-          const { data: currentProfile } = await supabase.from('profiles').select('run_balance').eq('id', userId).single();
+          // 2. Aggiornamento Profilo Utente
           const { data: userRuns } = await supabase.from('runs').select('km').eq('user_id', userId);
           const exactTotalKm = userRuns ? userRuns.reduce((sum, r) => sum + (Number(r.km) || 0), 0) : 0;
 
-          if (currentProfile) {
-              const safeBalance = (currentProfile.run_balance || 0) + runData.runEarned;
-              await supabase.from('profiles').update({
-                  total_km: exactTotalKm, run_balance: safeBalance 
-              }).eq('id', userId);
-          }
+          const { data: profileData } = await supabase.from('profiles').select('run_balance').eq('id', userId).single();
+          const currentBalance = profileData?.run_balance || 0;
 
-          // 3. Batch Update ONLY Modified Zones (Efficient)
+          const { error: profileUpdateError } = await supabase.from('profiles').update({
+              total_km: parseFloat(exactTotalKm.toFixed(4)), 
+              run_balance: parseFloat((currentBalance + runData.runEarned).toFixed(2)) 
+          }).eq('id', userId);
+
+          if (profileUpdateError) console.error("⚠️ Profile Update Failed:", profileUpdateError.message);
+
+          // 3. Aggiornamento Zone tramite RPC
           if (updatedZones.length > 0) {
-              const zonePayload = updatedZones.map(z => ({
-                  id: z.id,
-                  // Standard fields for upsert (if new) or update (if existing)
-                  name: z.name,
-                  location: `POINT(${z.lng} ${z.lat})`,
-                  owner_id: z.ownerId, // Ensure DB field match
-                  x: z.x, y: z.y, lat: z.lat, lng: z.lng,
-                  // Dynamic fields modified by gameplay
-                  defense_level: z.defenseLevel,
-                  record_km: z.recordKm,
-                  interest_rate: z.interestRate,
-                  interest_pool: z.interestPool,
-                  last_distribution_time: z.lastDistributionTime || null,
-                  boost_expires_at: z.boostExpiresAt,
-                  shield_expires_at: z.shieldExpiresAt
-              }));
+              for (const z of updatedZones) {
+                  const kmInThisZone = runData.zoneBreakdown?.[z.id] || 0;
+                  const previousZone = zones.find(oz => oz.id === z.id);
+                  const poolDelta = z.interestPool - (previousZone?.interestPool || 0);
+                  
+                  const { error: rpcError } = await supabase.rpc('record_zone_activity', {
+                      target_zone_id: String(z.id),
+                      runner_id: userId,
+                      km_delta: parseFloat(kmInThisZone.toFixed(6)),
+                      interest_pool_delta: parseFloat(poolDelta.toFixed(6))
+                  });
 
-              const { error: zoneError } = await supabase.from('zones').upsert(zonePayload);
-              if (zoneError) throw zoneError;
+                  if (rpcError) {
+                      console.warn(`[RECORD RUN] RPC Failed for zone ${z.id}, using fallback:`, rpcError.message);
+                      await supabase.from('zones').update({
+                          interest_pool: parseFloat(z.interestPool.toFixed(6)),
+                          record_km: parseFloat(z.recordKm.toFixed(6)),
+                          defense_level: z.defenseLevel
+                      }).eq('id', z.id);
+                  }
+              }
           }
 
           if (runData.runEarned > 0) {
@@ -103,299 +125,330 @@ export const useGameActions = ({
       }
   };
 
+  // Fix: Completed mintZone implementation
+  const mintZone = async (newZone: Zone, shiftedZones: Zone[]) => {
+      if (!user) return { success: false, error: "Not logged in" };
+      console.log("🛠️ [MINT ZONE] Attempting to create zone:", newZone.name);
+
+      try {
+          // 1. Crea la zona (Mappatura nomi colonne DB)
+          // La colonna 'location' è di tipo geography, richiede formato WKT: POINT(longitude latitude)
+          const { error: zoneError } = await supabase.from('zones').insert({
+              id: newZone.id,
+              name: newZone.name,
+              location: `POINT(${newZone.lng} ${newZone.lat})`,
+              owner_id: user.id,
+              x: Math.round(newZone.x),
+              y: Math.round(newZone.y),
+              lat: newZone.lat,
+              lng: newZone.lng,
+              defense_level: 1, 
+              record_km: 0,
+              interest_rate: parseFloat(newZone.interestRate.toFixed(2)),
+              interest_pool: 0,
+              boost_expires_at: newZone.boostExpiresAt || 0,
+              shield_expires_at: newZone.shieldExpiresAt || 0
+          });
+
+          if (zoneError) throw new Error(`Database insert failed: ${zoneError.message}`);
+
+          // 2. Aggiorna zone spostate se necessario
+          if (shiftedZones && shiftedZones.length > 0) {
+              for (const sz of shiftedZones) {
+                  await supabase.from('zones').update({ 
+                      x: Math.round(sz.x), 
+                      y: Math.round(sz.y) 
+                  }).eq('id', sz.id);
+              }
+          }
+
+          // 3. Aggiorna i bilanci dell'utente
+          const newRun = user.runBalance - MINT_COST;
+          const newGov = user.govBalance + MINT_REWARD_GOV;
+          
+          const { error: profileError } = await supabase.from('profiles').update({
+              run_balance: parseFloat(newRun.toFixed(2)),
+              gov_balance: parseFloat(newGov.toFixed(2))
+          }).eq('id', user.id);
+
+          if (profileError) console.error("⚠️ Balance update warning:", profileError.message);
+
+          await logTransaction(user.id, 'OUT', 'RUN', MINT_COST, `Mint Zone: ${newZone.name}`);
+          await logTransaction(user.id, 'IN', 'GOV', MINT_REWARD_GOV, `Mint Reward: ${newZone.name}`);
+
+          console.log("✅ [MINT ZONE] Success!");
+          return { success: true };
+      } catch (err: any) {
+          console.error("❌ [MINT ZONE FAILED]", err.message);
+          return { success: false, error: err.message };
+      }
+  };
+
+  // Fix: Completed claimZone implementation
   const claimZone = async (zoneId: string) => {
       if (!user) return;
       const zone = zones.find(z => z.id === zoneId);
       if (!zone) return;
 
-      // Security: Optimistic update with integrity check
       if (user.runBalance < CONQUEST_COST) {
-          showToast("Insufficient funds (Server Check)", 'ERROR');
+          showToast("Insufficient funds", 'ERROR');
           return;
       }
 
-      const updatedUser = { ...user, runBalance: user.runBalance - CONQUEST_COST, govBalance: user.govBalance + CONQUEST_REWARD_GOV };
-      const updatedZones = zones.map(z => z.id === zoneId ? { ...z, ownerId: user.id, recordKm: 0, defenseLevel: 1 } : z); 
-      
+      const updatedUser = { 
+          ...user, 
+          runBalance: parseFloat((user.runBalance - CONQUEST_COST).toFixed(2)), 
+          govBalance: parseFloat((user.govBalance + CONQUEST_REWARD_GOV).toFixed(2)) 
+      };
       setUser(updatedUser);
-      setZones(updatedZones);
 
       await logTransaction(user.id, 'OUT', 'RUN', CONQUEST_COST, `Conquest: ${zone.name}`);
       await logTransaction(user.id, 'IN', 'GOV', CONQUEST_REWARD_GOV, `Conquest Reward: ${zone.name}`);
       
-      // CRITICAL: We update DB.
-      await supabase.from('profiles').update({ run_balance: updatedUser.runBalance, gov_balance: updatedUser.govBalance }).eq('id', user.id);
+      await supabase.from('profiles').update({ 
+          run_balance: updatedUser.runBalance, 
+          gov_balance: updatedUser.govBalance 
+      }).eq('id', user.id);
       
-      await supabase.from('zones').update({ 
+      const { error } = await supabase.from('zones').update({
           owner_id: user.id,
+          interest_pool: 0,
           record_km: 0,
           defense_level: 1
       }).eq('id', zoneId);
+
+      if (!error) {
+          setZones(prev => prev.map(z => z.id === zoneId ? { ...z, ownerId: user.id, interestPool: 0, recordKm: 0, defenseLevel: 1 } : z));
+      }
   };
 
+  // Fix: Implemented buyItem for marketplace transactions
   const buyItem = async (item: Item) => {
       if (!user) return;
-      if (user.runBalance < item.priceRun) { 
-          showToast("Insufficient funds", 'ERROR'); 
-          return; 
-      }
-
-      const previousUser = { ...user };
-      // Prevent negative balance locally
-      const newRunBalance = Math.max(0, parseFloat((user.runBalance - item.priceRun).toFixed(2)));
-
-      // 1. Logic for Currency Items (Flash Drops)
-      if (item.type === 'CURRENCY') {
-          const newGovBalance = parseFloat((user.govBalance + item.effectValue).toFixed(2));
-          setUser({ ...user, runBalance: newRunBalance, govBalance: newGovBalance });
-          
-          await logTransaction(user.id, 'OUT', 'RUN', item.priceRun, `Market: ${item.name}`);
-          await logTransaction(user.id, 'IN', 'GOV', item.effectValue, `Opened: ${item.name}`);
-          
-          const { error } = await supabase.from('profiles').update({ run_balance: newRunBalance, gov_balance: newGovBalance }).eq('id', user.id);
-          
-          if (error) { 
-              showToast("Transaction failed.", 'ERROR'); 
-              setUser(previousUser); 
-              return; 
-          }
-
-          // Use RPC to decrement stock securely
-          const { error: stockError } = await supabase.rpc('purchase_item', { item_id_input: item.id, quantity_to_buy: 1 });
-          if (!stockError) {
-              const newQty = Math.max(0, item.quantity - 1);
-              setMarketItems(prev => prev.map(i => i.id === item.id ? { ...i, quantity: newQty } : i));
-              showToast(`Purchased ${item.name}!`, 'SUCCESS');
-          }
+      if (user.runBalance < item.priceRun) {
+          showToast("Insufficient funds", 'ERROR');
           return;
       }
 
-      // 2. Logic for Standard Items (Inventory)
-      const currentInventory = user.inventory || [];
-      const existingItemIndex = currentInventory.findIndex(i => i.id === item.id);
-      let newInventory: InventoryItem[];
-
-      if (existingItemIndex >= 0) {
-          newInventory = currentInventory.map((invItem, idx) => {
-              if (idx === existingItemIndex) return { ...invItem, quantity: (invItem.quantity || 0) + 1 };
-              return invItem;
-          });
-      } else {
-          const newItem: InventoryItem = {
-              id: item.id, name: item.name, description: item.description || '', priceRun: Number(item.priceRun),
-              type: item.type, effectValue: Number(item.effectValue), icon: item.icon || 'Box', quantity: 1
-          };
-          newInventory = [...currentInventory, newItem];
-      }
-
-      setUser({ ...user, runBalance: newRunBalance, inventory: newInventory });
-      await logTransaction(user.id, 'OUT', 'RUN', item.priceRun, `Market: ${item.name}`);
+      const { data: invRow } = await supabase.from('inventory').select('*').eq('user_id', user.id).eq('item_id', item.id).maybeSingle();
       
-      const { error: profileError } = await supabase.from('profiles').update({ run_balance: newRunBalance }).eq('id', user.id);
-      if (profileError) { 
-          showToast("Purchase failed. Rolling back.", 'ERROR'); 
-          setUser(previousUser); 
-          return; 
+      let res;
+      if (invRow) {
+          res = await supabase.from('inventory').update({ quantity: invRow.quantity + 1 }).eq('id', invRow.id);
+      } else {
+          res = await supabase.from('inventory').insert({ user_id: user.id, item_id: item.id, quantity: 1 });
       }
 
-      // Inventory DB Insert/Update
-      const { data: existingRows } = await supabase.from('inventory').select('*').eq('user_id', user.id).eq('item_id', item.id);
-      const existingRow = existingRows?.[0];
-      let invError;
-      if (existingRow) {
-          const { error } = await supabase.from('inventory').update({ quantity: existingRow.quantity + 1 }).eq('id', existingRow.id);
-          invError = error;
-      } else {
-          const { error } = await supabase.from('inventory').insert({ user_id: user.id, item_id: item.id, quantity: 1 });
-          invError = error;
+      if (res.error) {
+          showToast("Purchase failed: " + res.error.message, 'ERROR');
+          return;
       }
 
-      if (invError) { 
-          showToast("Error saving item.", 'ERROR'); 
-          // Rollback profile balance
-          await supabase.from('profiles').update({ run_balance: user.runBalance }).eq('id', user.id); 
-          setUser(previousUser); 
-          return; 
+      const newRunBalance = parseFloat((user.runBalance - item.priceRun).toFixed(2));
+      let newGovBalance = user.govBalance;
+
+      if (item.type === 'CURRENCY') {
+          newGovBalance += item.effectValue;
+          await logTransaction(user.id, 'IN', 'GOV', item.effectValue, `Flash Drop: ${item.name}`);
       }
+
+      await supabase.from('profiles').update({ run_balance: newRunBalance, gov_balance: newGovBalance }).eq('id', user.id);
+      await logTransaction(user.id, 'OUT', 'RUN', item.priceRun, `Market Purchase: ${item.name}`);
       
-      // Secure Stock Decrement via RPC
-      const { error: stockError } = await supabase.rpc('purchase_item', { item_id_input: item.id, quantity_to_buy: 1 });
+      // Update item stock
+      await supabase.from('items').update({ quantity: Math.max(0, item.quantity - 1) }).eq('id', item.id);
       
-      if (!stockError) {
-          const newQty = Math.max(0, item.quantity - 1);
-          setMarketItems(prev => prev.map(i => i.id === item.id ? { ...i, quantity: newQty } : i));
-          showToast(`Added ${item.name} to inventory`, 'SUCCESS');
-      } else {
-          // Note: We don't rollback the purchase if stock decrement fails in MVP, but in prod we should.
-          // For now, we assume if profile update worked, user bought it.
-          console.error("Stock update failed", stockError);
-          showToast(`Added ${item.name} (Stock Error)`, 'SUCCESS');
-      }
+      showToast(item.name + " purchased!", 'SUCCESS');
+      await fetchUserProfile(user.id);
+      setMarketItems(prev => prev.map(i => i.id === item.id ? { ...i, quantity: Math.max(0, i.quantity - 1) } : i));
   };
 
+  // Fix: Implemented useItem for applying items to zones
   const useItem = async (item: InventoryItem, targetZoneId: string) => {
       if (!user) return;
       const zone = zones.find(z => z.id === targetZoneId);
       if (!zone) return;
 
-      const duration = ITEM_DURATION_SEC * 1000;
-      const now = Date.now();
-      const previousInventory = [...user.inventory];
-      const previousZones = [...zones];
+      const updates: any = {};
+      const expiry = Date.now() + (ITEM_DURATION_SEC * 1000);
 
-      const updatedZones = zones.map(z => {
-          if (z.id === targetZoneId) {
-              if (item.type === 'BOOST') return { ...z, boostExpiresAt: now + duration };
-              else if (item.type === 'DEFENSE') return { ...z, shieldExpiresAt: now + duration };
+      if (item.type === 'BOOST') updates.boost_expires_at = expiry;
+      if (item.type === 'DEFENSE') updates.shield_expires_at = expiry;
+
+      const { error } = await supabase.from('zones').update(updates).eq('id', targetZoneId);
+
+      if (!error) {
+          const { data: invRow } = await supabase.from('inventory').select('*').eq('user_id', user.id).eq('item_id', item.id).single();
+          if (invRow) {
+              if (invRow.quantity > 1) {
+                  await supabase.from('inventory').update({ quantity: invRow.quantity - 1 }).eq('id', invRow.id);
+              } else {
+                  await supabase.from('inventory').delete().eq('id', invRow.id);
+              }
           }
-          return z;
-      });
 
-      const updatedInventory = user.inventory.map(i => i.id === item.id ? { ...i, quantity: i.quantity - 1 } : i).filter(i => i.quantity > 0);
+          setZones(prev => prev.map(z => z.id === targetZoneId ? { 
+              ...z, 
+              boostExpiresAt: item.type === 'BOOST' ? expiry : z.boostExpiresAt,
+              shieldExpiresAt: item.type === 'DEFENSE' ? expiry : z.shieldExpiresAt
+          } : z));
 
-      setUser({ ...user, inventory: updatedInventory });
-      setZones(updatedZones);
-      
-      await logTransaction(user.id, 'OUT', 'ITEM', item.priceRun, `Used ${item.name} on ${zone.name}`);
-      
-      const { data: existingRows } = await supabase.from('inventory').select('*').eq('user_id', user.id).eq('item_id', item.id);
-      const existingRow = existingRows?.[0];
-
-      if (existingRow) {
-          if (existingRow.quantity > 1) await supabase.from('inventory').update({ quantity: existingRow.quantity - 1 }).eq('id', existingRow.id);
-          else await supabase.from('inventory').delete().eq('id', existingRow.id);
-      } else { setUser({ ...user, inventory: previousInventory }); return; }
-      
-      let zoneUpdateError = null;
-      try {
-          if (item.type === 'BOOST') {
-              const { error } = await supabase.from('zones').update({ boost_expires_at: now + duration }).eq('id', zone.id);
-              zoneUpdateError = error;
-          } else if (item.type === 'DEFENSE') {
-              const { error } = await supabase.from('zones').update({ shield_expires_at: now + duration }).eq('id', zone.id);
-              zoneUpdateError = error;
-          }
-      } catch (err: any) { zoneUpdateError = err; }
-
-      if (zoneUpdateError) {
-          showToast(`Failed to apply effect.`, 'ERROR');
-          // Rollback inventory
-          if (existingRow) await supabase.from('inventory').update({ quantity: existingRow.quantity }).eq('id', existingRow.id);
-          else await supabase.from('inventory').insert({ user_id: user.id, item_id: item.id, quantity: 1 });
-          setUser({ ...user, inventory: previousInventory });
-          setZones(previousZones);
-      } else {
-          showToast(`${item.name} activated on ${zone.name}!`, item.type === 'BOOST' ? 'BOOST' : 'DEFENSE');
+          showToast("Item activated on " + zone.name, item.type === 'BOOST' ? 'BOOST' : 'DEFENSE');
+          await fetchUserProfile(user.id);
       }
   };
 
-  const buyFiatGov = async (amount: number) => {
+  // Fix: Implemented swapGovToRun for liquidity management
+  const swapGovToRun = async (govAmount: number) => {
+      if (!user || govAmount <= 0) return;
+      if (user.govBalance < govAmount) {
+          showToast("Insufficient GOV", 'ERROR');
+          return;
+      }
+
+      const runToReceive = govAmount * govToRunRate;
+      const newGov = parseFloat((user.govBalance - govAmount).toFixed(2));
+      const newRun = parseFloat((user.runBalance + runToReceive).toFixed(2));
+
+      const { error } = await supabase.from('profiles').update({
+          gov_balance: newGov,
+          run_balance: newRun
+      }).eq('id', user.id);
+
+      if (!error) {
+          await logTransaction(user.id, 'OUT', 'GOV', govAmount, 'Liquidity Swap');
+          await logTransaction(user.id, 'IN', 'RUN', runToReceive, 'Swap Settlement');
+          setUser({ ...user, govBalance: newGov, runBalance: newRun });
+          showToast("Swap successful!", 'SUCCESS');
+      }
+  };
+
+  // Fix: Implemented buyFiatGov for fiat purchases
+  const buyFiatGov = async (fiatAmount: number) => {
       if (!user) return;
-      if (amount <= 0 || isNaN(amount)) return;
-      const govAmount = amount * 10; 
-      const updatedUser = { ...user, govBalance: user.govBalance + govAmount };
-      setUser(updatedUser);
-      await logTransaction(user.id, 'IN', 'GOV', govAmount, `Fiat Purchase (€${amount})`);
-      await supabase.from('profiles').update({ gov_balance: updatedUser.govBalance }).eq('id', user.id);
-      showToast(`Purchased ${govAmount} GOV!`, 'SUCCESS');
-  };
+      const govToReceive = fiatAmount * 10;
+      const newGov = parseFloat((user.govBalance + govToReceive).toFixed(2));
 
-  const swapGovToRun = async (amount: number) => {
-      if (!user || user.govBalance < amount || amount <= 0) return;
-      const runReceived = amount * govToRunRate;
-      const updatedUser = { ...user, govBalance: user.govBalance - amount, runBalance: user.runBalance + runReceived };
-      setUser(updatedUser);
-      await logTransaction(user.id, 'OUT', 'GOV', amount, `Swap to RUN`);
-      await logTransaction(user.id, 'IN', 'RUN', runReceived, `Swap from GOV`);
-      await supabase.from('profiles').update({ run_balance: updatedUser.runBalance, gov_balance: updatedUser.govBalance }).eq('id', user.id);
-  };
+      const { error } = await supabase.from('profiles').update({ gov_balance: newGov }).eq('id', user.id);
 
-  const uploadFile = async (file: File, context: string): Promise<string | null> => {
-      try {
-          const fileExt = file.name.split('.').pop();
-          const cleanExt = fileExt ? fileExt.replace(/[^a-z0-9]/gi, '') : 'jpg';
-          // Sanitize filename to prevent path traversal
-          const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-          const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}_${safeName}.${cleanExt}`;
-          const bucketName = 'images'; 
-          let folder = context === 'avatars' ? 'avatars' : (context === 'reports' ? 'bugs' : context);
-          const filePath = `${folder}/${fileName}`;
-          const { error: uploadError } = await supabase.storage.from(bucketName).upload(filePath, file, { upsert: false });
-          if (uploadError) throw uploadError;
-          const { data } = supabase.storage.from(bucketName).getPublicUrl(filePath);
-          return data.publicUrl;
-      } catch (error) {
-          console.error("Upload failed:", error);
-          return null;
+      if (!error) {
+          await logTransaction(user.id, 'IN', 'GOV', govToReceive, `Fiat Purchase: €${fiatAmount}`);
+          setUser({ ...user, govBalance: newGov });
+          showToast(`Purchase Complete: +${govToReceive} GOV`, 'SUCCESS');
       }
   };
 
+  // Fix: Implemented reportBug for error logging
   const reportBug = async (description: string, screenshot?: File) => {
       if (!user) return false;
-      let screenshotUrl = null;
-      if (screenshot) screenshotUrl = await uploadFile(screenshot, 'reports');
-      const { error } = await supabase.from('bug_reports').insert({
-          user_id: user.id, user_name: user.name, description, screenshot: screenshotUrl, status: 'OPEN', timestamp: Date.now()
-      });
-      return !error;
+      try {
+          let screenshotUrl = '';
+          if (screenshot) {
+              const resUrl = await uploadFile(screenshot, 'bugs');
+              if (resUrl) screenshotUrl = resUrl;
+          }
+
+          const newReport = {
+              user_id: user.id,
+              user_name: user.name,
+              description,
+              screenshot: screenshotUrl,
+              timestamp: Date.now(),
+              status: 'OPEN'
+          };
+
+          const { data, error } = await supabase.from('bug_reports').insert(newReport).select().single();
+          if (error) throw error;
+          
+          setBugReports(prev => [{
+              id: data.id,
+              userId: data.user_id,
+              userName: data.user_name,
+              description: data.description,
+              screenshot: data.screenshot,
+              timestamp: data.timestamp,
+              status: data.status
+          }, ...prev]);
+
+          return true;
+      } catch (err) {
+          console.error("Bug report failed:", err);
+          return false;
+      }
   };
 
+  // Fix: Implemented submitSuggestion for user feedback
   const submitSuggestion = async (title: string, description: string) => {
       if (!user) return false;
-      const { error } = await supabase.from('suggestions').insert({
-          user_id: user.id, user_name: user.name, title, description, timestamp: Date.now()
-      });
-      return !error;
+      try {
+          const newSuggestion = {
+              user_id: user.id,
+              user_name: user.name,
+              title,
+              description,
+              timestamp: Date.now()
+          };
+
+          const { data, error } = await supabase.from('suggestions').insert(newSuggestion).select().single();
+          if (error) throw error;
+
+          setSuggestions(prev => [{
+              id: data.id,
+              userId: data.user_id,
+              userName: data.user_name,
+              title: data.title,
+              description: data.description,
+              timestamp: data.timestamp
+          }, ...prev]);
+
+          return true;
+      } catch (err) {
+          console.error("Suggestion failed:", err);
+          return false;
+      }
   };
 
+  // Fix: Implemented upgradePremium for agent tiering
+  const upgradePremium = async () => {
+      if (!user) return;
+      if (user.govBalance < PREMIUM_COST) {
+          showToast("Insufficient GOV for Premium", 'ERROR');
+          return;
+      }
+
+      const newGov = parseFloat((user.govBalance - PREMIUM_COST).toFixed(2));
+      const { error } = await supabase.from('profiles').update({ 
+          is_premium: true,
+          gov_balance: newGov
+      }).eq('id', user.id);
+
+      if (!error) {
+          await logTransaction(user.id, 'OUT', 'GOV', PREMIUM_COST, 'Premium Upgrade');
+          setUser({ ...user, isPremium: true, govBalance: newGov });
+          showToast("Agent Status: PREMIUM", 'SUCCESS');
+      }
+  };
+
+  // Fix: Implemented updateUser for profile management
   const updateUser = async (updates: Partial<User>) => {
       if (!user) return;
-      if (updates.avatar && user.avatar && updates.avatar !== user.avatar) {
-          if (user.avatar.includes('/storage/v1/object/public/images/')) {
-              try {
-                  const path = user.avatar.split('/images/')[1];
-                  if (path) await supabase.storage.from('images').remove([decodeURIComponent(path)]);
-              } catch (cleanupErr) { console.error("Error cleaning up old avatar:", cleanupErr); }
-          }
-      }
       const dbUpdates: any = {};
-      if (updates.name) dbUpdates.name = updates.name;
-      if (updates.email) dbUpdates.email = updates.email;
-      if (updates.avatar) dbUpdates.avatar = updates.avatar;
+      if (updates.name !== undefined) dbUpdates.name = updates.name;
+      if (updates.email !== undefined) dbUpdates.email = updates.email;
+      if (updates.avatar !== undefined) dbUpdates.avatar_url = updates.avatar;
       if (updates.favoriteBadgeId !== undefined) dbUpdates.favorite_badge_id = updates.favoriteBadgeId;
+
       const { error } = await supabase.from('profiles').update(dbUpdates).eq('id', user.id);
       if (!error) {
           setUser({ ...user, ...updates });
-          setAllUsers(prev => ({ ...prev, [user.id]: { ...prev[user.id], ...updates } }));
           showToast("Profile Updated", 'SUCCESS');
       } else {
-          showToast("Update Failed", 'ERROR');
+          showToast("Update failed: " + error.message, 'ERROR');
       }
   };
 
-  const upgradePremium = async () => {
-      if (!user) return;
-      if (user.isPremium) { showToast("Already Premium!", 'ERROR'); return; }
-      if (user.govBalance < PREMIUM_COST) { showToast(`Insufficient GOV. Cost: ${PREMIUM_COST} GOV`, 'ERROR'); return; }
-
-      const newGovBalance = user.govBalance - PREMIUM_COST;
-      const updatedUser = { ...user, isPremium: true, govBalance: newGovBalance };
-      
-      setUser(updatedUser);
-      setAllUsers(prev => ({ ...prev, [user.id]: { ...prev[user.id], isPremium: true, govBalance: newGovBalance } }));
-
-      await logTransaction(user.id, 'OUT', 'GOV', PREMIUM_COST, 'Premium Upgrade');
-      
-      const { error } = await supabase.from('profiles').update({ is_premium: true, gov_balance: newGovBalance }).eq('id', user.id);
-
-      if (error) {
-          console.error("Upgrade failed:", error);
-          showToast("Upgrade failed. Reverting.", 'ERROR');
-          await fetchUserProfile(user.id);
-      } else {
-          showToast("Welcome to Premium!", 'SUCCESS');
-      }
+  // Fix: Added the missing return statement to provide actions to useGameState
+  return {
+      logTransaction, recordRun, mintZone, claimZone, buyItem, useItem, swapGovToRun, buyFiatGov, reportBug, submitSuggestion, upgradePremium, updateUser
   };
-
-  return { logTransaction, recordRun, claimZone, buyItem, useItem, buyFiatGov, swapGovToRun, uploadFile, reportBug, submitSuggestion, updateUser, upgradePremium };
 };

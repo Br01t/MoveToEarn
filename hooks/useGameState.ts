@@ -5,13 +5,10 @@ import { useGameActions } from './gameState/useGameActions';
 import { useAdminActions } from './gameState/useAdminActions';
 
 export const useGameState = () => {
-  // 1. DATA CORE (State & Fetchers)
   const data = useGameData();
-
-  // 2. AUTHENTICATION
   const auth = useGameAuth(data.setUser, data.setZones, data.setRecoveryMode);
-
-  // 3. GAMEPLAY ACTIONS
+  
+  // Update: Passing missing dependencies from useGameData to useGameActions
   const actions = useGameActions({
       user: data.user,
       zones: data.zones,
@@ -21,10 +18,12 @@ export const useGameState = () => {
       setMarketItems: data.setMarketItems,
       setAllUsers: data.setAllUsers,
       fetchUserProfile: data.fetchUserProfile,
-      govToRunRate: data.govToRunRate
+      govToRunRate: data.govToRunRate,
+      uploadFile: data.uploadFile,
+      setBugReports: data.setBugReports,
+      setSuggestions: data.setSuggestions
   });
 
-  // 4. ADMIN ACTIONS
   const admin = useAdminActions({
       fetchGameData: data.fetchGameData,
       user: data.user,
@@ -44,6 +43,8 @@ export const useGameState = () => {
     ...auth,
     ...actions,
     ...admin,
-    refreshData: data.fetchGameData, // Alias for consistency
+    refreshData: data.fetchGameData, 
+    // Explicitly exposing uploadFile from data hook
+    uploadFile: data.uploadFile
   };
 };

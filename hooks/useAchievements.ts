@@ -10,7 +10,7 @@ interface AchievementProps {
     missions: Mission[];
     badges: Badge[];
     setUser: React.Dispatch<React.SetStateAction<User | null>>;
-    logTransaction: (userId: string, type: 'IN' | 'OUT', token: 'RUN' | 'GOV', amount: number, description: string) => Promise<void>;
+    logTransaction: (userId: string, type: 'IN' | 'OUT', token: 'RUN' | 'GOV' | 'ITEM', amount: number, description: string) => Promise<void>;
 }
 
 export const useAchievements = ({ user, zones, missions, badges, setUser, logTransaction }: AchievementProps) => {
@@ -20,7 +20,6 @@ export const useAchievements = ({ user, zones, missions, badges, setUser, logTra
   useEffect(() => {
     if (!user) return;
     
-    // Work with Logs instead of raw IDs for checking
     let newMissionLog = [...user.missionLog];
     let newBadgeLog = [...user.badgeLog];
     
@@ -33,18 +32,25 @@ export const useAchievements = ({ user, zones, missions, badges, setUser, logTra
 
     // Check Missions
     missions.forEach((m) => {
-      // Check if already in log
       if (!newMissionLog.some(log => log.id === m.id)) {
         if (checkAchievement(m, user, zones)) {
            newMissionLog.push({ id: m.id, claimedAt: timestamp });
            
-           additionalRun += m.rewardRun;
+           // WELCOME BONUS LOGIC: First mission gives 300 RUN instead of 150
+           let runReward = m.rewardRun;
+           if (newMissionLog.length === 1 && runReward === 150) {
+               runReward = 300;
+           }
+
+           additionalRun += runReward;
            if (m.rewardGov) additionalGov += m.rewardGov;
            hasChanges = true;
-           newUnlockQueue.push({ type: 'MISSION', item: m });
            
-           // LOG
-           if (m.rewardRun > 0) logTransaction(user.id, 'IN', 'RUN', m.rewardRun, `Mission Reward: ${m.title}`);
+           // Wrap item with potentially modified reward for the UI notification
+           const displayItem = { ...m, rewardRun: runReward };
+           newUnlockQueue.push({ type: 'MISSION', item: displayItem });
+           
+           if (runReward > 0) logTransaction(user.id, 'IN', 'RUN', runReward, `Mission Reward: ${m.title}`);
            if (m.rewardGov && m.rewardGov > 0) logTransaction(user.id, 'IN', 'GOV', m.rewardGov, `Mission Reward: ${m.title}`);
         }
       }
@@ -52,7 +58,6 @@ export const useAchievements = ({ user, zones, missions, badges, setUser, logTra
 
     // Check Badges
     badges.forEach((b) => {
-      // Check if already in log
       if (!newBadgeLog.some(log => log.id === b.id)) {
         if (checkAchievement(b, user, zones)) {
            newBadgeLog.push({ id: b.id, claimedAt: timestamp });
@@ -65,7 +70,6 @@ export const useAchievements = ({ user, zones, missions, badges, setUser, logTra
            hasChanges = true;
            newUnlockQueue.push({ type: 'BADGE', item: b });
 
-           // LOG
            if (rRun > 0) logTransaction(user.id, 'IN', 'RUN', rRun, `Badge Reward: ${b.name}`);
            if (rGov > 0) logTransaction(user.id, 'IN', 'GOV', rGov, `Badge Reward: ${b.name}`);
         }
@@ -76,14 +80,12 @@ export const useAchievements = ({ user, zones, missions, badges, setUser, logTra
       const newRunBalance = user.runBalance + additionalRun;
       const newGovBalance = user.govBalance + additionalGov;
 
-      // 1. Optimistic Update (Immediate UI Feedback)
       setUser((prev) =>
         prev
           ? {
               ...prev,
               missionLog: newMissionLog,
               badgeLog: newBadgeLog,
-              // Update helper arrays for compatibility
               completedMissionIds: newMissionLog.map(x => x.id),
               earnedBadgeIds: newBadgeLog.map(x => x.id),
               runBalance: newRunBalance,
@@ -92,8 +94,6 @@ export const useAchievements = ({ user, zones, missions, badges, setUser, logTra
           : null
       );
       
-      // 2. Persist to Supabase (Fire and Forget)
-      // We update the JSONB logs and the balances ONLY (Legacy columns removed)
       const updateDb = async () => {
           const { error } = await supabase.from('profiles').update({
               mission_log: newMissionLog,
@@ -115,7 +115,6 @@ export const useAchievements = ({ user, zones, missions, badges, setUser, logTra
 
   }, [user?.totalKm, user?.runHistory, zones, missions, badges]);
 
-  // Actions for UI
   const handleCloseNotification = () => {
     setAchievementQueue(prev => prev.slice(1));
   };

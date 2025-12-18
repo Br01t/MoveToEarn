@@ -17,8 +17,6 @@ import { useAchievements } from "./hooks/useAchievements";
 import { usePWA } from "./hooks/usePWA";
 
 // --- LAZY LOADED COMPONENTS (Code Splitting) ---
-// Critical components (Dashboard, Landing) remain static for LCP (Largest Contentful Paint)
-// Heavy or secondary components are loaded on demand.
 const Marketplace = React.lazy(() => import("./components/Marketplace"));
 const Wallet = React.lazy(() => import("./components/Wallet"));
 const Inventory = React.lazy(() => import("./components/Inventory"));
@@ -59,14 +57,11 @@ const AppContent: React.FC = () => {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showInsufficientFundsModal, setShowInsufficientFundsModal] = useState(false);
   
-  // PWA State
   const { deferredPrompt, isIOS, isStandalone, installPWA } = usePWA();
   const [forceShowPWA, setForceShowPWA] = useState(false);
 
-  // Sound Interaction State
   const lastHoveredRef = useRef<HTMLElement | null>(null);
 
-  // GLOBAL AUDIO LISTENER
   useEffect(() => {
     const handleGlobalInteraction = (e: Event) => {
         if (currentView === 'WHITEPAPER') return;
@@ -99,7 +94,6 @@ const AppContent: React.FC = () => {
     };
   }, [currentView, playSound]);
 
-  // 1. GAME STATE (Virtual Database)
   const { 
     user, zones, setUser, setZones, loading, transactions, logTransaction, recoveryMode,
     lastBurnTimestamp,
@@ -116,11 +110,11 @@ const AppContent: React.FC = () => {
     ...gameState
   } = useGameState();
 
-  // 2. WORKFLOWS (Business Logic)
   const runWorkflow = useRunWorkflow({ 
       user, zones, setUser, setZones, 
       logTransaction, 
-      recordRun: gameState.recordRun 
+      recordRun: gameState.recordRun,
+      mintZone: gameState.mintZone // FIX: Passata la funzione mintZone al workflow
   });
   
   const achievementSystem = useAchievements({ 
@@ -178,9 +172,9 @@ const AppContent: React.FC = () => {
       return result;
   };
 
-  const handleZoneConfirm = (name: string) => {
-      const result = runWorkflow.confirmZoneCreation(name);
-      if (!result.success) {
+  const handleZoneConfirm = async (name: string) => {
+      const result = await runWorkflow.confirmZoneCreation(name);
+      if (!result?.success) {
           setShowInsufficientFundsModal(true);
       }
   };
@@ -228,11 +222,9 @@ const AppContent: React.FC = () => {
   };
 
   const handleLogout = async () => {
-      setCurrentView("LANDING"); // Reset view immediately to avoid flickering
+      setCurrentView("LANDING");
       await gameState.logout();
-      // Added a slight timeout before any potential hard reload to ensure Supabase finishes clearing local session storage
       setTimeout(() => {
-          // Hard reload is generally cleaner to ensure all hooks and states reset fully
           window.location.reload(); 
       }, 100);
   };
