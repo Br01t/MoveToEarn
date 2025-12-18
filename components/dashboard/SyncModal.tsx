@@ -73,12 +73,12 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
             tracks.forEach((points, idx) => {
                 // 1. DATE CHECK (7-Day Rule)
                 // Use the start time of the run found in the GPS data
-                // if (points.length > 0 && points[0].time.getTime() < cutoffTimestamp) {
-                //     ignoredOldCount++;
-                //     // Only log if it's not spamming
-                //     // addLog(`Skipped (Old): ${fileName} - ${points[0].time.toLocaleDateString()}`);
-                //     return;
-                // }
+                if (points.length > 0 && points[0].time.getTime() < cutoffTimestamp) {
+                    ignoredOldCount++;
+                    // Only log if it's not spamming
+                    // addLog(`Skipped (Old): ${fileName} - ${points[0].time.toLocaleDateString()}`);
+                    return;
+                }
 
                 const analysis = analyzeRun(points, tracks.length > 1 ? `${fileName} (Track ${idx+1})` : fileName);
                 const result = analysis.result;
