@@ -130,30 +130,30 @@ export const processRunRewards = (
     locationName: string;
     involvedZoneNames: string[];
     involvedZoneIds: string[]; 
-    zoneBreakdown: Record<string, number>; // Even split KM per zone
+    zoneBreakdown: Record<string, number>; 
     isReinforced: boolean;
 } => {
     
-    // 1. Identify Involved Zones
+    // 1. Identify Involved Zones (START and END only, 1km radius)
     const involvedZoneIds = new Set<string>();
-    const points = data.points;
+    const terminals = [data.startPoint, data.endPoint];
+    const THRESHOLD_KM = 1.0;
 
-    if (points.length >= 2) {
-        for (const p of points) {
-            let closestZone: Zone | null = null;
-            let minDistance = Infinity;
+    for (const p of terminals) {
+        let closestZone: Zone | null = null;
+        let minDistance = Infinity;
 
-            for (const z of allZones) {
-                const d = getDistanceFromLatLonInKm(p.lat, p.lng, z.lat, z.lng);
-                if (d < minDistance) {
-                    minDistance = d;
-                    closestZone = z;
-                }
+        for (const z of allZones) {
+            const d = getDistanceFromLatLonInKm(p.lat, p.lng, z.lat, z.lng);
+            if (d < minDistance) {
+                minDistance = d;
+                closestZone = z;
             }
+        }
 
-            if (closestZone && minDistance < 10.0) {
-                involvedZoneIds.add(closestZone.id);
-            }
+        // Only add if within 1km
+        if (closestZone && minDistance < THRESHOLD_KM) {
+            involvedZoneIds.add(closestZone.id);
         }
     }
 
@@ -166,12 +166,10 @@ export const processRunRewards = (
     let isReinforced = false;
     
     // 2. OPTIMIZED UPDATE LOGIC
-    // We map over ALL zones. 
-    // If a zone is involved, we return a NEW object with updates.
-    // If NOT involved, we return the ORIGINAL object reference.
     const updatedZones = allZones.map(z => {
         if (involvedZoneIds.has(z.id)) {
             involvedZoneNames.push(z.name);
+            // Split KM equally among start and end zones (if they are different)
             const kmPerZone = data.totalKm / zoneCount;
             zoneBreakdown[z.id] = parseFloat(kmPerZone.toFixed(4));
 
@@ -190,6 +188,7 @@ export const processRunRewards = (
                 isReinforced = true;
                 newZone.recordKm = (newZone.recordKm || 0) + kmPerZone;
                 
+                // Defense Level Logic
                 if (newZone.recordKm > 50 && newZone.defenseLevel < 2) newZone.defenseLevel = 2;
                 if (newZone.recordKm > 150 && newZone.defenseLevel < 3) newZone.defenseLevel = 3;
                 if (newZone.recordKm > 500 && newZone.defenseLevel < 4) newZone.defenseLevel = 4;
@@ -198,13 +197,11 @@ export const processRunRewards = (
             return newZone;
         }
         
-        // CRITICAL: Return original reference for unchanged zones. 
-        // This ensures downstream strict equality checks (z !== oldZ) work correctly.
         return z; 
     });
 
     if (zoneCount === 0) {
-        // Uncharted Territory (No zones within 10km)
+        // Uncharted Territory (No zones within 1km of start or end)
         totalGrossRun = data.totalKm * RUN_RATE_BASE;
     }
 
@@ -235,7 +232,7 @@ export const processRunRewards = (
 
     return {
         totalRunEarned: parseFloat(totalUserRun.toFixed(2)),
-        zoneUpdates: updatedZones, // Contains mix of new objects and old references
+        zoneUpdates: updatedZones,
         locationName,
         involvedZoneNames,
         involvedZoneIds: involvedZonesList,

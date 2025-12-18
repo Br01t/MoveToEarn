@@ -254,7 +254,6 @@ const Dashboard: React.FC<DashboardProps> = ({
             
             <button 
               onClick={onOpenSync}
-              disabled
               className="relative group flex items-center gap-3 px-8 py-4 bg-gray-900/90 backdrop-blur-xl border-2 border-emerald-400 rounded-full shadow-[0_0_30px_rgba(16,185,129,0.4)] hover:shadow-[0_0_50px_rgba(16,185,129,0.7)] hover:border-emerald-300 hover:scale-105 transition-all duration-300"
             >
                 <div className="bg-emerald-500 text-black p-2 rounded-full">

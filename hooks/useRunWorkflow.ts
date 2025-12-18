@@ -12,24 +12,18 @@ interface RunWorkflowProps {
     setZones: React.Dispatch<React.SetStateAction<Zone[]>>;
     logTransaction: (userId: string, type: 'IN' | 'OUT', token: 'RUN' | 'GOV' | 'ITEM', amount: number, description: string) => Promise<void>;
     recordRun?: (userId: string, runData: RunEntry, updatedZones: Zone[]) => Promise<{ success: boolean; error?: string }>;
+    mintZone?: (newZone: Zone, shiftedZones: Zone[]) => Promise<{ success: boolean; error?: string }>;
 }
 
-export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction, recordRun }: RunWorkflowProps) => {
-  // Queue for processing multiple runs
+export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction, recordRun, mintZone }: RunWorkflowProps) => {
   const [pendingRunsQueue, setPendingRunsQueue] = useState<RunAnalysisData[]>([]);
-  
-  // Queue for Zone Naming Modals (Start/End points)
   const [zoneCreationQueue, setZoneCreationQueue] = useState<{
     lat: number;
     lng: number;
     defaultName: string;
     type: 'START' | 'END';
   }[]>([]);
-
-  // Current Run being processed (while waiting for user input)
   const [pendingRunData, setPendingRunData] = useState<RunAnalysisData | null>(null);
-
-  // Final Summary Modal State
   const [runSummary, setRunSummary] = useState<{
       totalKm: number;
       duration: number;
@@ -38,10 +32,7 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction,
       isReinforced: boolean;
   } | null>(null);
 
-  // Temporary storage for zones created in this session (to ensure adjacency logic works immediately)
   const sessionCreatedZonesRef = useRef<Zone[]>([]);
-  
-  // Accumulator for batch stats
   const batchStatsRef = useRef<{
       totalKm: number;
       duration: number;
@@ -50,23 +41,18 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction,
       reinforcedCount: number;
   }>({ totalKm: 0, duration: 0, runEarned: 0, involvedZoneNames: [], reinforcedCount: 0 });
 
-  // --- ENTRY POINT ---
   const startSync = (dataList: RunAnalysisData[]) => {
     if (!user) return;
-    // Reset batch stats
     batchStatsRef.current = { totalKm: 0, duration: 0, runEarned: 0, involvedZoneNames: [], reinforcedCount: 0 };
     sessionCreatedZonesRef.current = [];
     setPendingRunsQueue(dataList);
   };
 
-  // --- PROCESSOR LOOP ---
   useEffect(() => {
-      // If we have runs waiting, and no active modal (creation or summary), and no active run being held
       if (pendingRunsQueue.length > 0 && zoneCreationQueue.length === 0 && !pendingRunData) {
           const nextRun = pendingRunsQueue[0];
           analyzeForNewZones(nextRun);
       } 
-      // If queue is empty but we have stats, show summary
       else if (pendingRunsQueue.length === 0 && batchStatsRef.current.totalKm > 0 && !runSummary && zoneCreationQueue.length === 0 && !pendingRunData) {
           const stats = batchStatsRef.current;
           setRunSummary({
@@ -76,16 +62,12 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction,
               involvedZoneNames: Array.from(new Set(stats.involvedZoneNames)),
               isReinforced: stats.reinforcedCount > 0
           });
-          // Clear stats to prevent loop
           batchStatsRef.current = { totalKm: 0, duration: 0, runEarned: 0, involvedZoneNames: [], reinforcedCount: 0 };
       }
   }, [pendingRunsQueue, zoneCreationQueue.length, pendingRunData, runSummary, zones, user]);
 
-  // --- LOGIC: Check if new zones are needed ---
   const analyzeForNewZones = (data: RunAnalysisData) => {
     const { startPoint, endPoint } = data;
-    
-    // Merge Strategy: Prioritize `zones` state
     const sessionZonesUnique = sessionCreatedZonesRef.current.filter(sz => !zones.some(z => z.id === sz.id));
     const allZones = [...zones, ...sessionZonesUnique];
 
@@ -96,8 +78,7 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction,
 
     if (!startZone) {
         zonesToCreate.push({
-            lat: startPoint.lat,
-            lng: startPoint.lng,
+            lat: startPoint.lat, lng: startPoint.lng,
             defaultName: `New Zone ${Math.floor(startPoint.lat*100)},${Math.floor(startPoint.lng*100)}`,
             type: 'START'
         });
@@ -106,22 +87,20 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction,
     const distStartEnd = getDistanceFromLatLonInKm(startPoint.lat, startPoint.lng, endPoint.lat, endPoint.lng);
     if (!endZone && distStartEnd > 1.0) {
         zonesToCreate.push({
-             lat: endPoint.lat,
-             lng: endPoint.lng,
+             lat: endPoint.lat, lng: endPoint.lng,
              defaultName: `New Zone ${Math.floor(endPoint.lat*100)},${Math.floor(endPoint.lng*100)}`,
              type: 'END'
         });
     }
 
     if (zonesToCreate.length > 0) {
-        setPendingRunData(data); // Pause queue
-        setZoneCreationQueue(zonesToCreate); // Trigger Modal
+        setPendingRunData(data);
+        setZoneCreationQueue(zonesToCreate);
     } else {
-        finalizeRun(data, user!, zones); // No new zones, proceed
+        finalizeRun(data, user!, zones);
     }
   };
 
-  // --- LOGIC: Commit Run Data ---
   const finalizeRun = async (data: RunAnalysisData, currentUser: User, currentZones: Zone[]) => {
       const allZonesMap = new Map<string, Zone>();
       currentZones.forEach(z => allZonesMap.set(z.id, z));
@@ -153,32 +132,23 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction,
           totalKm: currentUser.totalKm + data.totalKm
       };
 
-      // OPTIMIZATION: Filter strictly for changes before DB call.
-      // This relies on `processRunRewards` returning strict references for unchanged zones.
       const modifiedZones = result.zoneUpdates.filter(u => {
           const original = allZonesMap.get(u.id);
-          // If purely new, keep it
-          if (!original) return true;
-          // If reference is different, it means logic updated it
-          return u !== original;
+          return !original || u !== original;
       });
 
       if (recordRun) {
-          // Send ONLY the actually modified zones to the DB handler
           const dbResult = await recordRun(currentUser.id, newRun, modifiedZones);
           if (!dbResult.success) {
+              console.error("❌ Sync Error:", dbResult.error);
               alert(`Sync Failed: ${dbResult.error || 'Database error'}.`);
               return; 
           }
-      } else if (result.totalRunEarned > 0) {
-          logTransaction(currentUser.id, 'IN', 'RUN', result.totalRunEarned, `Run Reward: ${result.locationName}`);
       }
 
-      // Update Local State with the full list (React needs the full picture)
       setZones(result.zoneUpdates);
       setUser(finalUser);
       
-      // Batch Stats Accumulation
       batchStatsRef.current.totalKm += data.totalKm;
       batchStatsRef.current.duration += data.durationMinutes;
       batchStatsRef.current.runEarned += result.totalRunEarned;
@@ -189,25 +159,19 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction,
       setPendingRunsQueue(prev => prev.slice(1)); 
   };
 
-  // --- ACTIONS: Modal Interactions ---
-  const confirmZoneCreation = (customName: string) => {
+  const confirmZoneCreation = async (customName: string) => {
       if (!user || !pendingRunData) return { success: false, msg: "No active run" };
       
       const pendingZone = zoneCreationQueue[0];
       if (user.runBalance < MINT_COST) return { success: false, msg: "Insufficient funds" };
 
-      logTransaction(user.id, 'OUT', 'RUN', MINT_COST, `Zone Mint Fee: ${customName}`);
-      logTransaction(user.id, 'IN', 'GOV', MINT_REWARD_GOV, `Zone Mint Reward: ${customName}`);
-
       const hasCountryCode = / - [A-Z]{2}$/.test(customName);
       const countryCode = hasCountryCode ? customName.split(' - ').pop() || "XX" : "XX";
       const finalName = hasCountryCode ? customName : `${customName} - XX`;
 
-      // --- DYNAMIC PLACEMENT & SHIFTING ---
       const sessionZonesUnique = sessionCreatedZonesRef.current.filter(sz => !zones.some(z => z.id === sz.id));
       const currentAllZones = [...zones, ...sessionZonesUnique];
       
-      // This function calculates the new spot AND returns any zones that had to move to make room
       const placementResult = insertZoneAndShift(pendingZone.lat, pendingZone.lng, countryCode, currentAllZones);
 
       const newZone: Zone = {
@@ -225,34 +189,30 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction,
           shieldExpiresAt: Date.now() + (ITEM_DURATION_SEC * 1000) 
       };
 
-      const updatedUser = { 
-          ...user, 
-          runBalance: user.runBalance - MINT_COST,
-          govBalance: user.govBalance + MINT_REWARD_GOV 
-      };
-      
+      // Persist to Database
+      if (mintZone) {
+          const dbRes = await mintZone(newZone, placementResult.shiftedZones);
+          if (!dbRes.success) {
+              console.error("❌ Minting failed in DB:", dbRes.error);
+              alert(`Failed to save new zone: ${dbRes.error}`);
+              return { success: false };
+          }
+      }
+
       sessionCreatedZonesRef.current.push(newZone);
       
-      // Update State: We must merge the new zone AND any shifted zones
-      setZones(prev => {
-          // 1. Add new zone
-          const listWithNew = [...prev, newZone];
-          // 2. Apply shifts (if any)
-          if (placementResult.shiftedZones.length > 0) {
-              return listWithNew.map(z => {
-                  const shiftUpdate = placementResult.shiftedZones.find(s => s.id === z.id);
-                  return shiftUpdate ? { ...z, x: shiftUpdate.x, y: shiftUpdate.y } : z;
-              });
-          }
-          return listWithNew;
-      });
-
-      // Pass the updated world state to the next step (recursive queue processing)
       const nextZonesState = [...zones, newZone].map(z => {
           const shiftUpdate = placementResult.shiftedZones.find(s => s.id === z.id);
           return shiftUpdate ? { ...z, x: shiftUpdate.x, y: shiftUpdate.y } : z;
       });
 
+      const updatedUser = { 
+          ...user, 
+          runBalance: user.runBalance - MINT_COST,
+          govBalance: user.govBalance + MINT_REWARD_GOV 
+      };
+
+      setZones(nextZonesState);
       setUser(updatedUser);
       proceedQueue(updatedUser, nextZonesState);
       return { success: true };
@@ -272,12 +232,8 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction,
   };
 
   return {
-      startSync,
-      confirmZoneCreation,
-      discardZoneCreation,
+      startSync, confirmZoneCreation, discardZoneCreation,
       closeSummary: () => setRunSummary(null),
-      zoneCreationQueue,
-      runSummary,
-      isProcessing: pendingRunsQueue.length > 0
+      zoneCreationQueue, runSummary, isProcessing: pendingRunsQueue.length > 0
   };
 };

@@ -391,6 +391,34 @@ export const useGameData = () => {
       }
   };
 
+  // Added uploadFile function for handling cloud storage uploads with Base64 fallback
+  const uploadFile = async (file: File, folder: string): Promise<string | null> => {
+      try {
+          const fileExt = file.name.split('.').pop();
+          const fileName = `${crypto.randomUUID()}.${fileExt}`;
+          const filePath = `${folder}/${fileName}`;
+
+          const { error: uploadError } = await supabase.storage
+              .from('zonerun-assets')
+              .upload(filePath, file);
+
+          if (uploadError) throw uploadError;
+
+          const { data } = supabase.storage
+              .from('zonerun-assets')
+              .getPublicUrl(filePath);
+
+          return data.publicUrl;
+      } catch (err) {
+          console.error("Error uploading file:", err);
+          return new Promise((resolve) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result as string);
+              reader.readAsDataURL(file);
+          });
+      }
+  };
+
   useEffect(() => {
     const initSession = async () => {
       try {
@@ -421,6 +449,6 @@ export const useGameData = () => {
       user, zones, allUsers, missions, badges, marketItems, leaderboards, levels, bugReports, suggestions, transactions,
       govToRunRate, loading, recoveryMode, lastBurnTimestamp, totalBurned,
       setUser, setZones, setAllUsers, setTransactions, setMarketItems, setBugReports, setSuggestions, setGovToRunRate, setRecoveryMode, setLastBurnTimestamp, setTotalBurned,
-      fetchGameData, fetchUserProfile, fetchZoneLeaderboard
+      fetchGameData, fetchUserProfile, fetchZoneLeaderboard, uploadFile
   };
 };
