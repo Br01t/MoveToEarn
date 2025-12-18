@@ -184,7 +184,7 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
                 </div>
             </div>
 
-            {isBoostActive && zone.boostExpiresAt && (
+            {!!isBoostActive && zone.boostExpiresAt && (
              <div className="flex items-center justify-between text-sm bg-amber-500/10 p-2 rounded-lg border border-amber-500/30 backdrop-blur-sm">
                <span className="text-amber-400 flex items-center gap-1 text-xs font-bold uppercase tracking-wide"><Clock size={12}/> {t('zone.boosted')}</span>
                <span className="text-amber-100 font-mono text-xs font-bold">
@@ -193,7 +193,7 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
              </div>
             )}
 
-            {isShieldActive && zone.shieldExpiresAt && (
+            {!!isShieldActive && zone.shieldExpiresAt && (
              <div className="flex items-center justify-between text-sm bg-cyan-500/10 p-2 rounded-lg border border-cyan-500/30 backdrop-blur-sm">
                <span className="text-cyan-400 flex items-center gap-1 text-xs font-bold uppercase tracking-wide"><Shield size={12}/> {t('zone.shielded')}</span>
                <span className="text-cyan-100 font-mono text-xs font-bold">
