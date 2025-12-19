@@ -129,7 +129,7 @@ const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuy
          </div>
          
          {/* External Wallet Connect */}
-         <button 
+         {/* <button 
             onClick={() => setIsWalletConnected(!isWalletConnected)}
             className={`px-4 py-2 rounded-xl font-bold flex items-center gap-2 transition-all border ${
               isWalletConnected 
@@ -138,7 +138,7 @@ const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuy
             }`}
           >
              {isWalletConnected ? <><CheckCircle size={16}/> 0x71...9A23</> : <><LinkIcon size={16}/> {t('wallet.connect')}</>}
-          </button>
+          </button> */}
       </div>
 
       {/* PERSONAL BALANCE CARDS */}

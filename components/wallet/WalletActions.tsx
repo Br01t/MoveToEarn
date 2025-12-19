@@ -121,7 +121,7 @@ const WalletActions: React.FC<WalletActionsProps> = ({ govBalance, govToRunRate,
         </div>
 
         {/* BUY FIAT CARD */}
-        <div className="glass-panel rounded-2xl p-6 relative overflow-hidden shrink-0">
+        {/* <div className="glass-panel rounded-2xl p-6 relative overflow-hidden shrink-0">
             <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
                 <CreditCard size={120} className="text-white" />
             </div>
@@ -160,7 +160,7 @@ const WalletActions: React.FC<WalletActionsProps> = ({ govBalance, govToRunRate,
                     <p className="text-[10px] text-center text-gray-500">{t('wallet.secured_by')}</p>
                 </div>
             </div>
-        </div>
+        </div> */}
 
         {/* CUSTOM SWAP CONFIRMATION MODAL */}
         {showSwapConfirm && (
