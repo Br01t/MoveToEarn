@@ -243,13 +243,13 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
             >
                 {t('sync.manual')}
             </button>
-            <button 
+            {/* <button 
               onClick={() => setSyncTab('PREMIUM')}
               disabled={uploadStep === 'PROCESSING' || uploadStep === 'SUCCESS'}
               className={`flex-1 py-3 font-bold text-sm transition-colors flex justify-center items-center gap-2 ${syncTab === 'PREMIUM' ? 'bg-white/5 text-yellow-400 border-b-2 border-yellow-400' : 'text-gray-500 hover:text-gray-300'}`}
             >
                 <Crown size={14} /> {t('sync.auto')}
-            </button>
+            </button> */}
          </div>
          
          <div className="p-6 overflow-y-auto">
