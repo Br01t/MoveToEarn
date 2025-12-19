@@ -29,9 +29,31 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const ALLOWED_EXTENSIONS = ['.gpx', '.tcx', '.fit', '.zip'];
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-        setSelectedFiles(Array.from(e.target.files));
+        // Fix: Cast Array.from result to File[] to avoid 'unknown' type errors during iteration
+        const files = Array.from(e.target.files) as File[];
+        
+        // Strict Client-Side Filter: Only allow GPS/Zip extensions
+        // This prevents mobile OS from allowing selection of photos even if "accept" is set
+        const filteredFiles = files.filter(file => {
+            const fileName = file.name.toLowerCase();
+            return ALLOWED_EXTENSIONS.some(ext => fileName.endsWith(ext));
+        });
+
+        if (filteredFiles.length === 0 && files.length > 0) {
+            showToast(t('sync.error.invalid_format'), 'ERROR');
+            if (fileInputRef.current) fileInputRef.current.value = "";
+            return;
+        }
+
+        if (filteredFiles.length < files.length) {
+            showToast("Some files were ignored (unsupported format).", 'ERROR');
+        }
+
+        setSelectedFiles(filteredFiles);
     }
   };
 
@@ -57,26 +79,19 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
         setLogs(prev => [...prev, msg]);
     };
 
-    // Calculate the 7-day cutoff timestamp (from now, or strictly from file upload time)
-    // 7 days * 24h * 60m * 60s * 1000ms
     const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
     const cutoffTimestamp = Date.now() - SEVEN_DAYS_MS;
 
     addLog(`Preparing to process files... Cutoff: ${new Date(cutoffTimestamp).toLocaleDateString()}`);
 
-    // Helper to process a single raw file content
     const processSingleFileContent = async (content: string | ArrayBuffer, fileName: string) => {
         try {
             const tracks = await parseActivityFile(content, fileName);
             let validInFile = 0;
 
             tracks.forEach((points, idx) => {
-                // 1. DATE CHECK (7-Day Rule)
-                // Use the start time of the run found in the GPS data
                 if (points.length > 0 && points[0].time.getTime() < cutoffTimestamp) {
                     ignoredOldCount++;
-                    // Only log if it's not spamming
-                    // addLog(`Skipped (Old): ${fileName} - ${points[0].time.toLocaleDateString()}`);
                     return;
                 }
 
@@ -84,7 +99,6 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
                 const result = analysis.result;
 
                 if (result.isValid) {
-                    // --- ENHANCED DUPLICATE CHECK ---
                     const isDuplicate = user.runHistory.some(run => {
                         const timeMatch = Math.abs(run.timestamp - result.startTime) < 60000;
                         const statsMatch = Math.abs(Number(run.km) - result.totalKm) < 0.1 && Math.abs((run.duration || 0) - result.durationMinutes) < 1.0;
@@ -94,9 +108,7 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
                     if (isDuplicate) {
                         duplicateCount++;
                         lastFailureReason = "Duplicate run detected.";
-                        // addLog(`⚠️ Duplicate: ${fileName}`);
                     } else {
-                        // Check if duplicate is already in current batch
                         const isBatchDuplicate = newResults.some(res => Math.abs(res.startTime - result.startTime) < 60000);
                         if (!isBatchDuplicate) {
                             newResults.push(result);
@@ -106,12 +118,10 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
                     }
                 } else {
                     lastFailureReason = result.failureReason || "Validation Error";
-                    // addLog(`❌ Invalid: ${fileName} - ${result.failureReason}`);
                 }
             });
             return validInFile;
         } catch (err: any) {
-            // addLog(`Error parsing ${fileName}: ${err.message}`);
             return 0;
         }
     };
@@ -121,7 +131,6 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
         
         const allPendingFiles: { name: string, content: string | ArrayBuffer }[] = [];
 
-        // 1. Unzip / Expand Files
         for (const file of selectedFiles) {
             if (file.name.toLowerCase().endsWith('.zip')) {
                 addLog(`📦 Unzipping ${file.name}...`);
@@ -134,7 +143,7 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
                         if (zipEntry.dir || filename.startsWith('__MACOSX') || filename.startsWith('.')) continue;
                         
                         const lowerName = filename.toLowerCase();
-                        if (lowerName.endsWith('.gpx') || lowerName.endsWith('.tcx') || lowerName.endsWith('.json') || lowerName.endsWith('.csv') || lowerName.endsWith('.xml')) {
+                        if (lowerName.endsWith('.gpx') || lowerName.endsWith('.tcx')) {
                             const text = await zipEntry.async("string");
                             allPendingFiles.push({ name: filename, content: text });
                         } else if (lowerName.endsWith('.fit')) {
@@ -146,7 +155,6 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
                     addLog(`❌ ZIP Error: ${e}`);
                 }
             } else {
-                // Regular file
                 let content: string | ArrayBuffer;
                 if (file.name.toLowerCase().endsWith('.fit')) {
                     content = await file.arrayBuffer();
@@ -160,12 +168,9 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
         setTotalFilesToProcess(allPendingFiles.length);
         addLog(`Found ${allPendingFiles.length} files to analyze.`);
 
-        // 2. Process expanded list
         for (let i = 0; i < allPendingFiles.length; i++) {
             setProcessedCount(i + 1);
             await processSingleFileContent(allPendingFiles[i].content, allPendingFiles[i].name);
-            
-            // Allow UI to breathe
             if (i % 5 === 0) await new Promise(r => setTimeout(r, 10));
         }
 
@@ -252,7 +257,6 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
                 <>
                     {uploadStep === 'SELECT' && (
                         <div className="space-y-4">
-                            {/* Bulk Info */}
                             <div className="bg-blue-900/20 border border-blue-500/30 p-3 rounded-lg flex items-start gap-3">
                                 <Archive size={18} className="text-blue-400 shrink-0 mt-0.5" />
                                 <div>
@@ -265,7 +269,8 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
                                 <label className="block text-xs font-bold text-gray-400 uppercase mb-2">{t('sync.upload_label')}</label>
                                 <input 
                                     type="file" 
-                                    accept=".gpx,.xml,.tcx,.fit,.json,.csv,.zip" 
+                                    // Modified to exclude media types and focus on documents for mobile pickers
+                                    accept=".gpx,.fit,.tcx,.zip" 
                                     multiple
                                     hidden 
                                     ref={fileInputRef} 
