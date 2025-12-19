@@ -30,14 +30,14 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const ALLOWED_EXTENSIONS = ['.gpx', '.tcx', '.fit', '.zip'];
+  // Explicit MIME types to hint OS to open "Files" app instead of "Gallery/Camera"
+  const ACCEPTED_MIME_TYPES = "application/gpx+xml,application/vnd.garmin.tcx+xml,application/octet-stream,application/zip,application/x-zip-compressed,.gpx,.fit,.tcx,.zip";
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-        // Fix: Cast Array.from result to File[] to avoid 'unknown' type errors during iteration
         const files = Array.from(e.target.files) as File[];
         
-        // Strict Client-Side Filter: Only allow GPS/Zip extensions
-        // This prevents mobile OS from allowing selection of photos even if "accept" is set
+        // Strict Client-Side Filter
         const filteredFiles = files.filter(file => {
             const fileName = file.name.toLowerCase();
             return ALLOWED_EXTENSIONS.some(ext => fileName.endsWith(ext));
@@ -269,8 +269,7 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
                                 <label className="block text-xs font-bold text-gray-400 uppercase mb-2">{t('sync.upload_label')}</label>
                                 <input 
                                     type="file" 
-                                    // Modified to exclude media types and focus on documents for mobile pickers
-                                    accept=".gpx,.fit,.tcx,.zip" 
+                                    accept={ACCEPTED_MIME_TYPES}
                                     multiple
                                     hidden 
                                     ref={fileInputRef} 
