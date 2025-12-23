@@ -1,7 +1,6 @@
-
 import React, { useState } from 'react';
 import { Badge, Mission, Rarity, User } from '../../types';
-import { Award, Lock, CheckCircle, Search, Flag, Crown, Zap, Mountain, Globe, Home, Landmark, Swords, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users } from 'lucide-react';
+import { Award, Lock, CheckCircle, Search, Flag, Crown, Zap, Mountain, Globe, Home, Landmark, Swords, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users, Info } from 'lucide-react';
 import Pagination from '../Pagination';
 import { useLanguage } from '../../LanguageContext';
 
@@ -138,22 +137,46 @@ const ProfileAchievementsTab: React.FC<ProfileAchievementsTabProps> = ({ user, e
                     <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-3">
                         {currentBadges.map(badge => {
                             const isEquipped = user.favoriteBadgeId === badge.id;
+                            const glowStyles = getRarityGlow(badge.rarity);
+                            
                             return (
-                              <button 
-                                key={badge.id} 
-                                onClick={() => onEquipBadge(badge.id)}
-                                className={`flex flex-col items-center gap-1 group relative p-1 transition-all rounded-xl ${isEquipped ? 'bg-gray-900/50 ring-1 ring-emerald-500/50' : 'hover:bg-gray-700/30'}`} 
-                              >
-                                  <div className={`p-3 rounded-full border bg-opacity-10 backdrop-blur-sm transition-transform group-hover:scale-110 ${getRarityGlow(badge.rarity)}`}>
-                                      {renderBadgeIcon(badge.icon, "w-6 h-6 md:w-8 md:h-8")}
+                              <div key={badge.id} className="relative group flex flex-col items-center">
+                                  {/* TOOLTIP */}
+                                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-3 glass-panel-heavy rounded-xl shadow-2xl opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none z-[100] transform scale-90 group-hover:scale-100">
+                                      <div className="flex items-center gap-2 mb-1.5">
+                                          <div className={`p-1.5 rounded-lg ${glowStyles.split(' ')[2]} ${glowStyles.split(' ')[3]}`}>
+                                              {renderBadgeIcon(badge.icon, "w-4 h-4")}
+                                          </div>
+                                          <div className="min-w-0">
+                                              <p className="text-xs font-bold text-white truncate">{badge.name}</p>
+                                              <p className={`text-[8px] font-black uppercase tracking-widest ${getRarityText(badge.rarity)}`}>{badge.rarity}</p>
+                                          </div>
+                                      </div>
+                                      <p className="text-[10px] text-gray-400 leading-tight mb-2 italic">"{badge.description}"</p>
+                                      {(badge.rewardRun || badge.rewardGov) && (
+                                          <div className="flex gap-2 pt-2 border-t border-white/10">
+                                              {badge.rewardRun > 0 && <span className="text-[9px] font-mono font-bold text-emerald-400">+{badge.rewardRun} RUN</span>}
+                                              {badge.rewardGov > 0 && <span className="text-[9px] font-mono font-bold text-cyan-400">+{badge.rewardGov} GOV</span>}
+                                          </div>
+                                      )}
+                                      <div className="absolute left-1/2 -bottom-1 w-2 h-2 bg-gray-900 border-r border-b border-gray-700 transform -translate-x-1/2 rotate-45"></div>
                                   </div>
-                                  <span className={`text-[9px] font-bold text-center leading-none truncate w-full group-hover:text-white ${isEquipped ? 'text-emerald-400' : 'text-gray-500'}`}>
-                                      {badge.name}
-                                  </span>
-                                  {isEquipped && (
-                                      <div className="absolute top-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-gray-800 shadow shadow-emerald-500/50"></div>
-                                  )}
-                              </button>
+
+                                  <button 
+                                    onClick={() => onEquipBadge(badge.id)}
+                                    className={`flex flex-col items-center gap-1 w-full p-1 transition-all rounded-xl ${isEquipped ? 'bg-gray-900/50 ring-1 ring-emerald-500/50' : 'hover:bg-gray-700/30'}`} 
+                                  >
+                                      <div className={`p-3 rounded-full border bg-opacity-10 backdrop-blur-sm transition-transform group-hover:scale-110 ${glowStyles}`}>
+                                          {renderBadgeIcon(badge.icon, "w-6 h-6 md:w-8 md:h-8")}
+                                      </div>
+                                      <span className={`text-[9px] font-bold text-center leading-none truncate w-full group-hover:text-white ${isEquipped ? 'text-emerald-400' : 'text-gray-500'}`}>
+                                          {badge.name}
+                                      </span>
+                                      {isEquipped && (
+                                          <div className="absolute top-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-gray-800 shadow shadow-emerald-500/50"></div>
+                                      )}
+                                  </button>
+                              </div>
                             )
                         })}
                     </div>
@@ -179,14 +202,47 @@ const ProfileAchievementsTab: React.FC<ProfileAchievementsTabProps> = ({ user, e
               
               <div className="space-y-2">
                   {currentCompletedMissions.map(m => (
-                      <div key={m.id} className="relative group bg-gray-900 p-3 rounded-lg border border-gray-700 flex justify-between items-center hover:border-gray-600 transition-colors">
-                          <div className="flex items-center gap-3">
-                              <CheckCircle size={16} className={getRarityText(m.rarity)} />
-                              <span className="text-sm font-bold text-gray-300 group-hover:text-white transition-colors">{m.title}</span>
+                      <div key={m.id} className="relative group">
+                          {/* MISSION TOOLTIP */}
+                          <div className="absolute bottom-full left-4 mb-2 w-64 p-4 glass-panel-heavy rounded-2xl shadow-2xl opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none z-[100] transform scale-95 group-hover:scale-100 origin-bottom-left">
+                              <div className="flex items-center gap-2 mb-2">
+                                  <div className={`p-1.5 rounded bg-white/5 ${getRarityText(m.rarity)}`}>
+                                      <Award size={16} />
+                                  </div>
+                                  <span className="text-xs font-black uppercase tracking-widest text-white">{m.title}</span>
+                              </div>
+                              <p className="text-[11px] text-gray-400 leading-relaxed mb-3">{m.description}</p>
+                              <div className="grid grid-cols-2 gap-2 pt-3 border-t border-white/10">
+                                  <div>
+                                      <p className="text-[9px] text-gray-500 uppercase font-bold mb-1">Rewards Claimed</p>
+                                      <div className="space-y-0.5">
+                                          <p className="text-xs font-mono font-bold text-emerald-400">+{m.rewardRun} RUN</p>
+                                          {m.rewardGov > 0 && <p className="text-xs font-mono font-bold text-cyan-400">+{m.rewardGov} GOV</p>}
+                                      </div>
+                                  </div>
+                                  <div>
+                                      <p className="text-[9px] text-gray-500 uppercase font-bold mb-1">Rarity Class</p>
+                                      <p className={`text-xs font-bold ${getRarityText(m.rarity)}`}>{m.rarity}</p>
+                                  </div>
+                              </div>
+                              <div className="absolute left-6 -bottom-1 w-2 h-2 bg-gray-900 border-r border-b border-gray-700 rotate-45"></div>
                           </div>
-                          <div className="text-right">
-                              <span className="text-xs font-mono text-emerald-400 block">+{m.rewardRun} RUN</span>
-                              {m.rewardGov && m.rewardGov > 0 && <span className="text-[10px] font-mono text-cyan-400 block">+{m.rewardGov} GOV</span>}
+
+                          <div className="relative bg-gray-900 p-3 rounded-lg border border-gray-700 flex justify-between items-center hover:border-gray-600 transition-colors group-hover:bg-gray-800/80">
+                              <div className="flex items-center gap-3">
+                                  <CheckCircle size={16} className={getRarityText(m.rarity)} />
+                                  <div className="flex flex-col">
+                                      <span className="text-sm font-bold text-gray-300 group-hover:text-white transition-colors">{m.title}</span>
+                                      <span className={`text-[10px] font-bold uppercase tracking-tighter opacity-50 ${getRarityText(m.rarity)}`}>{m.rarity}</span>
+                                  </div>
+                              </div>
+                              <div className="flex items-center gap-4">
+                                  <div className="text-right">
+                                      <span className="text-xs font-mono font-bold text-emerald-400 block">+{m.rewardRun} RUN</span>
+                                      {m.rewardGov && m.rewardGov > 0 && <span className="text-[10px] font-mono text-cyan-400 block">+{m.rewardGov} GOV</span>}
+                                  </div>
+                                  <Info size={14} className="text-gray-600 group-hover:text-emerald-400 transition-colors" />
+                              </div>
                           </div>
                       </div>
                   ))}
