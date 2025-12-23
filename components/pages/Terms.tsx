@@ -33,7 +33,7 @@ const Terms: React.FC<TermsProps> = ({ onNavigate }) => {
         <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight uppercase">
           {t('page.terms.title')}
         </h1>
-        <p className="text-gray-500">{t('page.terms.last_updated')}: <span className="text-emerald-400 font-mono">January 15, 2025</span></p>
+        <p className="text-gray-500">{t('page.terms.last_updated')}: <span className="text-emerald-400 font-mono">December 1, 2025</span></p>
       </div>
 
       {/* Critical Disclaimer Banner */}

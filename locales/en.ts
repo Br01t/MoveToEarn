@@ -41,11 +41,11 @@ export const en = {
     "landing.modal.earn_run_title": "Mining via Movement",
     "landing.modal.earn_run_body": "Your physical activity is the mining power. Tracking your run generates RUN tokens based on distance, speed, and territory bonuses. Consistent runners earn streak multipliers.",
     "landing.modal.earn_gov_title": "Governance & Ownership",
-    "landing.modal.earn_gov_body": "GOV is the premium token with fixed supply. You earn it by Minting new Zones (expanding the map), holding territories (yield), or converting RUN in the Wallet.",
+    "landing.modal.earn_gov_body": "GOV is the premium token with fixed supply. You earn it by Minting new Zones (expanding the map), conquering territories (yield), or converting RUN in the Wallet.",
     "landing.modal.spend_title": "Tactical Items",
     "landing.modal.spend_body": "The Marketplace offers strategic items. Shields protect your zones from conquest. Boosts increase APY. Loot boxes can contain rare badges or instant rewards.",
     "landing.modal.burn_title": "Deflationary Economy",
-    "landing.modal.burn_body": "Every transaction (marketplace, zone minting, upgrades) burns a percentage of tokens. Additionally, a Global Burn event occurs monthly to reduce supply and reward holders.",
+    "landing.modal.burn_body": "A Global Burn event occurs monthly to reduce supply and reward holders. That means inactive RUN tokens are permanently removed from circulation, increasing scarcity for active players.",
 
     "dash.sync_btn_main": "Sync Activity",
     "dash.sync_btn_sub": "Upload GPS Data",
