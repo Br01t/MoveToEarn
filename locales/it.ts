@@ -40,7 +40,7 @@ export const it = {
     "landing.modal.earn_gov_title": "Accumulo di Valore",
     "landing.modal.earn_gov_body": "GOV rappresenta il valore puro all'interno del network ZoneRun. A differenza di RUN, non può essere farmato facilmente. Viene assegnato solo per trionfi strategici: creare nuove Zone sulla mappa globale, conquistare con successo territorio da altri giocatori o completare obiettivi di alto livello.",
     "landing.modal.spend_title": "Economia Tattica",
-    "landing.modal.spend_body": "Il Mercato Nero ti permette di convertire il tuo sforzo fisico in vantaggi digitali. Acquista 'Scudi Zona' per proteggere il tuo territorio dagli attacchi senza dover correre, o 'Boost di Rendimento' per aumentare la generazione di reddito diretta dei tuoi RUN/km.",
+    "landing.modal.spend_body": "Il Mercato Nero ti permette di convertire il tuo sforzo fisico in vantaggi digitali. Acquista 'Scudi Zona' per proteggere il tuo territorio dagli attacchi senza dover correre, o 'Boost di Rendimento' per aumentare la generazione di reddito diretta dei tuoi RUN/Km.",
     "landing.modal.burn_title": "Meccaniche Deflazionistiche",
     "landing.modal.burn_body": "Per prevenire eccessiva inflazione, il protocollo esegue un 'Burn Globale' ogni mese. Una percentuale dei RUN in circolazione viene distrutta. Questo garantisce che i token inattivi vengano rimossi, aumentando la scarsità per i giocatori attivi e premiando coloro che contribuiscono al network.",
     "landing.close": "Chiudi",
