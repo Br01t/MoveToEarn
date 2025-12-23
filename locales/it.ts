@@ -42,7 +42,7 @@ export const it = {
     "landing.modal.spend_title": "Economia Tattica",
     "landing.modal.spend_body": "Il Mercato Nero ti permette di convertire il tuo sforzo fisico in vantaggi digitali. Acquista 'Scudi Zona' per proteggere il tuo territorio dagli attacchi mentre dormi, o 'Boost di Rendimento' per aumentare la generazione di reddito passivo delle tue terre.",
     "landing.modal.burn_title": "Meccaniche Deflazionistiche",
-    "landing.modal.burn_body": "Per prevenire l'iperinflazione, il protocollo esegue un 'Burn Globale' ogni settimana. Una percentuale dei RUN in circolazione viene distrutta. I giocatori che detengono territorio durante un evento di burn ricevono airdrop di GOV, premiando il mantenimento strategico a lungo termine rispetto al farming a breve termine.",
+    "landing.modal.burn_body": "Per prevenire l'iperinflazione, il protocollo esegue un 'Burn Globale' ogni mese. Una percentuale dei RUN in circolazione viene distrutta. Questo garantisce che i token inattivi vengano rimossi, aumentando la scarsità per i giocatori attivi e premiando coloro che contribuiscono al network.",
     "landing.close": "Chiudi",
     "dash.yield": "Rendita",
     "dash.search_placeholder": "Cerca zona...",
