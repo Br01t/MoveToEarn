@@ -1,7 +1,6 @@
-
 import React, { useState } from 'react';
 import { User, Zone, Badge, LevelConfig } from '../../types';
-import { X, Activity, Crown, Maximize2, ZoomIn } from 'lucide-react';
+import { X, Activity, Crown, Maximize2, ZoomIn, Info } from 'lucide-react';
 import { renderBadgeIcon, renderLevelIcon } from './LeaderboardIcons';
 
 interface PlayerProfileModalProps {
@@ -78,6 +77,15 @@ const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
         }
     };
 
+    const getRarityTextClass = (rarity: string) => {
+        switch(rarity) {
+            case 'LEGENDARY': return 'text-yellow-400';
+            case 'EPIC': return 'text-purple-400';
+            case 'RARE': return 'text-cyan-400';
+            default: return 'text-gray-400';
+        }
+    };
+
     return (
         <>
             {/* FULLSCREEN IMAGE OVERLAY */}
@@ -102,10 +110,10 @@ const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
             )}
 
             <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in">
-                <div className="glass-panel-heavy rounded-2xl w-full max-w-sm shadow-2xl relative overflow-hidden animate-slide-up">
+                <div className="glass-panel-heavy rounded-2xl w-full max-w-sm shadow-2xl relative overflow-visible animate-slide-up">
                     
                     {/* Header Banner - Semi-transparent */}
-                    <div className="h-24 bg-gradient-to-r from-gray-800/80 to-gray-900/80 relative border-b border-white/5">
+                    <div className="h-24 bg-gradient-to-r from-gray-800/80 to-gray-900/80 relative border-b border-white/5 rounded-t-2xl">
                         <button onClick={onClose} className="absolute top-4 right-4 text-white hover:text-red-400 z-10 bg-black/40 rounded-full p-1 transition-colors"><X size={20}/></button>
                     </div>
 
@@ -163,16 +171,33 @@ const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                             </div>
                         </div>
 
-                        {/* Favorite Badge */}
+                        {/* Favorite Badge with Tooltip */}
                         {favoriteBadge ? (
-                            <div className="bg-black/30 p-4 rounded-xl border border-white/5 flex items-center gap-4 text-left">
-                                <div className={`p-3 rounded-full border bg-gray-900 ${getRarityColor(favoriteBadge.rarity)}`}>
-                                    {renderBadgeIcon(favoriteBadge.icon, "w-6 h-6")}
+                            <div className="relative group">
+                                {/* HUD TOOLTIP */}
+                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-64 p-4 glass-panel-heavy rounded-2xl shadow-2xl opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none z-[110] transform scale-95 group-hover:scale-100 border border-white/10 text-center">
+                                    <div className="flex flex-col items-center gap-2 mb-2">
+                                        <div className={`p-2 rounded-full border ${getRarityColor(favoriteBadge.rarity)}`}>
+                                            {renderBadgeIcon(favoriteBadge.icon, "w-6 h-6")}
+                                        </div>
+                                        <h5 className={`font-bold text-base leading-tight ${getRarityTextClass(favoriteBadge.rarity)}`}>{favoriteBadge.name}</h5>
+                                    </div>
+                                    <p className="text-xs text-gray-300 leading-relaxed italic">"{favoriteBadge.description}"</p>
+                                    <div className="absolute left-1/2 -bottom-1.5 w-3 h-3 bg-gray-900 border-r border-b border-white/10 transform -translate-x-1/2 rotate-45"></div>
                                 </div>
-                                <div>
-                                    <div className="text-[10px] text-gray-500 uppercase font-bold">{t('leader.profile.fav_badge')}</div>
-                                    <div className="font-bold text-white text-sm">{favoriteBadge.name}</div>
-                                    <div className="text-[10px] text-gray-400">{favoriteBadge.rarity}</div>
+
+                                <div className="bg-black/30 p-4 rounded-xl border border-white/5 flex items-center gap-4 text-left cursor-help transition-all group-hover:border-white/20 group-hover:bg-black/40">
+                                    <div className={`p-3 rounded-full border bg-gray-900 ${getRarityColor(favoriteBadge.rarity)}`}>
+                                        {renderBadgeIcon(favoriteBadge.icon, "w-6 h-6")}
+                                    </div>
+                                    <div className="flex-1">
+                                        <div className="flex justify-between items-start">
+                                            <div className="text-[10px] text-gray-500 uppercase font-bold">{t('leader.profile.fav_badge')}</div>
+                                            <Info size={12} className="text-gray-600 group-hover:text-emerald-400 transition-colors" />
+                                        </div>
+                                        <div className="font-bold text-white text-sm">{favoriteBadge.name}</div>
+                                        <div className="text-[10px] text-gray-400">{favoriteBadge.rarity}</div>
+                                    </div>
                                 </div>
                             </div>
                         ) : (
