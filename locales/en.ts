@@ -1,4 +1,3 @@
-
 export const en = {
     "nav.map": "Map",
     "nav.market": "Market",
@@ -80,6 +79,10 @@ export const en = {
     "zone.modal.shield_desc": "This will consume 1 Zone Shield to prevent any conquest attempts for 24h.",
     "zone.modal.confirm": "Confirm",
     "zone.modal.cancel": "Cancel",
+    "zone.interest_pool": "Interest Pool",
+    "zone.pool_empty": "Awaiting Activity",
+    "zone.pool_tooltip_title": "Sector Mining Logic",
+    "zone.pool_tooltip_body": "The pool accumulates 2% of RUN from every user's activity within this sector. Distributed every 24h or claimed upon conquest.",
 
     "sync.title": "Sync Activity",
     "sync.manual": "Manual Upload",
@@ -567,7 +570,6 @@ export const en = {
     "wp.overview.govern_desc": "Become Zone Governor once you claim the record. (Zone control, not Project Governance).",
 
     // UPDATED SECTION 2: ROADMAP
-    "wp.roadmap.title": "2. Strategic Roadmap",
     "wp.roadmap.phase1_title": "Phase 1: Genesis (Pre-Launch / Tester)",
     "wp.roadmap.phase1_desc": "Current phase. Restricted access for Beta Testers to populate the Hex Grid and test mining mechanics (Running). GOV tokens earned now are 'allocation points' converting to a guaranteed Airdrop at TGE. RUN balances may undergo partial resets for balancing.",
     "wp.roadmap.phase2_title": "Phase 2: Fair Launch (TGE)",
@@ -751,7 +753,7 @@ export const en = {
     "htp.fitbit.bulk_step_1": "Log in to Fitbit dashboard via web browser at fitbit.com.",
     "htp.fitbit.bulk_step_2": "Click gear icon (top right) and select 'Settings'.",
     "htp.fitbit.bulk_step_3": "In left menu, select 'Data Export'.",
-    "htp.fitbit.bulk_step_4": "Under 'Export Your Account Archive', click 'Request Data'. You will receive a confirmation email and then a download link.",
+    "htp.fitbit.bulk_step_4": "Under 'Export Your Account Archive', click 'Request Data'. You will receive an email with a link to download the zip file.",
 
     // Upload
     "htp.upload.title": "Upload & Integrity Guarantee",

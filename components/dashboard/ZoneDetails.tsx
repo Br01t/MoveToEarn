@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { Zone, User, Badge, Rarity } from '../../types';
-import { X, Crown, Clock, Shield, Medal, Lock, Zap, Swords, Flag, Award, Mountain, Globe, Home, Landmark, Swords as SwordsIcon, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users, AlertTriangle, CheckCircle, Coins, Activity } from 'lucide-react';
+import { X, Crown, Clock, Shield, Medal, Lock, Zap, Swords, Flag, Award, Mountain, Globe, Home, Landmark, Swords as SwordsIcon, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users, AlertTriangle, CheckCircle, Coins, Activity, Info } from 'lucide-react';
 import { useLanguage } from '../../LanguageContext';
 import { CONQUEST_COST } from '../../constants';
 import { useGlobalUI } from '../../contexts/GlobalUIContext';
@@ -175,12 +174,32 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
             </div>
 
             {/* Interest Pool Display */}
-            <div className="bg-emerald-900/30 p-2 rounded-lg border border-emerald-500/30 text-center flex items-center justify-center gap-3 backdrop-blur-sm">
-                <div className="text-left">
-                    <div className="text-xs text-emerald-200/70 uppercase font-bold tracking-wider">Interest Pool</div>
-                    <div className="font-mono text-emerald-400 font-bold text-base flex items-center gap-1">
-                        <Coins size={12} /> {(zone.interestPool || 0).toFixed(4)} RUN
+            <div className="bg-emerald-900/30 p-3 rounded-lg border border-emerald-500/30 text-center relative group backdrop-blur-sm">
+                {zone.interestPool > 0 ? (
+                    <div>
+                        <div className="text-xs text-emerald-200/70 uppercase font-bold tracking-wider">{t('zone.interest_pool')}</div>
+                        <div className="font-mono text-emerald-400 font-bold text-base flex items-center justify-center gap-1">
+                            <Coins size={12} /> {(zone.interestPool || 0).toFixed(4)} RUN
+                        </div>
                     </div>
+                ) : (
+                    <div className="flex flex-col items-center">
+                        <div className="text-xs text-gray-500 uppercase font-bold tracking-wider flex items-center gap-1.5">
+                            {t('zone.interest_pool')} <Info size={12} className="text-gray-600 hover:text-emerald-400 transition-colors cursor-help" />
+                        </div>
+                        <div className="text-gray-600 italic text-xs mt-1 uppercase font-black tracking-tighter">{t('zone.pool_empty')}</div>
+                    </div>
+                )}
+                
+                {/* TOOLTIP HUD */}
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 glass-panel-heavy rounded-xl shadow-2xl opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none z-[100] transform scale-90 group-hover:scale-100 text-left border border-emerald-500/30">
+                    <p className="text-[10px] text-emerald-400 font-black uppercase tracking-widest mb-1.5 flex items-center gap-1">
+                        <Activity size={10} /> {t('zone.pool_tooltip_title')}
+                    </p>
+                    <p className="text-[11px] text-gray-300 leading-relaxed font-medium">
+                        {t('zone.pool_tooltip_body')}
+                    </p>
+                    <div className="absolute left-1/2 -bottom-1.5 w-3 h-3 bg-gray-900 border-r border-b border-emerald-500/30 transform -translate-x-1/2 rotate-45"></div>
                 </div>
             </div>
 
