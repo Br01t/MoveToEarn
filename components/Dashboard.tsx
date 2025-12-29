@@ -90,11 +90,8 @@ const Dashboard: React.FC<DashboardProps> = ({
   // FETCH REAL DATA WHEN ZONE IS SELECTED
   useEffect(() => {
       if (selectedZone) {
-          console.log(`[Dashboard Debug] 🟢 Zone Selected: "${selectedZone.name}" (ID: ${selectedZone.id})`);
           
-          // Pass ID instead of Name for accurate lookup
           onGetZoneLeaderboard(selectedZone.id).then(data => {
-              console.log(`[Dashboard Debug] 📥 Leaderboard Data Received for ${selectedZone.name}:`, data);
               setZoneLeaderboard(data);
           });
       } else {

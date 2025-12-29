@@ -2,17 +2,14 @@
 import { createClient } from '@supabase/supabase-js';
 
 // 1. Prova a leggere dal file .env (assicurati che inizino con VITE_)
-const envUrl = (import.meta as any).env?.VITE_SUPABASE_URL;
-const envKey = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY;
+const env = (import.meta as any).env;
+const envUrl = env.VITE_SUPABASE_URL;
+const envKey = env.VITE_SUPABASE_ANON_KEY;
 
-// 2. Se non li trova nel .env, usa queste stringhe (INCOLLA QUI LE TUE CHIAVI SE NECESSARIO)
-// Esempio: const manualUrl = 'https://xyz.supabase.co';
-const manualUrl = ''; 
-const manualKey = '';
 
 // Logica di selezione
-const supabaseUrl = envUrl || manualUrl;
-const supabaseAnonKey = envKey || manualKey;
+const supabaseUrl = envUrl;
+const supabaseAnonKey = envKey;
 
 if (!supabaseUrl || !supabaseAnonKey) {
   console.warn("⚠️ ATTENZIONE: Credenziali Supabase mancanti! Il login non funzionerà.");

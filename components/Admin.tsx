@@ -79,13 +79,10 @@ const Admin: React.FC<AdminProps> = ({
   
   // Assicuriamo che il timestamp sia un numero, usando 0 come default se non definito
   const lastBurnTimestamp = lastBurnTimestampProp || 0;
-console.log("🔥 [Admin Load] lastBurnTimestamp Prop Value:", lastBurnTimestamp);
-  console.log("🔥 [Admin Load] lastBurnTimestamp Date:", lastBurnTimestamp > 0 ? new Date(lastBurnTimestamp).toLocaleString() : 'N/A');
   // Trigger data refresh when Admin component mounts.
   useEffect(() => {
       // Questo effect si attiva quando lastBurnTimestamp cambia
       if (lastBurnTimestamp > 0) {
-          console.log("🟢 [Admin RENDERED] lastBurnTimestamp VALIDO ricevuto dopo il fetch:", lastBurnTimestamp);
       }
   }, [lastBurnTimestamp]); // Dipendenza dalla prop
 
