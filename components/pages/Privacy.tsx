@@ -1,21 +1,25 @@
-
 import React from 'react';
 import { Lock, Eye, MapPin, Database, User, ShieldCheck, Trash2, KeyRound } from 'lucide-react';
 import { useLanguage } from '../../LanguageContext';
+import { ViewState } from '../../types';
 
-const Privacy: React.FC = () => {
-  const { t, tRich } = useLanguage();
+interface PrivacyProps {
+  onNavigate?: (view: ViewState) => void;
+}
 
-  const Section = ({ title, icon: Icon, children }: { title: string; icon: any; children: React.ReactNode }) => (
-    <div className="border-b border-gray-700/50 pb-8 last:border-0">
-      <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-        <Icon className="text-emerald-500" size={24} /> {title}
-      </h3>
-      <div className="text-gray-400 text-sm leading-relaxed space-y-4 text-justify">
-        {children}
-      </div>
+const Section = ({ title, icon: Icon, children }: React.PropsWithChildren<{ title: string; icon: any }>) => (
+  <div className="border-b border-gray-700/50 pb-8 last:border-0">
+    <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+      <Icon className="text-emerald-500" size={24} /> {title}
+    </h3>
+    <div className="text-gray-400 text-sm leading-relaxed space-y-4 text-justify">
+      {children}
     </div>
-  );
+  </div>
+);
+
+const Privacy: React.FC<PrivacyProps> = ({ onNavigate }) => {
+  const { t, tRich } = useLanguage();
 
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-8 space-y-8 pb-24">
@@ -28,7 +32,7 @@ const Privacy: React.FC = () => {
             <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight uppercase">
             {t('page.privacy.title')}
             </h1>
-            <p className="text-gray-500">{t('page.privacy.last_updated')}: <span className="text-emerald-400 font-mono">December 1, 2025</span></p>
+            <p className="text-gray-500">{t('page.privacy.last_updated')}: <span className="text-emerald-400 font-mono">January 15, 2025</span></p>
         </div>
 
         {/* Intro */}
@@ -68,7 +72,28 @@ const Privacy: React.FC = () => {
             </Section>
 
             <Section title={t('page.privacy.sec6.title')} icon={Trash2}>
-                <p>{tRich('page.privacy.sec6.body')}</p>
+                <p>
+                    {(() => {
+                        const fullText = t('page.privacy.sec6.body');
+                        const parts = fullText.split('Community');
+                        
+                        if (parts.length > 1) {
+                            return (
+                                <>
+                                    {parts[0]}
+                                    <span 
+                                        onClick={() => onNavigate?.('COMMUNITY')} 
+                                        className="text-emerald-400 hover:text-emerald-300 hover:underline cursor-pointer font-bold transition-colors inline-block"
+                                    >
+                                        Community
+                                    </span>
+                                    {parts[1]}
+                                </>
+                            );
+                        }
+                        return tRich('page.privacy.sec6.body');
+                    })()}
+                </p>
             </Section>
 
         </div>

@@ -349,11 +349,11 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
              {!isEditing && (
                 <div className="flex flex-col gap-2 mt-4 md:mt-8 items-end min-w-[140px]">
-                    {!user.isPremium && (
+                    {/* {!user.isPremium && (
                         <button onClick={onUpgradePremium} className="w-full px-5 py-2.5 bg-yellow-600 hover:bg-yellow-500 text-white font-bold rounded-xl text-sm shadow-lg flex items-center justify-center gap-2 transition-colors">
                             <Crown size={16} /> {t('profile.upgrade_pro')}
                         </button>
-                    )}
+                    )} */}
                     <button 
                         onClick={onViewSubmissions}
                         className="w-full px-4 py-2 bg-gray-900 border border-gray-700 hover:border-gray-500 text-gray-400 hover:text-white rounded-xl text-xs font-medium transition-colors flex items-center justify-center gap-2"

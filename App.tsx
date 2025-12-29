@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef, Suspense } from "react";
 import Navbar from "./components/Navbar";
 import LandingPage from "./components/LandingPage";
@@ -412,7 +411,7 @@ const AppContent: React.FC = () => {
                 {currentView === "RULES" && <GameRules onBack={() => setCurrentView(user ? "DASHBOARD" : "LANDING")} onNavigate={setCurrentView} isAuthenticated={!!user} />}
                 {currentView === "WHITEPAPER" && <Whitepaper onBack={() => setCurrentView(user ? "DASHBOARD" : "LANDING")} onNavigate={setCurrentView} isAuthenticated={!!user} />}
                 {currentView === "HOW_TO_PLAY" && <HowToPlay onBack={() => setCurrentView(user ? "DASHBOARD" : "LANDING")} isAuthenticated={!!user} />}
-                {currentView === "PRIVACY" && <Privacy />}
+                {currentView === "PRIVACY" && <Privacy onNavigate={setCurrentView} />}
                 {currentView === "TERMS" && <Terms onNavigate={setCurrentView} />}
                 {currentView === "COMMUNITY" && <Community />}
               </Suspense>

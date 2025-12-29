@@ -417,10 +417,19 @@ export const en = {
 
     "page.privacy.title": "Privacy Policy",
     "page.terms.title": "Terms of Service",
-    "page.comm.title": "Community",
+    "page.comm.title": "Community Hub",
+    "page.comm.subtitle": "Connect with fellow runners and the development team across our digital frontier.",
+    "page.comm.email": "Direct Contact",
     "page.comm.discord": "Discord Server",
-    "page.comm.twitter": "Twitter / X",
-    "page.comm.dao": "DAO Governance",
+    "page.comm.discord_desc": "Join 50,000+ runners. Coordinate attacks, trade items, and chat with devs.",
+    "page.comm.telegram": "Telegram Channel",
+    "page.comm.telegram_desc": "Instant alerts for Burn Events, Flash Drops, and network status updates.",
+    "page.comm.twitter": "X (Twitter)",
+    "page.comm.twitter_desc": "Follow our primary broadcast channel for public announcements and community highlights.",
+    "page.comm.instagram": "Instagram",
+    "page.comm.instagram_desc": "Visual logs of the world map expansion and runner of the month spotlights.",
+    "page.comm.footer_title": "Protocol Support",
+    "page.comm.footer_desc": "Need technical assistance? Use the 'Report Bug' feature or reach out via email.",
 
     // Cookie Banner
     "privacy.banner.title": "Privacy Protocol",
