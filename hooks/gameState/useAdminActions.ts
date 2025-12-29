@@ -1,7 +1,7 @@
-
 import { supabase } from '../../supabaseClient';
 import { Item, Mission, Badge, Zone, LeaderboardConfig, LevelConfig, User, AchievementLog } from '../../types';
 import { useGlobalUI } from '../../contexts/GlobalUIContext';
+import { sendSlackNotification } from '../../utils/slack';
 
 interface AdminActionsProps {
     fetchGameData: () => Promise<void>;
@@ -34,6 +34,10 @@ export const useAdminActions = ({
       setLastBurnTimestamp(Date.now());
       await fetchUserProfile(user.id);
       await fetchGameData();
+      
+      // Slack Notification: Global Burn routed to SYSTEM channel
+      sendSlackNotification(`*Burn Initiated!* \nGlobal Burn executed by admin. \nTokens Destroyed: \`${data?.total_burned?.toFixed(0) || '0'} RUN\``, 'ALERT', 'SYSTEM');
+      
       return { success: true, totalBurned: data?.total_burned || 0, count: data?.users_affected || 0 };
   };
 
@@ -125,7 +129,7 @@ export const useAdminActions = ({
   };
 
   const deleteZone = async (id: string) => {
-      const { error } = await supabase.from('zones').delete().eq('id', id);
+      const { error = null } = await supabase.from('zones').delete().eq('id', id);
       if (!error) await fetchGameData();
       return { error: error?.message, success: !error };
   };
@@ -146,13 +150,13 @@ export const useAdminActions = ({
   };
 
   const deleteBugReport = async (id: string) => {
-      const { error } = await supabase.from('bug_reports').delete().eq('id', id);
+      const { error = null } = await supabase.from('bug_reports').delete().eq('id', id);
       if (!error) setBugReports(prev => prev.filter(b => b.id !== id));
       return { success: !error, error: error?.message };
   };
 
   const deleteSuggestion = async (id: string) => {
-      const { error } = await supabase.from('suggestions').delete().eq('id', id);
+      const { error = null } = await supabase.from('suggestions').delete().eq('id', id);
       if (!error) setSuggestions(prev => prev.filter(s => s.id !== id));
       return { success: !error, error: error?.message };
   };
@@ -176,7 +180,7 @@ export const useAdminActions = ({
   };
 
   const deleteLeaderboard = async (id: string) => {
-      const { error } = await supabase.from('leaderboards').delete().eq('id', id);
+      const { error = null } = await supabase.from('leaderboards').delete().eq('id', id);
       if (!error) await fetchGameData();
       return { error: error?.message, success: !error };
   };
@@ -204,7 +208,7 @@ export const useAdminActions = ({
   };
 
   const deleteLevel = async (id: string) => {
-      const { error } = await supabase.from('levels').delete().eq('id', id);
+      const { error = null } = await supabase.from('levels').delete().eq('id', id);
       if (!error) await fetchGameData();
       return { error: error?.message, success: !error };
   };

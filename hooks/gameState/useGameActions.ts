@@ -1,9 +1,9 @@
-
 import React from 'react';
 import { supabase } from '../../supabaseClient';
 import { User, Zone, Item, InventoryItem, Transaction, RunEntry, BugReport, Suggestion } from '../../types';
 import { CONQUEST_COST, CONQUEST_REWARD_GOV, PREMIUM_COST, ITEM_DURATION_SEC, MINT_COST, MINT_REWARD_GOV } from '../../constants';
 import { useGlobalUI } from '../../contexts/GlobalUIContext';
+import { sendSlackNotification } from '../../utils/slack';
 
 interface GameActionsProps {
     user: User | null;
@@ -55,7 +55,6 @@ export const useGameActions = ({
   const recordRun = async (userId: string, runData: RunEntry, updatedZones: Zone[]) => {
       try {
           if (!userId) throw new Error("User ID is missing.");
-          console.log("💾 [RECORD RUN] Syncing run:", runData.id);
 
           // 1. Inserimento Log Corsa
           const { error: runError } = await supabase.from('runs').insert({
@@ -118,6 +117,10 @@ export const useGameActions = ({
           if (runData.runEarned > 0) {
               await logTransaction(userId, 'IN', 'RUN', runData.runEarned, `Run Reward: ${runData.location}`);
           }
+
+          // Slack Notification: Valid Run sent to SYNC channel
+          sendSlackNotification(`*Attività registrata!* \nUtente: \`${user?.name}\` \nDistanza: \`${runData.km.toFixed(2)} KM\` \nLocation: \`${runData.location}\` \nRewards: \`+${runData.runEarned} RUN\``, 'INFO', 'SYNC');
+
           return { success: true };
       } catch (err: any) {
           console.error("❌ [RECORD RUN FAILED]", err.message);
@@ -128,11 +131,9 @@ export const useGameActions = ({
   // Fix: Completed mintZone implementation
   const mintZone = async (newZone: Zone, shiftedZones: Zone[]) => {
       if (!user) return { success: false, error: "Not logged in" };
-      console.log("🛠️ [MINT ZONE] Attempting to create zone:", newZone.name);
 
       try {
           // 1. Crea la zona (Mappatura nomi colonne DB)
-          // La colonna 'location' è di tipo geography, richiede formato WKT: POINT(longitude latitude)
           const { error: zoneError } = await supabase.from('zones').insert({
               id: newZone.id,
               name: newZone.name,
@@ -176,7 +177,9 @@ export const useGameActions = ({
           await logTransaction(user.id, 'OUT', 'RUN', MINT_COST, `Mint Zone: ${newZone.name}`);
           await logTransaction(user.id, 'IN', 'GOV', MINT_REWARD_GOV, `Mint Reward: ${newZone.name}`);
 
-          console.log("✅ [MINT ZONE] Success!");
+          // Slack Notification: Minting sent to MAP channel
+          sendSlackNotification(`*Nuova zona creata!* \nUtente: \`${user.name}\` \nZona: \`${newZone.name}\` \nCoordinate: \`${newZone.lat.toFixed(4)}, ${newZone.lng.toFixed(4)}\``, 'SUCCESS', 'MAP');
+
           return { success: true };
       } catch (err: any) {
           console.error("❌ [MINT ZONE FAILED]", err.message);
@@ -219,6 +222,9 @@ export const useGameActions = ({
 
       if (!error) {
           setZones(prev => prev.map(z => z.id === zoneId ? { ...z, ownerId: user.id, interestPool: 0, recordKm: 0, defenseLevel: 1 } : z));
+          
+          // Slack Notification: Conquest sent to MAP channel
+          sendSlackNotification(`*Zona conquistata!* \nNuovo proprietario: \`${user.name}\` \nZona: \`${zone.name}\``, 'ALERT', 'MAP');
       }
   };
 
@@ -310,7 +316,7 @@ export const useGameActions = ({
       const newGov = parseFloat((user.govBalance - govAmount).toFixed(2));
       const newRun = parseFloat((user.runBalance + runToReceive).toFixed(2));
 
-      const { error } = await supabase.from('profiles').update({
+      const { error = null } = await supabase.from('profiles').update({
           gov_balance: newGov,
           run_balance: newRun
       }).eq('id', user.id);
@@ -370,6 +376,9 @@ export const useGameActions = ({
               status: data.status
           }, ...prev]);
 
+          // Slack Notification: Bug sent to BUGS channel
+          sendSlackNotification(`*Nuovo Bug Report!* \nUtente: \`${user.name}\` \nDescrizione: \`${description.substring(0, 100)}${description.length > 100 ? '...' : ''}\``, 'WARNING', 'BUGS');
+
           return true;
       } catch (err) {
           console.error("Bug report failed:", err);
@@ -400,6 +409,9 @@ export const useGameActions = ({
               description: data.description,
               timestamp: data.timestamp
           }, ...prev]);
+
+          // Slack Notification: Suggestion sent to IDEAS channel
+          sendSlackNotification(`*Nuova proposta!* \nUtente: \`${user.name}\` \nTitolo: \`${title}\` \nDettagli: \`${description.substring(0, 100)}...\``, 'INFO', 'IDEAS');
 
           return true;
       } catch (err) {
@@ -447,7 +459,6 @@ export const useGameActions = ({
       }
   };
 
-  // Fix: Added the missing return statement to provide actions to useGameState
   return {
       logTransaction, recordRun, mintZone, claimZone, buyItem, useItem, swapGovToRun, buyFiatGov, reportBug, submitSuggestion, upgradePremium, updateUser
   };

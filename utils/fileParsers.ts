@@ -10,7 +10,6 @@ export interface ActivityPoint {
 
 // Helper: Parse FIT file (Binary)
 export const parseFIT = (buffer: ArrayBuffer): Promise<ActivityPoint[][]> => {
-    console.log("📂 [PARSER] Detected FIT format.");
     return new Promise((resolve, reject) => {
         const parser = new FitParser({
             force: true,
@@ -72,7 +71,6 @@ export const parseFIT = (buffer: ArrayBuffer): Promise<ActivityPoint[][]> => {
 
 // Helper: Parse JSON
 export const parseJSON = (text: string): ActivityPoint[][] => {
-    console.log("📂 [PARSER] Detected JSON format.");
     try {
         const json = JSON.parse(text);
         const points: ActivityPoint[] = [];
@@ -119,7 +117,6 @@ export const parseJSON = (text: string): ActivityPoint[][] => {
 
 // Helper: Parse CSV
 export const parseCSV = (text: string): ActivityPoint[][] => {
-    console.log("📂 [PARSER] Detected CSV format.");
     const lines = text.split(/\r?\n/);
     if (lines.length < 2) throw new Error("CSV file is empty or invalid.");
 
@@ -279,7 +276,6 @@ export const parseGPXInternal = (xmlDoc: Document): ActivityPoint[][] => {
 
 // Main Parser Entry
 export const parseActivityFile = async (data: string | ArrayBuffer, filename: string): Promise<{ lat: number, lng: number, ele: number, time: Date }[][]> => {
-    console.log("📂 [PARSER] Starting Parsing:", filename);
     const lowerName = filename.toLowerCase();
 
     if (lowerName.endsWith('.fit') && typeof data !== 'string') {

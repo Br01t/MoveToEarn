@@ -321,7 +321,6 @@ export const useGameData = () => {
   };
 
   const fetchZoneLeaderboard = async (zoneId: string) => {
-      console.log(`[Leaderboard Debug] 🔍 Fetching for Zone ID: ${zoneId}`);
       try {
           const { data: rpcData, error: rpcError } = await supabase.rpc('get_zone_leaderboard', { target_zone_id: zoneId });
 
