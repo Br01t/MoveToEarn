@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { User, Zone, InventoryItem, ViewState, Badge, RunAnalysisData } from '../types';
 import { UploadCloud, History, X, Calendar } from 'lucide-react';
@@ -47,15 +46,17 @@ const Dashboard: React.FC<DashboardProps> = ({
   // Map View State
   const [view, setView] = useState({ x: window.innerWidth / 2, y: window.innerHeight / 2, scale: 0.8 });
   
-  // Dragging State (Refs for performance and to avoid stale closures in memoized child)
+  // Dragging & Pinch State
   const isDragging = useRef(false);
   const lastMousePos = useRef({ x: 0, y: 0 });
+  const initialPinchDistance = useRef<number | null>(null);
+  const initialPinchScale = useRef<number>(0.8);
+  const initialMidpointWorld = useRef({ x: 0, y: 0 });
+  
+  const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
 
-  // Initialize to 0 to force density centering on mount even if data exists
   const prevZonesLengthRef = useRef(0);
-
-  // Derived Values - earningRate logic removed
 
   const boostItem: InventoryItem | undefined = user.inventory.find(i => i.type === 'BOOST');
   const defenseItem: InventoryItem | undefined = user.inventory.find(i => i.type === 'DEFENSE');
@@ -78,7 +79,6 @@ const Dashboard: React.FC<DashboardProps> = ({
       historyPage * RUNS_PER_PAGE
   );
 
-  // --- Zone Logic Helpers ---
   const getOwnerDetails = (ownerId: string | null) => {
       if (!ownerId) return { name: 'Unclaimed', avatar: null, badge: null };
       let userData = ownerId === user.id ? user : users[ownerId];
@@ -87,10 +87,8 @@ const Dashboard: React.FC<DashboardProps> = ({
       return { name: userData.name, avatar: userData.avatar, badge: badge };
   };
 
-  // FETCH REAL DATA WHEN ZONE IS SELECTED
   useEffect(() => {
       if (selectedZone) {
-          
           onGetZoneLeaderboard(selectedZone.id).then(data => {
               setZoneLeaderboard(data);
           });
@@ -99,73 +97,50 @@ const Dashboard: React.FC<DashboardProps> = ({
       }
   }, [selectedZone]);
 
-  // --- Effects ---
-  
-  // DENSITY CENTERING ALGORITHM
-  // Finds the cluster with the most zones and calculates its center
   const calculateDensityCenter = (currentZones: Zone[]) => {
       if (currentZones.length === 0) return null;
-
-      // 1. Group zones into "buckets" (sectors of approx 5x5 hexes)
       const CLUSTER_SIZE = 5;
       const clusters: Record<string, Zone[]> = {};
-
       currentZones.forEach(z => {
           const key = `${Math.floor(z.x / CLUSTER_SIZE)},${Math.floor(z.y / CLUSTER_SIZE)}`;
           if (!clusters[key]) clusters[key] = [];
           clusters[key].push(z);
       });
-
-      // 2. Find the cluster with the highest population
       let densestCluster: Zone[] = [];
       Object.values(clusters).forEach(c => {
           if (c.length > densestCluster.length) densestCluster = c;
       });
-
-      // If broad dispersion, fallback to all zones
       const targetGroup = densestCluster.length > 0 ? densestCluster : currentZones;
-
-      // 3. Calculate Average Axial Coordinate (Q, R) of that cluster
       let sumQ = 0, sumR = 0;
       targetGroup.forEach(z => {
           sumQ += z.x;
           sumR += z.y;
       });
-
       const avgQ = sumQ / targetGroup.length;
       const avgR = sumR / targetGroup.length;
-
-      // 4. Convert to Pixel Coordinates
       const pos = getHexPixelPosition(avgQ, avgR, HEX_SIZE);
-      
       return {
-          x: window.innerWidth / 2 - pos.x * 0.8, // Using initial scale 0.8
+          x: window.innerWidth / 2 - pos.x * 0.8,
           y: window.innerHeight / 2 - pos.y * 0.8
       };
   };
 
   useEffect(() => {
-    // CASE A: First Load (Zones appear from 0 to N) -> Center on Density
     if (prevZonesLengthRef.current === 0 && zones.length > 0) {
         const center = calculateDensityCenter(zones);
         if (center) {
             setView(v => ({ ...v, x: center.x, y: center.y }));
         }
     }
-    // CASE B: New Zone Minted (N -> N+1) -> Focus on the specific new zone
     else if (zones.length > prevZonesLengthRef.current) {
         const newZone = zones[zones.length - 1];
         const pos = getHexPixelPosition(newZone.x, newZone.y, HEX_SIZE);
         const newX = window.innerWidth / 2 - pos.x * view.scale;
         const newY = window.innerHeight / 2 - pos.y * view.scale;
-        
         setView(v => ({ ...v, x: newX, y: newY }));
     }
     prevZonesLengthRef.current = zones.length;
-  }, [zones]); // Removed view.scale dependency to avoid loops during init
-
-  // --- Map Interactions ---
-  // Note: Wheel zoom handler removed to restrict zooming to buttons only.
+  }, [zones]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     isDragging.current = true;
@@ -184,44 +159,97 @@ const Dashboard: React.FC<DashboardProps> = ({
       isDragging.current = false;
   };
 
-  const handleTouchStart = (e: React.TouchEvent) => {
+  // Helper per calcolare distanza e punto medio touch
+  const getTouchMetrics = (touches: TouchList) => {
+    const dx = touches[0].clientX - touches[1].clientX;
+    const dy = touches[0].clientY - touches[1].clientY;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    const midpoint = {
+      x: (touches[0].clientX + touches[1].clientX) / 2,
+      y: (touches[0].clientY + touches[1].clientY) / 2
+    };
+    return { distance, midpoint };
+  };
+
+  // Usiamo useEffect per listener non-passivi per bloccare lo zoom del browser
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleTouchStart = (e: TouchEvent) => {
       if (e.touches.length === 1) {
-          isDragging.current = true;
-          lastMousePos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        isDragging.current = true;
+        lastMousePos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        initialPinchDistance.current = null;
+      } else if (e.touches.length === 2) {
+        isDragging.current = false;
+        const { distance, midpoint } = getTouchMetrics(e.touches);
+        initialPinchDistance.current = distance;
+        initialPinchScale.current = view.scale;
+        
+        // Salviamo il punto medio in "world coordinates" (relative alla mappa)
+        initialMidpointWorld.current = {
+          x: (midpoint.x - view.x) / view.scale,
+          y: (midpoint.y - view.y) / view.scale
+        };
       }
-  };
+    };
 
-  const handleTouchMove = (e: React.TouchEvent) => {
-      if (!isDragging.current || e.touches.length !== 1) return;
-      const dx = e.touches[0].clientX - lastMousePos.current.x;
-      const dy = e.touches[0].clientY - lastMousePos.current.y;
-      setView(v => ({ ...v, x: v.x + dx, y: v.y + dy }));
-      lastMousePos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-  };
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length === 1 && isDragging.current) {
+        const dx = e.touches[0].clientX - lastMousePos.current.x;
+        const dy = e.touches[0].clientY - lastMousePos.current.y;
+        setView(v => ({ ...v, x: v.x + dx, y: v.y + dy }));
+        lastMousePos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      } else if (e.touches.length === 2 && initialPinchDistance.current !== null) {
+        const { distance, midpoint } = getTouchMetrics(e.touches);
+        const ratio = distance / initialPinchDistance.current;
+        const newScale = Math.min(2.5, Math.max(0.3, initialPinchScale.current * ratio));
+        
+        // Calcoliamo la nuova posizione per mantenere il punto medio fisso sotto le dita
+        const newX = midpoint.x - (initialMidpointWorld.current.x * newScale);
+        const newY = midpoint.y - (initialMidpointWorld.current.y * newScale);
+        
+        setView({ x: newX, y: newY, scale: newScale });
+      }
+      
+      if (e.cancelable) e.preventDefault();
+    };
 
-  const handleTouchEnd = () => {
+    const handleTouchEnd = () => {
       isDragging.current = false;
-  };
+      initialPinchDistance.current = null;
+    };
+
+    container.addEventListener('touchstart', handleTouchStart, { passive: false });
+    container.addEventListener('touchmove', handleTouchMove, { passive: false });
+    container.addEventListener('touchend', handleTouchEnd);
+
+    return () => {
+      container.removeEventListener('touchstart', handleTouchStart);
+      container.removeEventListener('touchmove', handleTouchMove);
+      container.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [view]); // Dipendenza da view necessaria per aggiornare i world points correttamente
 
   const zoomIn = () => setView(v => ({ ...v, scale: Math.min(v.scale + 0.2, 2.5) }));
   const zoomOut = () => setView(v => ({ ...v, scale: Math.max(v.scale - 0.2, 0.3) }));
 
-  // Center map on the "Empire Center" (Geometric center of all zones)
   const handleRecenter = () => {
       if (zones.length === 0) return;
-      
       const center = calculateDensityCenter(zones);
       if (center) {
           setView(v => ({ ...v, x: center.x, y: center.y }));
       }
   };
 
-  // --- Prep Render Data ---
   const ownerDetails = selectedZone ? getOwnerDetails(selectedZone.ownerId) : null;
 
   return (
-    // Changed bg-gray-900 to bg-transparent to show global background
-    <div className="relative w-full h-[calc(100vh-56px)] md:h-[calc(100vh-64px)] overflow-hidden bg-transparent shadow-inner">
+    <div 
+      ref={containerRef}
+      className="relative w-full h-[calc(100vh-56px)] md:h-[calc(100vh-64px)] overflow-hidden bg-transparent shadow-inner touch-none"
+    >
       
       <DashboardHUD 
           runBalance={user.runBalance} 
@@ -244,7 +272,6 @@ const Dashboard: React.FC<DashboardProps> = ({
 
       <DashboardControls onZoomIn={zoomIn} onZoomOut={zoomOut} />
 
-      {/* Sync Run Button - Adjusted bottom position for mobile from 36 to 44 (approx 176px) to clear 2-row navbar */}
       <div className="absolute bottom-44 md:bottom-10 left-1/2 transform -translate-x-1/2 z-30 flex items-center justify-center">
             <div className="absolute inset-0 bg-emerald-500 rounded-full animate-ping opacity-20 duration-1000"></div>
             <div className="absolute inset-0 bg-emerald-400 rounded-full blur-xl opacity-40"></div>
@@ -263,7 +290,6 @@ const Dashboard: React.FC<DashboardProps> = ({
             </button>
       </div>
 
-      {/* HEX MAP COMPONENT */}
       <HexMap
           ref={svgRef}
           zones={zones}
@@ -277,12 +303,11 @@ const Dashboard: React.FC<DashboardProps> = ({
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
+          onTouchStart={() => {}} // Gestiti dal listener manuale
+          onTouchMove={() => {}} // Gestiti dal listener manuale
+          onTouchEnd={() => {}} // Gestiti dal listener manuale
       />
 
-      {/* ZONE DETAILS PANEL */}
       {selectedZone && ownerDetails && (
           <ZoneDetails 
               zone={selectedZone}
@@ -298,7 +323,6 @@ const Dashboard: React.FC<DashboardProps> = ({
           />
       )}
 
-      {/* HISTORY MODAL (Inline for now, could be extracted further) */}
       {showHistoryModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in">
               <div className="bg-gray-800 rounded-2xl border border-gray-700 w-full max-w-lg shadow-2xl flex flex-col max-h-[80vh]">
