@@ -1,9 +1,7 @@
-
 import React, { forwardRef, useEffect, useState, useRef, useMemo } from 'react';
 import { Zone, User } from '../../types';
 import { getHexPixelPosition } from '../../utils/geo';
-import { Zap, Shield } from 'lucide-react';
-import { useLanguage } from '../../LanguageContext';
+import { Zap, Shield, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface HexMapProps {
   zones: Zone[];
@@ -14,7 +12,6 @@ interface HexMapProps {
   filterMode: 'ALL' | 'MINE' | 'ENEMY';
   filterCountry: string;
   searchTerm: string;
-  // Interaction handlers passed from parent
   onMouseDown: (e: React.MouseEvent) => void;
   onMouseMove: (e: React.MouseEvent) => void;
   onMouseUp: () => void;
@@ -25,7 +22,6 @@ interface HexMapProps {
 
 const HEX_SIZE = 100;
 
-// Named component for dev tools and memoization
 const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({ 
     zones, user, view, selectedZoneId, onZoneClick, 
     filterMode, filterCountry, searchTerm,
@@ -35,7 +31,6 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
   const [recentlyClaimed, setRecentlyClaimed] = useState<Set<string>>(new Set());
   const prevOwnersRef = useRef<Record<string, string | null>>({});
 
-  // Detect Ownership Changes for Animation
   useEffect(() => {
     const newClaims = new Set<string>();
     zones.forEach(z => {
@@ -62,18 +57,43 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
     }
   }, [zones]);
 
-  // --- 1. CALCULATE FLIGHT PATHS (Global Network) ---
+  // --- LOGICA BUSSOLA HUD (NAVIGAZIONE FUORI CAMPO) ---
+  const compassState = useMemo(() => {
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    // Calcola i limiti del viewport in coordinate mondo
+    const minWorldX = (0 - view.x) / view.scale;
+    const maxWorldX = (width - view.x) / view.scale;
+    const minWorldY = (0 - view.y) / view.scale;
+    const maxWorldY = (height - view.y) / view.scale;
+
+    const state = {
+        north: false,
+        south: false,
+        east: false,
+        west: false
+    };
+
+    zones.forEach(z => {
+        const pos = getHexPixelPosition(z.x, z.y, HEX_SIZE);
+        if (pos.y < minWorldY) state.north = true;
+        if (pos.y > maxWorldY) state.south = true;
+        if (pos.x > maxWorldX) state.east = true;
+        if (pos.x < minWorldX) state.west = true;
+    });
+
+    return state;
+  }, [zones, view]);
+
   const flightPaths = useMemo(() => {
       const myZones = zones.filter(z => z.ownerId === user.id);
       if (myZones.length < 2) return [];
-
       const connections: { d: string, key: string }[] = [];
       const processedPairs = new Set<string>(); 
 
-      // For every zone I own, connect to the 2 nearest zones I also own.
       myZones.forEach(startZone => {
           const startPos = getHexPixelPosition(startZone.x, startZone.y, HEX_SIZE);
-
           const neighbors = myZones
               .filter(z => z.id !== startZone.id)
               .map(endZone => {
@@ -84,32 +104,21 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
               .sort((a, b) => a.dist - b.dist); 
 
           const closestNeighbors = neighbors.slice(0, 2);
-
           closestNeighbors.forEach(target => {
               const pairKey = [startZone.id, target.zone.id].sort().join('-');
-              
               if (!processedPairs.has(pairKey)) {
                   processedPairs.add(pairKey);
-                  
                   const endPos = target.pos;
                   const midX = (startPos.x + endPos.x) / 2;
                   const midY = (startPos.y + endPos.y) / 2;
-                  
                   const altitude = 80 + (target.dist * 0.15); 
-                  
                   const controlX = midX;
                   const controlY = midY - altitude;
-
                   const pathData = `M ${startPos.x} ${startPos.y} Q ${controlX} ${controlY} ${endPos.x} ${endPos.y}`;
-
-                  connections.push({
-                      d: pathData,
-                      key: pairKey
-                  });
+                  connections.push({ d: pathData, key: pairKey });
               }
           });
       });
-
       return connections;
   }, [zones, user.id]);
 
@@ -168,6 +177,18 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
             stroke-dasharray: 12, 8;
             animation: dash-flight 1.5s linear infinite;
           }
+          @keyframes compass-glow {
+            0%, 100% { opacity: 0.6; filter: drop-shadow(0 0 2px #10b981); }
+            50% { opacity: 1; filter: drop-shadow(0 0 10px #10b981); }
+          }
+          .compass-active {
+            animation: compass-glow 2s infinite ease-in-out;
+            color: #10b981 !important;
+          }
+          .compass-inactive {
+            opacity: 0.2;
+            color: #475569 !important;
+          }
           @keyframes icon-float {
             0%, 100% { transform: translate(-14px, 28px); }
             50% { transform: translate(-14px, 24px); }
@@ -177,6 +198,27 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
           }
         `}
       </style>
+
+      {/* --- STRATO HUD: COMPASS ARROWS --- */}
+      <div className="absolute inset-0 pointer-events-none z-30 flex items-center justify-center">
+          {/* NORD */}
+          <div className={`absolute top-16 left-1/2 -translate-x-1/2 p-2 ${compassState.north ? 'compass-active' : 'compass-inactive'}`}>
+              <ChevronUp size={32} strokeWidth={3} />
+          </div>
+          {/* SUD */}
+          <div className={`absolute bottom-32 left-1/2 -translate-x-1/2 p-2 ${compassState.south ? 'compass-active' : 'compass-inactive'}`}>
+              <ChevronDown size={32} strokeWidth={3} />
+          </div>
+          {/* EST */}
+          <div className={`absolute right-4 top-1/2 -translate-y-1/2 p-2 ${compassState.east ? 'compass-active' : 'compass-inactive'}`}>
+              <ChevronRight size={32} strokeWidth={3} />
+          </div>
+          {/* OVEST */}
+          <div className={`absolute left-4 top-1/2 -translate-y-1/2 p-2 ${compassState.west ? 'compass-active' : 'compass-inactive'}`}>
+              <ChevronLeft size={32} strokeWidth={3} />
+          </div>
+      </div>
+
       <svg 
         ref={ref}
         width="100%" 
@@ -213,7 +255,6 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
         </defs>
 
         <g transform={`translate(${view.x},${view.y}) scale(${view.scale})`}>
-            
             {zones.map((zone) => {
               const pos = getHexPixelPosition(zone.x, zone.y, HEX_SIZE);
               const isSelected = selectedZoneId === zone.id;
@@ -357,8 +398,6 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
   );
 });
 
-// MEMOIZATION OPTIMIZATION
-// Prevents re-renders of the heavy map unless crucial data changes
 export default React.memo(HexMapComponent, (prevProps, nextProps) => {
     return (
         prevProps.zones === nextProps.zones &&

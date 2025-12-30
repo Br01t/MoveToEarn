@@ -272,20 +272,22 @@ const Dashboard: React.FC<DashboardProps> = ({
 
       <DashboardControls onZoomIn={zoomIn} onZoomOut={zoomOut} />
 
-      <div className="absolute bottom-44 md:bottom-10 left-1/2 transform -translate-x-1/2 z-30 flex items-center justify-center">
+      {/* --- REPOSITIONED & RESIZED SYNC BUTTON --- */}
+      <div className="absolute bottom-44 right-4 md:bottom-10 md:left-1/2 md:right-auto md:transform md:-translate-x-1/2 z-30 flex items-center justify-center">
             <div className="absolute inset-0 bg-emerald-500 rounded-full animate-ping opacity-20 duration-1000"></div>
             <div className="absolute inset-0 bg-emerald-400 rounded-full blur-xl opacity-40"></div>
             
             <button 
               onClick={onOpenSync}
-              className="relative group flex items-center gap-3 px-8 py-4 bg-gray-900/90 backdrop-blur-xl border-2 border-emerald-400 rounded-full shadow-[0_0_30px_rgba(16,185,129,0.4)] hover:shadow-[0_0_50px_rgba(16,185,129,0.7)] hover:border-emerald-300 hover:scale-105 transition-all duration-300"
+              className="relative group flex items-center gap-2 md:gap-3 px-4 py-2.5 md:px-8 md:py-4 bg-gray-900/90 backdrop-blur-xl border-2 border-emerald-400 rounded-full shadow-[0_0_30px_rgba(16,185,129,0.4)] hover:shadow-[0_0_50px_rgba(16,185,129,0.7)] hover:border-emerald-300 hover:scale-105 transition-all duration-300"
             >
-                <div className="bg-emerald-500 text-black p-2 rounded-full">
-                   <UploadCloud size={24} className="animate-pulse" /> 
+                <div className="bg-emerald-500 text-black p-1.5 md:p-2 rounded-full shrink-0">
+                   <UploadCloud size={20} className="md:w-6 md:h-6 animate-pulse" /> 
                 </div>
-                <div className="flex flex-col items-start">
-                   <span className="text-emerald-400 font-black text-xs uppercase tracking-widest leading-none mb-0.5">{t('dash.sync_btn_sub')}</span>
-                   <span className="text-white font-bold text-lg leading-none">{t('dash.sync_btn_main')}</span>
+                <div className="flex flex-col items-start min-w-0">
+                   {/* Hide sub-text on mobile */}
+                   <span className="hidden md:block text-emerald-400 font-black text-xs uppercase tracking-widest leading-none mb-0.5">{t('dash.sync_btn_sub')}</span>
+                   <span className="text-white font-bold text-sm md:text-lg leading-none truncate whitespace-nowrap">{t('dash.sync_btn_main')}</span>
                 </div>
             </button>
       </div>
