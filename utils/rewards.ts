@@ -1,4 +1,3 @@
-
 import { User, Zone, RunEntry, Mission, Badge, RunAnalysisData } from '../types';
 import { getDistanceFromLatLonInKm } from './geo';
 import { RUN_RATE_BASE, RUN_RATE_BOOST, REWARD_SPLIT_USER, REWARD_SPLIT_POOL } from '../constants';
@@ -183,6 +182,7 @@ export const processRunRewards = (
 
             let newZone = { ...z };
             newZone.interestPool = (newZone.interestPool || 0) + poolContribution;
+            newZone.totalKm = (newZone.totalKm || 0) + kmPerZone;
 
             if (z.ownerId === user.id) {
                 isReinforced = true;

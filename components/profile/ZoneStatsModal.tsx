@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Zone, User, Badge, Rarity } from '../../types';
-import { X, Crown, Shield, Medal, Lock, Zap, Flag, Award, Mountain, Globe, Home, Landmark, Swords, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users, MapPin, Activity } from 'lucide-react';
+import { X, Crown, Shield, Medal, Lock, Zap, Flag, Award, Mountain, Globe, Home, Landmark, Swords, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users, MapPin, Activity, Coins } from 'lucide-react';
 import { useLanguage } from '../../LanguageContext';
 
 interface ZoneStatsModalProps {
@@ -112,7 +112,6 @@ const ZoneStatsModal: React.FC<ZoneStatsModalProps> = ({
 
             {/* Stats Grid */}
             <div className="grid grid-cols-2 gap-3">
-                {/* Yield Card */}
                 <div className="bg-black/30 p-3 rounded-xl border border-white/5 flex flex-col items-center justify-center text-center">
                      <div className="text-[10px] text-gray-400 uppercase font-bold mb-1">{t('dash.yield')}</div>
                      <div className="font-mono text-xl font-bold text-emerald-400 flex items-center gap-1">
@@ -120,7 +119,6 @@ const ZoneStatsModal: React.FC<ZoneStatsModalProps> = ({
                      </div>
                 </div>
 
-                {/* Status Card (Replaced Defense Level) */}
                 <div className="bg-black/30 p-3 rounded-xl border border-white/5 flex flex-col items-center justify-center text-center">
                      <div className="text-[10px] text-gray-400 uppercase font-bold mb-1">{t('zone.status')}</div>
                      
@@ -137,6 +135,20 @@ const ZoneStatsModal: React.FC<ZoneStatsModalProps> = ({
                              <Activity size={14} className="mb-0.5" /> Standard
                          </div>
                      )}
+                </div>
+            </div>
+
+            {/* NEW: Interest Pool & Global Distance Block */}
+            <div className="bg-emerald-900/20 p-4 rounded-xl border border-emerald-500/20 text-center">
+                <div className="mb-3">
+                    <div className="text-xs text-emerald-200/70 uppercase font-bold tracking-wider mb-1">{t('zone.interest_pool')}</div>
+                    <div className="font-mono text-emerald-400 font-bold text-lg flex items-center justify-center gap-1">
+                        <Coins size={14} /> {(zone.interestPool || 0).toFixed(4)} RUN
+                    </div>
+                </div>
+                <div className="pt-2 border-t border-emerald-500/10">
+                    <div className="text-[10px] text-gray-500 uppercase font-bold tracking-widest mb-0.5">Global Distance</div>
+                    <div className="text-white font-mono font-bold text-sm">{(zone.totalKm || 0).toFixed(1)} KM</div>
                 </div>
             </div>
 

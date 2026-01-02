@@ -57,6 +57,7 @@ export const en = {
     "dash.legend.enemy": "Hostile",
     "dash.legend.boosted": "Boosted",
     "dash.legend.shielded": "Shielded",
+    "dash.compass.hint": "Navigate in this direction to discover existing sectors or reduce map dimensions.",
 
     "zone.owner_info": "Zone Controller",
     "zone.you": "(You)",
@@ -83,6 +84,7 @@ export const en = {
     "zone.pool_empty": "Awaiting Activity",
     "zone.pool_tooltip_title": "Sector Mining Logic",
     "zone.pool_tooltip_body": "The pool accumulates 2% of RUN from every user's activity within this sector. Distributed every 24h or claimed upon conquest.",
+    "zone.global_dist": "Global Sector Distance",
 
     "sync.title": "Sync Activity",
     "sync.manual": "Manual Upload",
@@ -524,7 +526,7 @@ export const en = {
     "rules.whitepaper_link": "Looking for Tokenomics? Read Whitepaper",
     "rules.export_guide_link": "Need Sync Help? Read Export Guide",
     "rules.intro.title": "Gamification of Running",
-    "rules.intro.body": 'Users create entertainment and sharing with little effort and no cost simply by running and uploading their data, giving value to simple <b>Proof-of-run</b> data. You will be rewarded in <b>RUN</b> based on validated km and how much you expand the <b>virtual map</b>. The sooner you start, the easier it is to accumulate. However, the real value of the ecosystem is <b>GOV</b>, the second token, which can be obtained by playing and performing strategic actions.',
+    "rules.intro.body": "Users create entertainment and sharing with little effort and no cost simply by running and uploading their data, giving value to simple <b>Proof-of-run</b> data. You will be rewarded in <b>RUN</b> based on validated km and how much you expand the <b>virtual map</b>. The sooner you start, the easier it is to accumulate. However, the real value of the ecosystem is <b>GOV</b>, the second token, which can be obtained by playing and performing strategic actions.",
     "rules.gameplay.title": "Game Mechanics",
     "rules.mech.move_title": "1. Move & Sync",
     "rules.mech.move_desc": "Go for a <b>run or walk</b> in reality. Record with <b>Strava</b> or <b>any GPS apps</b>. Export the activity file (GPX, ...) and <b>upload</b> it here. The game verifies speed and location.",

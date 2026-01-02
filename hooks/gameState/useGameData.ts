@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { User, Zone, Item, Mission, Badge, InventoryItem, BugReport, LeaderboardConfig, LevelConfig, Suggestion, Transaction, RunEntry, AchievementLog } from '../../types';
 import { supabase } from '../../supabaseClient';
@@ -130,6 +129,7 @@ export const useGameData = () => {
                   lng: z.lng || 0,
                   defenseLevel: z.defense_level || 1, 
                   recordKm: z.record_km,
+                  totalKm: z.total_km || z.record_km || 0,
                   interestRate: z.interest_rate,
                   interestPool: z.interest_pool || 0,
                   lastDistributionTime: z.last_distribution_time || 0,

@@ -1,7 +1,8 @@
 import React, { forwardRef, useEffect, useState, useRef, useMemo } from 'react';
 import { Zone, User } from '../../types';
 import { getHexPixelPosition } from '../../utils/geo';
-import { Zap, Shield, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Zap, Shield, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Info } from 'lucide-react';
+import { useLanguage } from '../../LanguageContext';
 
 interface HexMapProps {
   zones: Zone[];
@@ -27,8 +28,9 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
     filterMode, filterCountry, searchTerm,
     onMouseDown, onMouseMove, onMouseUp, onTouchStart, onTouchMove, onTouchEnd
 }, ref) => {
-  
+  const { t } = useLanguage();
   const [recentlyClaimed, setRecentlyClaimed] = useState<Set<string>>(new Set());
+  const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
   const prevOwnersRef = useRef<Record<string, string | null>>({});
 
   useEffect(() => {
@@ -57,34 +59,33 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
     }
   }, [zones]);
 
-  // --- LOGICA BUSSOLA HUD (NAVIGAZIONE FUORI CAMPO) ---
   const compassState = useMemo(() => {
     const width = window.innerWidth;
     const height = window.innerHeight;
 
-    // Calcola i limiti del viewport in coordinate mondo
     const minWorldX = (0 - view.x) / view.scale;
     const maxWorldX = (width - view.x) / view.scale;
     const minWorldY = (0 - view.y) / view.scale;
     const maxWorldY = (height - view.y) / view.scale;
 
-    const state = {
-        north: false,
-        south: false,
-        east: false,
-        west: false
-    };
+    const state = { north: false, south: false, east: false, west: false };
+    const TRIGGER_THRESHOLD = 5 / view.scale;
 
     zones.forEach(z => {
         const pos = getHexPixelPosition(z.x, z.y, HEX_SIZE);
-        if (pos.y < minWorldY) state.north = true;
-        if (pos.y > maxWorldY) state.south = true;
-        if (pos.x > maxWorldX) state.east = true;
-        if (pos.x < minWorldX) state.west = true;
+        const distN = minWorldY - pos.y; 
+        const distS = pos.y - maxWorldY; 
+        const distW = minWorldX - pos.x; 
+        const distE = pos.x - maxWorldX; 
+
+        if (distN > TRIGGER_THRESHOLD) state.north = true;
+        if (distS > TRIGGER_THRESHOLD) state.south = true;
+        if (distW > TRIGGER_THRESHOLD) state.west = true;
+        if (distE > TRIGGER_THRESHOLD) state.east = true;
     });
 
     return state;
-  }, [zones, view]);
+  }, [zones, view.x, view.y, view.scale]);
 
   const flightPaths = useMemo(() => {
       const myZones = zones.filter(z => z.ownerId === user.id);
@@ -156,14 +157,60 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
       }
   };
 
+  const CompassArrow = ({ dir, isActive, icon: Icon, positionClasses, isMobile = false }: { dir: string, isActive: boolean, icon: any, positionClasses: string, isMobile?: boolean }) => {
+      const showTooltip = activeTooltip === dir && isActive;
+      
+      const getFlexDir = () => {
+          if (dir === 'north' && !isMobile) return 'flex-col-reverse';
+          return 'flex-col';
+      };
+
+      const getTooltipAlignment = () => {
+          if (isMobile) {
+              return 'left-0 origin-left'; // Expand towards center from the left
+          }
+          if (dir === 'west') return 'left-2';
+          if (dir === 'east') return 'right-2';
+          return 'left-1/2 -translate-x-1/2';
+      };
+
+      const tooltipTopClass = isMobile 
+        ? 'bottom-11' 
+        : (dir === 'north' ? 'top-14' : 'bottom-14');
+
+      return (
+          <div 
+              className={`absolute ${positionClasses} flex ${getFlexDir()} items-center group transition-all duration-300 ${isActive ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-20'} ${showTooltip ? 'z-[70]' : 'z-50'}`}
+              onMouseEnter={() => isActive && setActiveTooltip(dir)}
+              onMouseLeave={() => setActiveTooltip(null)}
+              onClick={(e) => {
+                  if (isActive) {
+                      e.stopPropagation();
+                      setActiveTooltip(activeTooltip === dir ? null : dir);
+                  }
+              }}
+          >
+              <div className={`absolute ${tooltipTopClass} ${isMobile ? 'w-32' : 'whitespace-nowrap'} px-3 py-2 glass-panel-heavy rounded-lg border border-emerald-500/30 transition-all duration-300 pointer-events-none transform ${showTooltip ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-2 scale-90'} ${getTooltipAlignment()} z-[80]`}>
+                  <p className={`text-[10px] text-white font-bold leading-tight flex items-start gap-2 ${isMobile ? 'whitespace-normal' : 'whitespace-nowrap'}`}>
+                      <Info size={10} className="text-emerald-400 mt-0.5 shrink-0"/> {t('dash.compass.hint')}
+                  </p>
+              </div>
+
+              <div className={`compass-plate ${isActive ? 'compass-active' : 'compass-base'}`}>
+                  <Icon className="w-4 h-4 md:w-6 md:h-6" strokeWidth={isActive ? 3 : 1.5} />
+              </div>
+          </div>
+      );
+  };
+
   return (
     <div 
         className="absolute inset-0 cursor-move touch-none"
-        onMouseDown={onMouseDown}
+        onMouseDown={(e) => { setActiveTooltip(null); onMouseDown(e); }}
         onMouseMove={onMouseMove}
         onMouseUp={onMouseUp}
         onMouseLeave={onMouseUp}
-        onTouchStart={onTouchStart}
+        onTouchStart={(e) => { setActiveTooltip(null); onTouchStart(e); }}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
     >
@@ -177,17 +224,38 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
             stroke-dasharray: 12, 8;
             animation: dash-flight 1.5s linear infinite;
           }
-          @keyframes compass-glow {
-            0%, 100% { opacity: 0.6; filter: drop-shadow(0 0 2px #10b981); }
-            50% { opacity: 1; filter: drop-shadow(0 0 10px #10b981); }
+          @keyframes compass-pulse {
+            0%, 100% { transform: scale(1); opacity: 0.8; filter: drop-shadow(0 0 5px #10b981); }
+            50% { transform: scale(1.1); opacity: 1; filter: drop-shadow(0 0 15px #10b981); }
+          }
+          .compass-plate {
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+          }
+          @media (min-width: 768px) {
+            .compass-plate {
+                width: 42px;
+                height: 42px;
+            }
+          }
+          .compass-base {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.2);
           }
           .compass-active {
-            animation: compass-glow 2s infinite ease-in-out;
-            color: #10b981 !important;
-          }
-          .compass-inactive {
-            opacity: 0.2;
-            color: #475569 !important;
+            background: rgba(13, 18, 30, 0.9);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(16, 185, 129, 0.6);
+            color: #34d399;
+            animation: compass-pulse 2s infinite ease-in-out;
           }
           @keyframes icon-float {
             0%, 100% { transform: translate(-14px, 28px); }
@@ -199,23 +267,67 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
         `}
       </style>
 
-      {/* --- STRATO HUD: COMPASS ARROWS --- */}
-      <div className="absolute inset-0 pointer-events-none z-30 flex items-center justify-center">
-          {/* NORD */}
-          <div className={`absolute top-16 left-1/2 -translate-x-1/2 p-2 ${compassState.north ? 'compass-active' : 'compass-inactive'}`}>
-              <ChevronUp size={32} strokeWidth={3} />
+      {/* --- HUD: COMPASS (Grouped on Mobile, Scattered on Desktop) --- */}
+      <div className="absolute inset-0 pointer-events-none z-40">
+          
+          {/* MOBILE CLUSTER: Moved to LEFT side to avoid right-edge overflow and sync button overlap */}
+          <div className="md:hidden absolute bottom-44 left-6 w-32 h-32 pointer-events-none">
+                <CompassArrow 
+                    dir="north" 
+                    isActive={compassState.north} 
+                    icon={ChevronUp} 
+                    positionClasses="top-0 left-1/2 -translate-x-1/2" 
+                    isMobile={true}
+                />
+                <CompassArrow 
+                    dir="south" 
+                    isActive={compassState.south} 
+                    icon={ChevronDown} 
+                    positionClasses="bottom-0 left-1/2 -translate-x-1/2" 
+                    isMobile={true}
+                />
+                <CompassArrow 
+                    dir="east" 
+                    isActive={compassState.east} 
+                    icon={ChevronRight} 
+                    positionClasses="right-0 top-1/2 -translate-y-1/2" 
+                    isMobile={true}
+                />
+                <CompassArrow 
+                    dir="west" 
+                    isActive={compassState.west} 
+                    icon={ChevronLeft} 
+                    positionClasses="left-0 top-1/2 -translate-y-1/2" 
+                    isMobile={true}
+                />
           </div>
-          {/* SUD */}
-          <div className={`absolute bottom-32 left-1/2 -translate-x-1/2 p-2 ${compassState.south ? 'compass-active' : 'compass-inactive'}`}>
-              <ChevronDown size={32} strokeWidth={3} />
-          </div>
-          {/* EST */}
-          <div className={`absolute right-4 top-1/2 -translate-y-1/2 p-2 ${compassState.east ? 'compass-active' : 'compass-inactive'}`}>
-              <ChevronRight size={32} strokeWidth={3} />
-          </div>
-          {/* OVEST */}
-          <div className={`absolute left-4 top-1/2 -translate-y-1/2 p-2 ${compassState.west ? 'compass-active' : 'compass-inactive'}`}>
-              <ChevronLeft size={32} strokeWidth={3} />
+
+          {/* DESKTOP HUD LAYOUT (Peripheral) */}
+          <div className="hidden md:block absolute inset-0 pointer-events-none">
+                <CompassArrow 
+                    dir="north" 
+                    isActive={compassState.north} 
+                    icon={ChevronUp} 
+                    positionClasses="top-4 left-1/2 -translate-x-1/2" 
+                />
+                <CompassArrow 
+                    dir="south" 
+                    isActive={compassState.south} 
+                    icon={ChevronDown} 
+                    positionClasses="bottom-36 left-1/2 -translate-x-1/2" 
+                />
+                <CompassArrow 
+                    dir="east" 
+                    isActive={compassState.east} 
+                    icon={ChevronRight} 
+                    positionClasses="right-2 top-1/2 -translate-y-1/2" 
+                />
+                <CompassArrow 
+                    dir="west" 
+                    isActive={compassState.west} 
+                    icon={ChevronLeft} 
+                    positionClasses="left-2 top-1/2 -translate-y-1/2" 
+                />
           </div>
       </div>
 
@@ -229,12 +341,10 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
           <pattern id="tech-dots" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
              <circle cx="2" cy="2" r="1" fill="rgba(255,255,255,0.15)" />
           </pattern>
-
           <filter id="glow-flight" x="-50%" y="-50%" width="200%" height="200%">
             <feGaussianBlur stdDeviation="4" result="blur" />
             <feComposite in="SourceGraphic" in2="blur" operator="over" />
           </filter>
-
           <linearGradient id="grad-flight-path" x1="0%" y1="0%" x2="100%" y2="0%">
              <stop offset="0%" style={{ stopColor: '#a855f7', stopOpacity: 0.1 }} />
              <stop offset="20%" style={{ stopColor: '#a855f7', stopOpacity: 0.8 }} />
@@ -242,12 +352,10 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
              <stop offset="80%" style={{ stopColor: '#d8b4fe', stopOpacity: 0.8 }} />
              <stop offset="100%" style={{ stopColor: '#a855f7', stopOpacity: 0.1 }} />
           </linearGradient>
-
           <radialGradient id="grad-my-zone" cx="50%" cy="50%" r="70%" fx="50%" fy="50%">
             <stop offset="40%" style={{ stopColor: '#059669', stopOpacity: 0.8 }} />
             <stop offset="100%" style={{ stopColor: '#064e3b', stopOpacity: 0.9 }} />
           </radialGradient>
-          
           <radialGradient id="grad-enemy-zone" cx="50%" cy="50%" r="70%" fx="50%" fy="50%">
             <stop offset="40%" style={{ stopColor: '#b91c1c', stopOpacity: 0.8 }} />
             <stop offset="100%" style={{ stopColor: '#450a0a', stopOpacity: 0.9 }} />
@@ -282,7 +390,6 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
               
               let strokeColor = isMine ? '#34d399' : '#7f1d1d'; 
               let strokeWidth = isMine ? 2 : 1;
-              
               if (boosted) { strokeColor = '#fbbf24'; strokeWidth = 3; }
               else if (shielded) { strokeColor = '#06b6d4'; strokeWidth = 3; }
               else if (isSelected) { strokeColor = '#ffffff'; strokeWidth = 4; }
@@ -298,7 +405,6 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
                   {isJustClaimed && isMatch && (
                     <polygon points={getHexPoints()} fill="none" stroke="white" strokeWidth="4" className="animate-ping" style={{ transformOrigin: 'center', animationDuration: '1.5s' }} />
                   )}
-
                   <polygon
                     points={getHexPoints()}
                     fill={getFillId(zone)}
@@ -308,88 +414,34 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
                     className="transition-all duration-300 group-hover:brightness-125"
                     style={{ filter: isSelected ? 'drop-shadow(0 0 15px rgba(255,255,255,0.4))' : 'drop-shadow(0 4px 6px rgba(0,0,0,0.5))' }}
                   />
-
-                  <polygon 
-                    points={getHexPoints()}
-                    fill="url(#tech-dots)"
-                    opacity="0.3"
-                    pointerEvents="none"
-                    transform="scale(0.95)"
-                  />
-                  
-                  <polygon 
-                    points={getHexPoints()} 
-                    fill="none" 
-                    stroke="rgba(255,255,255,0.15)" 
-                    strokeWidth="2" 
-                    transform="scale(0.85)" 
-                    className="transition-all duration-300 group-hover:stroke-white/40"
-                  />
-                  
+                  <polygon points={getHexPoints()} fill="url(#tech-dots)" opacity="0.3" pointerEvents="none" transform="scale(0.95)" />
+                  <polygon points={getHexPoints()} fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="2" transform="scale(0.85)" className="transition-all duration-300 group-hover:stroke-white/40" />
                   <g pointerEvents="none">
-                      <text 
-                          x="0" 
-                          y="-28" 
-                          textAnchor="middle" 
-                          dominantBaseline="middle"
-                          fill="white"
-                          fontSize="18"
-                          fontWeight="900"
-                          style={{ textShadow: '0 2px 4px rgba(0,0,0,1)', letterSpacing: '0.02em', fontFamily: '"Rajdhani", sans-serif' }}
-                      >
+                      <text x="0" y="-35" textAnchor="middle" dominantBaseline="middle" fill="white" fontSize="18" fontWeight="900" style={{ textShadow: '0 2px 4px rgba(0,0,0,1)', letterSpacing: '0.02em', fontFamily: '"Rajdhani", sans-serif' }}>
                           {displayName}
                       </text>
-
-                      <g transform="translate(-40, -5)">
-                          <rect 
-                              x="0" 
-                              y="0" 
-                              width="80" 
-                              height="26" 
-                              rx="6" 
-                              fill="rgba(0,0,0,0.6)"
-                              stroke={isMine ? 'rgba(52, 211, 153, 0.5)' : 'rgba(239, 68, 68, 0.5)'}
-                              strokeWidth="1"
-                          />
-                          <text 
-                              x="40" 
-                              y="17" 
-                              textAnchor="middle" 
-                              fill={isMine ? '#34d399' : '#fca5a5'}
-                              fontSize="14"
-                              fontWeight="bold"
-                              style={{ fontFamily: 'monospace', textShadow: '0 1px 2px black' }}
-                          >
+                      <g transform="translate(-40, -15)">
+                          <rect x="0" y="0" width="80" height="44" rx="8" fill="rgba(0,0,0,0.7)" stroke={isMine ? 'rgba(52, 211, 153, 0.6)' : 'rgba(239, 68, 68, 0.6)'} strokeWidth="1.5" />
+                          <text x="40" y="16" textAnchor="middle" fill={isMine ? '#34d399' : '#fca5a5'} fontSize="14" fontWeight="bold" style={{ fontFamily: 'monospace', textShadow: '0 1px 2px black' }}>
                               {(zone.interestPool || 0).toFixed(2)}
                           </text>
+                          <text x="40" y="34" textAnchor="middle" fill="rgba(200, 210, 255, 0.7)" fontSize="11" fontWeight="bold" style={{ fontFamily: 'monospace' }}>
+                              {(zone.totalKm || 0).toFixed(1)} km
+                          </text>
                       </g>
-
                       {(shielded || boosted) && (
                           <g className="animate-icon-float">
-                              {shielded && !boosted && (
-                                  <Shield size={28} color="#67e8f9" fill="rgba(8, 145, 178, 0.8)" style={{ filter: 'drop-shadow(0 0 5px #06b6d4)' }} />
-                              )}
-                              {boosted && (
-                                  <Zap size={28} color="#fbbf24" fill="rgba(217, 119, 6, 0.8)" style={{ filter: 'drop-shadow(0 0 5px #f59e0b)' }} />
-                              )}
+                              {shielded && !boosted && <Shield size={28} color="#67e8f9" fill="rgba(8, 145, 178, 0.8)" style={{ filter: 'drop-shadow(0 0 5px #06b6d4)' }} />}
+                              {boosted && <Zap size={28} color="#fbbf24" fill="rgba(217, 119, 6, 0.8)" style={{ filter: 'drop-shadow(0 0 5px #f59e0b)' }} />}
                           </g>
                       )}
                   </g>
                 </g>
               );
             })}
-
             <g className="connections-layer" style={{ filter: 'url(#glow-flight)', pointerEvents: 'none' }}>
                 {flightPaths.map(conn => (
-                    <path 
-                        key={conn.key}
-                        d={conn.d}
-                        stroke="url(#grad-flight-path)"
-                        strokeWidth="4"
-                        fill="none"
-                        className="flight-path"
-                        strokeLinecap="round"
-                    />
+                    <path key={conn.key} d={conn.d} stroke="url(#grad-flight-path)" strokeWidth="4" fill="none" className="flight-path" strokeLinecap="round" />
                 ))}
             </g>
         </g>

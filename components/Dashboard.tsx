@@ -97,46 +97,43 @@ const Dashboard: React.FC<DashboardProps> = ({
       }
   }, [selectedZone]);
 
-  const calculateDensityCenter = (currentZones: Zone[]) => {
+  // --- REFINED CENTROID RECENTER LOGIC ---
+  const calculateDistributionCenter = (currentZones: Zone[], currentScale: number) => {
       if (currentZones.length === 0) return null;
-      const CLUSTER_SIZE = 5;
-      const clusters: Record<string, Zone[]> = {};
+      
+      let sumX = 0;
+      let sumY = 0;
+      
       currentZones.forEach(z => {
-          const key = `${Math.floor(z.x / CLUSTER_SIZE)},${Math.floor(z.y / CLUSTER_SIZE)}`;
-          if (!clusters[key]) clusters[key] = [];
-          clusters[key].push(z);
+          const pixelPos = getHexPixelPosition(z.x, z.y, HEX_SIZE);
+          sumX += pixelPos.x;
+          sumY += pixelPos.y;
       });
-      let densestCluster: Zone[] = [];
-      Object.values(clusters).forEach(c => {
-          if (c.length > densestCluster.length) densestCluster = c;
-      });
-      const targetGroup = densestCluster.length > 0 ? densestCluster : currentZones;
-      let sumQ = 0, sumR = 0;
-      targetGroup.forEach(z => {
-          sumQ += z.x;
-          sumR += z.y;
-      });
-      const avgQ = sumQ / targetGroup.length;
-      const avgR = sumR / targetGroup.length;
-      const pos = getHexPixelPosition(avgQ, avgR, HEX_SIZE);
-      return {
-          x: window.innerWidth / 2 - pos.x * 0.8,
-          y: window.innerHeight / 2 - pos.y * 0.8
+
+      const avgX = sumX / currentZones.length;
+      const avgY = sumY / currentZones.length;
+
+      // Rounded to prevent coordinate drift/jitter
+      return { 
+          x: Math.round((window.innerWidth / 2) - (avgX * currentScale)), 
+          y: Math.round((window.innerHeight / 2) - (avgY * currentScale)) 
       };
   };
 
   useEffect(() => {
+    // Initial Load centering on global distribution
     if (prevZonesLengthRef.current === 0 && zones.length > 0) {
-        const center = calculateDensityCenter(zones);
+        const center = calculateDistributionCenter(zones, view.scale);
         if (center) {
             setView(v => ({ ...v, x: center.x, y: center.y }));
         }
     }
+    // Centering on newly minted zone
     else if (zones.length > prevZonesLengthRef.current) {
         const newZone = zones[zones.length - 1];
         const pos = getHexPixelPosition(newZone.x, newZone.y, HEX_SIZE);
-        const newX = window.innerWidth / 2 - pos.x * view.scale;
-        const newY = window.innerHeight / 2 - pos.y * view.scale;
+        const newX = Math.round(window.innerWidth / 2 - pos.x * view.scale);
+        const newY = Math.round(window.innerHeight / 2 - pos.y * view.scale);
         setView(v => ({ ...v, x: newX, y: newY }));
     }
     prevZonesLengthRef.current = zones.length;
@@ -237,7 +234,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   const handleRecenter = () => {
       if (zones.length === 0) return;
-      const center = calculateDensityCenter(zones);
+      const center = calculateDistributionCenter(zones, view.scale);
       if (center) {
           setView(v => ({ ...v, x: center.x, y: center.y }));
       }

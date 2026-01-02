@@ -1,3 +1,4 @@
+import React from 'react';
 import { supabase } from '../../supabaseClient';
 import { Item, Mission, Badge, Zone, LeaderboardConfig, LevelConfig, User, AchievementLog } from '../../types';
 import { useGlobalUI } from '../../contexts/GlobalUIContext';

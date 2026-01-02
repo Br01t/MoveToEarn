@@ -1,4 +1,3 @@
-
 export type ViewState = 'LANDING' | 'DASHBOARD' | 'MARKETPLACE' | 'INVENTORY' | 'LEADERBOARD' | 'WALLET' | 'PROFILE' | 'MISSIONS' | 'RULES' | 'WHITEPAPER' | 'HOW_TO_PLAY' | 'PRIVACY' | 'TERMS' | 'COMMUNITY' | 'ADMIN' | 'REPORT_BUG' | 'SUGGESTION';
 
 export type Rarity = 'COMMON' | 'RARE' | 'EPIC' | 'LEGENDARY';
@@ -111,6 +110,7 @@ export interface Zone {
   name: string;
   defenseLevel: number;
   recordKm: number;
+  totalKm: number; // Global Total Distance by all users
   interestRate: number;
   interestPool: number; // Interest Pool for the zone (accumulates 2% of RUN)
   lastDistributionTime?: number; // Track when rewards were last distributed

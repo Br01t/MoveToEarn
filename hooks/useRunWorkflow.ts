@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { User, Zone, RunAnalysisData, RunEntry } from '../types';
 import { getDistanceFromLatLonInKm, insertZoneAndShift } from '../utils/geo';
@@ -184,6 +183,7 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction,
           name: finalName,
           defenseLevel: 1,
           recordKm: 0, 
+          totalKm: 0,
           interestRate: DEFAULT_ZONE_INTEREST_RATE,
           interestPool: 0,
           shieldExpiresAt: Date.now() + (ITEM_DURATION_SEC * 1000) 
