@@ -79,8 +79,8 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
         setLogs(prev => [...prev, msg]);
     };
 
-    const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
-    const cutoffTimestamp = Date.now() - SEVEN_DAYS_MS;
+    const FOURTEEN_DAYS_MS = 14 * 24 * 60 * 60 * 1000;
+    const cutoffTimestamp = Date.now() - FOURTEEN_DAYS_MS;
 
     addLog(`Preparing to process files... Cutoff: ${new Date(cutoffTimestamp).toLocaleDateString()}`);
 

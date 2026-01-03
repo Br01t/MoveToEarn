@@ -1,4 +1,3 @@
-
 import FitParser from 'fit-file-parser';
 
 export interface ActivityPoint {
@@ -10,67 +9,99 @@ export interface ActivityPoint {
 
 // Helper: Parse FIT file (Binary)
 export const parseFIT = (buffer: ArrayBuffer): Promise<ActivityPoint[][]> => {
+    console.log("📂 [PARSER] Avvio parsing FIT. Dimensione buffer:", buffer.byteLength);
+    
     return new Promise((resolve, reject) => {
-        const parser = new FitParser({
-            force: true,
-            speedUnit: 'km/h',
-            lengthUnit: 'km',
-            temperatureUnit: 'celsius',
-            elapsedRecordField: true,
-            mode: 'cascade', 
-        });
-
-        parser.parse(buffer, (error: any, data: any) => {
-            if (error) {
-                console.error("❌ [PARSER] FIT Parsing Error", error);
-                reject(new Error("Failed to parse FIT file structure."));
+        try {
+            // Risolve il costruttore per compatibilità ESM/CJS
+            const ParserClass = (FitParser as any).default || FitParser;
+            if (typeof ParserClass !== 'function') {
+                console.error("❌ [PARSER] FitParser constructor non trovato.");
+                reject(new Error("Inizializzazione FIT Parser fallita."));
                 return;
             }
 
-            const points: ActivityPoint[] = [];
-            const records = data.records || [];
-            
-            if (records.length === 0) {
-                if (data.activity?.sessions) {
+            const parser = new ParserClass({
+                force: true,
+                speedUnit: 'km/h',
+                lengthUnit: 'km',
+                temperatureUnit: 'celsius',
+                elapsedRecordField: true,
+                mode: 'cascade', 
+            });
+
+            // Converte ArrayBuffer in Uint8Array per il parser
+            const uint8Array = new Uint8Array(buffer);
+
+            parser.parse(uint8Array, (error: any, data: any) => {
+                if (error) {
+                    console.error("❌ [PARSER] Errore FIT:", error);
+                    reject(new Error(`Errore nel parse del file FIT: ${error.message || error}`));
+                    return;
+                }
+
+                const points: ActivityPoint[] = [];
+                // Alcuni file FIT usano 'records', altri 'record' o strutture annidate
+                const records = data.records || data.record || [];
+                
+                // Se non ci sono record principali, controlliamo sessioni/laps (Garmin/Wahoo)
+                if (records.length === 0 && data.activity?.sessions) {
                     data.activity.sessions.forEach((session: any) => {
                         if (session.laps) {
                             session.laps.forEach((lap: any) => {
                                 if (lap.records) records.push(...lap.records);
+                                else if (lap.record) records.push(...lap.record);
                             });
                         }
                     });
                 }
-            }
 
-            for (const record of records) {
-                if (record.position_lat && record.position_long && record.timestamp) {
-                    const SEMICIRCLE_CONVERSION = 180 / 2147483648;
-                    const lat = record.position_lat * SEMICIRCLE_CONVERSION;
-                    const lng = record.position_long * SEMICIRCLE_CONVERSION;
-                    const ele = record.enhanced_altitude || record.altitude || 0;
-                    
-                    points.push({
-                        lat,
-                        lng,
-                        ele,
-                        time: new Date(record.timestamp)
-                    });
+                for (const record of records) {
+                    // Supporto a diversi nomi di campo (position_lat, lat, latitude)
+                    const rawLat = record.position_lat ?? record.lat ?? record.latitude;
+                    const rawLng = record.position_long ?? record.lng ?? record.longitude ?? record.position_lon;
+                    const timestamp = record.timestamp;
+
+                    // Solo record con coordinate GPS reali e tempo
+                    if (rawLat !== undefined && rawLng !== undefined && timestamp) {
+                        // CONVERSIONE INTELLIGENTE: Semicircles -> Gradi
+                        // I semicircoli sono valori interi grandi. Se il valore assoluto è > 180, convertiamo.
+                        // Se è <= 180, il parser ha già fornito i gradi o il file è in gradi.
+                        const SEMICIRCLE_CONVERSION = 180 / 2147483648;
+                        const lat = Math.abs(rawLat) > 180 ? rawLat * SEMICIRCLE_CONVERSION : rawLat;
+                        const lng = Math.abs(rawLng) > 180 ? rawLng * SEMICIRCLE_CONVERSION : rawLng;
+                        
+                        const ele = record.enhanced_altitude || record.altitude || 0;
+                        
+                        points.push({
+                            lat,
+                            lng,
+                            ele,
+                            time: new Date(timestamp)
+                        });
+                    }
                 }
-            }
 
-            if (points.length < 2) {
-                reject(new Error("No GPS tracks found in FIT file."));
-            } else {
-                // Ensure strictly sorted by time
-                points.sort((a, b) => a.time.getTime() - b.time.getTime());
-                resolve([points]);
-            }
-        });
+                if (points.length < 2) {
+                    console.warn("⚠️ [PARSER] File FIT senza punti GPS validi.");
+                    reject(new Error("Nessun punto GPS trovato nel file FIT."));
+                } else {
+                    // Ordina per tempo
+                    points.sort((a, b) => a.time.getTime() - b.time.getTime());
+                    console.log(`✅ [PARSER] Estratti ${points.length} punti dal FIT.`);
+                    resolve([points]);
+                }
+            });
+        } catch (err: any) {
+            console.error("❌ [PARSER] Errore critico FIT:", err);
+            reject(new Error(`Crash Parser FIT: ${err.message}`));
+        }
     });
 };
 
 // Helper: Parse JSON
 export const parseJSON = (text: string): ActivityPoint[][] => {
+    console.log("📂 [PARSER] Rilevato formato JSON.");
     try {
         const json = JSON.parse(text);
         const points: ActivityPoint[] = [];
@@ -83,7 +114,7 @@ export const parseJSON = (text: string): ActivityPoint[][] => {
         else if (Array.isArray(json.track)) candidates = json.track;
         else if (Array.isArray(json.locations)) candidates = json.locations;
 
-        if (candidates.length < 2) throw new Error("No track points found in JSON.");
+        if (candidates.length < 2) throw new Error("Nessun punto traccia nel JSON.");
 
         for (const p of candidates) {
             const lat = p.latitude || p.lat || p.y;
@@ -104,21 +135,22 @@ export const parseJSON = (text: string): ActivityPoint[][] => {
             }
         }
 
-        if (points.length < 2) throw new Error("Valid GPS data not found in JSON array.");
+        if (points.length < 2) throw new Error("Coordinate GPS valide non trovate nel JSON.");
         
         points.sort((a, b) => a.time.getTime() - b.time.getTime());
         return [points];
 
     } catch (e: any) {
         console.error("JSON Parse Error:", e);
-        throw new Error("Invalid JSON file format.");
+        throw new Error("Formato JSON non valido.");
     }
 };
 
 // Helper: Parse CSV
 export const parseCSV = (text: string): ActivityPoint[][] => {
+    console.log("📂 [PARSER] Rilevato formato CSV.");
     const lines = text.split(/\r?\n/);
-    if (lines.length < 2) throw new Error("CSV file is empty or invalid.");
+    if (lines.length < 2) throw new Error("File CSV vuoto.");
 
     const headerRow = lines[0].toLowerCase();
     const delimiter = headerRow.includes(';') ? ';' : ',';
@@ -130,7 +162,7 @@ export const parseCSV = (text: string): ActivityPoint[][] => {
     const timeIdx = headers.findIndex(h => h.includes('time') || h.includes('date'));
 
     if (latIdx === -1 || lngIdx === -1 || timeIdx === -1) {
-        throw new Error("CSV missing required columns (Latitude, Longitude, Time).");
+        throw new Error("CSV manca di colonne obbligatorie (Latitude, Longitude, Time).");
     }
 
     const points: ActivityPoint[] = [];
@@ -162,7 +194,7 @@ export const parseCSV = (text: string): ActivityPoint[][] => {
         }
     }
 
-    if (points.length < 2) throw new Error("No valid GPS points extracted from CSV.");
+    if (points.length < 2) throw new Error("Nessun punto GPS estratto dal CSV.");
     
     points.sort((a, b) => a.time.getTime() - b.time.getTime());
     return [points];
@@ -275,14 +307,16 @@ export const parseGPXInternal = (xmlDoc: Document): ActivityPoint[][] => {
 };
 
 // Main Parser Entry
-export const parseActivityFile = async (data: string | ArrayBuffer, filename: string): Promise<{ lat: number, lng: number, ele: number, time: Date }[][]> => {
+export const parseActivityFile = async (data: string | ArrayBuffer, filename: string): Promise<ActivityPoint[][]> => {
+    console.log("📂 [PARSER] Analisi file:", filename);
     const lowerName = filename.toLowerCase();
 
+    // Gestione binaria per FIT
     if (lowerName.endsWith('.fit') && typeof data !== 'string') {
         return parseFIT(data as ArrayBuffer);
     }
 
-    if (typeof data !== 'string') throw new Error("Invalid file content for text parser.");
+    if (typeof data !== 'string') throw new Error("Contenuto non valido per il parser testuale.");
 
     if (lowerName.endsWith('.json')) return parseJSON(data);
     if (lowerName.endsWith('.csv')) return parseCSV(data);
@@ -292,25 +326,17 @@ export const parseActivityFile = async (data: string | ArrayBuffer, filename: st
         const xmlDoc = parser.parseFromString(data, "text/xml");
         const parserError = xmlDoc.getElementsByTagName("parsererror");
         
-        if (parserError.length > 0) throw new Error("Malformed XML file.");
+        if (parserError.length > 0) throw new Error("File XML malformato.");
 
         if (xmlDoc.getElementsByTagName("TrainingCenterDatabase").length > 0) {
-            const tcxTracks = parseTCX(xmlDoc);
-            if (tcxTracks.length === 0) throw new Error("No valid GPS tracks found in TCX file.");
-            return tcxTracks;
+            return parseTCX(xmlDoc);
         } else if (xmlDoc.getElementsByTagName("gpx").length > 0 || xmlDoc.getElementsByTagName("trk").length > 0) {
-            const gpxTracks = parseGPXInternal(xmlDoc);
-            if (gpxTracks.length === 0) throw new Error("No valid tracks with time data found in GPX.");
-            return gpxTracks;
+            return parseGPXInternal(xmlDoc);
         }
     } catch (e) {
-        // Fallback checks
         if (data.trim().startsWith('{') || data.trim().startsWith('[')) return parseJSON(data);
-        const firstLine = data.split('\n')[0].toLowerCase();
-        if ((firstLine.includes('lat') || firstLine.includes('lon')) && (firstLine.includes(',') || firstLine.includes(';'))) return parseCSV(data);
-        
         throw e;
     }
 
-    throw new Error("Unknown file format. Please upload a standard GPX, TCX, FIT, JSON or CSV file.");
+    throw new Error("Formato sconosciuto. Usa GPX, TCX, FIT, JSON o CSV.");
 };
