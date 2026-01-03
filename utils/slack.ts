@@ -1,8 +1,8 @@
 /**
- * Utility to send notifications to specific Slack channels via different Webhooks.
- * Direct browser-to-slack calls are restricted by CORS. 
- * We use 'no-cors' and a plain text payload which Slack's webhook endpoint 
- * can typically parse if formatted as a JSON string.
+ * Utility to send notifications to specific Slack channels via Webhooks.
+ * IMPORTANT: Slack Webhooks do not support CORS headers for browser-side JSON POSTs.
+ * We use a "Simple Request" approach with x-www-form-urlencoded and 'payload' 
+ * which Slack legacy API supports to bypass CORS preflight.
  */
 
 export type SlackChannel = 'RUNNERS' | 'MAP' | 'SYNC' | 'BUGS' | 'IDEAS' | 'SYSTEM';
@@ -12,9 +12,9 @@ export const sendSlackNotification = async (
   type: 'INFO' | 'SUCCESS' | 'WARNING' | 'ALERT' = 'INFO',
   channel: SlackChannel = 'SYSTEM'
 ) => {
-  // Fix: Cast import.meta to any to bypass environment variable typing issues in specific build contexts
   const env = (import.meta as any).env;
   
+  // Mappatura Webhook URLs
   const webhookUrls: Record<SlackChannel, string | undefined> = {
     RUNNERS: env.VITE_SLACK_WEBHOOK_RUNNERS,
     MAP: env.VITE_SLACK_WEBHOOK_MAP,
@@ -27,7 +27,9 @@ export const sendSlackNotification = async (
   const webhookUrl = webhookUrls[channel] || env.VITE_SLACK_WEBHOOK_URL;
   
   if (!webhookUrl) {
-    console.warn(`⚠️ Slack Webhook for channel ${channel} not found in .env. Notification skipped.`);
+    if (env.DEV) {
+        console.warn(`⚠️ [SLACK] Webhook non trovato per il canale ${channel}. Controlla il file .env`);
+    }
     return;
   }
 
@@ -38,27 +40,33 @@ export const sendSlackNotification = async (
     ALERT: '🚨'
   };
 
-  const payload = {
+  // Costruzione del payload Slack standard
+  const slackPayload = {
     text: `${icons[type]} *[${channel}] Notification*\n${message}\n_Timestamp: ${new Date().toLocaleString()}_`
   };
 
   try {
-    // We send as text/plain with no-cors to bypass browser pre-flight checks.
-    // Slack webhooks are designed to handle this "opaque" format.
+    /**
+     * BROWSER CORS HACK:
+     * Slack non invia Access-Control-Allow-Origin.
+     * Usiamo il formato legacy "payload=JSON_STRING" con Content-Type semplice.
+     */
+    const body = new URLSearchParams();
+    body.append('payload', JSON.stringify(slackPayload));
+
     await fetch(webhookUrl, {
       method: 'POST',
-      mode: 'no-cors',
+      mode: 'no-cors', // Fondamentale: impedisce al browser di bloccare la richiesta per mancanza di CORS
       headers: {
-        'Content-Type': 'text/plain', // Use text/plain to avoid CORS pre-flight
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: JSON.stringify(payload),
+      body: body.toString(),
     });
     
-    // Fix: Cast import.meta to any here to fix compilation error
-    if ((import.meta as any).env.DEV) {
-        console.log(`📡 Slack [${channel}]: Message dispatched.`);
+    if (env.DEV) {
+        console.log(`📡 [SLACK] Messaggio inviato al canale ${channel} (Richiesta Opaque)`);
     }
   } catch (error) {
-    console.error(`❌ Failed to dispatch Slack notification to ${channel}:`, error);
+    console.error(`❌ [SLACK] Errore critico durante l'invio a ${channel}:`, error);
   }
 };
