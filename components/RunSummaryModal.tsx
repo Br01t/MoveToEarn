@@ -79,11 +79,11 @@ const RunSummaryModal: React.FC<RunSummaryModalProps> = ({ data, onClose }) => {
                         <div className="text-lg font-mono font-bold text-white">{Math.floor(data.duration)}</div>
                         <div className="text-[9px] text-gray-600">MIN</div>
                     </div>
-                    <div className="bg-black/30 p-2 rounded-lg text-center border border-gray-700/50">
+                    {/* <div className="bg-black/30 p-2 rounded-lg text-center border border-gray-700/50">
                         <div className="text-[10px] text-gray-500 uppercase font-bold mb-1">{t('run_summary.pace')}</div>
                         <div className="text-lg font-mono font-bold text-white">{pace}</div>
                         <div className="text-[9px] text-gray-600">MIN/KM</div>
-                    </div>
+                    </div> */}
                 </div>
 
                 {/* Reward Section */}

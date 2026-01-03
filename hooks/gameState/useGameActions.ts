@@ -26,7 +26,6 @@ export const useGameActions = ({
 }: GameActionsProps) => {
   const { showToast } = useGlobalUI();
 
-  // Fix: Completed logTransaction implementation
   const logTransaction = async (userId: string, type: 'IN' | 'OUT', token: 'RUN' | 'GOV' | 'ITEM', amount: number, description: string) => {
       if (!amount || amount <= 0 || isNaN(amount)) return;
       
@@ -51,10 +50,10 @@ export const useGameActions = ({
       if (error) console.error("❌ [TRANSACTION LOG FAILED]", error.message);
   };
 
-  // Fix: Completed recordRun implementation
   const recordRun = async (userId: string, runData: RunEntry, updatedZones: Zone[]) => {
       try {
           if (!userId) throw new Error("User ID is missing.");
+          console.log("💾 [RECORD RUN] Syncing run:", runData.id);
 
           // 1. Inserimento Log Corsa
           const { error: runError } = await supabase.from('runs').insert({
@@ -89,7 +88,7 @@ export const useGameActions = ({
 
           if (profileUpdateError) console.error("⚠️ Profile Update Failed:", profileUpdateError.message);
 
-          // 3. Aggiornamento Zone tramite RPC
+          // 3. Aggiornamento Zone tramite RPC o Fallback
           if (updatedZones.length > 0) {
               for (const z of updatedZones) {
                   const kmInThisZone = runData.zoneBreakdown?.[z.id] || 0;
@@ -104,10 +103,12 @@ export const useGameActions = ({
                   });
 
                   if (rpcError) {
-                      console.warn(`[RECORD RUN] RPC Failed for zone ${z.id}, using fallback:`, rpcError.message);
+                      console.warn(`[RECORD RUN] RPC Failed for zone ${z.id}, using manual fallback update:`, rpcError.message);
+                      // FIX: Aggiunto total_km al fallback manuale
                       await supabase.from('zones').update({
                           interest_pool: parseFloat(z.interestPool.toFixed(6)),
                           record_km: parseFloat(z.recordKm.toFixed(6)),
+                          total_km: parseFloat((z.totalKm || 0).toFixed(6)), // <-- Campo mancante aggiunto
                           defense_level: z.defenseLevel
                       }).eq('id', z.id);
                   }
@@ -118,8 +119,7 @@ export const useGameActions = ({
               await logTransaction(userId, 'IN', 'RUN', runData.runEarned, `Run Reward: ${runData.location}`);
           }
 
-          // Slack Notification: Valid Run sent to SYNC channel
-          sendSlackNotification(`*Attività registrata!* \nUtente: \`${user?.name}\` \nDistanza: \`${runData.km.toFixed(2)} KM\` \nLocation: \`${runData.location}\` \nRewards: \`+${runData.runEarned} RUN\``, 'INFO', 'SYNC');
+          sendSlackNotification(`*Activity Synced!* \nAgent: \`${user?.name}\` \nDistance: \`${runData.km.toFixed(2)} KM\` \nLocation: \`${runData.location}\` \nRewards: \`+${runData.runEarned} RUN\``, 'INFO', 'SYNC');
 
           return { success: true };
       } catch (err: any) {
@@ -128,12 +128,11 @@ export const useGameActions = ({
       }
   };
 
-  // Fix: Completed mintZone implementation
   const mintZone = async (newZone: Zone, shiftedZones: Zone[]) => {
       if (!user) return { success: false, error: "Not logged in" };
+      console.log("🛠️ [MINT ZONE] Attempting to create zone:", newZone.name);
 
       try {
-          // 1. Crea la zona (Mappatura nomi colonne DB)
           const { error: zoneError } = await supabase.from('zones').insert({
               id: newZone.id,
               name: newZone.name,
@@ -145,6 +144,7 @@ export const useGameActions = ({
               lng: newZone.lng,
               defense_level: 1, 
               record_km: 0,
+              total_km: 0,
               interest_rate: parseFloat(newZone.interestRate.toFixed(2)),
               interest_pool: 0,
               boost_expires_at: newZone.boostExpiresAt || 0,
@@ -153,7 +153,6 @@ export const useGameActions = ({
 
           if (zoneError) throw new Error(`Database insert failed: ${zoneError.message}`);
 
-          // 2. Aggiorna zone spostate se necessario
           if (shiftedZones && shiftedZones.length > 0) {
               for (const sz of shiftedZones) {
                   await supabase.from('zones').update({ 
@@ -163,7 +162,6 @@ export const useGameActions = ({
               }
           }
 
-          // 3. Aggiorna i bilanci dell'utente
           const newRun = user.runBalance - MINT_COST;
           const newGov = user.govBalance + MINT_REWARD_GOV;
           
@@ -177,9 +175,9 @@ export const useGameActions = ({
           await logTransaction(user.id, 'OUT', 'RUN', MINT_COST, `Mint Zone: ${newZone.name}`);
           await logTransaction(user.id, 'IN', 'GOV', MINT_REWARD_GOV, `Mint Reward: ${newZone.name}`);
 
-          // Slack Notification: Minting sent to MAP channel
-          sendSlackNotification(`*Nuova zona creata!* \nUtente: \`${user.name}\` \nZona: \`${newZone.name}\` \nCoordinate: \`${newZone.lat.toFixed(4)}, ${newZone.lng.toFixed(4)}\``, 'SUCCESS', 'MAP');
+          sendSlackNotification(`*Zone Minted!* \nController: \`${user.name}\` \nSector: \`${newZone.name}\` \nCoordinates: \`${newZone.lat.toFixed(4)}, ${newZone.lng.toFixed(4)}\``, 'SUCCESS', 'MAP');
 
+          console.log("✅ [MINT ZONE] Success!");
           return { success: true };
       } catch (err: any) {
           console.error("❌ [MINT ZONE FAILED]", err.message);
@@ -187,7 +185,6 @@ export const useGameActions = ({
       }
   };
 
-  // Fix: Completed claimZone implementation
   const claimZone = async (zoneId: string) => {
       if (!user) return;
       const zone = zones.find(z => z.id === zoneId);
@@ -222,13 +219,10 @@ export const useGameActions = ({
 
       if (!error) {
           setZones(prev => prev.map(z => z.id === zoneId ? { ...z, ownerId: user.id, interestPool: 0, recordKm: 0, defenseLevel: 1 } : z));
-          
-          // Slack Notification: Conquest sent to MAP channel
-          sendSlackNotification(`*Zona conquistata!* \nNuovo proprietario: \`${user.name}\` \nZona: \`${zone.name}\``, 'ALERT', 'MAP');
+          sendSlackNotification(`*Zone Conquered!* \nNew Ruler: \`${user.name}\` \nSector Seized: \`${zone.name}\``, 'ALERT', 'MAP');
       }
   };
 
-  // Fix: Implemented buyItem for marketplace transactions
   const buyItem = async (item: Item) => {
       if (!user) return;
       if (user.runBalance < item.priceRun) {
@@ -261,7 +255,6 @@ export const useGameActions = ({
       await supabase.from('profiles').update({ run_balance: newRunBalance, gov_balance: newGovBalance }).eq('id', user.id);
       await logTransaction(user.id, 'OUT', 'RUN', item.priceRun, `Market Purchase: ${item.name}`);
       
-      // Update item stock
       await supabase.from('items').update({ quantity: Math.max(0, item.quantity - 1) }).eq('id', item.id);
       
       showToast(item.name + " purchased!", 'SUCCESS');
@@ -269,7 +262,6 @@ export const useGameActions = ({
       setMarketItems(prev => prev.map(i => i.id === item.id ? { ...i, quantity: Math.max(0, i.quantity - 1) } : i));
   };
 
-  // Fix: Implemented useItem for applying items to zones
   const useItem = async (item: InventoryItem, targetZoneId: string) => {
       if (!user) return;
       const zone = zones.find(z => z.id === targetZoneId);
@@ -304,7 +296,6 @@ export const useGameActions = ({
       }
   };
 
-  // Fix: Implemented swapGovToRun for liquidity management
   const swapGovToRun = async (govAmount: number) => {
       if (!user || govAmount <= 0) return;
       if (user.govBalance < govAmount) {
@@ -329,7 +320,6 @@ export const useGameActions = ({
       }
   };
 
-  // Fix: Implemented buyFiatGov for fiat purchases
   const buyFiatGov = async (fiatAmount: number) => {
       if (!user) return;
       const govToReceive = fiatAmount * 10;
@@ -344,7 +334,6 @@ export const useGameActions = ({
       }
   };
 
-  // Fix: Implemented reportBug for error logging
   const reportBug = async (description: string, screenshot?: File) => {
       if (!user) return false;
       try {
@@ -376,8 +365,7 @@ export const useGameActions = ({
               status: data.status
           }, ...prev]);
 
-          // Slack Notification: Bug sent to BUGS channel
-          sendSlackNotification(`*Nuovo Bug Report!* \nUtente: \`${user.name}\` \nDescrizione: \`${description.substring(0, 100)}${description.length > 100 ? '...' : ''}\``, 'WARNING', 'BUGS');
+          sendSlackNotification(`*New Bug Report!* \nAgent: \`${user.name}\` \nDescription: \`${description.substring(0, 100)}${description.length > 100 ? '...' : ''}\``, 'WARNING', 'BUGS');
 
           return true;
       } catch (err) {
@@ -386,7 +374,6 @@ export const useGameActions = ({
       }
   };
 
-  // Fix: Implemented submitSuggestion for user feedback
   const submitSuggestion = async (title: string, description: string) => {
       if (!user) return false;
       try {
@@ -410,8 +397,7 @@ export const useGameActions = ({
               timestamp: data.timestamp
           }, ...prev]);
 
-          // Slack Notification: Suggestion sent to IDEAS channel
-          sendSlackNotification(`*Nuova proposta!* \nUtente: \`${user.name}\` \nTitolo: \`${title}\` \nDettagli: \`${description.substring(0, 100)}...\``, 'INFO', 'IDEAS');
+          sendSlackNotification(`*New Strategy Proposed!* \nAgent: \`${user.name}\` \nTitle: \`${title}\` \nDetails: \`${description.substring(0, 100)}...\``, 'INFO', 'IDEAS');
 
           return true;
       } catch (err) {
@@ -420,7 +406,6 @@ export const useGameActions = ({
       }
   };
 
-  // Fix: Implemented upgradePremium for agent tiering
   const upgradePremium = async () => {
       if (!user) return;
       if (user.govBalance < PREMIUM_COST) {
@@ -441,7 +426,6 @@ export const useGameActions = ({
       }
   };
 
-  // Fix: Implemented updateUser for profile management
   const updateUser = async (updates: Partial<User>) => {
       if (!user) return;
       const dbUpdates: any = {};
