@@ -2,7 +2,6 @@ import React from 'react';
 import { supabase } from '../../supabaseClient';
 import { Item, Mission, Badge, Zone, LeaderboardConfig, LevelConfig, User, AchievementLog } from '../../types';
 import { useGlobalUI } from '../../contexts/GlobalUIContext';
-import { sendSlackNotification } from '../../utils/slack';
 
 interface AdminActionsProps {
     fetchGameData: () => Promise<void>;
@@ -35,9 +34,6 @@ export const useAdminActions = ({
       setLastBurnTimestamp(Date.now());
       await fetchUserProfile(user.id);
       await fetchGameData();
-      
-      // Slack Notification: Global Burn routed to SYSTEM channel
-      sendSlackNotification(`*Burn Initiated!* \nGlobal Burn executed by admin. \nTokens Destroyed: \`${data?.total_burned?.toFixed(0) || '0'} RUN\``, 'ALERT', 'SYSTEM');
       
       return { success: true, totalBurned: data?.total_burned || 0, count: data?.users_affected || 0 };
   };

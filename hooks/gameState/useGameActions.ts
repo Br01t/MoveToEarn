@@ -108,7 +108,6 @@ export const useGameActions = ({
                       await supabase.from('zones').update({
                           interest_pool: parseFloat(z.interestPool.toFixed(6)),
                           record_km: parseFloat(z.recordKm.toFixed(6)),
-                          total_km: parseFloat((z.totalKm || 0).toFixed(6)), // <-- Campo mancante aggiunto
                           defense_level: z.defenseLevel
                       }).eq('id', z.id);
                   }
@@ -144,7 +143,6 @@ export const useGameActions = ({
               lng: newZone.lng,
               defense_level: 1, 
               record_km: 0,
-              total_km: 0,
               interest_rate: parseFloat(newZone.interestRate.toFixed(2)),
               interest_pool: 0,
               boost_expires_at: newZone.boostExpiresAt || 0,
