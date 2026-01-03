@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { Zone, User, Badge, Rarity } from '../../types';
-import { X, Crown, Clock, Shield, Medal, Lock, Zap, Swords, Flag, Award, Mountain, Globe, Home, Landmark, Swords as SwordsIcon, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users, AlertTriangle, CheckCircle, Coins, Activity, Info } from 'lucide-react';
+import { X, Crown, Clock, Shield, Medal, Lock, Zap, Flag, Award, Mountain, Globe, Home, Landmark, Swords, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users, AlertTriangle, CheckCircle, Coins, Activity, Info } from 'lucide-react';
 import { useLanguage } from '../../LanguageContext';
 import { CONQUEST_COST } from '../../constants';
 import { useGlobalUI } from '../../contexts/GlobalUIContext';
@@ -90,7 +89,7 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
   };
 
   return (
-    <div className="fixed bottom-[56px] md:bottom-24 md:right-6 md:left-auto left-0 right-0 md:w-80 glass-panel-heavy md:rounded-2xl rounded-t-2xl shadow-[0_-10px_30px_rgba(0,0,0,0.6)] overflow-hidden animate-slide-up z-40 max-h-[70vh] flex flex-col">
+    <div className="fixed bottom-[125px] md:bottom-24 md:right-6 md:left-auto left-0 right-0 md:w-80 glass-panel-heavy md:rounded-2xl rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.8)] overflow-hidden animate-slide-up z-[60] max-h-[75vh] flex flex-col border-t border-white/20">
       <div className="relative p-5 flex flex-col h-full overflow-hidden">
         
         {/* CONFIRMATION MODAL OVERLAY */}
