@@ -13,6 +13,7 @@ interface HexMapProps {
   filterMode: 'ALL' | 'MINE' | 'ENEMY';
   filterCountry: string;
   searchTerm: string;
+  showGlobalTrajectories?: boolean;
   onMouseDown: (e: React.MouseEvent) => void;
   onMouseMove: (e: React.MouseEvent) => void;
   onMouseUp: () => void;
@@ -25,7 +26,7 @@ const HEX_SIZE = 100;
 
 const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({ 
     zones, user, view, selectedZoneId, onZoneClick, 
-    filterMode, filterCountry, searchTerm,
+    filterMode, filterCountry, searchTerm, showGlobalTrajectories,
     onMouseDown, onMouseMove, onMouseUp, onTouchStart, onTouchMove, onTouchEnd
 }, ref) => {
   const { t } = useLanguage();
@@ -87,41 +88,73 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
     return state;
   }, [zones, view.x, view.y, view.scale]);
 
+  // Helper per generare un colore unico vibrante e persistente per ogni proprietario
+  const getOwnerColor = (id: string | null) => {
+    if (!id) return 'rgba(255,255,255,0.1)';
+    // Colore Emerald/Cyan brillante per il giocatore corrente
+    if (id === user.id) return '#10b981'; 
+    
+    let hash = 0;
+    for (let i = 0; i < id.length; i++) {
+        hash = id.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    // Usiamo alta saturazione (95%) e luminosità bilanciata (65%) per massima visibilità
+    const h = Math.abs(hash) % 360;
+    return `hsl(${h}, 95%, 65%)`;
+  };
+
   const flightPaths = useMemo(() => {
-      const myZones = zones.filter(z => z.ownerId === user.id);
-      if (myZones.length < 2) return [];
-      const connections: { d: string, key: string }[] = [];
+      const connections: { d: string, key: string, color: string, isMine: boolean }[] = [];
       const processedPairs = new Set<string>(); 
 
-      myZones.forEach(startZone => {
-          const startPos = getHexPixelPosition(startZone.x, startZone.y, HEX_SIZE);
-          const neighbors = myZones
-              .filter(z => z.id !== startZone.id)
-              .map(endZone => {
-                  const endPos = getHexPixelPosition(endZone.x, endZone.y, HEX_SIZE);
-                  const dist = Math.sqrt(Math.pow(endPos.x - startPos.x, 2) + Math.pow(endPos.y - startPos.y, 2));
-                  return { zone: endZone, dist, pos: endPos };
-              })
-              .sort((a, b) => a.dist - b.dist); 
+      // Raggruppiamo le zone per proprietario
+      const ownersMap: Record<string, Zone[]> = {};
+      zones.forEach(z => {
+          if (!z.ownerId) return;
+          if (!ownersMap[z.ownerId]) ownersMap[z.ownerId] = [];
+          ownersMap[z.ownerId].push(z);
+      });
 
-          const closestNeighbors = neighbors.slice(0, 2);
-          closestNeighbors.forEach(target => {
-              const pairKey = [startZone.id, target.zone.id].sort().join('-');
-              if (!processedPairs.has(pairKey)) {
-                  processedPairs.add(pairKey);
-                  const endPos = target.pos;
-                  const midX = (startPos.x + endPos.x) / 2;
-                  const midY = (startPos.y + endPos.y) / 2;
-                  const altitude = 80 + (target.dist * 0.15); 
-                  const controlX = midX;
-                  const controlY = midY - altitude;
-                  const pathData = `M ${startPos.x} ${startPos.y} Q ${controlX} ${controlY} ${endPos.x} ${endPos.y}`;
-                  connections.push({ d: pathData, key: pairKey });
-              }
+      // Calcoliamo le traiettorie per ogni proprietario
+      Object.entries(ownersMap).forEach(([ownerId, ownerZones]) => {
+          const isMine = ownerId === user.id;
+          
+          // Se non è globale e non sono io, salta
+          if (!showGlobalTrajectories && !isMine) return;
+          if (ownerZones.length < 2) return;
+
+          const color = getOwnerColor(ownerId);
+
+          ownerZones.forEach(startZone => {
+              const startPos = getHexPixelPosition(startZone.x, startZone.y, HEX_SIZE);
+              const neighbors = ownerZones
+                  .filter(z => z.id !== startZone.id)
+                  .map(endZone => {
+                      const endPos = getHexPixelPosition(endZone.x, endZone.y, HEX_SIZE);
+                      const dist = Math.sqrt(Math.pow(endPos.x - startPos.x, 2) + Math.pow(endPos.y - startPos.y, 2));
+                      return { zone: endZone, dist, pos: endPos };
+                  })
+                  .sort((a, b) => a.dist - b.dist); 
+
+              const closestNeighbors = neighbors.slice(0, 2);
+              closestNeighbors.forEach(target => {
+                  const pairKey = [startZone.id, target.zone.id].sort().join('-');
+                  if (!processedPairs.has(pairKey)) {
+                      processedPairs.add(pairKey);
+                      const endPos = target.pos;
+                      const midX = (startPos.x + endPos.x) / 2;
+                      const midY = (startPos.y + endPos.y) / 2;
+                      const altitude = 100 + (target.dist * 0.2); 
+                      const controlX = midX;
+                      const controlY = midY - altitude;
+                      const pathData = `M ${startPos.x} ${startPos.y} Q ${controlX} ${controlY} ${endPos.x} ${endPos.y}`;
+                      connections.push({ d: pathData, key: pairKey, color, isMine });
+                  }
+              });
           });
       });
       return connections;
-  }, [zones, user.id]);
+  }, [zones, user.id, showGlobalTrajectories]);
 
   const getHexPoints = () => {
     const angles = [30, 90, 150, 210, 270, 330];
@@ -217,12 +250,15 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
       <style>
         {`
           @keyframes dash-flight {
-            0% { stroke-dashoffset: 40; }
-            100% { stroke-dashoffset: 0; }
+            from { stroke-dashoffset: 24; }
+            to { stroke-dashoffset: 0; }
           }
           .flight-path {
-            stroke-dasharray: 12, 8;
-            animation: dash-flight 1.5s linear infinite;
+            stroke-dasharray: 12, 12;
+            animation: dash-flight 0.8s linear infinite;
+            filter: drop-shadow(0 0 8px currentColor) drop-shadow(0 0 2px white);
+            pointer-events: none;
+            stroke-linecap: round;
           }
           @keyframes compass-pulse {
             0%, 100% { transform: scale(1); opacity: 0.8; filter: drop-shadow(0 0 5px #10b981); }
@@ -327,6 +363,7 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
                     isActive={compassState.west} 
                     icon={ChevronLeft} 
                     positionClasses="left-2 top-1/2 -translate-y-1/2" 
+                    isMobile={true}
                 />
           </div>
       </div>
@@ -341,17 +378,10 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
           <pattern id="tech-dots" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
              <circle cx="2" cy="2" r="1" fill="rgba(255,255,255,0.15)" />
           </pattern>
-          <filter id="glow-flight" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="4" result="blur" />
+          <filter id="glow-flight-strong" x="-100%" y="-100%" width="300%" height="300%">
+            <feGaussianBlur stdDeviation="6" result="blur" />
             <feComposite in="SourceGraphic" in2="blur" operator="over" />
           </filter>
-          <linearGradient id="grad-flight-path" x1="0%" y1="0%" x2="100%" y2="0%">
-             <stop offset="0%" style={{ stopColor: '#a855f7', stopOpacity: 0.1 }} />
-             <stop offset="20%" style={{ stopColor: '#a855f7', stopOpacity: 0.8 }} />
-             <stop offset="50%" style={{ stopColor: '#e9d5ff', stopOpacity: 1 }} />
-             <stop offset="80%" style={{ stopColor: '#d8b4fe', stopOpacity: 0.8 }} />
-             <stop offset="100%" style={{ stopColor: '#a855f7', stopOpacity: 0.1 }} />
-          </linearGradient>
           <radialGradient id="grad-my-zone" cx="50%" cy="50%" r="70%" fx="50%" fy="50%">
             <stop offset="40%" style={{ stopColor: '#059669', stopOpacity: 0.8 }} />
             <stop offset="100%" style={{ stopColor: '#064e3b', stopOpacity: 0.9 }} />
@@ -363,6 +393,24 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
         </defs>
 
         <g transform={`translate(${view.x},${view.y}) scale(${view.scale})`}>
+            {/* Trajectory Layer (Under Zones) */}
+            <g className="connections-layer" style={{ pointerEvents: 'none' }}>
+                {flightPaths.map(conn => (
+                    <path 
+                        key={conn.key} 
+                        d={conn.d} 
+                        stroke={conn.color} 
+                        strokeWidth={conn.isMine ? 6 : 4} 
+                        fill="none" 
+                        className="flight-path" 
+                        strokeLinecap="round" 
+                        opacity={conn.isMine ? 1 : 0.9}
+                        style={{ filter: 'url(#glow-flight-strong)' }}
+                    />
+                ))}
+            </g>
+
+            {/* Zones Layer */}
             {zones.map((zone) => {
               const pos = getHexPixelPosition(zone.x, zone.y, HEX_SIZE);
               const isSelected = selectedZoneId === zone.id;
@@ -439,11 +487,6 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
                 </g>
               );
             })}
-            <g className="connections-layer" style={{ filter: 'url(#glow-flight)', pointerEvents: 'none' }}>
-                {flightPaths.map(conn => (
-                    <path key={conn.key} d={conn.d} stroke="url(#grad-flight-path)" strokeWidth="4" fill="none" className="flight-path" strokeLinecap="round" />
-                ))}
-            </g>
         </g>
       </svg>
     </div>
@@ -460,6 +503,7 @@ export default React.memo(HexMapComponent, (prevProps, nextProps) => {
         prevProps.filterMode === nextProps.filterMode &&
         prevProps.filterCountry === nextProps.filterCountry &&
         prevProps.searchTerm === nextProps.searchTerm &&
+        prevProps.showGlobalTrajectories === nextProps.showGlobalTrajectories &&
         prevProps.user.id === nextProps.user.id
     );
 });

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { User, Zone, InventoryItem, ViewState, Badge, RunAnalysisData } from '../types';
-import { UploadCloud, History, X, Calendar } from 'lucide-react';
+import { UploadCloud, History, X, Calendar, Waypoints, Circle } from 'lucide-react';
 import Pagination from './Pagination';
 import { useLanguage } from '../LanguageContext';
 import { getHexPixelPosition } from '../utils/geo';
@@ -35,6 +35,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   const { t } = useLanguage();
   const [selectedZone, setSelectedZone] = useState<Zone | null>(null);
   const [zoneLeaderboard, setZoneLeaderboard] = useState<any[]>([]);
+  const [showGlobalTrajectories, setShowGlobalTrajectories] = useState(false);
   
   // Search & Filter State
   const [searchTerm, setSearchTerm] = useState('');
@@ -197,6 +198,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         const dx = e.touches[0].clientX - lastMousePos.current.x;
         const dy = e.touches[0].clientY - lastMousePos.current.y;
         setView(v => ({ ...v, x: v.x + dx, y: v.y + dy }));
+        // Fix: Changed e.clientX to e.touches[0].clientX for TouchEvent compatibility
         lastMousePos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
       } else if (e.touches.length === 2 && initialPinchDistance.current !== null) {
         const { distance, midpoint } = getTouchMetrics(e.touches);
@@ -267,7 +269,28 @@ const Dashboard: React.FC<DashboardProps> = ({
           onRecenter={handleRecenter}
       />
 
-      <DashboardControls onZoomIn={zoomIn} onZoomOut={zoomOut} />
+      {/* CONSOLIDATED MAP CONTROLS - Positioned top-right under navbar */}
+      <div className="absolute top-2 right-2 z-20 flex flex-col gap-2 pointer-events-none">
+          {/* COMPACT GLOBAL TRAJECTORIES TOGGLE */}
+          <button 
+            onClick={() => setShowGlobalTrajectories(!showGlobalTrajectories)}
+            className={`relative p-2 rounded-lg border shadow-lg transition-all duration-300 flex items-center justify-center pointer-events-auto ${
+                showGlobalTrajectories 
+                ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50' 
+                : 'bg-gray-800/90 text-gray-500 border-gray-700 hover:text-white'
+            }`}
+            title="Toggle Global Trajectories"
+          >
+              <Waypoints size={20} className={showGlobalTrajectories ? 'animate-pulse' : ''} />
+              {showGlobalTrajectories && (
+                  <div className="absolute -top-1 -right-1 w-2 h-2 bg-emerald-400 rounded-full animate-pulse shadow-[0_0_5px_#10b981]"></div>
+              )}
+          </button>
+          
+          <div className="flex flex-col gap-2 pointer-events-auto">
+            <DashboardControls onZoomIn={zoomIn} onZoomOut={zoomOut} />
+          </div>
+      </div>
 
       {/* --- REPOSITIONED & RESIZED SYNC BUTTON --- */}
       <div className="absolute bottom-44 right-4 md:bottom-10 md:left-1/2 md:right-auto md:transform md:-translate-x-1/2 z-30 flex items-center justify-center">
@@ -299,6 +322,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           filterMode={filterMode}
           filterCountry={filterCountry}
           searchTerm={searchTerm}
+          showGlobalTrajectories={showGlobalTrajectories}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
