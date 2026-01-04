@@ -88,26 +88,24 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
       triggerParticles(e.clientX, e.clientY, '#10b981'); 
   };
 
-  // Funzione critica per impedire alla mappa di intercettare il tocco sulla scheda
   const stopEvent = (e: React.UIEvent | React.TouchEvent | React.WheelEvent | React.PointerEvent) => {
+    // Fermiamo la propagazione verso la Dashboard e la mappa
     e.stopPropagation();
   };
 
   return (
     <div 
-      className="fixed bottom-[125px] md:bottom-24 md:right-6 md:left-auto left-0 right-0 md:w-80 glass-panel-heavy md:rounded-2xl rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.8)] overflow-hidden animate-slide-up z-[60] max-h-[80vh] md:max-h-[75vh] flex flex-col border-t border-white/20 touch-auto pointer-events-auto"
+      className="fixed bottom-[130px] md:bottom-24 md:right-6 md:left-auto left-4 right-4 md:w-80 glass-panel-heavy rounded-2xl md:rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.9)] overflow-hidden animate-slide-up z-[60] max-h-[60vh] md:max-h-[75vh] flex flex-col border border-white/20 pointer-events-auto"
       onPointerDown={stopEvent}
       onTouchStart={stopEvent}
-      onTouchMove={stopEvent}
-      onTouchEnd={stopEvent}
-      onWheel={stopEvent}
       onMouseDown={stopEvent}
+      style={{ touchAction: 'pan-y' }}
     >
       <div className="relative p-5 flex flex-col h-full overflow-hidden">
         
         {/* CONFIRMATION MODAL OVERLAY */}
         {confirmAction && (
-            <div className="absolute inset-0 z-50 bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center animate-fade-in">
+            <div className="absolute inset-0 z-50 bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center animate-fade-in">
                 <div className={`p-4 rounded-full mb-4 ${confirmAction === 'BOOST' ? 'bg-amber-900/40 text-amber-400' : 'bg-cyan-900/40 text-cyan-400'}`}>
                     {confirmAction === 'BOOST' ? <Zap size={32} /> : <Shield size={32} />}
                 </div>
@@ -140,10 +138,11 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
 
         <h3 className="font-bold text-xl text-white mb-4 pr-6 tracking-tight break-words uppercase shrink-0">{zone.name}</h3>
         
-        {/* Contenitore scorrevole con touch-action specifico per abilitare lo scroll nativo */}
+        {/* Contenitore scorrevole - pan-y abilita lo scorrimento del browser */}
         <div 
           className="overflow-y-auto flex-1 space-y-4 pr-1 overscroll-contain no-scrollbar md:scrollbar-thin"
           style={{ touchAction: 'pan-y' }}
+          onPointerDown={stopEvent}
         >
             {/* Owner Card */}
             {ownerDetails && (
@@ -189,7 +188,6 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
                 </div>
             </div>
 
-            {/* Interest Pool Display with KM - KM PRIORITIZZATI */}
             <div className="bg-emerald-900/30 p-3 rounded-lg border border-emerald-500/30 text-center relative group backdrop-blur-sm shrink-0">
                 <div className="flex flex-col items-center mb-3">
                     <span className="text-[10px] text-emerald-200/50 uppercase font-bold tracking-tighter">{t('zone.global_dist')}</span>
@@ -201,17 +199,6 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
                     <div className="font-mono text-emerald-400 font-bold text-lg flex items-center justify-center gap-1">
                         <Coins size={12} /> {(zone.interestPool || 0).toFixed(4)} RUN
                     </div>
-                </div>
-                
-                {/* TOOLTIP HUD */}
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 glass-panel-heavy rounded-xl shadow-2xl opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none z-[100] transform scale-90 group-hover:scale-100 text-left border border-emerald-500/30">
-                    <p className="text-[10px] text-emerald-400 font-black uppercase tracking-widest mb-1.5 flex items-center gap-1">
-                        <Activity size={10} /> {t('zone.pool_tooltip_title')}
-                    </p>
-                    <p className="text-[11px] text-gray-300 leading-relaxed font-medium">
-                        {t('zone.pool_tooltip_body')}
-                    </p>
-                    <div className="absolute left-1/2 -bottom-1.5 w-3 h-3 bg-gray-900 border-r border-b border-emerald-500/30 transform -translate-x-1/2 rotate-45"></div>
                 </div>
             </div>
 
@@ -233,7 +220,6 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
              </div>
             )}
 
-            {/* My Stats Highlight */}
             <div className="glass-panel p-2 rounded-lg flex justify-between items-center border-emerald-500/20 bg-emerald-900/10 shrink-0">
                 <span className="text-xs text-emerald-400 font-bold uppercase tracking-wide">Your Distance:</span>
                 <span className="font-mono font-bold text-white text-base">{myKmInZone.toFixed(2)} km</span>

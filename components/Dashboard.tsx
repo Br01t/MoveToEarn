@@ -98,7 +98,6 @@ const Dashboard: React.FC<DashboardProps> = ({
       }
   }, [selectedZone]);
 
-  // --- REFINED CENTROID RECENTER LOGIC ---
   const calculateDistributionCenter = (currentZones: Zone[], currentScale: number) => {
       if (currentZones.length === 0) return null;
       
@@ -114,7 +113,6 @@ const Dashboard: React.FC<DashboardProps> = ({
       const avgX = sumX / currentZones.length;
       const avgY = sumY / currentZones.length;
 
-      // Rounded to prevent coordinate drift/jitter
       return { 
           x: Math.round((window.innerWidth / 2) - (avgX * currentScale)), 
           y: Math.round((window.innerHeight / 2) - (avgY * currentScale)) 
@@ -122,14 +120,12 @@ const Dashboard: React.FC<DashboardProps> = ({
   };
 
   useEffect(() => {
-    // Initial Load centering on global distribution
     if (prevZonesLengthRef.current === 0 && zones.length > 0) {
         const center = calculateDistributionCenter(zones, view.scale);
         if (center) {
             setView(v => ({ ...v, x: center.x, y: center.y }));
         }
     }
-    // Centering on newly minted zone
     else if (zones.length > prevZonesLengthRef.current) {
         const newZone = zones[zones.length - 1];
         const pos = getHexPixelPosition(newZone.x, newZone.y, HEX_SIZE);
@@ -157,7 +153,6 @@ const Dashboard: React.FC<DashboardProps> = ({
       isDragging.current = false;
   };
 
-  // Helper per calcolare distanza e punto medio touch
   const getTouchMetrics = (touches: TouchList) => {
     const dx = touches[0].clientX - touches[1].clientX;
     const dy = touches[0].clientY - touches[1].clientY;
@@ -169,7 +164,6 @@ const Dashboard: React.FC<DashboardProps> = ({
     return { distance, midpoint };
   };
 
-  // Usiamo useEffect per listener non-passivi per bloccare lo zoom del browser
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -185,7 +179,6 @@ const Dashboard: React.FC<DashboardProps> = ({
         initialPinchDistance.current = distance;
         initialPinchScale.current = view.scale;
         
-        // Salviamo il punto medio in "world coordinates" (relative alla mappa)
         initialMidpointWorld.current = {
           x: (midpoint.x - view.x) / view.scale,
           y: (midpoint.y - view.y) / view.scale
@@ -198,21 +191,24 @@ const Dashboard: React.FC<DashboardProps> = ({
         const dx = e.touches[0].clientX - lastMousePos.current.x;
         const dy = e.touches[0].clientY - lastMousePos.current.y;
         setView(v => ({ ...v, x: v.x + dx, y: v.y + dy }));
-        // Fix: Changed e.clientX to e.touches[0].clientX for TouchEvent compatibility
         lastMousePos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
       } else if (e.touches.length === 2 && initialPinchDistance.current !== null) {
         const { distance, midpoint } = getTouchMetrics(e.touches);
         const ratio = distance / initialPinchDistance.current;
         const newScale = Math.min(2.5, Math.max(0.3, initialPinchScale.current * ratio));
         
-        // Calcoliamo la nuova posizione per mantenere il punto medio fisso sotto le dita
         const newX = midpoint.x - (initialMidpointWorld.current.x * newScale);
         const newY = midpoint.y - (initialMidpointWorld.current.y * newScale);
         
         setView({ x: newX, y: newY, scale: newScale });
       }
       
-      if (e.cancelable) e.preventDefault();
+      // Solo se il target è l'area della mappa impediamo il default
+      // Se il target è dentro ZoneDetails, lasciamo scorrere
+      const target = e.target as HTMLElement;
+      if (target.closest('svg') || target === container) {
+          if (e.cancelable) e.preventDefault();
+      }
     };
 
     const handleTouchEnd = () => {
@@ -229,7 +225,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       container.removeEventListener('touchmove', handleTouchMove);
       container.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [view]); // Dipendenza da view necessaria per aggiornare i world points correttamente
+  }, [view]);
 
   const zoomIn = () => setView(v => ({ ...v, scale: Math.min(v.scale + 0.2, 2.5) }));
   const zoomOut = () => setView(v => ({ ...v, scale: Math.max(v.scale - 0.2, 0.3) }));
@@ -247,7 +243,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   return (
     <div 
       ref={containerRef}
-      className="relative w-full h-[calc(100vh-56px)] md:h-[calc(100vh-64px)] overflow-hidden bg-transparent shadow-inner touch-none"
+      className="relative w-full h-[calc(100vh-56px)] md:h-[calc(100vh-64px)] overflow-hidden bg-transparent shadow-inner"
     >
       
       <DashboardHUD 
@@ -269,22 +265,18 @@ const Dashboard: React.FC<DashboardProps> = ({
           onRecenter={handleRecenter}
       />
 
-      {/* CONSOLIDATED MAP CONTROLS - Positioned top-right under navbar */}
       <div className="absolute top-2 right-2 z-20 flex flex-col gap-2 pointer-events-none">
-          {/* COMPACT GLOBAL TRAJECTORIES TOGGLE */}
           <button 
             onClick={() => setShowGlobalTrajectories(!showGlobalTrajectories)}
-            className={`relative p-2 rounded-lg border shadow-lg transition-all duration-300 flex items-center justify-center pointer-events-auto ${
+            className={`relative w-10 h-10 rounded-lg border shadow-lg transition-all duration-300 flex items-center justify-center pointer-events-auto ${
                 showGlobalTrajectories 
                 ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50' 
                 : 'bg-gray-800/90 text-gray-500 border-gray-700 hover:text-white'
             }`}
-            title="Toggle Global Trajectories"
+            title="Toggle Traiettorie"
           >
               <Waypoints size={20} className={showGlobalTrajectories ? 'animate-pulse' : ''} />
-              {showGlobalTrajectories && (
-                  <div className="absolute -top-1 -right-1 w-2 h-2 bg-emerald-400 rounded-full animate-pulse shadow-[0_0_5px_#10b981]"></div>
-              )}
+              <div className={`absolute top-1 right-1 w-1.5 h-1.5 rounded-full border border-black/50 ${showGlobalTrajectories ? 'bg-emerald-400 animate-pulse shadow-[0_0_5px_#10b981]' : 'bg-gray-600'}`}></div>
           </button>
           
           <div className="flex flex-col gap-2 pointer-events-auto">
@@ -292,7 +284,6 @@ const Dashboard: React.FC<DashboardProps> = ({
           </div>
       </div>
 
-      {/* --- REPOSITIONED & RESIZED SYNC BUTTON --- */}
       <div className="absolute bottom-44 right-4 md:bottom-10 md:left-1/2 md:right-auto md:transform md:-translate-x-1/2 z-30 flex items-center justify-center">
             <div className="absolute inset-0 bg-emerald-500 rounded-full animate-ping opacity-20 duration-1000"></div>
             <div className="absolute inset-0 bg-emerald-400 rounded-full blur-xl opacity-40"></div>
@@ -305,7 +296,6 @@ const Dashboard: React.FC<DashboardProps> = ({
                    <UploadCloud size={20} className="md:w-6 md:h-6 animate-pulse" /> 
                 </div>
                 <div className="flex flex-col items-start min-w-0">
-                   {/* Hide sub-text on mobile */}
                    <span className="hidden md:block text-emerald-400 font-black text-xs uppercase tracking-widest leading-none mb-0.5">{t('dash.sync_btn_sub')}</span>
                    <span className="text-white font-bold text-sm md:text-lg leading-none truncate whitespace-nowrap">{t('dash.sync_btn_main')}</span>
                 </div>
@@ -326,9 +316,9 @@ const Dashboard: React.FC<DashboardProps> = ({
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
-          onTouchStart={() => {}} // Gestiti dal listener manuale
-          onTouchMove={() => {}} // Gestiti dal listener manuale
-          onTouchEnd={() => {}} // Gestiti dal listener manuale
+          onTouchStart={() => {}}
+          onTouchMove={() => {}}
+          onTouchEnd={() => {}}
       />
 
       {selectedZone && ownerDetails && (
