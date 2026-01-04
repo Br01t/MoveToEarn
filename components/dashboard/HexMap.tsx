@@ -470,11 +470,11 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
                       </text>
                       <g transform="translate(-40, -15)">
                           <rect x="0" y="0" width="80" height="44" rx="8" fill="rgba(0,0,0,0.7)" stroke={isMine ? 'rgba(52, 211, 153, 0.6)' : 'rgba(239, 68, 68, 0.6)'} strokeWidth="1.5" />
-                          <text x="40" y="16" textAnchor="middle" fill={isMine ? '#34d399' : '#fca5a5'} fontSize="14" fontWeight="bold" style={{ fontFamily: 'monospace', textShadow: '0 1px 2px black' }}>
-                              {(zone.interestPool || 0).toFixed(2)}
-                          </text>
-                          <text x="40" y="34" textAnchor="middle" fill="rgba(200, 210, 255, 0.7)" fontSize="11" fontWeight="bold" style={{ fontFamily: 'monospace' }}>
+                          <text x="40" y="16" textAnchor="middle" fill="rgba(200, 210, 255, 0.7)" fontSize="14" fontWeight="bold" style={{ fontFamily: 'monospace' }}>
                               {(zone.totalKm || 0).toFixed(1)} km
+                          </text>
+                          <text x="40" y="34" textAnchor="middle" fill={isMine ? '#34d399' : '#fca5a5'} fontSize="12" fontWeight="bold" style={{ fontFamily: 'monospace', textShadow: '0 1px 2px black' }}>
+                              {(zone.interestPool || 0).toFixed(2)}
                           </text>
                       </g>
                       {(shielded || boosted) && (

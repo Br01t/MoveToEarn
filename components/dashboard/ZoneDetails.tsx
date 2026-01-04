@@ -74,22 +74,22 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
   const handleConfirmAction = (e: React.MouseEvent) => {
       if (confirmAction === 'BOOST') {
           onBoost(zone.id);
-          triggerParticles(e.clientX, e.clientY, '#fbbf24'); // Amber particles
+          triggerParticles(e.clientX, e.clientY, '#fbbf24'); 
       }
       if (confirmAction === 'SHIELD') {
           onDefend(zone.id);
-          triggerParticles(e.clientX, e.clientY, '#06b6d4'); // Cyan particles
+          triggerParticles(e.clientX, e.clientY, '#06b6d4'); 
       }
       setConfirmAction(null);
   };
 
   const handleClaimClick = (e: React.MouseEvent) => {
       onClaim(zone.id);
-      triggerParticles(e.clientX, e.clientY, '#10b981'); // Emerald particles
+      triggerParticles(e.clientX, e.clientY, '#10b981'); 
   };
 
   return (
-    <div className="fixed bottom-[125px] md:bottom-24 md:right-6 md:left-auto left-0 right-0 md:w-80 glass-panel-heavy md:rounded-2xl rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.8)] overflow-hidden animate-slide-up z-[60] max-h-[75vh] flex flex-col border-t border-white/20">
+    <div className="fixed bottom-[125px] md:bottom-24 md:right-6 md:left-auto left-0 right-0 md:w-80 glass-panel-heavy md:rounded-2xl rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.8)] overflow-hidden animate-slide-up z-[60] max-h-[70vh] flex flex-col border-t border-white/20">
       <div className="relative p-5 flex flex-col h-full overflow-hidden">
         
         {/* CONFIRMATION MODAL OVERLAY */}
@@ -125,9 +125,10 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
           <X size={18} />
         </button>
 
-        <h3 className="font-bold text-xl text-white mb-4 pr-6 tracking-tight break-words uppercase">{zone.name}</h3>
+        <h3 className="font-bold text-xl text-white mb-4 pr-6 tracking-tight break-words uppercase shrink-0">{zone.name}</h3>
         
-        <div className="overflow-y-auto flex-1 space-y-4 pr-1 scrollbar-hide">
+        {/* Scrollable container improved for mobile */}
+        <div className="overflow-y-auto flex-1 space-y-4 pr-1 touch-pan-y">
             
             {/* Owner Card */}
             {ownerDetails && (
@@ -173,19 +174,20 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
                 </div>
             </div>
 
-            {/* Interest Pool Display with Total KM */}
+            {/* Interest Pool Display with KM - SWAPPED ORDER */}
             <div className="bg-emerald-900/30 p-3 rounded-lg border border-emerald-500/30 text-center relative group backdrop-blur-sm">
-                <div>
+                {/* KM Globali ora al primo posto */}
+                <div className="flex flex-col items-center mb-3">
+                    <span className="text-[10px] text-emerald-200/50 uppercase font-bold tracking-tighter">{t('zone.global_dist')}</span>
+                    <span className="text-white font-mono font-black text-2xl drop-shadow-md">{(zone.totalKm || 0).toFixed(1)} <span className="text-xs text-emerald-500/70">KM</span></span>
+                </div>
+
+                {/* Pool Interessi ora al secondo posto */}
+                <div className="pt-2 border-t border-emerald-500/20">
                     <div className="text-xs text-emerald-200/70 uppercase font-bold tracking-wider">{t('zone.interest_pool')}</div>
-                    <div className="font-mono text-emerald-400 font-bold text-base flex items-center justify-center gap-1">
+                    <div className="font-mono text-emerald-400 font-bold text-lg flex items-center justify-center gap-1">
                         <Coins size={12} /> {(zone.interestPool || 0).toFixed(4)} RUN
                     </div>
-                </div>
-                
-                {/* NEW: Total KM Global Section */}
-                <div className="mt-2 pt-2 border-t border-emerald-500/10 flex flex-col items-center">
-                    <span className="text-[10px] text-gray-500 uppercase font-bold tracking-tighter">{t('zone.global_dist')}</span>
-                    <span className="text-white font-mono font-bold text-sm">{(zone.totalKm || 0).toFixed(1)} KM</span>
                 </div>
                 
                 {/* TOOLTIP HUD */}
@@ -229,7 +231,7 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
                 <h4 className="text-xs font-bold text-gray-400 uppercase mb-3 flex items-center gap-1 tracking-wider">
                     <Medal size={12} className="text-yellow-500"/> {t('zone.top_runners')}
                 </h4>
-                <div className="space-y-2 max-h-[120px] overflow-y-auto pr-1">
+                <div className="space-y-2 max-h-[150px] overflow-y-auto pr-1">
                     {zoneLeaderboard.map((runner, index) => (
                         <div key={runner.id} className={`flex items-center justify-between text-xs p-1 rounded transition-colors ${runner.id === user.id ? 'bg-emerald-900/20 border border-emerald-500/20' : 'hover:bg-white/5'}`}>
                             <div className="flex items-center gap-2">
@@ -250,6 +252,7 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
             </div>
         </div>
 
+        {/* Action area kept at the bottom */}
         <div className="pt-4 mt-2 border-t border-white/10 shrink-0">
            {zone.ownerId === user.id ? (
                 <div className="flex gap-2">
