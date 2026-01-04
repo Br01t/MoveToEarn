@@ -88,8 +88,21 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
       triggerParticles(e.clientX, e.clientY, '#10b981'); 
   };
 
+  // Funzione per bloccare la propagazione degli eventi touch/mouse alla mappa sottostante
+  const stopEvent = (e: React.UIEvent | React.TouchEvent | React.WheelEvent | React.PointerEvent) => {
+    e.stopPropagation();
+  };
+
   return (
-    <div className="fixed bottom-[125px] md:bottom-24 md:right-6 md:left-auto left-0 right-0 md:w-80 glass-panel-heavy md:rounded-2xl rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.8)] overflow-hidden animate-slide-up z-[60] max-h-[65vh] md:max-h-[75vh] flex flex-col border-t border-white/20 touch-auto pointer-events-auto">
+    <div 
+      className="fixed bottom-[125px] md:bottom-24 md:right-6 md:left-auto left-0 right-0 md:w-80 glass-panel-heavy md:rounded-2xl rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.8)] overflow-hidden animate-slide-up z-[60] max-h-[65vh] md:max-h-[75vh] flex flex-col border-t border-white/20 touch-auto pointer-events-auto"
+      onPointerDown={stopEvent}
+      onTouchStart={stopEvent}
+      onTouchMove={stopEvent}
+      onTouchEnd={stopEvent}
+      onWheel={stopEvent}
+      onMouseDown={stopEvent}
+    >
       <div className="relative p-5 flex flex-col h-full overflow-hidden">
         
         {/* CONFIRMATION MODAL OVERLAY */}
