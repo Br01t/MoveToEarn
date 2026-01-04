@@ -88,14 +88,14 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
       triggerParticles(e.clientX, e.clientY, '#10b981'); 
   };
 
-  // Funzione per bloccare la propagazione degli eventi touch/mouse alla mappa sottostante
+  // Funzione critica per impedire alla mappa di intercettare il tocco sulla scheda
   const stopEvent = (e: React.UIEvent | React.TouchEvent | React.WheelEvent | React.PointerEvent) => {
     e.stopPropagation();
   };
 
   return (
     <div 
-      className="fixed bottom-[125px] md:bottom-24 md:right-6 md:left-auto left-0 right-0 md:w-80 glass-panel-heavy md:rounded-2xl rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.8)] overflow-hidden animate-slide-up z-[60] max-h-[65vh] md:max-h-[75vh] flex flex-col border-t border-white/20 touch-auto pointer-events-auto"
+      className="fixed bottom-[125px] md:bottom-24 md:right-6 md:left-auto left-0 right-0 md:w-80 glass-panel-heavy md:rounded-2xl rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.8)] overflow-hidden animate-slide-up z-[60] max-h-[80vh] md:max-h-[75vh] flex flex-col border-t border-white/20 touch-auto pointer-events-auto"
       onPointerDown={stopEvent}
       onTouchStart={stopEvent}
       onTouchMove={stopEvent}
@@ -140,9 +140,11 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
 
         <h3 className="font-bold text-xl text-white mb-4 pr-6 tracking-tight break-words uppercase shrink-0">{zone.name}</h3>
         
-        {/* Contenitore scorrevole ottimizzato per mobile */}
-        <div className="overflow-y-auto flex-1 space-y-4 pr-1 overscroll-contain no-scrollbar md:scrollbar-thin">
-            
+        {/* Contenitore scorrevole con touch-action specifico per abilitare lo scroll nativo */}
+        <div 
+          className="overflow-y-auto flex-1 space-y-4 pr-1 overscroll-contain no-scrollbar md:scrollbar-thin"
+          style={{ touchAction: 'pan-y' }}
+        >
             {/* Owner Card */}
             {ownerDetails && (
                 <div className="glass-panel p-3 rounded-xl flex items-center gap-3 shrink-0">
@@ -187,15 +189,13 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
                 </div>
             </div>
 
-            {/* Interest Pool Display with KM - SWAPPED ORDER */}
+            {/* Interest Pool Display with KM - KM PRIORITIZZATI */}
             <div className="bg-emerald-900/30 p-3 rounded-lg border border-emerald-500/30 text-center relative group backdrop-blur-sm shrink-0">
-                {/* KM Globali prima */}
                 <div className="flex flex-col items-center mb-3">
                     <span className="text-[10px] text-emerald-200/50 uppercase font-bold tracking-tighter">{t('zone.global_dist')}</span>
                     <span className="text-white font-mono font-black text-2xl drop-shadow-md">{(zone.totalKm || 0).toFixed(1)} <span className="text-xs text-emerald-500/70">KM</span></span>
                 </div>
 
-                {/* Pool Interessi dopo */}
                 <div className="pt-2 border-t border-emerald-500/20">
                     <div className="text-xs text-emerald-200/70 uppercase font-bold tracking-wider">{t('zone.interest_pool')}</div>
                     <div className="font-mono text-emerald-400 font-bold text-lg flex items-center justify-center gap-1">
@@ -265,7 +265,7 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
             </div>
         </div>
 
-        {/* Action area kept at the bottom */}
+        {/* Action area */}
         <div className="pt-4 mt-2 border-t border-white/10 shrink-0">
            {zone.ownerId === user.id ? (
                 <div className="flex gap-2">
