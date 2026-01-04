@@ -89,7 +89,7 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
   };
 
   return (
-    <div className="fixed bottom-[125px] md:bottom-24 md:right-6 md:left-auto left-0 right-0 md:w-80 glass-panel-heavy md:rounded-2xl rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.8)] overflow-hidden animate-slide-up z-[60] max-h-[70vh] flex flex-col border-t border-white/20">
+    <div className="fixed bottom-[125px] md:bottom-24 md:right-6 md:left-auto left-0 right-0 md:w-80 glass-panel-heavy md:rounded-2xl rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.8)] overflow-hidden animate-slide-up z-[60] max-h-[65vh] md:max-h-[75vh] flex flex-col border-t border-white/20 touch-auto pointer-events-auto">
       <div className="relative p-5 flex flex-col h-full overflow-hidden">
         
         {/* CONFIRMATION MODAL OVERLAY */}
@@ -127,12 +127,12 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
 
         <h3 className="font-bold text-xl text-white mb-4 pr-6 tracking-tight break-words uppercase shrink-0">{zone.name}</h3>
         
-        {/* Scrollable container improved for mobile */}
-        <div className="overflow-y-auto flex-1 space-y-4 pr-1 touch-pan-y">
+        {/* Contenitore scorrevole ottimizzato per mobile */}
+        <div className="overflow-y-auto flex-1 space-y-4 pr-1 overscroll-contain no-scrollbar md:scrollbar-thin">
             
             {/* Owner Card */}
             {ownerDetails && (
-                <div className="glass-panel p-3 rounded-xl flex items-center gap-3">
+                <div className="glass-panel p-3 rounded-xl flex items-center gap-3 shrink-0">
                     <div className="relative shrink-0">
                         <img 
                             src={ownerDetails.avatar || `https://ui-avatars.com/api/?name=${ownerDetails.name}&background=10b981&color=fff`} 
@@ -159,7 +159,7 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
                 </div>
             )}
 
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-2 shrink-0">
                 <div className="bg-black/30 p-2 rounded-lg border border-white/5 text-center backdrop-blur-sm">
                      <div className="text-xs text-gray-400 uppercase font-bold tracking-wider">{t('dash.yield')}</div>
                      <div className={`font-bold font-mono text-xl ${isBoostActive ? 'text-amber-400' : 'text-cyan-400'}`}>
@@ -175,14 +175,14 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
             </div>
 
             {/* Interest Pool Display with KM - SWAPPED ORDER */}
-            <div className="bg-emerald-900/30 p-3 rounded-lg border border-emerald-500/30 text-center relative group backdrop-blur-sm">
-                {/* KM Globali ora al primo posto */}
+            <div className="bg-emerald-900/30 p-3 rounded-lg border border-emerald-500/30 text-center relative group backdrop-blur-sm shrink-0">
+                {/* KM Globali prima */}
                 <div className="flex flex-col items-center mb-3">
                     <span className="text-[10px] text-emerald-200/50 uppercase font-bold tracking-tighter">{t('zone.global_dist')}</span>
                     <span className="text-white font-mono font-black text-2xl drop-shadow-md">{(zone.totalKm || 0).toFixed(1)} <span className="text-xs text-emerald-500/70">KM</span></span>
                 </div>
 
-                {/* Pool Interessi ora al secondo posto */}
+                {/* Pool Interessi dopo */}
                 <div className="pt-2 border-t border-emerald-500/20">
                     <div className="text-xs text-emerald-200/70 uppercase font-bold tracking-wider">{t('zone.interest_pool')}</div>
                     <div className="font-mono text-emerald-400 font-bold text-lg flex items-center justify-center gap-1">
@@ -203,7 +203,7 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
             </div>
 
             {!!isBoostActive && zone.boostExpiresAt && (
-             <div className="flex items-center justify-between text-sm bg-amber-500/10 p-2 rounded-lg border border-amber-500/30 backdrop-blur-sm">
+             <div className="flex items-center justify-between text-sm bg-amber-500/10 p-2 rounded-lg border border-amber-500/30 backdrop-blur-sm shrink-0">
                <span className="text-amber-400 flex items-center gap-1 text-xs font-bold uppercase tracking-wide"><Clock size={12}/> {t('zone.boosted')}</span>
                <span className="text-amber-100 font-mono text-xs font-bold">
                  {formatTimeRemaining(zone.boostExpiresAt)}
@@ -212,7 +212,7 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
             )}
 
             {!!isShieldActive && zone.shieldExpiresAt && (
-             <div className="flex items-center justify-between text-sm bg-cyan-500/10 p-2 rounded-lg border border-cyan-500/30 backdrop-blur-sm">
+             <div className="flex items-center justify-between text-sm bg-cyan-500/10 p-2 rounded-lg border border-cyan-500/30 backdrop-blur-sm shrink-0">
                <span className="text-cyan-400 flex items-center gap-1 text-xs font-bold uppercase tracking-wide"><Shield size={12}/> {t('zone.shielded')}</span>
                <span className="text-cyan-100 font-mono text-xs font-bold">
                  {formatTimeRemaining(zone.shieldExpiresAt)}
@@ -221,19 +221,19 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
             )}
 
             {/* My Stats Highlight */}
-            <div className="glass-panel p-2 rounded-lg flex justify-between items-center border-emerald-500/20 bg-emerald-900/10">
+            <div className="glass-panel p-2 rounded-lg flex justify-between items-center border-emerald-500/20 bg-emerald-900/10 shrink-0">
                 <span className="text-xs text-emerald-400 font-bold uppercase tracking-wide">Your Distance:</span>
                 <span className="font-mono font-bold text-white text-base">{myKmInZone.toFixed(2)} km</span>
             </div>
 
             {/* Leaderboard */}
-            <div className="bg-black/20 rounded-lg border border-white/5 p-3">
+            <div className="bg-black/20 rounded-lg border border-white/5 p-3 shrink-0">
                 <h4 className="text-xs font-bold text-gray-400 uppercase mb-3 flex items-center gap-1 tracking-wider">
                     <Medal size={12} className="text-yellow-500"/> {t('zone.top_runners')}
                 </h4>
-                <div className="space-y-2 max-h-[150px] overflow-y-auto pr-1">
+                <div className="space-y-2">
                     {zoneLeaderboard.map((runner, index) => (
-                        <div key={runner.id} className={`flex items-center justify-between text-xs p-1 rounded transition-colors ${runner.id === user.id ? 'bg-emerald-900/20 border border-emerald-500/20' : 'hover:bg-white/5'}`}>
+                        <div key={runner.id} className={`flex items-center justify-between text-xs p-1.5 rounded transition-colors ${runner.id === user.id ? 'bg-emerald-900/20 border border-emerald-500/20' : 'hover:bg-white/5'}`}>
                             <div className="flex items-center gap-2">
                                 <span className={`w-4 text-center font-bold font-mono ${index === 0 ? 'text-yellow-400' : (index === 1 ? 'text-gray-300' : (index === 2 ? 'text-amber-600' : 'text-gray-600'))}`}>
                                     {index + 1}
@@ -260,7 +260,7 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
                           <button 
                               onClick={() => setConfirmAction('BOOST')}
                               disabled={!hasBoostItem}
-                              className={`flex-1 py-3 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all border text-xs md:text-sm uppercase tracking-wide shadow-lg ${hasBoostItem ? 'bg-amber-600/80 hover:bg-amber-500 border-amber-500/50 hover:scale-105' : 'bg-gray-800 opacity-50 border-transparent'}`}
+                              className={`flex-1 py-3 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all border text-xs md:text-sm uppercase tracking-wide shadow-lg ${hasBoostItem ? 'bg-amber-600/80 hover:bg-amber-500 border-amber-500/50 hover:scale-105' : 'bg-gray-800 opacity-50 border-transparent cursor-not-allowed'}`}
                           >
                               <Zap size={16} /> {t('zone.action.boost')}
                           </button>
@@ -272,7 +272,7 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
                           <button 
                               onClick={() => setConfirmAction('SHIELD')}
                               disabled={!hasDefenseItem}
-                              className={`flex-1 py-3 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all border text-xs md:text-sm uppercase tracking-wide shadow-lg ${hasDefenseItem ? 'bg-cyan-600/80 hover:bg-cyan-500 border-cyan-500/50 hover:scale-105' : 'bg-gray-800 opacity-50 border-transparent'}`}
+                              className={`flex-1 py-3 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all border text-xs md:text-sm uppercase tracking-wide shadow-lg ${hasDefenseItem ? 'bg-cyan-600/80 hover:bg-cyan-500 border-cyan-500/50 hover:scale-105' : 'bg-gray-800 opacity-50 border-transparent cursor-not-allowed'}`}
                           >
                               <Shield size={16} /> {t('zone.action.shield')}
                           </button>
@@ -286,7 +286,7 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
                      <button 
                          onClick={handleClaimClick}
                          data-text="CLAIM ZONE"
-                         className="btn-glitch w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-[0_0_15px_rgba(16,185,129,0.3)] animate-pulse uppercase tracking-wide border border-emerald-400/30"
+                         className="btn-glitch w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-[0_0_15px_rgba(16,185,129,0.3)] animate-pulse uppercase tracking-wide border border-emerald-400/30"
                      >
                          <Swords size={18} /> {t('zone.action.claim')} ({CONQUEST_COST} RUN)
                      </button>

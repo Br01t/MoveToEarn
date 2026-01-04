@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { UploadCloud, HelpCircle, X, Shield, FileText, CheckCircle, Lock, Crown, AlertTriangle, RefreshCw, Archive } from 'lucide-react';
 import { useLanguage } from '../../LanguageContext';
@@ -30,14 +29,12 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const ALLOWED_EXTENSIONS = ['.gpx', '.tcx', '.fit', '.zip'];
-  // Explicit MIME types to hint OS to open "Files" app instead of "Gallery/Camera"
   const ACCEPTED_MIME_TYPES = "application/gpx+xml,application/vnd.garmin.tcx+xml,application/octet-stream,application/zip,application/x-zip-compressed,.gpx,.fit,.tcx,.zip";
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
         const files = Array.from(e.target.files) as File[];
         
-        // Strict Client-Side Filter
         const filteredFiles = files.filter(file => {
             const fileName = file.name.toLowerCase();
             return ALLOWED_EXTENSIONS.some(ext => fileName.endsWith(ext));
@@ -89,26 +86,33 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
             const tracks = await parseActivityFile(content, fileName);
             let validInFile = 0;
 
-            tracks.forEach((points, idx) => {
-                if (points.length > 0 && points[0].time.getTime() < cutoffTimestamp) {
+            for (let idx = 0; idx < tracks.length; idx++) {
+                const points = tracks[idx];
+                if (points.length === 0) continue;
+
+                if (points[0].time.getTime() < cutoffTimestamp) {
                     ignoredOldCount++;
-                    return;
+                    addLog(`ℹ️ Skipping ${fileName}: activity older than 14 days.`);
+                    continue;
                 }
 
                 const analysis = analyzeRun(points, tracks.length > 1 ? `${fileName} (Track ${idx+1})` : fileName);
                 const result = analysis.result;
 
                 if (result.isValid) {
+                    // FIX: La logica precedente usava || tra tempo e statistiche.
+                    // Ora usiamo solo il tempo come identificatore univoco primario.
                     const isDuplicate = user.runHistory.some(run => {
-                        const timeMatch = Math.abs(run.timestamp - result.startTime) < 60000;
-                        const statsMatch = Math.abs(Number(run.km) - result.totalKm) < 0.1 && Math.abs((run.duration || 0) - result.durationMinutes) < 1.0;
-                        return timeMatch || statsMatch;
+                        const timeMatch = Math.abs(run.timestamp - result.startTime) < 60000; // 1 minuto di tolleranza
+                        return timeMatch;
                     });
 
                     if (isDuplicate) {
                         duplicateCount++;
-                        lastFailureReason = "Duplicate run detected.";
+                        lastFailureReason = "Duplicate run detected (Same start time).";
+                        addLog(`⚠️ Duplicate ignored: ${fileName} (Start time match)`);
                     } else {
+                        // Evita duplicati anche all'interno dello stesso batch di upload
                         const isBatchDuplicate = newResults.some(res => Math.abs(res.startTime - result.startTime) < 60000);
                         if (!isBatchDuplicate) {
                             newResults.push(result);
@@ -118,10 +122,12 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
                     }
                 } else {
                     lastFailureReason = result.failureReason || "Validation Error";
+                    addLog(`❌ Failed ${fileName}: ${lastFailureReason}`);
                 }
-            });
+            }
             return validInFile;
         } catch (err: any) {
+            addLog(`❌ Error parsing ${fileName}: ${err.message}`);
             return 0;
         }
     };
@@ -181,11 +187,9 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
             if (duplicateCount > 0) {
                 setErrorType('DUPLICATE');
                 setFailureDetail(t('sync.error.bulk_duplicates'));
-                addLog(`⚠️ Processed ${processedCount} files. ${duplicateCount} duplicates. ${ignoredOldCount} too old.`);
             } else if (ignoredOldCount > 0 && newResults.length === 0) {
                 setErrorType('INVALID');
                 setFailureDetail(t('sync.error.7days'));
-                addLog(`⚠️ All files skipped (7-Day Rule).`);
             } else {
                 setErrorType('INVALID');
                 setFailureDetail(lastFailureReason || "No valid data found.");
@@ -243,13 +247,6 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
             >
                 {t('sync.manual')}
             </button>
-            {/* <button 
-              onClick={() => setSyncTab('PREMIUM')}
-              disabled={uploadStep === 'PROCESSING' || uploadStep === 'SUCCESS'}
-              className={`flex-1 py-3 font-bold text-sm transition-colors flex justify-center items-center gap-2 ${syncTab === 'PREMIUM' ? 'bg-white/5 text-yellow-400 border-b-2 border-yellow-400' : 'text-gray-500 hover:text-gray-300'}`}
-            >
-                <Crown size={14} /> {t('sync.auto')}
-            </button> */}
          </div>
          
          <div className="p-6 overflow-y-auto">
@@ -372,33 +369,6 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
                         </div>
                     )}
                 </>
-            )}
-
-            {syncTab === 'PREMIUM' && (
-                <div className="space-y-6 py-4">
-                    {!user.isPremium ? (
-                        <div className="text-center space-y-6">
-                            <div className="bg-black/30 p-6 rounded-xl border border-gray-700 flex flex-col items-center">
-                                <div className="bg-gray-800 p-4 rounded-full mb-4"><Lock size={32} className="text-gray-500" /></div>
-                                <h4 className="text-lg font-bold text-white mb-2">{t('sync.premium_locked')}</h4>
-                                <p className="text-gray-400 text-xs mb-6 max-w-xs mx-auto">{t('sync.premium_desc')}</p>
-                                <button className="w-full py-4 bg-gray-700 text-gray-400 font-bold rounded-xl cursor-not-allowed text-sm">Requires Premium Subscription</button>
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="space-y-6">
-                            <div className="bg-black/30 p-4 rounded-xl border border-emerald-500/30 flex items-center justify-center">
-                                <div className="flex items-center gap-3">
-                                    <div className="bg-[#FC4C02] p-2 rounded text-white font-bold text-xs">STRAVA</div>
-                                    <div>
-                                        <div className="text-white font-bold text-sm">Connected</div>
-                                        <div className="text-xs text-emerald-400 flex items-center gap-1"><CheckCircle size={10} /> Sync Active</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                </div>
             )}
          </div>
       </div>
