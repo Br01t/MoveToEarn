@@ -137,6 +137,10 @@ const Dashboard: React.FC<DashboardProps> = ({
   }, [zones]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    // IMPORTANTE: Se clicchiamo sulla UI (non mappa), ignoriamo il drag
+    if (!target.closest('svg') && target !== containerRef.current) return;
+    
     isDragging.current = true;
     lastMousePos.current = { x: e.clientX, y: e.clientY };
   };
@@ -169,6 +173,13 @@ const Dashboard: React.FC<DashboardProps> = ({
     if (!container) return;
 
     const handleTouchStart = (e: TouchEvent) => {
+      const target = e.target as HTMLElement;
+      // IMPORTANTE: Se il tocco inizia sulla UI (come la scheda dettagli), non iniziamo il drag
+      if (!target.closest('svg') && target !== container) {
+          isDragging.current = false;
+          return;
+      }
+
       if (e.touches.length === 1) {
         isDragging.current = true;
         lastMousePos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
@@ -187,7 +198,10 @@ const Dashboard: React.FC<DashboardProps> = ({
     };
 
     const handleTouchMove = (e: TouchEvent) => {
-      if (e.touches.length === 1 && isDragging.current) {
+      const target = e.target as HTMLElement;
+      const isUITouch = !target.closest('svg') && target !== container;
+
+      if (e.touches.length === 1 && isDragging.current && !isUITouch) {
         const dx = e.touches[0].clientX - lastMousePos.current.x;
         const dy = e.touches[0].clientY - lastMousePos.current.y;
         setView(v => ({ ...v, x: v.x + dx, y: v.y + dy }));
@@ -203,10 +217,9 @@ const Dashboard: React.FC<DashboardProps> = ({
         setView({ x: newX, y: newY, scale: newScale });
       }
       
-      // Solo se il target è l'area della mappa impediamo il default
-      // Se il target è dentro ZoneDetails, lasciamo scorrere
-      const target = e.target as HTMLElement;
-      if (target.closest('svg') || target === container) {
+      // Blocchiamo il comportamento di scroll del browser SOLO se siamo sulla mappa.
+      // Se siamo sulla UI (scheda), lasciamo che il browser gestisca lo scroll verticale.
+      if (!isUITouch) {
           if (e.cancelable) e.preventDefault();
       }
     };
