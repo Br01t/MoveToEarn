@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Zone, User, Badge, Rarity } from '../../types';
-import { X, Crown, Shield, Medal, Lock, Zap, Flag, Award, Mountain, Globe, Home, Landmark, Swords, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users, AlertTriangle, CheckCircle, Coins, Activity, Info, Clock } from 'lucide-react';
+import { X, Crown, Shield, Medal, Lock, Zap, Flag, Award, Mountain, Globe, Home, Landmark, Swords, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users, AlertTriangle, CheckCircle, Coins, Activity, Info, Clock, TrendingUp, AlertCircle } from 'lucide-react';
 import { useLanguage } from '../../LanguageContext';
 import { CONQUEST_COST } from '../../constants';
 import { useGlobalUI } from '../../contexts/GlobalUIContext';
@@ -46,10 +46,15 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
   
   const topRunner = zoneLeaderboard.length > 0 ? zoneLeaderboard[0] : null;
   const isTopRunner = topRunner ? topRunner.id === user.id : false;
+  const isOwner = zone.ownerId === user.id;
   
+  // STATO CRITICO: Top Runner ma non Owner (Opportunità)
+  const isRipeForConquest = isTopRunner && !isOwner;
+  // STATO CRITICO: Owner ma non più Top Runner (Pericolo)
+  const isTerritoryAtRisk = isOwner && !isTopRunner && zoneLeaderboard.length > 0;
+
   const currentUserStats = zoneLeaderboard.find(u => u.id === user.id);
   const myKmInZone = currentUserStats ? currentUserStats.km : 0;
-  
   const kmToTop = topRunner && !isTopRunner ? (topRunner.km - myKmInZone) : 0;
 
   const renderBadgeIcon = (iconName: string, className: string) => {
@@ -94,7 +99,11 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
 
   return (
     <div 
-      className="fixed bottom-[130px] md:bottom-24 md:right-6 md:left-auto left-4 right-4 md:w-80 glass-panel-heavy rounded-2xl md:rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.9)] overflow-hidden animate-slide-up z-[60] max-h-[60vh] md:max-h-[75vh] flex flex-col border border-white/20 pointer-events-auto"
+      className={`fixed bottom-[130px] md:bottom-24 md:right-6 md:left-auto left-4 right-4 md:w-80 glass-panel-heavy rounded-2xl md:rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.9)] overflow-hidden animate-slide-up z-[60] max-h-[60vh] md:max-h-[75vh] flex flex-col border pointer-events-auto transition-all duration-500 ${
+        isRipeForConquest ? 'border-yellow-500/50 animate-opportunity-pulse' : 
+        isTerritoryAtRisk ? 'border-red-500/50 animate-danger-pulse' : 
+        'border-white/20'
+      }`}
       onPointerDown={stopEvent}
       onTouchStart={stopEvent}
       onMouseDown={stopEvent}
@@ -102,6 +111,23 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
     >
       <div className="relative p-5 flex flex-col h-full overflow-hidden">
         
+        {/* OPPORTUNITY BANNER */}
+        {isRipeForConquest && (
+            <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-yellow-600 to-yellow-500 py-1 px-4 flex items-center justify-center gap-2 z-20 shadow-lg">
+                <TrendingUp size={12} className="text-black animate-bounce" />
+                <span className="text-[10px] font-black text-black uppercase tracking-widest">Zona Pronta per il Reclamo!</span>
+            </div>
+        )}
+
+        {/* RISK BANNER */}
+        {isTerritoryAtRisk && (
+            <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-red-600 to-red-500 py-1 px-4 flex items-center justify-center gap-2 z-20 shadow-lg">
+                <AlertCircle size={12} className="text-white animate-pulse" />
+                <span className="text-[10px] font-black text-white uppercase tracking-widest">Allerta: Difesa Violata!</span>
+            </div>
+        )}
+
+        {/* CONFIRMATION MODAL OVERLAY */}
         {confirmAction && (
             <div className="absolute inset-0 z-50 bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center animate-fade-in">
                 <div className={`p-4 rounded-full mb-4 ${confirmAction === 'BOOST' ? 'bg-amber-900/40 text-amber-400' : 'bg-cyan-900/40 text-cyan-400'}`}>
@@ -130,19 +156,20 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
             </div>
         )}
 
-        <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-white z-10 bg-black/30 rounded-full p-1 border border-white/10">
+        <button onClick={onClose} className={`absolute ${isRipeForConquest || isTerritoryAtRisk ? 'top-6' : 'top-4'} right-4 text-gray-400 hover:text-white z-10 bg-black/30 rounded-full p-1 border border-white/10`}>
           <X size={18} />
         </button>
 
-        <h3 className="font-bold text-xl text-white mb-4 pr-6 tracking-tight break-words uppercase shrink-0">{zone.name}</h3>
+        <h3 className={`font-bold text-xl text-white mb-4 pr-6 tracking-tight break-words uppercase shrink-0 ${isRipeForConquest || isTerritoryAtRisk ? 'mt-4' : ''}`}>{zone.name}</h3>
         
         <div 
           className="overflow-y-auto flex-1 space-y-4 pr-1 overscroll-contain no-scrollbar md:scrollbar-thin"
           style={{ touchAction: 'pan-y' }}
           onPointerDown={stopEvent}
         >
+            {/* Owner Card */}
             {ownerDetails && (
-                <div className="glass-panel p-3 rounded-xl flex items-center gap-3 shrink-0">
+                <div className={`glass-panel p-3 rounded-xl flex items-center gap-3 shrink-0 border transition-colors ${isTerritoryAtRisk ? 'border-red-500/40 bg-red-950/20' : 'border-white/5'}`}>
                     <div className="relative shrink-0">
                         <img 
                             src={ownerDetails.avatar || `https://ui-avatars.com/api/?name=${ownerDetails.name}&background=10b981&color=fff`} 
@@ -156,7 +183,7 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
                     <div className="min-w-0">
                         <div className="text-xs text-gray-400 uppercase font-bold tracking-wider">{t('zone.owner_info')}</div>
                         <div className="flex items-center gap-2">
-                           <div className={`font-bold text-base truncate ${zone.ownerId === user.id ? 'text-emerald-400' : 'text-white'}`}>
+                           <div className={`font-bold text-base truncate ${zone.ownerId === user.id ? (isTerritoryAtRisk ? 'text-red-400' : 'text-emerald-400') : 'text-white'}`}>
                                 {ownerDetails.name} {zone.ownerId === user.id && t('zone.you')}
                            </div>
                            {ownerDetails.badge && (
@@ -178,21 +205,21 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
                 </div>
                 <div className="bg-black/30 p-2 rounded-lg border border-white/5 text-center backdrop-blur-sm">
                      <div className="text-xs text-gray-400 uppercase font-bold tracking-wider">{t('zone.status')}</div>
-                     <div className={`font-bold text-xs uppercase pt-1 tracking-wide ${zone.ownerId === user.id ? 'text-emerald-500' : 'text-red-500'}`}>
-                         {zone.ownerId === user.id ? t('zone.occupied') : t('zone.hostile')}
+                     <div className={`font-bold text-xs uppercase pt-1 tracking-wide ${isOwner ? (isTerritoryAtRisk ? 'text-red-500' : 'text-emerald-500') : 'text-red-500'}`}>
+                         {isOwner ? t('zone.occupied') : t('zone.hostile')}
                      </div>
                 </div>
             </div>
 
-            <div className="bg-emerald-900/30 p-3 rounded-lg border border-emerald-500/30 text-center relative group backdrop-blur-sm shrink-0">
+            <div className={`p-3 rounded-lg border text-center relative group backdrop-blur-sm shrink-0 transition-all ${isRipeForConquest ? 'bg-yellow-900/20 border-yellow-500/40 shadow-[inset_0_0_15px_rgba(251,191,36,0.1)]' : 'bg-emerald-900/30 border-emerald-500/30'}`}>
                 <div className="flex flex-col items-center mb-3">
-                    <span className="text-[10px] text-emerald-200/50 uppercase font-bold tracking-tighter">{t('zone.global_dist')}</span>
-                    <span className="text-white font-mono font-black text-2xl drop-shadow-md">{(zone.totalKm || 0).toFixed(1)} <span className="text-xs text-emerald-500/70">KM</span></span>
+                    <span className={`text-[10px] uppercase font-bold tracking-tighter ${isRipeForConquest ? 'text-yellow-400' : 'text-emerald-200/50'}`}>{t('zone.global_dist')}</span>
+                    <span className="text-white font-mono font-black text-2xl drop-shadow-md">{(zone.totalKm || 0).toFixed(1)} <span className={`text-xs ${isRipeForConquest ? 'text-yellow-500' : 'text-emerald-500/70'}`}>KM</span></span>
                 </div>
 
-                <div className="pt-2 border-t border-emerald-500/20">
-                    <div className="text-xs text-emerald-200/70 uppercase font-bold tracking-wider">{t('zone.interest_pool')}</div>
-                    <div className="font-mono text-emerald-400 font-bold text-lg flex items-center justify-center gap-1">
+                <div className={`pt-2 border-t ${isRipeForConquest ? 'border-yellow-500/20' : 'border-emerald-500/20'}`}>
+                    <div className={`text-xs uppercase font-bold tracking-wider ${isRipeForConquest ? 'text-yellow-200' : 'text-emerald-200/70'}`}>{t('zone.interest_pool')}</div>
+                    <div className={`font-mono font-bold text-lg flex items-center justify-center gap-1 ${isRipeForConquest ? 'text-yellow-400' : 'text-emerald-400'}`}>
                         <Coins size={12} /> {(zone.interestPool || 0).toFixed(4)} RUN
                     </div>
                 </div>
@@ -216,24 +243,25 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
              </div>
             )}
 
-            <div className="glass-panel p-2 rounded-lg flex justify-between items-center border-emerald-500/20 bg-emerald-900/10 shrink-0">
-                <span className="text-xs text-emerald-400 font-bold uppercase tracking-wide">Your Distance:</span>
+            <div className={`glass-panel p-2 rounded-lg flex justify-between items-center shrink-0 border-l-4 ${isRipeForConquest ? 'border-yellow-500 bg-yellow-900/10' : 'border-emerald-500/20 bg-emerald-900/10'}`}>
+                <span className={`text-xs font-bold uppercase tracking-wide ${isRipeForConquest ? 'text-yellow-400' : 'text-emerald-400'}`}>Your distance:</span>
                 <span className="font-mono font-bold text-white text-base">{myKmInZone.toFixed(2)} km</span>
             </div>
 
+            {/* Leaderboard */}
             <div className="bg-black/20 rounded-lg border border-white/5 p-3 shrink-0">
                 <h4 className="text-xs font-bold text-gray-400 uppercase mb-3 flex items-center gap-1 tracking-wider">
                     <Medal size={12} className="text-yellow-500"/> {t('zone.top_runners')}
                 </h4>
                 <div className="space-y-2">
                     {zoneLeaderboard.map((runner, index) => (
-                        <div key={runner.id} className={`flex items-center justify-between text-xs p-1.5 rounded transition-colors ${runner.id === user.id ? 'bg-emerald-900/20 border border-emerald-500/20' : 'hover:bg-white/5'}`}>
+                        <div key={runner.id} className={`flex items-center justify-between text-xs p-1.5 rounded transition-colors ${runner.id === user.id ? (isRipeForConquest ? 'bg-yellow-900/20 border border-yellow-500/20' : 'bg-emerald-900/20 border border-emerald-500/20') : 'hover:bg-white/5'}`}>
                             <div className="flex items-center gap-2">
-                                <span className={`w-4 text-center font-bold font-mono ${index === 0 ? 'text-yellow-400' : (index === 1 ? 'text-gray-300' : (index === 2 ? 'text-amber-600' : 'text-gray-600'))}`}>
+                                <span className={`w-4 text-center font-bold font-mono ${index === 0 ? 'text-yellow-400' : (index === 1 ? 'text-gray-300' : (index === 2 ? 'text-amber-600' : (index === 2 ? 'text-amber-600' : 'text-gray-600')))}`}>
                                     {index + 1}
                                 </span>
                                 <img src={runner.avatar} className="w-5 h-5 rounded-full bg-gray-700 object-cover" alt={runner.name}/>
-                                <span className={`${runner.id === user.id ? 'text-emerald-400 font-bold' : 'text-gray-300'}`}>
+                                <span className={`${runner.id === user.id ? (isRipeForConquest ? 'text-yellow-400 font-bold' : 'text-emerald-400 font-bold') : 'text-gray-300'}`}>
                                     {runner.name}
                                 </span>
                             </div>
@@ -246,43 +274,56 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
             </div>
         </div>
 
+        {/* Action area */}
         <div className="pt-4 mt-2 border-t border-white/10 shrink-0">
-           {zone.ownerId === user.id ? (
-                <div className="flex gap-2">
-                      {!isBoostActive ? (
-                          <button 
-                              onClick={() => setConfirmAction('BOOST')}
-                              disabled={!hasBoostItem}
-                              className={`flex-1 py-3 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all border text-xs md:text-sm uppercase tracking-wide shadow-lg ${hasBoostItem ? 'bg-amber-600/80 hover:bg-amber-500 border-amber-500/50 hover:scale-105' : 'bg-gray-800 opacity-50 border-transparent cursor-not-allowed'}`}
-                          >
-                              <Zap size={16} /> {t('zone.action.boost')}
-                          </button>
-                      ) : (
-                          <div className="flex-1 py-3 bg-black/40 text-amber-500 font-bold rounded-xl flex items-center justify-center gap-2 border border-amber-500/20 text-xs md:text-sm uppercase tracking-wide"><Zap size={16} /> {t('zone.action.active')}</div>
-                      )}
+           {isOwner ? (
+                <div className="flex flex-col gap-2">
+                    {isTerritoryAtRisk && (
+                        <div className="bg-red-500/20 text-red-400 text-[10px] font-bold py-1 px-2 rounded mb-1 flex items-center justify-center gap-1 animate-pulse border border-red-500/30">
+                            <AlertTriangle size={10} /> CORRI SUBITO O USA UN BOOST PER DIFENDERE!
+                        </div>
+                    )}
+                    <div className="flex gap-2">
+                        {!isBoostActive ? (
+                            <button 
+                                onClick={() => setConfirmAction('BOOST')}
+                                disabled={!hasBoostItem}
+                                className={`flex-1 py-3 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all border text-xs md:text-sm uppercase tracking-wide shadow-lg ${hasBoostItem ? 'bg-amber-600/80 hover:bg-amber-500 border-amber-500/50 hover:scale-105' : 'bg-gray-800 opacity-50 border-transparent cursor-not-allowed'}`}
+                            >
+                                <Zap size={16} /> {t('zone.action.boost')}
+                            </button>
+                        ) : (
+                            <div className="flex-1 py-3 bg-black/40 text-amber-500 font-bold rounded-xl flex items-center justify-center gap-2 border border-amber-500/20 text-xs md:text-sm uppercase tracking-wide"><Zap size={16} /> {t('zone.action.active')}</div>
+                        )}
 
-                      {!isShieldActive ? (
-                          <button 
-                              onClick={() => setConfirmAction('SHIELD')}
-                              disabled={!hasDefenseItem}
-                              className={`flex-1 py-3 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all border text-xs md:text-sm uppercase tracking-wide shadow-lg ${hasDefenseItem ? 'bg-cyan-600/80 hover:bg-cyan-500 border-cyan-500/50 hover:scale-105' : 'bg-gray-800 opacity-50 border-transparent cursor-not-allowed'}`}
-                          >
-                              <Shield size={16} /> {t('zone.action.shield')}
-                          </button>
-                      ) : (
-                          <div className="flex-1 py-3 bg-black/40 text-cyan-400 font-bold rounded-xl flex items-center justify-center gap-2 border border-cyan-500/20 text-xs md:text-sm uppercase tracking-wide"><Shield size={16} /> {t('zone.action.active')}</div>
-                      )}
+                        {!isShieldActive ? (
+                            <button 
+                                onClick={() => setConfirmAction('SHIELD')}
+                                disabled={!hasDefenseItem}
+                                className={`flex-1 py-3 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all border text-xs md:text-sm uppercase tracking-wide shadow-lg ${hasDefenseItem ? 'bg-cyan-600/80 hover:bg-cyan-500 border-cyan-500/50 hover:scale-105' : 'bg-gray-800 opacity-50 border-transparent cursor-not-allowed'}`}
+                            >
+                                <Shield size={16} /> {t('zone.action.shield')}
+                            </button>
+                        ) : (
+                            <div className="flex-1 py-3 bg-black/40 text-cyan-400 font-bold rounded-xl flex items-center justify-center gap-2 border border-cyan-500/20 text-xs md:text-sm uppercase tracking-wide"><Shield size={16} /> {t('zone.action.active')}</div>
+                        )}
+                    </div>
                 </div>
            ) : (
               <>
                  {isTopRunner ? (
-                     <button 
-                         onClick={handleClaimClick}
-                         data-text="CLAIM ZONE"
-                         className="btn-glitch w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-[0_0_15px_rgba(16,185,129,0.3)] animate-pulse uppercase tracking-wide border border-emerald-400/30"
-                     >
-                         <Swords size={18} /> {t('zone.action.claim')} ({CONQUEST_COST} RUN)
-                     </button>
+                     <div className="flex flex-col gap-2">
+                        <div className="bg-yellow-500/20 text-yellow-400 text-[10px] font-bold py-1 px-2 rounded mb-1 flex items-center justify-center gap-1 animate-pulse border border-yellow-500/30 uppercase">
+                            <TrendingUp size={10} /> Sei il Leader! Reclama il premio e la zona!
+                        </div>
+                        <button 
+                            onClick={handleClaimClick}
+                            data-text="CLAIM ZONE"
+                            className="btn-glitch w-full py-4 bg-yellow-600 hover:bg-yellow-500 text-black font-black rounded-xl flex items-center justify-center gap-2 transition-all shadow-[0_0_25px_rgba(251,191,36,0.4)] animate-pulse uppercase tracking-widest border-2 border-yellow-400"
+                        >
+                            <Swords size={18} /> {t('zone.action.claim')} ({CONQUEST_COST} RUN)
+                        </button>
+                     </div>
                  ) : (
                      <div className="bg-red-900/20 border border-red-500/30 p-3 rounded-lg text-center backdrop-blur-sm">
                          <div className="text-red-400 font-bold text-xs uppercase mb-1 flex items-center justify-center gap-2 tracking-wider">

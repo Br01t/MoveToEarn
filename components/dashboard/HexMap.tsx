@@ -300,6 +300,10 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
           .animate-icon-float {
             animation: icon-float 2s ease-in-out infinite;
           }
+          @keyframes contested-double-pulse { 0%, 100% { stroke-opacity: 1; stroke-width: 2; } 50% { stroke-opacity: 0.5; stroke-width: 8; } }
+          @keyframes hex-scanline { 0% { transform: translateY(-100px); } 100% { transform: translateY(100px); } }
+          .contested-pulse { animation: contested-double-pulse 1.5s infinite ease-in-out; }
+          .scan-laser { animation: hex-scanline 2s infinite linear; }
         `}
       </style>
 
@@ -390,6 +394,7 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
             <stop offset="40%" style={{ stopColor: '#b91c1c', stopOpacity: 0.8 }} />
             <stop offset="100%" style={{ stopColor: '#450a0a', stopOpacity: 0.9 }} />
           </radialGradient>
+          <clipPath id="hex-clip"><polygon points={getHexPoints()} /></clipPath>
         </defs>
 
         <g transform={`translate(${view.x},${view.y}) scale(${view.scale})`}>
@@ -418,6 +423,9 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
               const shielded = isShieldActive(zone);
               const isJustClaimed = recentlyClaimed.has(zone.id);
               const isMine = zone.ownerId === user.id;
+
+              // Stato conteso: l'utente è selezionato (focus) ma non l'owner
+              const isContested = isSelected && !isMine;
 
               let isMatch = true;
               if (filterMode === 'MINE' && zone.ownerId !== user.id) isMatch = false;
@@ -453,6 +461,15 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
                   {isJustClaimed && isMatch && (
                     <polygon points={getHexPoints()} fill="none" stroke="white" strokeWidth="4" className="animate-ping" style={{ transformOrigin: 'center', animationDuration: '1.5s' }} />
                   )}
+
+                  {/* Doppio bordo pulsante per zone contese */}
+                  {isContested && (
+                    <>
+                      <polygon points={getHexPoints()} fill="none" stroke="#fbbf24" strokeWidth="6" className="contested-pulse" opacity="0.4" />
+                      <polygon points={getHexPoints()} fill="none" stroke="#ffffff" strokeWidth="2" className="contested-pulse" style={{ animationDelay: '0.5s' }} />
+                    </>
+                  )}
+
                   <polygon
                     points={getHexPoints()}
                     fill={getFillId(zone)}
@@ -462,6 +479,14 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
                     className="transition-all duration-300 group-hover:brightness-125"
                     style={{ filter: isSelected ? 'drop-shadow(0 0 15px rgba(255,255,255,0.4))' : 'drop-shadow(0 4px 6px rgba(0,0,0,0.5))' }}
                   />
+
+                  {/* Animazione di scansione per zone selezionate */}
+                  {isSelected && (
+                    <g clipPath="url(#hex-clip)">
+                      <rect x="-100" y="-100" width="200" height="20" fill="rgba(255,255,255,0.2)" className="scan-laser" style={{ filter: 'blur(8px)' }} />
+                    </g>
+                  )}
+
                   <polygon points={getHexPoints()} fill="url(#tech-dots)" opacity="0.3" pointerEvents="none" transform="scale(0.95)" />
                   <polygon points={getHexPoints()} fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="2" transform="scale(0.85)" className="transition-all duration-300 group-hover:stroke-white/40" />
                   <g pointerEvents="none">

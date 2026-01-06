@@ -13,9 +13,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="ZoneRun">
-    <link rel="apple-touch-icon" href="/logo.png">
-
-    <link rel="icon" type="image/png" href="/logo.png">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%2334d399'/%3E%3Cstop offset='100%25' stop-color='%2306b6d4'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpolygon points='50,5 93.3,25 93.3,75 50,95 6.7,75 6.7,25' fill='url(%23g)'/%3E%3Cpath d='M55 22 L62 22 L42 52 L58 52 L38 82 L38 82 L42 58 L28 58 Z' fill='white' transform='translate(5, -2)'/%3E%3C/svg%3E">
 
     <!-- Original Dynamic SVG Favicon -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%2334d399'/%3E%3Cstop offset='100%25' stop-color='%2306b6d4'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpolygon points='50,5 93.3,25 93.3,75 50,95 6.7,75 6.7,25' fill='url(%23g)'/%3E%3Cpath d='M55 22 L62 22 L42 52 L58 52 L38 82 L38 82 L42 58 L28 58 Z' fill='white' transform='translate(5, -2)'/%3E%3C/svg%3E">
@@ -38,7 +36,6 @@
               wide: '.05em',   /* Slightly wider default text */
               widest: '.15em', /* Aggressive spacing for headers */
             },
-            // OVERRIDE FONT SIZES TO BE SLIGHTLY LARGER GLOBALLY
             fontSize: {
               xs: ['0.8125rem', { lineHeight: '1.5' }], // 13px
               sm: ['0.9375rem', { lineHeight: '1.5' }], // 15px
@@ -54,6 +51,23 @@
             },
             animation: {
               'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+              'zoom-in': 'zoom-in 0.3s ease-out',
+              'danger-pulse': 'danger-pulse 2s infinite',
+              'opportunity-pulse': 'opportunity-pulse 2s infinite',
+            },
+            keyframes: {
+              'zoom-in': {
+                '0%': { transform: 'scale(0.9)', opacity: '0' },
+                '100%': { transform: 'scale(1)', opacity: '1' },
+              },
+              'danger-pulse': {
+                '0%, 100%': { boxShadow: '0 0 10px rgba(239, 68, 68, 0.2), inset 0 0 10px rgba(239, 68, 68, 0.1)' },
+                '50%': { boxShadow: '0 0 25px rgba(239, 68, 68, 0.5), inset 0 0 20px rgba(239, 68, 68, 0.2)' },
+              },
+              'opportunity-pulse': {
+                '0%, 100%': { boxShadow: '0 0 10px rgba(251, 191, 36, 0.2), inset 0 0 10px rgba(251, 191, 36, 0.1)' },
+                '50%': { boxShadow: '0 0 25px rgba(251, 191, 36, 0.5), inset 0 0 20px rgba(251, 191, 36, 0.2)' },
+              }
             }
           }
         }
@@ -61,85 +75,63 @@
     </script>
 
     <style>
-      /* Custom scrollbar for dark theme aesthetics */
       ::-webkit-scrollbar {
         width: 8px;
-        height: 8px; /* Added height for horizontal bars */
+        height: 8px;
       }
       ::-webkit-scrollbar-track {
-        background: #0f172a; /* Darker track matching gray-950 */
+        background: #0f172a;
       }
       ::-webkit-scrollbar-thumb {
         background: #334155;
         border-radius: 4px;
-        border: 2px solid #0f172a; /* Padding effect */
+        border: 2px solid #0f172a;
       }
       ::-webkit-scrollbar-thumb:hover {
         background: #475569;
       }
-
-      /* Utility to hide scrollbar but allow scrolling */
       .no-scrollbar::-webkit-scrollbar {
         display: none;
       }
       .no-scrollbar {
-        -ms-overflow-style: none;  /* IE and Edge */
-        scrollbar-width: none;  /* Firefox */
+        -ms-overflow-style: none;
+        scrollbar-width: none;
       }
-      
-      /* PWA Safe Area for iPhone X+ */
       body {
         padding-top: env(safe-area-inset-top);
         padding-bottom: env(safe-area-inset-bottom);
-        background-color: #020617; /* Slate 950 */
+        background-color: #020617;
       }
-
-      /* --- ADVANCED GLASSMORPHISM (HUD EFFECT) --- */
-      
-      /* Standard Glass Panel (Cards, Lists, Modals) */
       .glass-panel {
-        background: rgba(13, 18, 30, 0.70); /* Darker base for better contrast */
+        background: rgba(13, 18, 30, 0.70);
         backdrop-filter: blur(16px);
         -webkit-backdrop-filter: blur(16px);
         border: 1px solid rgba(255, 255, 255, 0.08); 
-        border-top: 1px solid rgba(255, 255, 255, 0.12); /* Top highlight */
-        box-shadow: 
-          0 4px 24px rgba(0, 0, 0, 0.4), 
-          inset 0 0 0 1px rgba(255, 255, 255, 0.02); 
+        border-top: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.02); 
         background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.0) 100%);
       }
-
-      /* Heavy Glass Panel (Zone Details, Critical Modals) - MORE OPAQUE */
       .glass-panel-heavy {
-        background: rgba(5, 8, 16, 0.92); /* Very opaque dark blue/black */
+        background: rgba(5, 8, 16, 0.92);
         backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
-        border: 1px solid rgba(255, 255, 255, 0.15); /* Stronger border */
-        box-shadow: 
-          0 10px 40px rgba(0, 0, 0, 0.8), /* Deep shadow to separate from map */
-          inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.1);
         background-image: linear-gradient(to bottom, rgba(30, 41, 59, 0.8) 0%, rgba(2, 6, 23, 0.95) 100%);
       }
-
       .glass-panel:hover {
         border-color: rgba(255, 255, 255, 0.15);
         background: rgba(17, 24, 39, 0.75);
       }
-
       .glass-panel-active {
-        background: rgba(16, 185, 129, 0.15); /* Emerald tint */
+        background: rgba(16, 185, 129, 0.15);
         border: 1px solid rgba(16, 185, 129, 0.4);
-        box-shadow: 
-          0 0 20px rgba(16, 185, 129, 0.15), 
-          inset 0 0 20px rgba(16, 185, 129, 0.05);
+        box-shadow: 0 0 20px rgba(16, 185, 129, 0.15), inset 0 0 20px rgba(16, 185, 129, 0.05);
       }
-
-      /* --- CYBERPUNK GLITCH BUTTON EFFECT --- */
       .btn-glitch {
         position: relative;
         overflow: hidden;
       }
-      
       .btn-glitch::before,
       .btn-glitch::after {
         content: attr(data-text);
@@ -152,28 +144,24 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        opacity: 0; /* HIDDEN BY DEFAULT for clarity */
+        opacity: 0;
         pointer-events: none;
         transition: opacity 0.1s;
       }
-
       .btn-glitch:hover::before,
       .btn-glitch:hover::after {
-        opacity: 0.8; /* Only visible on hover */
+        opacity: 0.8;
       }
-
       .btn-glitch:hover::before {
         left: 2px;
         text-shadow: -1px 0 #ff00c1;
         animation: glitch-anim-1 2s infinite linear alternate-reverse;
       }
-
       .btn-glitch:hover::after {
         left: -2px;
         text-shadow: -1px 0 #00fff9;
         animation: glitch-anim-2 2s infinite linear alternate-reverse;
       }
-
       @keyframes glitch-anim-1 {
         0% { clip-path: inset(20% 0 80% 0); }
         20% { clip-path: inset(60% 0 10% 0); }
@@ -182,7 +170,6 @@
         80% { clip-path: inset(10% 0 60% 0); }
         100% { clip-path: inset(30% 0 30% 0); }
       }
-
       @keyframes glitch-anim-2 {
         0% { clip-path: inset(10% 0 60% 0); }
         20% { clip-path: inset(80% 0 5% 0); }
@@ -209,10 +196,8 @@
 }
 </script> -->
 </head>
-  <!-- Removed overflow-hidden from body, added overflow-x-hidden -->
   <body class="bg-gray-950 text-slate-200 font-sans font-medium tracking-wide antialiased selection:bg-emerald-500 selection:text-black overflow-x-hidden">
     <div id="root"></div>
-    <!-- Entry Point for React/Vite -->
     <script type="module" src="./index.tsx"></script>
   </body>
 </html>
