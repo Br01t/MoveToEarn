@@ -104,7 +104,6 @@ export const useGameActions = ({
 
                   if (rpcError) {
                       console.warn(`[RECORD RUN] RPC Failed for zone ${z.id}, using manual fallback update:`, rpcError.message);
-                      // FIX: Aggiunto total_km al fallback manuale
                       await supabase.from('zones').update({
                           interest_pool: parseFloat(z.interestPool.toFixed(6)),
                           record_km: parseFloat(z.recordKm.toFixed(6)),
@@ -188,6 +187,12 @@ export const useGameActions = ({
       const zone = zones.find(z => z.id === zoneId);
       if (!zone) return;
 
+      // Sicurezza: Impedisce il reclamo se l'utente è già proprietario
+      if (zone.ownerId === user.id) {
+          showToast("Sei già il proprietario di questa zona", 'ERROR');
+          return;
+      }
+
       if (user.runBalance < CONQUEST_COST) {
           showToast("Insufficient funds", 'ERROR');
           return;
@@ -208,15 +213,23 @@ export const useGameActions = ({
           gov_balance: updatedUser.govBalance 
       }).eq('id', user.id);
       
+      // LOGICA CONQUISTA AGGIORNATA:
+      // - Cambia il proprietario
+      // - Azzera il pool accumulato (bottino di guerra)
+      // - NON AZZERA record_km e defense_level (la zona mantiene la sua storia e potenza)
       const { error } = await supabase.from('zones').update({
           owner_id: user.id,
-          interest_pool: 0,
-          record_km: 0,
-          defense_level: 1
+          interest_pool: 0
       }).eq('id', zoneId);
 
       if (!error) {
-          setZones(prev => prev.map(z => z.id === zoneId ? { ...z, ownerId: user.id, interestPool: 0, recordKm: 0, defenseLevel: 1 } : z));
+          // Aggiornamento stato locale
+          setZones(prev => prev.map(z => z.id === zoneId ? { 
+              ...z, 
+              ownerId: user.id, 
+              interestPool: 0,
+              // Mantieni recordKm, defenseLevel e totalKm originali
+          } : z));
           sendSlackNotification(`*Zone Conquered!* \nNew Ruler: \`${user.name}\` \nSector Seized: \`${zone.name}\``, 'ALERT', 'MAP');
       }
   };
@@ -412,7 +425,7 @@ export const useGameActions = ({
       }
 
       const newGov = parseFloat((user.govBalance - PREMIUM_COST).toFixed(2));
-      const { error } = await supabase.from('profiles').update({ 
+      const { error = null } = await supabase.from('profiles').update({ 
           is_premium: true,
           gov_balance: newGov
       }).eq('id', user.id);

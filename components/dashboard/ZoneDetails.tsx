@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Zone, User, Badge, Rarity } from '../../types';
-import { X, Crown, Clock, Shield, Medal, Lock, Zap, Flag, Award, Mountain, Globe, Home, Landmark, Swords, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users, AlertTriangle, CheckCircle, Coins, Activity, Info } from 'lucide-react';
+import { X, Crown, Shield, Medal, Lock, Zap, Flag, Award, Mountain, Globe, Home, Landmark, Swords, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users, AlertTriangle, CheckCircle, Coins, Activity, Info, Clock } from 'lucide-react';
 import { useLanguage } from '../../LanguageContext';
 import { CONQUEST_COST } from '../../constants';
 import { useGlobalUI } from '../../contexts/GlobalUIContext';
@@ -89,7 +89,6 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
   };
 
   const stopEvent = (e: React.UIEvent | React.TouchEvent | React.WheelEvent | React.PointerEvent) => {
-    // Fermiamo la propagazione verso la Dashboard e la mappa
     e.stopPropagation();
   };
 
@@ -103,7 +102,6 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
     >
       <div className="relative p-5 flex flex-col h-full overflow-hidden">
         
-        {/* CONFIRMATION MODAL OVERLAY */}
         {confirmAction && (
             <div className="absolute inset-0 z-50 bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center animate-fade-in">
                 <div className={`p-4 rounded-full mb-4 ${confirmAction === 'BOOST' ? 'bg-amber-900/40 text-amber-400' : 'bg-cyan-900/40 text-cyan-400'}`}>
@@ -138,13 +136,11 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
 
         <h3 className="font-bold text-xl text-white mb-4 pr-6 tracking-tight break-words uppercase shrink-0">{zone.name}</h3>
         
-        {/* Contenitore scorrevole - pan-y abilita lo scorrimento del browser */}
         <div 
           className="overflow-y-auto flex-1 space-y-4 pr-1 overscroll-contain no-scrollbar md:scrollbar-thin"
           style={{ touchAction: 'pan-y' }}
           onPointerDown={stopEvent}
         >
-            {/* Owner Card */}
             {ownerDetails && (
                 <div className="glass-panel p-3 rounded-xl flex items-center gap-3 shrink-0">
                     <div className="relative shrink-0">
@@ -225,7 +221,6 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
                 <span className="font-mono font-bold text-white text-base">{myKmInZone.toFixed(2)} km</span>
             </div>
 
-            {/* Leaderboard */}
             <div className="bg-black/20 rounded-lg border border-white/5 p-3 shrink-0">
                 <h4 className="text-xs font-bold text-gray-400 uppercase mb-3 flex items-center gap-1 tracking-wider">
                     <Medal size={12} className="text-yellow-500"/> {t('zone.top_runners')}
@@ -251,7 +246,6 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
             </div>
         </div>
 
-        {/* Action area */}
         <div className="pt-4 mt-2 border-t border-white/10 shrink-0">
            {zone.ownerId === user.id ? (
                 <div className="flex gap-2">
