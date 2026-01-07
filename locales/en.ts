@@ -684,6 +684,7 @@ export const en = {
     "htp.title": "User Guide: Download Your Run Files for Upload",
     "htp.subtitle": "How to export .GPX or .FIT files from your running app to upload to ZoneRun.",
     "htp.intro": "This guide shows you how to download single run files (.GPX, .FIT) or your full activity history archive from major fitness platforms.",
+    "htp.intro_tip": 'TIP: You can also download these files directly from your smartphone. Instead of using the native app, open your mobile browser, log in to the platform, and switch to "Desktop Version" to access the export features.',
     
     "htp.table.func": "Function",
     "htp.table.device": "Recommended Device",

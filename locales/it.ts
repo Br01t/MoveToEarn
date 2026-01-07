@@ -661,6 +661,7 @@ export const it = {
     "htp.title": "Guida Utente: Scaricare i Tuoi File Corsa per il Caricamento",
     "htp.subtitle": "Come esportare i file .GPX o .FIT dalla tua app di corsa per caricarli su ZoneRun.",
     "htp.intro": "Questa guida ti mostra come scaricare il file della singola corsa (.GPX, .FIT) o l'archivio completo delle tue attività dalle principali piattaforme di corsa.",
+    "htp.intro_tip": "SUGGERIMENTO: Puoi scaricare questi file anche direttamente dal tuo smartphone. Invece di usare l'app nativa, apri il browser, accedi alla piattaforma e attiva la Versione Desktop per accedere alle funzioni di esportazione.",
     
     "htp.table.func": "Funzionalità",
     "htp.table.device": "Dispositivo Consigliato",

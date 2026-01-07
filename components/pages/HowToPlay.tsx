@@ -166,8 +166,11 @@ const HowToPlay: React.FC<HowToPlayProps> = ({ onBack, isAuthenticated = false }
           <h1 className="text-3xl md:text-4xl font-black text-white flex items-center gap-3">
             <Download className="text-emerald-400" /> {t('htp.title')}
           </h1>
-          <p className="text-lg text-gray-400 leading-relaxed max-w-3xl">
+          <p className="text-lg text-gray-400 leading-relaxed">
             {t('htp.intro')}
+          </p>
+          <p className="text-lg text-gray-400 leading-relaxed">
+            {t('htp.intro_tip')}
           </p>
       </div>
       
