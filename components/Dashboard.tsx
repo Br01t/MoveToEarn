@@ -138,7 +138,6 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   const handleMouseDown = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
-    // IMPORTANTE: Se clicchiamo sulla UI (non mappa), ignoriamo il drag
     if (!target.closest('svg') && target !== containerRef.current) return;
     
     isDragging.current = true;
@@ -174,7 +173,6 @@ const Dashboard: React.FC<DashboardProps> = ({
 
     const handleTouchStart = (e: TouchEvent) => {
       const target = e.target as HTMLElement;
-      // IMPORTANTE: Se il tocco inizia sulla UI (come la scheda dettagli), non iniziamo il drag
       if (!target.closest('svg') && target !== container) {
           isDragging.current = false;
           return;
@@ -217,8 +215,6 @@ const Dashboard: React.FC<DashboardProps> = ({
         setView({ x: newX, y: newY, scale: newScale });
       }
       
-      // Blocchiamo il comportamento di scroll del browser SOLO se siamo sulla mappa.
-      // Se siamo sulla UI (scheda), lasciamo che il browser gestisca lo scroll verticale.
       if (!isUITouch) {
           if (e.cancelable) e.preventDefault();
       }
@@ -341,7 +337,10 @@ const Dashboard: React.FC<DashboardProps> = ({
               onClose={() => setSelectedZone(null)}
               ownerDetails={ownerDetails}
               zoneLeaderboard={zoneLeaderboard}
-              onClaim={onClaim}
+              onClaim={(id) => { 
+                  onClaim(id); 
+                  setSelectedZone(null); 
+              }}
               onBoost={onBoost}
               onDefend={onDefend}
               hasBoostItem={!!boostItem}

@@ -115,7 +115,7 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
         {isRipeForConquest && (
             <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-yellow-600 to-yellow-500 py-1 px-4 flex items-center justify-center gap-2 z-20 shadow-lg">
                 <TrendingUp size={12} className="text-black animate-bounce" />
-                <span className="text-[10px] font-black text-black uppercase tracking-widest">Zona Pronta per il Reclamo!</span>
+                <TrendingUp size={12} className="text-black animate-bounce" />
             </div>
         )}
 
@@ -280,7 +280,7 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
                 <div className="flex flex-col gap-2">
                     {isTerritoryAtRisk && (
                         <div className="bg-red-500/20 text-red-400 text-[10px] font-bold py-1 px-2 rounded mb-1 flex items-center justify-center gap-1 animate-pulse border border-red-500/30">
-                            <AlertTriangle size={10} /> CORRI SUBITO O USA UN BOOST PER DIFENDERE!
+                            <AlertTriangle size={10} />
                         </div>
                     )}
                     <div className="flex gap-2">
@@ -313,9 +313,6 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
               <>
                  {isTopRunner ? (
                      <div className="flex flex-col gap-2">
-                        <div className="bg-yellow-500/20 text-yellow-400 text-[10px] font-bold py-1 px-2 rounded mb-1 flex items-center justify-center gap-1 animate-pulse border border-yellow-500/30 uppercase">
-                            <TrendingUp size={10} /> Sei il Leader! Reclama il premio e la zona!
-                        </div>
                         <button 
                             onClick={handleClaimClick}
                             data-text="CLAIM ZONE"
