@@ -178,7 +178,7 @@ export const en = {
     "inv.consume_warn": "Item will be consumed upon use.",
     "inv.stack_warn": "Cannot apply if effect is already active.",
 
-    "leader.title": "Users Leaderboard",
+    "leader.title": "All Leaderboards",
     "leader.rank": "Rank",
     "leader.runner": "Runner",
     "leader.distance": "Distance",
@@ -202,18 +202,29 @@ export const en = {
     "leader.profile.total_km": "Career Distance",
     
     "leader.zones_title": "Zones Leaderboard",
-    "leader.career": "Career",
-    "leader.territorial": "Territorial",
+    "leader.career": "By Users (Career)",
+    "leader.territorial": "By Zones (Territorial)",
     "leader.sector": "Sector / Location",
     "leader.controller": "Controller",
     "leader.unclaimed": "Unclaimed",
     "leader.search_sector": "Search sector...",
-    "leader.board.visited.title": "Most Visited Hubs",
+    "leader.board.visited.title": "📍 Most Visited Hubs",
     "leader.board.visited.desc": "The sectors with the highest number of unique run sessions recorded in the database.",
-    "leader.board.heavy.title": "Heavy Duty Sectors",
+    "leader.board.heavy.title": "☝ Heavy Duty Sectors",
     "leader.board.heavy.desc": "Sectors ranked by the total cumulative distance covered by all runners globally.",
     "leader.metric.sessions": "Sessions",
     "leader.metric.total_km": "Total KM",
+
+    "leader.geo.filters_title": "Territorial Filters",
+    "leader.geo.selection_title": "Territory Selection",
+    "leader.geo.all_territories": "All Territories (Reset filters)",
+    "leader.geo.all_countries": "All Countries",
+    "leader.geo.all_cities": "All Cities",
+    "leader.geo.select_country": "1. Select Country",
+    "leader.geo.select_city": "2. Select City",
+    "leader.geo.select_first": "(Select a country first)",
+    "leader.geo.btn_label": "Location",
+    "leader.geo.no_data": "No data for selected filters.",
 
     "admin.leader.title": "Leaderboard Management",
     "admin.leader.add_btn": "Create Leaderboard",
@@ -667,21 +678,16 @@ export const en = {
     "wp.missions.first_zone": "First Zone Created",
     "wp.missions.first_conq": "First Conquest",
     "wp.missions.badge_carto": "Badge: Cartographer (10 Zones)",
-    
-    // UPDATED SECTION 8 WITH DISCLAIMER
     "wp.missions.desc": "Missions track your progress and unlock cosmetic Badges. **Pre-Launch Exclusive:** Rare and difficult badges reward GOV tokens **only during the pre-launch phase**. Once the GOV token is generated on the blockchain (TGE), these rewards will cease, and missions will grant RUN/XP only.",
 
-    // NEW SECTION 9 RE-BUY
     "wp.rebuy.title": "9. Automatic Buyback & Sustainability",
     "wp.rebuy.desc": "Fees generated from GOV buy/sell transactions (after Pump.fun launch) are collected in SOL. These SOL revenues are automatically reallocated to support the ecosystem according to the following breakdown.",
-    
     "wp.rebuy.phase1_title": "Initial Allocation (Post-Launch Phase)",
     "wp.rebuy.phase1_desc": "In this phase, priority is given to rewarding early contributors (testers) who helped build the map and system before the official token launch.",
     "wp.rebuy.row1_title": "Dev Fund / Treasury",
     "wp.rebuy.row1_desc": "60% - Fund managed by the team to cover future OpEx, development, partnerships, and marketing. Serves as a long-term financial reserve.",
     "wp.rebuy.row2_title": "Pre-Launch Tester Rewards",
     "wp.rebuy.row2_desc": "40% - Periodic Reward: Used to reward pre-launch testers. Their internal GOV balances will be reset at launch, but they will receive periodic compensation from fees at a favorable vesting rate. The rate is calculated based on the total internal GOV volume accumulated by the tester group.",
-
     "wp.rebuy.phase2_title": "Steady State Allocation (After Tester Payout)",
     "wp.rebuy.phase2_desc": "Once pre-launch tester rewards are fully paid, the 40% allocation shifts to support liquidity and internal deflation.",
     "wp.rebuy.row3_title": "Dev Fund / Treasury",
@@ -693,13 +699,11 @@ export const en = {
     "wp.download.desc": "Get the full technical documentation in PDF format for offline reading.",
     "wp.download.btn": "Download PDF (v1.0)",
 
-    // --- HOW TO PLAY / DATA EXPORT GUIDE ---
     "htp.back": "Back",
     "htp.title": "User Guide: Download Your Run Files for Upload",
     "htp.subtitle": "How to export .GPX or .FIT files from your running app to upload to ZoneRun.",
     "htp.intro": "This guide shows you how to download single run files (.GPX, .FIT) or your full activity history archive from major fitness platforms.",
     "htp.intro_tip": 'TIP: You can also download these files directly from your smartphone. Instead of using the native app, open your mobile browser, log in to the platform, and switch to "Desktop Version" to access the export features.',
-    
     "htp.table.func": "Function",
     "htp.table.device": "Recommended Device",
     "htp.table.format": "File Format",
@@ -711,8 +715,6 @@ export const en = {
     "htp.mobile_app": "Mobile App",
     "htp.email_req": "Request sent via email",
     "htp.direct_download": "Direct download",
-    
-    // Strava
     "htp.strava.title": "1. Strava",
     "htp.strava.desc": "Strava allows downloading data for both single activities and full account history.",
     "htp.strava.single_note": "Download directly from activity page.",
@@ -727,8 +729,6 @@ export const en = {
     "htp.strava.bulk_step_2": "In the side menu, select 'My Account'.",
     "htp.strava.bulk_step_3": "Scroll down to 'Download or Delete Your Account' and click 'Get Started'.",
     "htp.strava.bulk_step_4": "Select 'Request Archive'. You will receive an email with a link to download the zip file.",
-
-    // Garmin
     "htp.garmin.title": "2. Garmin Connect",
     "htp.garmin.desc": "Garmin Connect allows export in various formats for single activities and offers full data archive request.",
     "htp.garmin.single_note": "Accessible via the gear icon on activity page.",
@@ -742,8 +742,6 @@ export const en = {
     "htp.garmin.bulk_step_1": "Go to Garmin Data Management Portal: garmin.com/account/datamanagement/.",
     "htp.garmin.bulk_step_2": "Log in and select 'Export Your Data'.",
     "htp.garmin.bulk_step_3": "Submit request and wait for email from Garmin with the download link.",
-
-    // Adidas
     "htp.adidas.title": "3. Adidas Running (Runtastic)",
     "htp.adidas.desc": "Adidas Running provides full account data archive, useful for migration and analysis.",
     "htp.adidas.single_note": "N/A (Sync Recommended). Use Partner Sync (e.g. Strava/Garmin) to export GPX from there.",
@@ -753,8 +751,6 @@ export const en = {
     "htp.adidas.bulk_step_2": "Go to account settings, 'Account & Data' section.",
     "htp.adidas.bulk_step_3": "Click 'Export Data' button.",
     "htp.adidas.bulk_step_4": "Wait for email containing the download link for the archive with .JSON files.",
-
-    // Apple
     "htp.apple.title": "4. Apple Fitness (Via 3rd Party Apps)",
     "htp.apple.desc": "Apple Health ecosystem requires external tools to extract run data in required format.",
     "htp.apple.single_note": "iPhone / App Store.",
@@ -764,8 +760,6 @@ export const en = {
     "htp.apple.step_2": "Install and authorize app to access Health (Workout/Fitness) data.",
     "htp.apple.step_3": "Inside the app, select the activity or history you wish to export.",
     "htp.apple.step_4": "Choose export format (.GPX) and save.",
-
-    // Fitbit
     "htp.fitbit.title": "5. Fitbit",
     "htp.fitbit.desc": "Fitbit allows exporting single GPS runs (from phone or watch) and requesting full fitness data archive.",
     "htp.fitbit.single_note": "Available only for GPS-tracked activities.",
@@ -780,8 +774,6 @@ export const en = {
     "htp.fitbit.bulk_step_2": "Click gear icon (top right) and select 'Settings'.",
     "htp.fitbit.bulk_step_3": "In left menu, select 'Data Export'.",
     "htp.fitbit.bulk_step_4": "Under 'Export Your Account Archive', click 'Request Data'. You will receive an email with a link to download the zip file.",
-
-    // Upload
     "htp.upload.title": "Upload & Integrity Guarantee",
     "htp.upload.desc": "Once you have your .zip (full archive) or single run file, upload it to our service.",
     "htp.upload.guarantee_title": "Non-Duplication Guarantee",
