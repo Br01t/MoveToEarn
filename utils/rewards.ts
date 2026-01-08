@@ -168,17 +168,15 @@ export const processRunRewards = (
             let newZone = { ...z };
             newZone.interestPool = (newZone.interestPool || 0) + poolContribution;
             
-            // AGGIORNAMENTO KM TOTALI GLOBALI DELLA ZONA
-            newZone.totalKm = (z.totalKm || 0) + kmPerZone;
-            
-            // RICHIESTA UTENTE: recordKm deve essere la somma di tutti i KM percorsi nella zona da chiunque
+            // RICHIESTA UTENTE: recordKm deve essere la somma di TUTTI i km percorsi nella zona da TUTTI gli utenti
             newZone.recordKm = (z.recordKm || 0) + kmPerZone;
+            newZone.totalKm = (z.totalKm || 0) + kmPerZone;
 
             if (z.ownerId === user.id) {
                 isReinforced = true;
             }
 
-            // La potenza di difesa scala sulla distanza globale (chiunque corra la rinforza collettivamente)
+            // Livello di difesa basato sullo sforzo collettivo
             if (newZone.recordKm > 50 && newZone.defenseLevel < 2) newZone.defenseLevel = 2;
             if (newZone.recordKm > 150 && newZone.defenseLevel < 3) newZone.defenseLevel = 3;
             if (newZone.recordKm > 500 && newZone.defenseLevel < 4) newZone.defenseLevel = 4;

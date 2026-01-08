@@ -88,19 +88,17 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
     return state;
   }, [zones, view.x, view.y, view.scale]);
 
-  // Helper per generare un colore unico vibrante e persistente per ogni proprietario
   const getOwnerColor = (id: string | null) => {
     if (!id) return 'rgba(255,255,255,0.1)';
-    // Colore Emerald/Cyan brillante per il giocatore corrente
     if (id === user.id) return '#10b981'; 
     
     let hash = 0;
     for (let i = 0; i < id.length; i++) {
         hash = id.charCodeAt(i) + ((hash << 5) - hash);
     }
-    // Usiamo alta saturazione (95%) e luminosità bilanciata (65%) per massima visibilità
-    const h = Math.abs(hash) % 360;
-    return `hsl(${h}, 95%, 65%)`;
+    
+    const h = (Math.abs(hash) * 137.508) % 360;
+    return `hsl(${h}, 95%, 60%)`;
   };
 
   const flightPaths = useMemo(() => {
