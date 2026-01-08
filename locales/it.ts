@@ -169,7 +169,7 @@ export const it = {
     "inv.apply": "Applica",
     "inv.consume_warn": "L'oggetto verrà consumato all'uso.",
     "inv.stack_warn": "Non applicabile se l'effetto è già attivo.",
-    "leader.title": "Classifica Globale",
+    "leader.title": "Classifiche Utenti",
     "leader.rank": "Rango",
     "leader.runner": "Runner",
     "leader.distance": "Distanza",
@@ -191,6 +191,21 @@ export const it = {
     "leader.profile.owned_zones": "Territori",
     "leader.profile.fav_badge": "Badge Distintivo",
     "leader.profile.total_km": "Distanza Carriera",
+    
+    "leader.zones_title": "Classifiche Zone",
+    "leader.career": "Carriera",
+    "leader.territorial": "Territoriale",
+    "leader.sector": "Settore / Località",
+    "leader.controller": "Controllore",
+    "leader.unclaimed": "Libera",
+    "leader.search_sector": "Cerca settore...",
+    "leader.board.visited.title": "Hub più Frequentati",
+    "leader.board.visited.desc": "I settori con il maggior numero di sessioni di corsa uniche registrate nel database.",
+    "leader.board.heavy.title": "Settori Heavy Duty",
+    "leader.board.heavy.desc": "Settori classificati in base alla distanza totale percorsa da tutti i runner a livello globale.",
+    "leader.metric.sessions": "Sessioni",
+    "leader.metric.total_km": "KM Totali",
+
     "admin.leader.title": "Gestione Classifiche",
     "admin.leader.add_btn": "Crea Classifica",
     "admin.leader.name": "Titolo",
@@ -569,7 +584,6 @@ export const it = {
     "wp.roadmap.phase4_title": "Fase 4: DAO & Governance",
     "wp.roadmap.phase4_desc": "Il controllo dei parametri del protocollo (tasse, tassi di minting) passa alla comunità tramite votazione on-chain utilizzando il token GOV.",
 
-    // UPDATED SECTION 3
     "wp.tokenomics.title": "3. Strategia di Allocazione (Post-Launch)",
     "wp.tokenomics.supply": "Supply Totale (Disponibile)",
     "wp.tokenomics.note_title": "Nota sul Fair Launch",
