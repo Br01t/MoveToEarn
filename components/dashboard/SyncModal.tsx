@@ -90,11 +90,11 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
                 const points = tracks[idx];
                 if (points.length === 0) continue;
 
-                // if (points[0].time.getTime() < cutoffTimestamp) {
-                //     ignoredOldCount++;
-                //     addLog(`ℹ️ Skipping ${fileName}: activity older than 14 days.`);
-                //     continue;
-                // }
+                if (points[0].time.getTime() < cutoffTimestamp) {
+                    ignoredOldCount++;
+                    addLog(`ℹ️ Skipping ${fileName}: activity older than 14 days.`);
+                    continue;
+                }
 
                 const analysis = analyzeRun(points, tracks.length > 1 ? `${fileName} (Track ${idx+1})` : fileName);
                 const result = analysis.result;
