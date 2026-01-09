@@ -108,6 +108,11 @@ export const checkAchievement = (item: Mission | Badge, currentUser: User, curre
 };
 
 // --- PROCESS RUN & REWARDS ---
+/**
+ * Logica per assegnare i KM alle zone coinvolte e calcolare i guadagni.
+ * Regola richiesta: Controlla solo punto iniziale e finale. 
+ * Se ricadono in due zone diverse, divide KM, Premi Utente e Pool Interessi a metà (50/50).
+ */
 export const processRunRewards = (
     data: RunAnalysisData, 
     user: User, 
@@ -121,108 +126,84 @@ export const processRunRewards = (
     zoneBreakdown: Record<string, number>; 
     isReinforced: boolean;
 } => {
+    const totalKm = data.totalKm;
+    const { startPoint, endPoint } = data;
+    const RADIUS_KM = 1.0; 
+
+    // Identifichiamo le zone di partenza e arrivo
+    const startZone = allZones.find(z => getDistanceFromLatLonInKm(startPoint.lat, startPoint.lng, z.lat, z.lng) <= RADIUS_KM);
+    const endZone = allZones.find(z => getDistanceFromLatLonInKm(endPoint.lat, endPoint.lng, z.lat, z.lng) <= RADIUS_KM);
+
+    const zoneKmBuckets: Record<string, number> = {};
     
-    const involvedZoneIds = new Set<string>();
-    const terminals = [data.startPoint, data.endPoint];
-    const THRESHOLD_KM = 1.0;
-
-    for (const p of terminals) {
-        let closestZone: Zone | null = null;
-        let minDistance = Infinity;
-
-        for (const z of allZones) {
-            const d = getDistanceFromLatLonInKm(p.lat, p.lng, z.lat, z.lng);
-            if (d < minDistance) {
-                minDistance = d;
-                closestZone = z;
-            }
+    if (startZone && endZone) {
+        if (startZone.id === endZone.id) {
+            // Stessa zona: 100% dei dati assegnati a questa zona
+            zoneKmBuckets[startZone.id] = totalKm;
+        } else {
+            // Zone diverse: 50% dei KM a ciascuna (Logica richiesta dall'utente)
+            zoneKmBuckets[startZone.id] = totalKm / 2;
+            zoneKmBuckets[endZone.id] = totalKm / 2;
         }
-
-        if (closestZone && minDistance < THRESHOLD_KM) {
-            involvedZoneIds.add(closestZone.id);
-        }
+    } else if (startZone) {
+        // Solo partenza in zona: 100% assegnato qui
+        zoneKmBuckets[startZone.id] = totalKm;
+    } else if (endZone) {
+        // Solo arrivo in zona: 100% assegnato qui
+        zoneKmBuckets[endZone.id] = totalKm;
     }
 
-    const involvedZonesList = Array.from(involvedZoneIds);
-    const zoneCount = involvedZonesList.length;
-    
-    let totalGrossRun = 0;
-    const zoneBreakdown: Record<string, number> = {};
+    const involvedZoneIds = Object.keys(zoneKmBuckets);
     const involvedZoneNames: string[] = [];
+    const zoneUpdates: Zone[] = [...allZones];
+    let totalRunEarned = 0;
     let isReinforced = false;
-    
-    const updatedZones = allZones.map(z => {
-        if (involvedZoneIds.has(z.id)) {
-            involvedZoneNames.push(z.name);
-            const kmPerZone = data.totalKm / zoneCount;
-            zoneBreakdown[z.id] = parseFloat(kmPerZone.toFixed(4));
 
-            const isBoostActive = z.boostExpiresAt ? z.boostExpiresAt > Date.now() : false;
-            const effectiveRate = isBoostActive ? RUN_RATE_BOOST : RUN_RATE_BASE;
-
-            const zoneEarnings = kmPerZone * effectiveRate;
-            totalGrossRun += zoneEarnings;
-
-            const poolContribution = zoneEarnings * REWARD_SPLIT_POOL;
-
-            let newZone = { ...z };
-            newZone.interestPool = (newZone.interestPool || 0) + poolContribution;
-            
-            // RICHIESTA UTENTE: recordKm deve essere la somma di TUTTI i km percorsi nella zona da TUTTI gli utenti
-            newZone.recordKm = (z.recordKm || 0) + kmPerZone;
-            newZone.totalKm = (z.totalKm || 0) + kmPerZone;
-
-            if (z.ownerId === user.id) {
-                isReinforced = true;
-            }
-
-            // Livello di difesa basato sullo sforzo collettivo
-            if (newZone.recordKm > 50 && newZone.defenseLevel < 2) newZone.defenseLevel = 2;
-            if (newZone.recordKm > 150 && newZone.defenseLevel < 3) newZone.defenseLevel = 3;
-            if (newZone.recordKm > 500 && newZone.defenseLevel < 4) newZone.defenseLevel = 4;
-            if (newZone.recordKm > 1000 && newZone.defenseLevel < 5) newZone.defenseLevel = 5;
-
-            return newZone;
-        }
-        
-        return z; 
-    });
-
-    if (zoneCount === 0) {
-        totalGrossRun = data.totalKm * RUN_RATE_BASE;
-    }
-
-    let locationName = "Unknown Territory";
-    if (zoneCount > 0) {
-        const startP = data.startPoint;
-        const sortedByProx = involvedZonesList.sort((a,b) => {
-            const zA = allZones.find(z => z.id === a)!;
-            const zB = allZones.find(z => z.id === b)!;
-            const distA = getDistanceFromLatLonInKm(startP.lat, startP.lng, zA.lat, zA.lng);
-            const distB = getDistanceFromLatLonInKm(startP.lat, startP.lng, zB.lat, zB.lng);
-            return distA - distB;
-        });
-
-        const primaryZone = allZones.find(z => z.id === sortedByProx[0]);
-        if (primaryZone) {
-            locationName = primaryZone.name;
-            if (zoneCount > 1) {
-                locationName += ` (+${zoneCount - 1} others)`;
-            }
-        }
+    // Se non abbiamo zone coinvolte, i KM sono "dispersi" (guadagno base 100% per l'utente)
+    if (involvedZoneIds.length === 0) {
+        totalRunEarned = totalKm * RUN_RATE_BASE;
     } else {
-        locationName = "Uncharted Area"; 
-    }
+        involvedZoneIds.forEach(id => {
+            const zoneIdx = zoneUpdates.findIndex(z => z.id === id);
+            if (zoneIdx !== -1) {
+                const zone = zoneUpdates[zoneIdx];
+                const kmForThisZone = zoneKmBuckets[id];
+                involvedZoneNames.push(zone.name);
 
-    const totalUserRun = totalGrossRun * REWARD_SPLIT_USER;
+                // Calcolo Tasso Reward (Boost se la zona è potenziata)
+                const isBoosted = zone.boostExpiresAt && zone.boostExpiresAt > Date.now();
+                const rate = isBoosted ? RUN_RATE_BOOST : RUN_RATE_BASE;
+                
+                // Ricompensa generata specificamente per la quota KM di questa zona
+                const generatedReward = kmForThisZone * rate;
+
+                // Split Reward: 98% utente, 2% pool interessi della zona
+                totalRunEarned += generatedReward * REWARD_SPLIT_USER;
+                const poolAddition = generatedReward * REWARD_SPLIT_POOL;
+
+                // Aggiornamento statistiche community della zona (divise proporzionalmente)
+                const updatedZone = {
+                    ...zone,
+                    recordKm: zone.recordKm + kmForThisZone, 
+                    totalKm: (zone.totalKm || 0) + kmForThisZone,
+                    interestPool: zone.interestPool + poolAddition // Anche gli interessi sono divisi
+                };
+
+                zoneUpdates[zoneIdx] = updatedZone;
+
+                // Check se l'utente ha rinforzato il proprio territorio (anche se parzialmente)
+                if (zone.ownerId === user.id) isReinforced = true;
+            }
+        });
+    }
 
     return {
-        totalRunEarned: parseFloat(totalUserRun.toFixed(2)),
-        zoneUpdates: updatedZones,
-        locationName,
+        totalRunEarned: parseFloat(totalRunEarned.toFixed(2)),
+        zoneUpdates,
+        locationName: involvedZoneNames.length > 0 ? involvedZoneNames.join(', ') : data.fileName,
         involvedZoneNames,
-        involvedZoneIds: involvedZonesList,
-        zoneBreakdown,
+        involvedZoneIds,
+        zoneBreakdown: zoneKmBuckets,
         isReinforced
     };
 };
