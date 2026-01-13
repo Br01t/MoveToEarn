@@ -105,7 +105,6 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
       const connections: { d: string, key: string, color: string, isMine: boolean }[] = [];
       const processedPairs = new Set<string>(); 
 
-      // Raggruppiamo le zone per proprietario
       const ownersMap: Record<string, Zone[]> = {};
       zones.forEach(z => {
           if (!z.ownerId) return;
@@ -113,11 +112,9 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
           ownersMap[z.ownerId].push(z);
       });
 
-      // Calcoliamo le traiettorie per ogni proprietario
       Object.entries(ownersMap).forEach(([ownerId, ownerZones]) => {
           const isMine = ownerId === user.id;
           
-          // Se non è globale e non sono io, salta
           if (!showGlobalTrajectories && !isMine) return;
           if (ownerZones.length < 2) return;
 
@@ -170,21 +167,26 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
       return "url(#grad-enemy-zone)";
   };
 
-  const formatZoneLabel = (originalName: string) => {
+  const getZoneLabelParts = (originalName: string) => {
       try {
           const parts = originalName.split(' - ');
-          if (parts.length === 2) {
-              const [locationPart, country] = parts;
+          if (parts.length >= 2) {
+              const locationPart = parts[0];
+              const country = parts[1];
+              
               const locSegments = locationPart.split(', ');
-              if (locSegments.length >= 2) {
+              if (locSegments.length >= 1) {
                   const city = locSegments[locSegments.length - 1];
                   const street = locSegments.slice(0, locSegments.length - 1).join(', ');
-                  return `${city}, ${street} - ${country}`;
+                  
+                  const details = street ? `${street} - ${country}` : country;
+                  
+                  return { city, details };
               }
           }
-          return originalName;
+          return { city: originalName, details: '' };
       } catch (e) {
-          return originalName;
+          return { city: originalName, details: '' };
       }
   };
 
@@ -198,7 +200,7 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
 
       const getTooltipAlignment = () => {
           if (isMobile) {
-              return 'left-0 origin-left'; // Expand towards center from the left
+              return 'left-0 origin-left';
           }
           if (dir === 'west') return 'left-2';
           if (dir === 'east') return 'right-2';
@@ -292,8 +294,8 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
             animation: compass-pulse 2s infinite ease-in-out;
           }
           @keyframes icon-float {
-            0%, 100% { transform: translate(-14px, 28px); }
-            50% { transform: translate(-14px, 24px); }
+            0%, 100% { transform: translate(-14px, 49px); }
+            50% { transform: translate(-14px, 45px); }
           }
           .animate-icon-float {
             animation: icon-float 2s ease-in-out infinite;
@@ -305,10 +307,8 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
         `}
       </style>
 
-      {/* --- HUD: COMPASS (Grouped on Mobile, Scattered on Desktop) --- */}
       <div className="absolute inset-0 pointer-events-none z-40">
           
-          {/* MOBILE CLUSTER: Moved to LEFT side to avoid right-edge overflow and sync button overlap */}
           <div className="md:hidden absolute bottom-44 left-6 w-32 h-32 pointer-events-none">
                 <CompassArrow 
                     dir="north" 
@@ -340,7 +340,6 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
                 />
           </div>
 
-          {/* DESKTOP HUD LAYOUT (Peripheral) */}
           <div className="hidden md:block absolute inset-0 pointer-events-none">
                 <CompassArrow 
                     dir="north" 
@@ -396,7 +395,6 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
         </defs>
 
         <g transform={`translate(${view.x},${view.y}) scale(${view.scale})`}>
-            {/* Trajectory Layer (Under Zones) */}
             <g className="connections-layer" style={{ pointerEvents: 'none' }}>
                 {flightPaths.map(conn => (
                     <path 
@@ -413,7 +411,6 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
                 ))}
             </g>
 
-            {/* Zones Layer */}
             {zones.map((zone) => {
               const pos = getHexPixelPosition(zone.x, zone.y, HEX_SIZE);
               const isSelected = selectedZoneId === zone.id;
@@ -422,7 +419,6 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
               const isJustClaimed = recentlyClaimed.has(zone.id);
               const isMine = zone.ownerId === user.id;
 
-              // Stato conteso: l'utente è selezionato (focus) ma non l'owner
               const isContested = isSelected && !isMine;
 
               let isMatch = true;
@@ -439,8 +435,9 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
                   isMatch = false;
               }
 
-              const formattedName = formatZoneLabel(zone.name);
-              const displayName = formattedName.length > 20 ? formattedName.substring(0, 18) + '..' : formattedName;
+              const { city, details } = getZoneLabelParts(zone.name);
+              const displayCity = city.length > 16 ? city.substring(0, 14) + '..' : city;
+              const displayDetails = details.length > 22 ? details.substring(0, 20) + '..' : details;
               
               let strokeColor = isMine ? '#34d399' : '#7f1d1d'; 
               let strokeWidth = isMine ? 2 : 1;
@@ -460,7 +457,6 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
                     <polygon points={getHexPoints()} fill="none" stroke="white" strokeWidth="4" className="animate-ping" style={{ transformOrigin: 'center', animationDuration: '1.5s' }} />
                   )}
 
-                  {/* Doppio bordo pulsante per zone contese */}
                   {isContested && (
                     <>
                       <polygon points={getHexPoints()} fill="none" stroke="#fbbf24" strokeWidth="6" className="contested-pulse" opacity="0.4" />
@@ -478,7 +474,6 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
                     style={{ filter: isSelected ? 'drop-shadow(0 0 15px rgba(255,255,255,0.4))' : 'drop-shadow(0 4px 6px rgba(0,0,0,0.5))' }}
                   />
 
-                  {/* Animazione di scansione per zone selezionate */}
                   {isSelected && (
                     <g clipPath="url(#hex-clip)">
                       <rect x="-100" y="-100" width="200" height="20" fill="rgba(255,255,255,0.2)" className="scan-laser" style={{ filter: 'blur(8px)' }} />
@@ -487,11 +482,33 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
 
                   <polygon points={getHexPoints()} fill="url(#tech-dots)" opacity="0.3" pointerEvents="none" transform="scale(0.95)" />
                   <polygon points={getHexPoints()} fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="2" transform="scale(0.85)" className="transition-all duration-300 group-hover:stroke-white/40" />
+                  
                   <g pointerEvents="none">
-                      <text x="0" y="-35" textAnchor="middle" dominantBaseline="middle" fill="white" fontSize="18" fontWeight="900" style={{ textShadow: '0 2px 4px rgba(0,0,0,1)', letterSpacing: '0.02em', fontFamily: '"Rajdhani", sans-serif' }}>
-                          {displayName}
+                      <text 
+                          x="0" 
+                          y="-45"
+                          textAnchor="middle" 
+                          fill="white" 
+                          style={{ textShadow: '0 2px 4px rgba(0,0,0,1)', fontFamily: '"Rajdhani", sans-serif' }}
+                      >
+                          <tspan x="0" dy="0" fontSize="18" fontWeight="900" letterSpacing="0.02em">
+                              {displayCity}
+                          </tspan>
+                          
+                          {details && (
+                              <tspan 
+                                  x="0" 
+                                  dy="1.3em"
+                                  fontSize="15" 
+                                  fontWeight="600"
+                                  fill="rgba(255,255,255,0.8)"
+                              >
+                                  {displayDetails}
+                              </tspan>
+                          )}
                       </text>
-                      <g transform="translate(-40, -15)">
+
+                      <g transform="translate(-40, -5)">
                           <rect x="0" y="0" width="80" height="44" rx="8" fill="rgba(0,0,0,0.7)" stroke={isMine ? 'rgba(52, 211, 153, 0.6)' : 'rgba(239, 68, 68, 0.6)'} strokeWidth="1.5" />
                           <text x="40" y="16" textAnchor="middle" fill="rgba(200, 210, 255, 0.7)" fontSize="14" fontWeight="bold" style={{ fontFamily: 'monospace' }}>
                               {(zone.totalKm || 0).toFixed(1)} km

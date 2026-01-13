@@ -148,7 +148,7 @@ const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuy
                   <Activity size={100} />
               </div>
               <div>
-                  <p className="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">{t('wallet.available_run')}</p>
+                  <p className="text-gray-400 text-xs font-bold tracking-wider mb-1">{t('wallet.available_run')}</p>
                   <h2 className="text-3xl font-mono font-bold text-emerald-400">{user.runBalance.toFixed(2)}</h2>
                   <p className="text-xs text-gray-500 mt-1">{tRich('wallet.utility_token')}</p>
               </div>
@@ -162,8 +162,8 @@ const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuy
                   <Crown size={100} />
               </div>
               <div>
-                  <p className="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">{t('wallet.available_gov')}</p>
-                  <h2 className="text-3xl font-mono font-bold text-cyan-400">{user.govBalance.toFixed(2)}</h2>
+                  <p className="text-gray-400 text-xs font-bold tracking-wider mb-1">{t('wallet.available_gov')}</p>
+                  <h2 className="text-3xl font-mono font-bold text-cyan-400">{user.govBalance.toFixed(1)}</h2>
                   <p className="text-xs text-gray-500 mt-1">{tRich('wallet.gov_token')}</p>
               </div>
                <div className="bg-cyan-500/10 p-4 rounded-full text-cyan-400 border border-cyan-500/20">
