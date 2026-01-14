@@ -90,16 +90,39 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
 
   const getOwnerColor = (id: string | null) => {
     if (!id) return 'rgba(255,255,255,0.1)';
-    if (id === user.id) return '#10b981'; 
-    
+    if (id === user.id) return '#10b981';
+
     let hash = 0;
     for (let i = 0; i < id.length; i++) {
         hash = id.charCodeAt(i) + ((hash << 5) - hash);
     }
-    
-    const h = (Math.abs(hash) * 137.508) % 360;
-    return `hsl(${h}, 95%, 60%)`;
-  };
+    const index = Math.abs(hash);
+    const distinctColors = [
+        '#e11d48',
+        '#2563eb',
+        '#d97706',
+        '#7c3aed',
+        '#db2777',
+        '#0891b2',
+        '#ca8a04',
+        '#4f46e5',
+        '#059669',
+        '#9333ea',
+    ];
+
+    if (index % 40 < distinctColors.length) {
+        return distinctColors[index % distinctColors.length];
+    }
+
+    const sectors = 12;
+    const sector = index % sectors;
+    const h = sector * (360 / sectors); 
+
+    const l = (index % 2 === 0) ? 45 : 70;
+    const s = 85;
+
+    return `hsl(${h}, ${s}%, ${l}%)`;
+};
 
   const flightPaths = useMemo(() => {
       const connections: { d: string, key: string, color: string, isMine: boolean }[] = [];
