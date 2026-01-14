@@ -191,6 +191,10 @@ export const it = {
     "leader.profile.owned_zones": "Territori",
     "leader.profile.fav_badge": "Badge Distintivo",
     "leader.profile.total_km": "Distanza Carriera",
+
+    "leader.board.runs.title": "🏃 Veterani della Griglia",
+    "leader.board.runs.desc": "Runners classificati per il numero totale di attività validate e sincronizzate presenti nello storico della griglia.",
+    "leader.metric_runs": "Sessioni",
     
     "leader.zones_title": "Classifiche Zone",
     "leader.career": "Carriera",

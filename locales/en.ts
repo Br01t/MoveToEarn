@@ -200,6 +200,10 @@ export const en = {
     "leader.profile.owned_zones": "Territories",
     "leader.profile.fav_badge": "Favorite Badge",
     "leader.profile.total_km": "Career Distance",
+
+    "leader.board.runs.title": "🏃 Activity Milestone",
+    "leader.board.runs.desc": "Ranking of the most active runners based on total validated runs loaded into the grid.",
+    "leader.metric_runs": "Sessions",
     
     "leader.zones_title": "Zones Leaderboard",
     "leader.career": "By Users (Career)",

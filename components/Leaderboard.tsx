@@ -27,16 +27,24 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
   const [mobileCategory, setMobileCategory] = useState<'USER' | 'ZONE'>('USER');
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   
-  // Filtri Geografici per Zone (Ora MULTI-SELEZIONE)
   const [filterCountries, setFilterCountries] = useState<string[]>([]);
   const [filterCities, setFilterCities] = useState<string[]>([]);
   const [isGeoPanelOpen, setIsGeoPanelOpen] = useState(false);
   
-  // State per i dati aggregati delle zone (visite reali da DB)
   const [zoneRunCounts, setZoneRunCounts] = useState<Record<string, number>>({});
+  const [userRunCounts, setUserRunCounts] = useState<Record<string, number>>({});
   const [isLoadingCounts, setIsLoadingCounts] = useState(false);
 
-  // Configurazioni classifiche ZONE
+  const careerVirtualBoards: LeaderboardConfig[] = [
+    {
+        id: 'global_runs',
+        title: t('leader.board.runs.title'),
+        description: t('leader.board.runs.desc'),
+        metric: 'TOTAL_RUNS',
+        type: 'PERMANENT'
+    }
+  ];
+
   const zoneBoards: LeaderboardConfig[] = [
     {
         id: 'zone_frequency',
@@ -54,10 +62,11 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
     }
   ];
 
-  const isZoneRanking = zoneBoards.some(b => b.id === activeBoardId);
-  const activeBoard = [...leaderboards, ...zoneBoards].find(b => b.id === activeBoardId) || leaderboards[0];
+  const allCareerBoards = useMemo(() => [...leaderboards, ...careerVirtualBoards], [leaderboards, careerVirtualBoards]);
 
-  // Helper per estrarre dati geografici dai nomi delle zone ("Nome, Città - CC")
+  const isZoneRanking = zoneBoards.some(b => b.id === activeBoardId);
+  const activeBoard = [...allCareerBoards, ...zoneBoards].find(b => b.id === activeBoardId) || allCareerBoards[0];
+
   const geoData = useMemo(() => {
     const countries = new Set<string>();
     const cityMap: Record<string, Set<string>> = {};
@@ -83,7 +92,6 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
     };
   }, [zones]);
 
-  // Reset filtri quando si passa da zone a utenti
   useEffect(() => {
     if (!isZoneRanking) {
       setFilterCountries([]);
@@ -92,38 +100,50 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
     }
   }, [isZoneRanking]);
 
-  // Effetto per recuperare il conteggio reale delle corse per zona da Supabase
   useEffect(() => {
-      if (isZoneRanking && Object.keys(zoneRunCounts).length === 0) {
-          const fetchCounts = async () => {
+      const fetchCounts = async () => {
+          if (isLoadingCounts) return;
+
+          const needsZoneCounts = isZoneRanking && Object.keys(zoneRunCounts).length === 0;
+          const needsUserRuns = activeBoardId === 'global_runs' && Object.keys(userRunCounts).length === 0;
+
+          if (needsZoneCounts || needsUserRuns) {
               setIsLoadingCounts(true);
               try {
                   const { data: runs, error } = await supabase
                     .from('runs')
-                    .select('involved_zones');
+                    .select('user_id, involved_zones');
 
                   if (!error && runs) {
-                      const counts: Record<string, number> = {};
+                      const zCounts: Record<string, number> = {};
+                      const uCounts: Record<string, number> = {};
+
                       runs.forEach(run => {
+                          if (run.user_id) {
+                              uCounts[run.user_id] = (uCounts[run.user_id] || 0) + 1;
+                          }
+
                           const zoneIds = Array.isArray(run.involved_zones) 
                             ? run.involved_zones 
                             : JSON.parse(run.involved_zones || '[]');
                           
                           zoneIds.forEach((id: string) => {
-                              counts[id] = (counts[id] || 0) + 1;
+                              zCounts[id] = (zCounts[id] || 0) + 1;
                           });
                       });
-                      setZoneRunCounts(counts);
+
+                      setZoneRunCounts(zCounts);
+                      setUserRunCounts(uCounts);
                   }
               } catch (e) {
-                  console.error("Error fetching zone frequencies:", e);
+                  console.error("Error fetching run aggregations:", e);
               } finally {
                   setIsLoadingCounts(false);
               }
-          };
-          fetchCounts();
-      }
-  }, [isZoneRanking, zoneRunCounts]);
+          }
+      };
+      fetchCounts();
+  }, [activeBoardId, isZoneRanking, zoneRunCounts, userRunCounts]);
 
   const handleBoardChange = (id: string) => {
       setActiveBoardId(id);
@@ -132,7 +152,6 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
       setHighlightedId(null);
   };
 
-  // --- SCORE CALCULATION LOGIC (GLOBAL) ---
   const getScore = (user: Omit<User, 'inventory'> | User, config: LeaderboardConfig): number => {
       switch(config.metric) {
           case 'TOTAL_KM': return user.totalKm;
@@ -140,22 +159,20 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
           case 'RUN_BALANCE': return user.runBalance;
           case 'GOV_BALANCE': return user.govBalance;
           case 'UNIQUE_ZONES': return Math.floor(user.totalKm / 5) + 1;
+          case 'TOTAL_RUNS': return userRunCounts[user.id] || 0;
           default: return 0;
       }
   };
 
-  // --- RANKING AGGREGATION ---
   const filteredRankings = useMemo(() => {
       if (isZoneRanking) {
           return zones
             .filter(z => {
-              // Logica Multi-Filtro: Nazioni
               if (filterCountries.length > 0) {
                 const zoneCountry = z.name.split(' - ')[1]?.trim();
                 if (!filterCountries.includes(zoneCountry)) return false;
               }
               
-              // Logica Multi-Filtro: Città
               if (filterCities.length > 0) {
                 const parts = z.name.split(' - ')[0].split(', ');
                 const zoneCity = parts[parts.length - 1]?.trim();
@@ -198,9 +215,8 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
           .map((item, index) => ({ ...item, rank: index + 1 }))
           .filter(item => item.name.toLowerCase().includes(searchQuery.toLowerCase()));
       }
-  }, [isZoneRanking, zones, users, currentUser, activeBoard, activeBoardId, zoneRunCounts, searchQuery, filterCountries, filterCities]);
+  }, [isZoneRanking, zones, users, currentUser, activeBoard, activeBoardId, zoneRunCounts, userRunCounts, searchQuery, filterCountries, filterCities]);
 
-  // --- PAGINATION LOGIC ---
   const totalPages = Math.ceil(filteredRankings.length / ITEMS_PER_PAGE);
   const paginatedRankings = useMemo(() => {
       const start = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -211,7 +227,6 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
     setFilterCountries(prev => 
       prev.includes(country) ? prev.filter(c => c !== country) : [...prev, country]
     );
-    // Rimuoviamo le città che non appartengono più alle nazioni selezionate (opzionale, ma pulito)
     setCurrentPage(1);
   };
 
@@ -263,17 +278,15 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
           case 'RUN_BALANCE': return t('leader.metric_run');
           case 'GOV_BALANCE': return t('leader.metric_gov');
           case 'UNIQUE_ZONES': return t('leader.metric_unique');
+          case 'TOTAL_RUNS': return t('leader.metric_runs');
           default: return 'Score';
       }
   };
 
-  // Calcolo delle città visibili in base alle nazioni selezionate
   const visibleCities = useMemo(() => {
     if (filterCountries.length === 0) {
-      // Se non ci sono nazioni, mostriamo tutte le città disponibili
       return Array.from(new Set(Object.values(geoData.citiesByCountry).flatMap(set => Array.from(set)))).sort();
     }
-    // Altrimenti solo quelle delle nazioni attive
     const cities = new Set<string>();
     filterCountries.forEach(country => {
       if (geoData.citiesByCountry[country]) {
@@ -301,7 +314,6 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
 
       <div className="flex flex-col lg:flex-row gap-6">
           
-          {/* SIDEBAR */}
           <div className="w-full lg:w-64 shrink-0 space-y-4 md:space-y-6">
               <h2 className="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
                   <Trophy className="text-yellow-400" /> {t('leader.title')}
@@ -332,7 +344,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
                       </div>
                       
                       <div className="grid grid-cols-2 lg:grid-cols-1 gap-2">
-                        {leaderboards.map(board => (
+                        {allCareerBoards.map(board => (
                             <button
                                 key={board.id}
                                 onClick={() => handleBoardChange(board.id)}
@@ -381,7 +393,6 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
               </div>
           </div>
 
-          {/* MAIN CONTENT */}
           <div className="flex-1 space-y-4 md:space-y-6">
               
               <div className="glass-panel rounded-xl p-4 md:p-6 relative overflow-hidden">
@@ -394,7 +405,6 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
                   </div>
               </div>
 
-              {/* SEARCH & FILTER CONTROLS */}
               <div className="space-y-3">
                   <div className="flex flex-col sm:flex-row gap-3">
                       <div className="relative flex-1">
@@ -453,7 +463,6 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
                       </div>
                   </div>
 
-                  {/* COLLAPSIBLE GEO FILTER PANEL - MULTI SELECTION */}
                   {isZoneRanking && isGeoPanelOpen && (
                     <div className="glass-panel p-4 rounded-xl border-cyan-500/20 animate-fade-in space-y-4">
                         <div className="flex justify-between items-center pb-2 border-b border-white/5">
@@ -467,7 +476,6 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
                         </div>
                         
                         <div className="space-y-4">
-                            {/* Nazioni Grid (Multi) */}
                             <div>
                                 <h4 className="text-[9px] font-bold text-gray-500 uppercase mb-2 flex items-center justify-between">
                                   <span>{t('leader.geo.select_country')}</span>
@@ -489,7 +497,6 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
                                 </div>
                             </div>
 
-                            {/* Città Grid (Multi, dinamiche in base alle nazioni) */}
                             <div className="animate-fade-in">
                                 <h4 className="text-[9px] font-bold text-gray-500 uppercase mb-2 flex items-center justify-between">
                                     <span>{t('leader.geo.select_city')}</span>
@@ -511,7 +518,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
                                         })}
                                         {visibleCities.length === 0 && (
                                           <div className="col-span-full py-4 text-center text-[10px] text-gray-600 italic">
-                                            Nessuna città disponibile per la selezione attuale.
+                                            {t('leader.geo.no_data')}
                                           </div>
                                         )}
                                     </div>
@@ -522,7 +529,6 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
                   )}
               </div>
 
-              {/* DATA TABLE */}
               <div className="glass-panel rounded-xl overflow-hidden shadow-2xl relative">
                 {isLoadingCounts && (
                     <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] z-20 flex items-center justify-center">
@@ -616,7 +622,10 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
                               
                               <td className="px-2 md:px-6 py-3 text-right align-middle">
                                 <span className={`font-mono text-xs md:text-xl font-bold ${isZoneRanking ? 'text-cyan-400' : 'text-emerald-400'}`}>
-                                    {item.score.toLocaleString(undefined, { minimumFractionDigits: activeBoardId === 'zone_frequency' ? 0 : 1 })}
+                                    {item.score.toLocaleString(undefined, { 
+                                        minimumFractionDigits: (activeBoardId === 'zone_frequency' || activeBoard.metric === 'TOTAL_RUNS') ? 0 : 1,
+                                        maximumFractionDigits: (activeBoardId === 'zone_frequency' || activeBoard.metric === 'TOTAL_RUNS') ? 0 : 1 
+                                    })}
                                 </span>
                               </td>
                             </tr>
