@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { ViewState, User } from '../types';
 import { Map, ShoppingBag, Trophy, Wallet, LogOut, Package, User as UserIcon, Settings, Target, Volume2, VolumeX } from 'lucide-react';
@@ -23,15 +22,11 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, user, onLogout
     const activeClass = isAdmin ? 'text-red-400 bg-red-500/10' : 'text-emerald-400 bg-emerald-500/10';
     const inactiveClass = isAdmin ? 'text-gray-500 hover:text-red-400' : 'text-gray-400 hover:text-white';
 
-    // Mobile layout adjustment: 
-    // Increased padding (py-2.5 instead of py-1.5)
-    // Increased Icon size (24 instead of 18)
-    // Text size updated to 'text-xs' (which is now 13px) instead of arbitrary small values
     return (
       <button
         onClick={() => onNavigate(view)}
-        className={`flex flex-col items-center justify-center rounded-lg transition-colors w-full ${
-          compact ? 'py-2.5' : 'py-2 px-3 md:flex-row md:space-x-2'
+        className={`flex flex-col items-center justify-center rounded-lg transition-colors ${
+          compact ? 'py-2.5 w-full' : 'py-2 px-3 md:flex-row md:space-x-2'
         } ${isActive ? activeClass : inactiveClass}`}
       >
         <Icon size={compact ? 24 : 20} className={isActive ? 'stroke-2' : 'stroke-1'} />
@@ -46,63 +41,66 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, user, onLogout
     <>
       {/* DESKTOP TOP BAR */}
       <nav className="bg-gray-900 border-b border-gray-800 sticky top-0 z-50 h-16 hidden md:block">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
-          <div className="flex items-center justify-between h-full">
-            <div className="flex items-center">
-              <span className="text-3xl font-black uppercase tracking-widest bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-500 cursor-pointer" onClick={() => onNavigate('DASHBOARD')}>
-                ZoneRun
-              </span>
-            </div>
-            
-            <div className="flex items-center space-x-1 lg:space-x-2">
-              <NavItem view="DASHBOARD" icon={Map} label={t('nav.map')} />
-              <NavItem view="MARKETPLACE" icon={ShoppingBag} label={t('nav.market')} />
-              <NavItem view="INVENTORY" icon={Package} label={t('nav.inventory')} />
-              <NavItem view="MISSIONS" icon={Target} label={t('nav.missions')} />
-              <NavItem view="LEADERBOARD" icon={Trophy} label={t('nav.rank')} />
-              <NavItem view="WALLET" icon={Wallet} label={t('nav.wallet')} />
-              <NavItem view="PROFILE" icon={UserIcon} label={t('nav.profile')} />
-              
-              {user.isAdmin && (
-                  <>
-                    <div className="h-6 w-px bg-gray-700 mx-2"></div>
-                    <NavItem view="ADMIN" icon={Settings} label={t('nav.admin')} isAdmin={true} />
-                  </>
-              )}
-            </div>
-
-            <div className="flex items-center ml-4 gap-2">
-              <button
-                onClick={toggleLanguage}
-                className="p-2 text-xl hover:scale-110 transition-transform bg-gray-800 rounded-lg border border-gray-700 hover:border-gray-500"
-                title="Switch Language"
-              >
-                {language === 'en' ? '🇮🇹' : '🇬🇧'}
-              </button>
-              
-              <button
-                onClick={toggleMute}
-                className={`p-2 transition-colors rounded-lg border ${isMuted ? 'text-red-400 border-red-500/30 bg-red-900/10' : 'text-gray-400 border-gray-700 bg-gray-800 hover:text-white'}`}
-                title={isMuted ? "Unmute" : "Mute"}
-              >
-                {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
-              </button>
-
-              <div className="w-px h-6 bg-gray-700 mx-1"></div>
-
-              <button
-                onClick={onLogout}
-                className="p-2 text-gray-500 hover:text-red-400 transition-colors"
-                title={t('nav.logout')}
-              >
-                <LogOut size={20} />
-              </button>
-            </div>
+        <div className="w-full h-full px-6 flex items-center justify-between">
+          
+          {/* LEFT: LOGO */}
+          <div className="flex items-center shrink-0 min-w-[150px]">
+            <span className="text-3xl font-black uppercase tracking-widest bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-500 cursor-pointer" onClick={() => onNavigate('DASHBOARD')}>
+              ZoneRun
+            </span>
           </div>
+          
+          {/* CENTER: NAV LINKS */}
+          <div className="flex-1 flex justify-center items-center space-x-1 lg:space-x-2">
+            <NavItem view="DASHBOARD" icon={Map} label={t('nav.map')} />
+            <NavItem view="MARKETPLACE" icon={ShoppingBag} label={t('nav.market')} />
+            <NavItem view="INVENTORY" icon={Package} label={t('nav.inventory')} />
+            <NavItem view="MISSIONS" icon={Target} label={t('nav.missions')} />
+            <NavItem view="LEADERBOARD" icon={Trophy} label={t('nav.rank')} />
+            <NavItem view="WALLET" icon={Wallet} label={t('nav.wallet')} />
+            <NavItem view="PROFILE" icon={UserIcon} label={t('nav.profile')} />
+            
+            {user.isAdmin && (
+                <>
+                  <div className="h-6 w-px bg-gray-700 mx-2"></div>
+                  <NavItem view="ADMIN" icon={Settings} label={t('nav.admin')} isAdmin={true} />
+                </>
+            )}
+          </div>
+
+          {/* RIGHT: UTILS */}
+          <div className="flex items-center justify-end shrink-0 min-w-[150px] gap-3">
+            <button
+              onClick={toggleLanguage}
+              className="p-2 text-xl hover:scale-110 transition-transform bg-gray-800 rounded-lg border border-gray-700 hover:border-gray-500"
+              title="Switch Language"
+            >
+              {language === 'en' ? '🇮🇹' : '🇬🇧'}
+            </button>
+            
+            <button
+              onClick={toggleMute}
+              className={`p-2 transition-colors rounded-lg border ${isMuted ? 'text-red-400 border-red-500/30 bg-red-900/10' : 'text-gray-400 border-gray-700 bg-gray-800 hover:text-white'}`}
+              title={isMuted ? "Unmute" : "Mute"}
+            >
+              {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
+            </button>
+
+            <div className="w-px h-6 bg-gray-700 mx-1"></div>
+
+            <button
+              onClick={onLogout}
+              className="p-2 text-gray-500 hover:text-red-400 transition-colors"
+              title={t('nav.logout')}
+            >
+              <LogOut size={20} />
+            </button>
+          </div>
+
         </div>
       </nav>
 
-      {/* MOBILE TOP BAR (Logo + Language + Audio + Admin + Logout) */}
+      {/* MOBILE TOP BAR */}
       <nav className="bg-gray-900 border-b border-gray-800 sticky top-0 z-50 h-16 md:hidden flex justify-between items-center px-4 shadow-lg">
           <span className="text-2xl font-black uppercase tracking-widest bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-500" onClick={() => onNavigate('DASHBOARD')}>
             ZoneRun
@@ -131,25 +129,20 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, user, onLogout
           </div>
       </nav>
 
-      {/* MOBILE BOTTOM NAV BAR - 2 ROWS LAYOUT */}
+      {/* MOBILE BOTTOM NAV BAR */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-gray-950/95 backdrop-blur-md border-t border-gray-800 z-50 pb-safe shadow-[0_-5px_20px_rgba(0,0,0,0.3)]">
         <div className="flex flex-col w-full">
-           
-           {/* ROW 1: Map, Missions, Rank (Centered 3 cols) */}
            <div className="grid grid-cols-3 w-full border-b border-gray-800/30">
                <NavItem view="DASHBOARD" icon={Map} label={t('nav.map')} mobileLabel={t('nav.map')} compact={true} />
                <NavItem view="MISSIONS" icon={Target} label={t('nav.missions')} mobileLabel={t('nav.missions')} compact={true} />
                <NavItem view="LEADERBOARD" icon={Trophy} label={t('nav.rank')} mobileLabel={t('nav.rank')} compact={true} />
            </div>
-
-           {/* ROW 2: Market, Profile, Inventory, Wallet (Centered 4 cols) */}
            <div className="grid grid-cols-4 w-full">
                <NavItem view="MARKETPLACE" icon={ShoppingBag} label={t('nav.market')} mobileLabel={t('nav.market')} compact={true} />
                <NavItem view="PROFILE" icon={UserIcon} label={t('nav.profile')} mobileLabel={t('nav.profile')} compact={true} />
                <NavItem view="INVENTORY" icon={Package} label={t('nav.inventory')} mobileLabel={t('nav.inventory')} compact={true} />
                <NavItem view="WALLET" icon={Wallet} label={t('nav.wallet')} mobileLabel={t('nav.wallet')} compact={true} />
            </div>
-
         </div>
       </nav>
     </>
