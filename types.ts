@@ -159,7 +159,7 @@ export interface Suggestion {
   timestamp: number;
 }
 
-export type LeaderboardMetric = 'TOTAL_KM' | 'OWNED_ZONES' | 'RUN_BALANCE' | 'GOV_BALANCE' | 'UNIQUE_ZONES' | 'TOTAL_RUNS';
+export type LeaderboardMetric = 'TOTAL_KM' | 'OWNED_ZONES' | 'RUN_BALANCE' | 'GOV_BALANCE' | 'UNIQUE_ZONES' | 'TOTAL_RUNS' | 'TOTAL_ACHIEVEMENTS';
 
 export interface LeaderboardConfig {
   id: string;

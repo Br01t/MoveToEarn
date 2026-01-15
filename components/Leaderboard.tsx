@@ -42,6 +42,13 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
         description: t('leader.board.runs.desc'),
         metric: 'TOTAL_RUNS',
         type: 'PERMANENT'
+    },
+    {
+        id: 'global_achievements',
+        title: t('leader.board.achievements.title'),
+        description: t('leader.board.achievements.desc'),
+        metric: 'TOTAL_ACHIEVEMENTS',
+        type: 'PERMANENT'
     }
   ];
 
@@ -160,6 +167,8 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
           case 'GOV_BALANCE': return user.govBalance;
           case 'UNIQUE_ZONES': return Math.floor(user.totalKm / 5) + 1;
           case 'TOTAL_RUNS': return userRunCounts[user.id] || 0;
+          case 'TOTAL_ACHIEVEMENTS': 
+              return (user.missionLog?.length || 0) + (user.badgeLog?.length || 0);
           default: return 0;
       }
   };
@@ -279,6 +288,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
           case 'GOV_BALANCE': return t('leader.metric_gov');
           case 'UNIQUE_ZONES': return t('leader.metric_unique');
           case 'TOTAL_RUNS': return t('leader.metric_runs');
+          case 'TOTAL_ACHIEVEMENTS': return t('leader.metric_achievements');
           default: return 'Score';
       }
   };
@@ -488,7 +498,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
                                           <button 
                                               key={country}
                                               onClick={() => toggleCountryFilter(country)}
-                                              className={`px-2 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all border truncate flex items-center justify-center gap-1 ${isActive ? 'bg-emerald-500 text-black border-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.3)]' : 'bg-gray-900/50 text-gray-400 border-gray-700 hover:border-gray-500'}`}
+                                              className={`px-2 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all border truncate flex items-center justify-center gap-1 ${isActive ? 'bg-emerald-500 text-black border-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.3)]' : 'bg-gray-900 text-gray-400 border-gray-700 hover:border-gray-500'}`}
                                           >
                                               {isActive && <Check size={10} />} {country}
                                           </button>
@@ -510,7 +520,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
                                               <button 
                                                   key={city}
                                                   onClick={() => toggleCityFilter(city)}
-                                                  className={`px-2 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all border truncate flex items-center justify-center gap-1 ${isActive ? 'bg-cyan-500 text-black border-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.3)]' : 'bg-gray-900/50 text-gray-400 border-gray-700 hover:border-gray-500'}`}
+                                                  className={`px-2 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all border truncate flex items-center justify-center gap-1 ${isActive ? 'bg-cyan-500 text-black border-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.3)]' : 'bg-gray-900 text-gray-400 border-gray-700 hover:border-gray-500'}`}
                                               >
                                                   {isActive && <Check size={10} />} {city}
                                               </button>
@@ -623,8 +633,8 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
                               <td className="px-2 md:px-6 py-3 text-right align-middle">
                                 <span className={`font-mono text-xs md:text-xl font-bold ${isZoneRanking ? 'text-cyan-400' : 'text-emerald-400'}`}>
                                     {item.score.toLocaleString(undefined, { 
-                                        minimumFractionDigits: (activeBoardId === 'zone_frequency' || activeBoard.metric === 'TOTAL_RUNS') ? 0 : 1,
-                                        maximumFractionDigits: (activeBoardId === 'zone_frequency' || activeBoard.metric === 'TOTAL_RUNS') ? 0 : 1 
+                                        minimumFractionDigits: (activeBoardId === 'zone_frequency' || activeBoard.metric === 'TOTAL_RUNS' || activeBoard.metric === 'TOTAL_ACHIEVEMENTS') ? 0 : 1,
+                                        maximumFractionDigits: (activeBoardId === 'zone_frequency' || activeBoard.metric === 'TOTAL_RUNS' || activeBoard.metric === 'TOTAL_ACHIEVEMENTS') ? 0 : 1 
                                     })}
                                 </span>
                               </td>

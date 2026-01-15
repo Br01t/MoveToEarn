@@ -202,8 +202,12 @@ export const en = {
     "leader.profile.total_km": "Career Distance",
 
     "leader.board.runs.title": "🏃 Activity Milestone",
-    "leader.board.runs.desc": "Ranking of the most active runners based on total validated runs loaded into the grid.",
+    "leader.board.runs.desc": "Ranking of the most active runners based on total validated runs loaded into the system.",
     "leader.metric_runs": "Sessions",
+
+    "leader.board.achievements.title": "🏅 Achievers Milestone",
+    "leader.board.achievements.desc": "Ranking based on the total number of unique missions completed and badges earned in the protocol.",
+    "leader.metric_achievements": "Achievements",
     
     "leader.zones_title": "Zones Leaderboard",
     "leader.career": "By Users (Career)",
