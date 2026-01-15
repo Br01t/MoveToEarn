@@ -421,7 +421,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
                           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" size={16} />
                           <input 
                               type="text" 
-                              placeholder={isZoneRanking ? t('leader.search_sector') : t('dash.search_placeholder')} 
+                              placeholder={isZoneRanking ? t('leader.search_sector') : t('leader.search_user')} 
                               className="w-full glass-panel rounded-xl pl-10 pr-10 py-3 text-white focus:border-emerald-500 focus:outline-none transition-colors text-sm md:text-base"
                               value={searchQuery}
                               onChange={(e) => {

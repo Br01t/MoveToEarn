@@ -216,6 +216,7 @@ export const en = {
     "leader.controller": "Controller",
     "leader.unclaimed": "Unclaimed",
     "leader.search_sector": "Search sector...",
+    "leader.search_user": "Search runner...",
     "leader.board.visited.title": "📍 Most Visited Hubs",
     "leader.board.visited.desc": "The sectors with the highest number of unique run sessions recorded in the database.",
     "leader.board.heavy.title": "☝ Heavy Duty Sectors",

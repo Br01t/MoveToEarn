@@ -207,6 +207,7 @@ export const it = {
     "leader.controller": "Controllore",
     "leader.unclaimed": "Libera",
     "leader.search_sector": "Cerca settore...",
+    "leader.search_user": "Cerca runner...",
     "leader.board.visited.title": "📍 Hub più Frequentati",
     "leader.board.visited.desc": "I settori con il maggior numero di sessioni di corsa uniche registrate nel database.",
     "leader.board.heavy.title": "☝ Settori Heavy Duty",
