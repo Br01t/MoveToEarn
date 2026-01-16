@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { User, Zone, Badge, Rarity, LeaderboardConfig, LeaderboardMetric, LevelConfig } from '../types';
-import { Trophy, Medal, Map as MapIcon, Crown, Activity, X, Search, MapPin, Zap, Rocket, BarChart3, Loader2, Target, Globe, Filter, ChevronDown, ChevronUp, Check } from 'lucide-react';
+import { Trophy, Medal, Map as MapIcon, Crown, Activity, X, Search, MapPin, Zap, Rocket, BarChart3, Loader2, Target, Globe, Filter, ChevronDown, ChevronUp, Check, Coins, Layers, Footprints } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 import { renderBadgeIcon } from './leaderboard/LeaderboardIcons';
 import PlayerProfileModal from './leaderboard/PlayerProfileModal';
@@ -195,7 +195,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
               if (activeBoardId === 'zone_frequency') {
                   score = zoneRunCounts[z.id] || 0;
               } else {
-                  score = z.totalKm || 0;
+                  score = z.recordKm || 0;
               }
               return {
                   id: z.id,
@@ -278,24 +278,27 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
       return filteredRankings.some(item => item.id === currentUser.id);
   }, [isZoneRanking, filteredRankings, currentUser.id]);
 
-  const getMetricLabel = () => {
-      if (activeBoardId === 'zone_frequency') return t('leader.metric.sessions');
-      if (activeBoardId === 'zone_heavy_duty') return t('leader.metric.total_km');
+  const getMetricHeading = () => {
+      if (activeBoardId === 'zone_frequency') return { label: 'SESS.', unit: '', icon: <Activity size={12}/> };
+      if (activeBoardId === 'zone_heavy_duty') return { label: 'COMMUNITY', unit: 'KM', icon: <Globe size={12}/> };
+      
       switch(activeBoard.metric) {
-          case 'TOTAL_KM': return t('leader.metric_km');
-          case 'OWNED_ZONES': return t('leader.metric_zones');
-          case 'RUN_BALANCE': return t('leader.metric_run');
-          case 'GOV_BALANCE': return t('leader.metric_gov');
-          case 'UNIQUE_ZONES': return t('leader.metric_unique');
-          case 'TOTAL_RUNS': return t('leader.metric_runs');
-          case 'TOTAL_ACHIEVEMENTS': return t('leader.metric_achievements');
-          default: return 'Score';
+          case 'TOTAL_KM': return { label: 'CARRIERA', unit: 'KM', icon: <Footprints size={12}/> };
+          case 'OWNED_ZONES': return { label: 'DOMINIO', unit: 'ZONE', icon: <MapPin size={12}/> };
+          case 'RUN_BALANCE': return { label: 'SALDO', unit: 'RUN', icon: <Zap size={12}/> };
+          case 'GOV_BALANCE': return { label: 'SALDO', unit: 'GOV', icon: <Crown size={12}/> };
+          case 'UNIQUE_ZONES': return { label: 'LUOGHI', unit: 'PUNTI', icon: <MapIcon size={12}/> };
+          case 'TOTAL_RUNS': return { label: 'ATTIVITÀ', unit: 'SESS.', icon: <Activity size={12}/> };
+          case 'TOTAL_ACHIEVEMENTS': return { label: 'PROGRESSI', unit: 'OBJ', icon: <Trophy size={12}/> };
+          default: return { label: 'VALORE', unit: '', icon: <BarChart3 size={12}/> };
       }
   };
 
+  const heading = getMetricHeading();
+
   const visibleCities = useMemo(() => {
     if (filterCountries.length === 0) {
-      return Array.from(new Set(Object.values(geoData.citiesByCountry).flatMap(set => Array.from(set)))).sort();
+      return Array.from(new Set((Object.values(geoData.citiesByCountry) as Set<string>[]).flatMap(set => Array.from(set)))).sort();
     }
     const cities = new Set<string>();
     filterCountries.forEach(country => {
@@ -554,9 +557,9 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
                           <th className="px-1 md:px-6 py-3">{isZoneRanking ? t('leader.sector') : t('leader.runner')}</th>
                           <th className="px-2 md:px-6 py-3 text-right w-24 md:w-40">
                               <div className="flex items-center justify-end gap-1 md:gap-2">
-                                  {isZoneRanking ? <Activity size={12}/> : <BarChart3 size={12}/>}
-                                  <span className="hidden xs:inline">{getMetricLabel()}</span>
-                                  <span className="xs:hidden">VAL</span>
+                                  {heading.icon}
+                                  <span className="hidden xs:inline">{heading.label} {heading.unit && `(${heading.unit})`}</span>
+                                  <span className="xs:hidden">{heading.unit || 'VAL'}</span>
                               </div>
                           </th>
                         </tr>
@@ -574,6 +577,8 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
                           const owner = isZoneRanking ? (item.ownerId ? (users[item.ownerId] || currentUser) : null) : null;
                           const userBadge = !isZoneRanking && (item as any).badgeId ? badges.find(b => b.id === (item as any).badgeId) : null;
                           const canClick = isZoneRanking ? !!item.ownerId : true;
+
+                          const hasDecimals = heading.unit === 'KM' || heading.label === 'SALDO';
 
                           return (
                             <tr 
@@ -633,8 +638,8 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
                               <td className="px-2 md:px-6 py-3 text-right align-middle">
                                 <span className={`font-mono text-xs md:text-xl font-bold ${isZoneRanking ? 'text-cyan-400' : 'text-emerald-400'}`}>
                                     {item.score.toLocaleString(undefined, { 
-                                        minimumFractionDigits: (activeBoardId === 'zone_frequency' || activeBoard.metric === 'TOTAL_RUNS' || activeBoard.metric === 'TOTAL_ACHIEVEMENTS') ? 0 : 1,
-                                        maximumFractionDigits: (activeBoardId === 'zone_frequency' || activeBoard.metric === 'TOTAL_RUNS' || activeBoard.metric === 'TOTAL_ACHIEVEMENTS') ? 0 : 1 
+                                        minimumFractionDigits: hasDecimals ? 1 : 0,
+                                        maximumFractionDigits: hasDecimals ? 1 : 0 
                                     })}
                                 </span>
                               </td>
