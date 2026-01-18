@@ -122,8 +122,8 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
         {/* RISK BANNER */}
         {isTerritoryAtRisk && (
             <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-red-600 to-red-500 py-1 px-4 flex items-center justify-center gap-2 z-20 shadow-lg">
-                <AlertCircle size={12} className="text-white animate-pulse" />
-                <span className="text-[10px] font-black text-white uppercase tracking-widest">Allerta: Difesa Violata!</span>
+                <AlertCircle size={20} className="text-white animate-pulse" />
+                {/* <span className="text-[10px] font-black text-white uppercase tracking-widest">Allerta: Difesa Violata!</span> */}
             </div>
         )}
 
@@ -280,7 +280,7 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
                 <div className="flex flex-col gap-2">
                     {isTerritoryAtRisk && (
                         <div className="bg-red-500/20 text-red-400 text-[10px] font-bold py-1 px-2 rounded mb-1 flex items-center justify-center gap-1 animate-pulse border border-red-500/30">
-                            <AlertTriangle size={10} />
+                            <AlertTriangle size={20} />
                         </div>
                     )}
                     <div className="flex gap-2">

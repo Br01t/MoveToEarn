@@ -44,7 +44,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [historyPage, setHistoryPage] = useState(1);
 
-  // Map View State
+  // Map View State - Zoom out limit expanded to 0.05
   const [view, setView] = useState({ x: window.innerWidth / 2, y: window.innerHeight / 2, scale: 0.8 });
   
   // Dragging & Pinch State
@@ -207,7 +207,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       } else if (e.touches.length === 2 && initialPinchDistance.current !== null) {
         const { distance, midpoint } = getTouchMetrics(e.touches);
         const ratio = distance / initialPinchDistance.current;
-        const newScale = Math.min(2.5, Math.max(0.3, initialPinchScale.current * ratio));
+        const newScale = Math.min(2.5, Math.max(0.05, initialPinchScale.current * ratio));
         
         const newX = midpoint.x - (initialMidpointWorld.current.x * newScale);
         const newY = midpoint.y - (initialMidpointWorld.current.y * newScale);
@@ -237,7 +237,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   }, [view]);
 
   const zoomIn = () => setView(v => ({ ...v, scale: Math.min(v.scale + 0.2, 2.5) }));
-  const zoomOut = () => setView(v => ({ ...v, scale: Math.max(v.scale - 0.2, 0.3) }));
+  const zoomOut = () => setView(v => ({ ...v, scale: Math.max(v.scale - 0.2, 0.05) }));
 
   const handleRecenter = () => {
       if (zones.length === 0) return;

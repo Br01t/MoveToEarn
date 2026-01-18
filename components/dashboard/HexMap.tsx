@@ -88,44 +88,31 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
     return state;
   }, [zones, view.x, view.y, view.scale]);
 
-  const getOwnerColor = (id: string | null) => {
-    if (!id) return 'rgba(255,255,255,0.1)';
-    if (id === user.id) return '#10b981';
-
+  const getOwnerAttributes = (id: string | null) => {
+    if (!id) return { color: 'rgba(255,255,255,0.1)', speed: 1.0 };
+    
     let hash = 0;
     for (let i = 0; i < id.length; i++) {
-        hash = id.charCodeAt(i) + ((hash << 5) - hash);
+        hash = id.charCodeAt(i) + ((hash << 7) - hash);
     }
-    const index = Math.abs(hash);
-    const distinctColors = [
-        '#e11d48',
-        '#2563eb',
-        '#d97706',
-        '#7c3aed',
-        '#db2777',
-        '#0891b2',
-        '#ca8a04',
-        '#4f46e5',
-        '#059669',
-        '#9333ea',
-    ];
+    const absHash = Math.abs(hash);
 
-    if (index % 40 < distinctColors.length) {
-        return distinctColors[index % distinctColors.length];
-    }
+    if (id === user.id) return { color: '#10b981', speed: 0.8 };
 
-    const sectors = 12;
-    const sector = index % sectors;
-    const h = sector * (360 / sectors); 
+    const hue = (absHash * 137.508) % 360;
+    const saturation = 70 + ((absHash % 4) * 10);
+    const lightness = 45 + ((absHash % 3) * 10);
 
-    const l = (index % 2 === 0) ? 45 : 70;
-    const s = 85;
+    const speed = 0.6 + ((absHash % 10) * 0.2);
 
-    return `hsl(${h}, ${s}%, ${l}%)`;
-};
+    return { 
+        color: `hsl(${hue}, ${saturation}%, ${lightness}%)`, 
+        speed: parseFloat(speed.toFixed(1)) 
+    };
+  };
 
   const flightPaths = useMemo(() => {
-      const connections: { d: string, key: string, color: string, isMine: boolean }[] = [];
+      const connections: { d: string, key: string, color: string, speed: number, isMine: boolean }[] = [];
       const processedPairs = new Set<string>(); 
 
       const ownersMap: Record<string, Zone[]> = {};
@@ -141,7 +128,7 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
           if (!showGlobalTrajectories && !isMine) return;
           if (ownerZones.length < 2) return;
 
-          const color = getOwnerColor(ownerId);
+          const attrs = getOwnerAttributes(ownerId);
 
           ownerZones.forEach(startZone => {
               const startPos = getHexPixelPosition(startZone.x, startZone.y, HEX_SIZE);
@@ -166,7 +153,7 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
                       const controlX = midX;
                       const controlY = midY - altitude;
                       const pathData = `M ${startPos.x} ${startPos.y} Q ${controlX} ${controlY} ${endPos.x} ${endPos.y}`;
-                      connections.push({ d: pathData, key: pairKey, color, isMine });
+                      connections.push({ d: pathData, key: pairKey, color: attrs.color, speed: attrs.speed, isMine });
                   }
               });
           });
@@ -278,10 +265,14 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
           }
           .flight-path {
             stroke-dasharray: 12, 12;
-            animation: dash-flight 0.8s linear infinite;
+            animation: dash-flight var(--flight-speed, 0.8s) linear infinite;
             filter: drop-shadow(0 0 8px currentColor) drop-shadow(0 0 2px white);
             pointer-events: none;
             stroke-linecap: round;
+          }
+          .inner-glow-path {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: none;
           }
           @keyframes compass-pulse {
             0%, 100% { transform: scale(1); opacity: 0.8; filter: drop-shadow(0 0 5px #10b981); }
@@ -424,12 +415,15 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
                         key={conn.key} 
                         d={conn.d} 
                         stroke={conn.color} 
-                        strokeWidth={conn.isMine ? 6 : 4} 
+                        strokeWidth={conn.isMine ? 10 : 8} 
                         fill="none" 
                         className="flight-path" 
                         strokeLinecap="round" 
-                        opacity={conn.isMine ? 1 : 0.9}
-                        style={{ filter: 'url(#glow-flight-strong)' }}
+                        opacity={conn.isMine ? 1 : 0.95}
+                        style={{ 
+                            filter: 'url(#glow-flight-strong)',
+                            '--flight-speed': `${conn.speed}s` 
+                        } as any}
                     />
                 ))}
             </g>
@@ -443,6 +437,8 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
               const isMine = zone.ownerId === user.id;
 
               const isContested = isSelected && !isMine;
+              
+              const attrs = getOwnerAttributes(zone.ownerId);
 
               let isMatch = true;
               if (filterMode === 'MINE' && zone.ownerId !== user.id) isMatch = false;
@@ -467,6 +463,11 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
               if (boosted) { strokeColor = '#fbbf24'; strokeWidth = 3; }
               else if (shielded) { strokeColor = '#06b6d4'; strokeWidth = 3; }
               else if (isSelected) { strokeColor = '#ffffff'; strokeWidth = 4; }
+
+              const isInnerColored = !!(showGlobalTrajectories && zone.ownerId);
+              const innerStroke = isInnerColored ? attrs.color : "rgba(255,255,255,0.35)";
+              const innerWidth = isInnerColored ? 6 : 3;
+              const innerOpacity = isInnerColored ? 0.95 : 0.35;
 
               return (
                 <g 
@@ -504,7 +505,19 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
                   )}
 
                   <polygon points={getHexPoints()} fill="url(#tech-dots)" opacity="0.3" pointerEvents="none" transform="scale(0.95)" />
-                  <polygon points={getHexPoints()} fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="2" transform="scale(0.85)" className="transition-all duration-300 group-hover:stroke-white/40" />
+                  
+                  <polygon 
+                    points={getHexPoints()} 
+                    fill="none" 
+                    stroke={innerStroke} 
+                    strokeWidth={innerWidth} 
+                    opacity={innerOpacity}
+                    transform="scale(0.88)" 
+                    className="inner-glow-path group-hover:opacity-100" 
+                    style={{ 
+                        filter: isInnerColored ? `drop-shadow(0 0 12px ${innerStroke})` : 'none'
+                    }}
+                  />
                   
                   <g pointerEvents="none">
                       <text 
