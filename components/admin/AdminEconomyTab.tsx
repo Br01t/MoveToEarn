@@ -184,7 +184,7 @@ const AdminEconomyTab: React.FC<AdminEconomyTabProps> = ({
                 <CheckCircle className="text-emerald-400" /> Zone Rewards Distribution
             </h3>
             <p className="text-sm text-gray-400 mb-4">
-                Manually trigger the daily distribution of Zone Interest Pools to owners and top runners.
+                Manually trigger the weekly distribution of Zone Interest Pools to owners and top runners.
                 (Normally automated via Cron).
             </p>
             <button onClick={onDistributeRewards} className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 px-6 rounded-lg transition-colors">
