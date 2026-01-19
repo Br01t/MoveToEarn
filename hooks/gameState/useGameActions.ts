@@ -4,6 +4,7 @@ import { User, Zone, Item, InventoryItem, Transaction, RunEntry, BugReport, Sugg
 import { CONQUEST_COST, CONQUEST_REWARD_GOV, PREMIUM_COST, ITEM_DURATION_SEC, MINT_COST, MINT_REWARD_GOV } from '../../constants';
 import { useGlobalUI } from '../../contexts/GlobalUIContext';
 import { sendSlackNotification } from '../../utils/slack';
+import { useLanguage } from '../../LanguageContext';
 
 interface GameActionsProps {
     user: User | null;
@@ -25,6 +26,7 @@ export const useGameActions = ({
     uploadFile, setBugReports, setSuggestions
 }: GameActionsProps) => {
   const { showToast } = useGlobalUI();
+  const { t } = useLanguage();
 
   const logTransaction = async (userId: string, type: 'IN' | 'OUT', token: 'RUN' | 'GOV' | 'ITEM', amount: number, description: string) => {
       if (!amount || amount <= 0 || isNaN(amount)) return;
@@ -187,7 +189,6 @@ export const useGameActions = ({
       const zone = zones.find(z => z.id === zoneId);
       if (!zone) return;
 
-      // Sicurezza: Impedisce il reclamo se l'utente è già proprietario
       if (zone.ownerId === user.id) {
           showToast("Sei già il proprietario di questa zona", 'ERROR');
           return;
@@ -198,39 +199,42 @@ export const useGameActions = ({
           return;
       }
 
+      const poolLoot = zone.interestPool || 0;
       const updatedUser = { 
           ...user, 
-          runBalance: parseFloat((user.runBalance - CONQUEST_COST).toFixed(2)), 
+          runBalance: parseFloat((user.runBalance - CONQUEST_COST + poolLoot).toFixed(2)), 
           govBalance: parseFloat((user.govBalance + CONQUEST_REWARD_GOV).toFixed(2)) 
       };
       setUser(updatedUser);
 
+      // Log delle transazioni
       await logTransaction(user.id, 'OUT', 'RUN', CONQUEST_COST, `Conquest: ${zone.name}`);
       await logTransaction(user.id, 'IN', 'GOV', CONQUEST_REWARD_GOV, `Conquest Reward: ${zone.name}`);
+      
+      if (poolLoot > 0) {
+          await logTransaction(user.id, 'IN', 'RUN', poolLoot, `Sector Loot Seized: ${zone.name}`);
+          showToast(`${t('alert.zone_claimed')} +${CONQUEST_REWARD_GOV} GOV & +${poolLoot.toFixed(2)} RUN Loot`, 'SUCCESS');
+      } else {
+          showToast(`${t('alert.zone_claimed')} +${CONQUEST_REWARD_GOV} GOV`, 'SUCCESS');
+      }
       
       await supabase.from('profiles').update({ 
           run_balance: updatedUser.runBalance, 
           gov_balance: updatedUser.govBalance 
       }).eq('id', user.id);
       
-      // LOGICA CONQUISTA AGGIORNATA:
-      // - Cambia il proprietario
-      // - Azzera il pool accumulato (bottino di guerra)
-      // - NON AZZERA record_km e defense_level (la zona mantiene la sua storia e potenza)
       const { error } = await supabase.from('zones').update({
           owner_id: user.id,
           interest_pool: 0
       }).eq('id', zoneId);
 
       if (!error) {
-          // Aggiornamento stato locale
           setZones(prev => prev.map(z => z.id === zoneId ? { 
               ...z, 
               ownerId: user.id, 
               interestPool: 0,
-              // Mantieni recordKm, defenseLevel e totalKm originali
           } : z));
-          sendSlackNotification(`*Zone Conquered!* \nNew Ruler: \`${user.name}\` \nSector Seized: \`${zone.name}\``, 'ALERT', 'MAP');
+          sendSlackNotification(`*Zone Conquered!* \nNew Ruler: \`${user.name}\` \nSector Seized: \`${zone.name}\` \nLoot Claimed: \`${poolLoot.toFixed(2)} RUN\``, 'ALERT', 'MAP');
       }
   };
 

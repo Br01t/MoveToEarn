@@ -113,7 +113,7 @@ const AppContent: React.FC = () => {
       user, zones, setUser, setZones, 
       logTransaction, 
       recordRun: gameState.recordRun,
-      mintZone: gameState.mintZone // FIX: Passata la funzione mintZone al workflow
+      mintZone: gameState.mintZone 
   });
   
   const achievementSystem = useAchievements({ 
@@ -195,7 +195,6 @@ const AppContent: React.FC = () => {
           message: t('alert.claim_confirm'),
           onConfirm: () => {
               gameState.claimZone(zoneId);
-              showToast(`${t('alert.zone_claimed')} +25 GOV`, 'SUCCESS');
           }
       });
   };
