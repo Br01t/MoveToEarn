@@ -90,7 +90,7 @@ export const analyzeRun = (points: { lat: number, lng: number, ele: number, time
     let failureReason = "";
 
     // --- FINAL VALIDATION RULES ---
-    if (totalKm === 0 || totalKm < 0.1) { isValid = false; failureReason = "Distance too short (< 1 km)."; }
+    if (totalKm === 0 || totalKm < 1) { isValid = false; failureReason = "Distance too short (< 1 km)."; }
     else if (avgSpeed > 25) { isValid = false; failureReason = `Avg speed suspicious: ${avgSpeed.toFixed(1)} km/h (Limit: 25)`; }
     else if (maxSpeed > 50) { isValid = false; failureReason = `Max speed spike: ${maxSpeed.toFixed(1)} km/h (Limit: 50)`; } 
     else if (totalTime < 1) { isValid = false; failureReason = "Duration too short (< 1 min)."; }
