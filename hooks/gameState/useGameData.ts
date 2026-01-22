@@ -3,12 +3,9 @@ import { User, Zone, Item, Mission, Badge, InventoryItem, BugReport, Leaderboard
 import { supabase } from '../../supabaseClient';
 
 export const useGameData = () => {
-  // --- DATABASE STATE ---
   const [user, setUser] = useState<User | null>(null);
   const [zones, setZones] = useState<Zone[]>([]); 
   const [allUsers, setAllUsers] = useState<Record<string, Omit<User, 'inventory'>>>({}); 
-  
-  // Real DB Data
   const [missions, setMissions] = useState<Mission[]>([]);
   const [badges, setBadges] = useState<Badge[]>([]);
   const [marketItems, setMarketItems] = useState<Item[]>([]);
@@ -17,15 +14,12 @@ export const useGameData = () => {
   const [bugReports, setBugReports] = useState<BugReport[]>([]);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  
-  // --- CONFIG STATE ---
-  const [govToRunRate, setGovToRunRate] = useState<number>(3000); // 1 GOV = 3000 RUN
+  const [govToRunRate, setGovToRunRate] = useState<number>(3000); 
   const [loading, setLoading] = useState(true);
   const [recoveryMode, setRecoveryMode] = useState(false);
   const [lastBurnTimestamp, setLastBurnTimestamp] = useState<number>(0);
   const [totalBurned, setTotalBurned] = useState<number>(0);
 
-  // --- DATA FETCHING ---
   const fetchGameData = async () => {
       try {
           const [
@@ -53,9 +47,9 @@ export const useGameData = () => {
                   
                   usersMap[p.id] = {
                       id: p.id,
-                      name: p.name || 'Runner',
+                      name: p.name || p.username || 'Runner',
                       email: p.email,
-                      avatar: p.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${p.id}`,
+                      avatar: p.avatar_url || p.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${p.id}`,
                       runBalance: p.run_balance || 0,
                       govBalance: p.gov_balance || 0,
                       totalKm: p.total_km || 0,
@@ -227,16 +221,9 @@ export const useGameData = () => {
               }).filter((i): i is InventoryItem => i !== null && i !== undefined);
           }
 
-          // Increased limit to 1000 to support accurate charting from the first transaction
-          const { data: txRows } = await supabase
-              .from('transactions')
-              .select('*')
-              .eq('user_id', userId)
-              .order('timestamp', { ascending: false })
-              .limit(1000);
-
+          const { data: txRows } = await supabase.from('transactions').select('*').eq('user_id', userId).order('timestamp', { ascending: false }).limit(1000);
           if (txRows) {
-              const mappedTxs: Transaction[] = txRows.map((t: any) => ({
+              setTransactions(txRows.map((t: any) => ({
                   id: t.id,
                   userId: t.user_id,
                   type: t.type,
@@ -244,41 +231,15 @@ export const useGameData = () => {
                   amount: t.amount,
                   description: t.description,
                   timestamp: typeof t.timestamp === 'string' ? new Date(t.timestamp).getTime() : t.timestamp
-              }));
-              setTransactions(mappedTxs);
+              })));
           }
 
-          const { data: runRows } = await supabase
-              .from('runs')
-              .select('*')
-              .eq('user_id', userId)
-              .order('timestamp', { ascending: false });
-
+          const { data: runRows } = await supabase.from('runs').select('*').eq('user_id', userId).order('timestamp', { ascending: false });
           let runHistory: RunEntry[] = [];
           if (runRows) {
               runHistory = runRows.map((r: any) => {
-                  let involvedZones: string[] = [];
-                  if (Array.isArray(r.involved_zones)) {
-                      involvedZones = r.involved_zones;
-                  } else if (typeof r.involved_zones === 'string') {
-                      try {
-                          const parsed = JSON.parse(r.involved_zones);
-                          if (Array.isArray(parsed)) involvedZones = parsed;
-                      } catch (e) { 
-                          console.warn("Failed to parse involved_zones", r.id); 
-                      }
-                  }
-
-                  let zoneBreakdown: Record<string, number> = {};
-                  if (typeof r.zone_breakdown === 'object' && r.zone_breakdown !== null) {
-                      zoneBreakdown = r.zone_breakdown;
-                  } else if (typeof r.zone_breakdown === 'string') {
-                      try {
-                          zoneBreakdown = JSON.parse(r.zone_breakdown);
-                      } catch (e) { 
-                          console.warn("Failed to parse zone_breakdown", r.id); 
-                      }
-                  }
+                  const invZones = Array.isArray(r.involved_zones) ? r.involved_zones : [];
+                  const breakdown = (typeof r.zone_breakdown === 'object' && r.zone_breakdown !== null) ? r.zone_breakdown : {};
 
                   return {
                       id: r.id,
@@ -291,8 +252,8 @@ export const useGameData = () => {
                       elevation: Number(r.elevation || 0),
                       maxSpeed: Number(r.max_speed || 0),
                       avgSpeed: Number(r.avg_speed || 0),
-                      involvedZones: involvedZones,
-                      zoneBreakdown: zoneBreakdown
+                      involvedZones: invZones,
+                      zoneBreakdown: breakdown
                   };
               });
           }
@@ -303,7 +264,7 @@ export const useGameData = () => {
               id: data.id,
               name: data.username || data.name || 'Runner',
               email: data.email,
-              avatar: data.avatar_url || data.avatar || 'https://via.placeholder.com/150',
+              avatar: data.avatar_url || data.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.id}`,
               runBalance: data.run_balance || 0,
               govBalance: data.gov_balance || 0,
               totalKm: dynamicTotalKm, 
@@ -323,118 +284,78 @@ export const useGameData = () => {
   const fetchZoneLeaderboard = async (zoneId: string) => {
       try {
           const { data: rpcData, error: rpcError } = await supabase.rpc('get_zone_leaderboard', { target_zone_id: zoneId });
+          
+          if (rpcError) {
+              console.warn("RPC Error in leaderboard:", rpcError.message);
+              return [];
+          }
 
-          if (!rpcError && rpcData) {
-              const userIds = rpcData.map((r: any) => r.user_id);
-              const { data: profiles } = await supabase.from('profiles').select('id, name, avatar').in('id', userIds);
+          if (rpcData && rpcData.length > 0) {
+              const userIds = rpcData.map((r: any) => { return r.user_id; });
+              const { data: profiles } = await supabase.from('profiles').select('id, name, avatar, avatar_url, username').in('id', userIds);
               
               return rpcData.map((row: any) => {
                   const profile = profiles?.find(p => p.id === row.user_id);
-                  const fallbackName = allUsers[row.user_id] ? allUsers[row.user_id].name : 'Runner';
-                  const fallbackAvatar = allUsers[row.user_id] ? allUsers[row.user_id].avatar : null;
-                  
                   return {
                       id: row.user_id,
-                      name: profile?.name || fallbackName,
-                      avatar: profile?.avatar || fallbackAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${row.user_id}`,
+                      name: profile?.username || profile?.name || allUsers[row.user_id]?.name || 'Runner',
+                      avatar: profile?.avatar_url || profile?.avatar || allUsers[row.user_id]?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${row.user_id}`,
                       km: Number(row.km)
                   };
               });
           }
-
-          console.warn("[Leaderboard Debug] RPC failed or not found, falling back to Client-Side Fetch.");
-          
-          const { data: rawRuns, error } = await supabase
-              .from('runs')
-              .select('id, user_id, km, zone_breakdown, involved_zones')
-              .contains('involved_zones', [zoneId])
-              .limit(1000); 
-
-          if (error || !rawRuns || rawRuns.length === 0) return [];
-
-          const userStats: Record<string, number> = {};
-          rawRuns.forEach((run: any) => {
-              let zoneKm = 0;
-              let breakdown = run.zone_breakdown;
-              if (typeof breakdown === 'string') {
-                  try { breakdown = JSON.parse(breakdown); } catch (e) { breakdown = {}; }
-              }
-
-              if (breakdown && breakdown[zoneId]) {
-                  zoneKm = Number(breakdown[zoneId]);
-              } else {
-                  const count = Array.isArray(run.involved_zones) ? run.involved_zones.length : 1;
-                  zoneKm = Number(run.km) / count;
-              }
-              if (zoneKm > 0) userStats[run.user_id] = (userStats[run.user_id] || 0) + zoneKm;
-          });
-
-          const sortedUserIds = Object.keys(userStats).sort((a, b) => userStats[b] - userStats[a]).slice(0, 10);
-          const { data: profilesData } = await supabase.from('profiles').select('id, name, avatar').in('id', sortedUserIds);
-
-          return sortedUserIds.map(userId => {
-              const profile = profilesData?.find(p => p.id === userId);
-              const fallbackName = allUsers[userId] ? allUsers[userId].name : 'Runner';
-              const fallbackAvatar = allUsers[userId] ? allUsers[userId].avatar : null;
-              return {
-                  id: userId,
-                  name: profile?.name || fallbackName, 
-                  avatar: profile?.avatar || fallbackAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userId}`,
-                  km: userStats[userId]
-              };
-          });
-
+          return [];
       } catch (err) {
-          console.error("Error calculating zone leaderboard:", err);
+          console.error("Critical error fetching zone leaderboard:", err);
           return [];
       }
   };
 
-  // Added uploadFile function for handling cloud storage uploads with Base64 fallback
   const uploadFile = async (file: File, folder: string): Promise<string | null> => {
       try {
           const fileExt = file.name.split('.').pop();
           const fileName = `${crypto.randomUUID()}.${fileExt}`;
           const filePath = `${folder}/${fileName}`;
-
-          const { error: uploadError } = await supabase.storage
-              .from('images')
-              .upload(filePath, file);
-
+          const { error: uploadError } = await supabase.storage.from('images').upload(filePath, file);
           if (uploadError) throw uploadError;
-
-          const { data } = supabase.storage
-              .from('images')
-              .getPublicUrl(filePath);
-
+          const { data } = supabase.storage.from('images').getPublicUrl(filePath);
           return data.publicUrl;
       } catch (err) {
           console.error("Error uploading file:", err);
+          return null;
       }
   };
 
   useEffect(() => {
     const initSession = async () => {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        if (session) await fetchUserProfile(session.user.id);
-        await fetchGameData();
+        // Fix: Use any cast to resolve property existence errors on getSession, likely due to mismatched Supabase types in the environment.
+        const { data: { session }, error } = await (supabase.auth as any).getSession();
+        if (session) {
+            await fetchUserProfile(session.user.id);
+            await fetchGameData();
+        }
         if (error) throw error;
-        if (!session) setLoading(false);
       } catch (err) {
-        console.warn("Supabase connection issue:", err);
+        console.warn("Supabase auth issue:", err);
+      } finally {
         setLoading(false);
       }
     };
     initSession();
     
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    // Fix: Use any cast to resolve property existence errors on onAuthStateChange.
+    const { data: { subscription } } = (supabase.auth as any).onAuthStateChange((event: any, session: any) => {
       if (event === 'PASSWORD_RECOVERY') setRecoveryMode(true);
       if (session) {
           fetchUserProfile(session.user.id);
           setTimeout(() => fetchGameData(), 500);
       }
-      else { setUser(null); setZones([]); }
+      else { 
+          setUser(null); 
+          setZones([]); 
+          setLoading(false);
+      }
     });
     return () => subscription.unsubscribe();
   }, []);

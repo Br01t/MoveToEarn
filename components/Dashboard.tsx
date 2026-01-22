@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { User, Zone, InventoryItem, ViewState, Badge, RunAnalysisData } from '../types';
 import { UploadCloud, History, X, Calendar, Waypoints, Circle, Footprints, Info } from 'lucide-react';
@@ -35,6 +36,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   const { t } = useLanguage();
   const [selectedZone, setSelectedZone] = useState<Zone | null>(null);
   const [zoneLeaderboard, setZoneLeaderboard] = useState<any[]>([]);
+  const [isLeaderboardLoading, setIsLeaderboardLoading] = useState(false);
   const [showGlobalTrajectories, setShowGlobalTrajectories] = useState(false);
   const [showOnlyVisited, setShowOnlyVisited] = useState(false);
   
@@ -104,11 +106,17 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   useEffect(() => {
       if (selectedZone) {
+          setIsLeaderboardLoading(true);
           onGetZoneLeaderboard(selectedZone.id).then(data => {
               setZoneLeaderboard(data);
+              setIsLeaderboardLoading(false);
+          }).catch(() => {
+              setZoneLeaderboard([]);
+              setIsLeaderboardLoading(false);
           });
       } else {
           setZoneLeaderboard([]);
+          setIsLeaderboardLoading(false);
       }
   }, [selectedZone]);
 
@@ -418,6 +426,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               onClose={() => setSelectedZone(null)}
               ownerDetails={ownerDetails}
               zoneLeaderboard={zoneLeaderboard}
+              isLoadingLeaderboard={isLeaderboardLoading}
               onClaim={(id) => { 
                   onClaim(id); 
                   setSelectedZone(null); 

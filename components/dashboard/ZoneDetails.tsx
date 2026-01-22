@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Zone, User, Badge, Rarity } from '../../types';
-import { X, Crown, Shield, Medal, Lock, Zap, Flag, Award, Mountain, Globe, Home, Landmark, Swords, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users, AlertTriangle, CheckCircle, Coins, Activity, Info, Clock, TrendingUp, AlertCircle } from 'lucide-react';
+import { X, Crown, Shield, Medal, Lock, Zap, Flag, Award, Mountain, Globe, Home, Landmark, Swords, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users, AlertTriangle, CheckCircle, Coins, Activity, Info, Clock, TrendingUp, AlertCircle, Loader2 } from 'lucide-react';
 import { useLanguage } from '../../LanguageContext';
 import { CONQUEST_COST } from '../../constants';
 import { useGlobalUI } from '../../contexts/GlobalUIContext';
@@ -11,6 +11,7 @@ interface ZoneDetailsProps {
   onClose: () => void;
   ownerDetails: { name: string; avatar: string | null; badge: Badge | null | undefined } | null;
   zoneLeaderboard: any[];
+  isLoadingLeaderboard?: boolean;
   onClaim: (id: string) => void;
   onBoost: (id: string) => void;
   onDefend: (id: string) => void;
@@ -19,7 +20,7 @@ interface ZoneDetailsProps {
 }
 
 const ZoneDetails: React.FC<ZoneDetailsProps> = ({ 
-    zone, user, onClose, ownerDetails, zoneLeaderboard, 
+    zone, user, onClose, ownerDetails, zoneLeaderboard, isLoadingLeaderboard,
     onClaim, onBoost, onDefend, hasBoostItem, hasDefenseItem 
 }) => {
   const { t } = useLanguage();
@@ -123,7 +124,6 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
         {isTerritoryAtRisk && (
             <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-red-600 to-red-500 py-1 px-4 flex items-center justify-center gap-2 z-20 shadow-lg">
                 <AlertCircle size={20} className="text-white animate-pulse" />
-                {/* <span className="text-[10px] font-black text-white uppercase tracking-widest">Allerta: Difesa Violata!</span> */}
             </div>
         )}
 
@@ -248,29 +248,41 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
                 <span className="font-mono font-bold text-white text-base">{myKmInZone.toFixed(2)} km</span>
             </div>
 
-            {/* Leaderboard */}
+            {/* Leaderboard Section */}
             <div className="bg-black/20 rounded-lg border border-white/5 p-3 shrink-0">
                 <h4 className="text-xs font-bold text-gray-400 uppercase mb-3 flex items-center gap-1 tracking-wider">
                     <Medal size={12} className="text-yellow-500"/> {t('zone.top_runners')}
                 </h4>
-                <div className="space-y-2">
-                    {zoneLeaderboard.map((runner, index) => (
-                        <div key={runner.id} className={`flex items-center justify-between text-xs p-1.5 rounded transition-colors ${runner.id === user.id ? (isRipeForConquest ? 'bg-yellow-900/20 border border-yellow-500/20' : 'bg-emerald-900/20 border border-emerald-500/20') : 'hover:bg-white/5'}`}>
-                            <div className="flex items-center gap-2">
-                                <span className={`w-4 text-center font-bold font-mono ${index === 0 ? 'text-yellow-400' : (index === 1 ? 'text-gray-300' : (index === 2 ? 'text-amber-600' : (index === 2 ? 'text-amber-600' : 'text-gray-600')))}`}>
-                                    {index + 1}
-                                </span>
-                                <img src={runner.avatar} className="w-5 h-5 rounded-full bg-gray-700 object-cover" alt={runner.name}/>
-                                <span className={`${runner.id === user.id ? (isRipeForConquest ? 'text-yellow-400 font-bold' : 'text-emerald-400 font-bold') : 'text-gray-300'}`}>
-                                    {runner.name}
-                                </span>
+                
+                {isLoadingLeaderboard ? (
+                    <div className="flex flex-col items-center justify-center py-6 gap-2">
+                        <Loader2 size={24} className="text-emerald-500 animate-spin" />
+                        <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Scanning Agents...</span>
+                    </div>
+                ) : zoneLeaderboard.length === 0 ? (
+                    <div className="text-center py-4 text-gray-500 italic text-[10px]">
+                        No recorded activity in this sector.
+                    </div>
+                ) : (
+                    <div className="space-y-2">
+                        {zoneLeaderboard.map((runner, index) => (
+                            <div key={runner.id} className={`flex items-center justify-between text-xs p-1.5 rounded transition-colors ${runner.id === user.id ? (isRipeForConquest ? 'bg-yellow-900/20 border border-yellow-500/20' : 'bg-emerald-900/20 border border-emerald-500/20') : 'hover:bg-white/5'}`}>
+                                <div className="flex items-center gap-2">
+                                    <span className={`w-4 text-center font-bold font-mono ${index === 0 ? 'text-yellow-400' : (index === 1 ? 'text-gray-300' : (index === 2 ? 'text-amber-600' : 'text-gray-600'))}`}>
+                                        {index + 1}
+                                    </span>
+                                    <img src={runner.avatar} className="w-5 h-5 rounded-full bg-gray-700 object-cover" alt={runner.name}/>
+                                    <span className={`${runner.id === user.id ? (isRipeForConquest ? 'text-yellow-400 font-bold' : 'text-emerald-400 font-bold') : 'text-gray-300'}`}>
+                                        {runner.name}
+                                    </span>
+                                </div>
+                                <div className="font-mono text-gray-400">
+                                    {runner.km.toFixed(1)} km
+                                </div>
                             </div>
-                            <div className="font-mono text-gray-400">
-                                {runner.km.toFixed(1)} km
-                            </div>
-                        </div>
-                    ))}
-                </div>
+                        ))}
+                    </div>
+                )}
             </div>
         </div>
 

@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Search, X, Globe, Activity, History, Crosshair } from 'lucide-react';
 import { useLanguage } from '../../LanguageContext';
 import { RunEntry, Zone } from '../../types';
+import { useGlobalUI } from '../../contexts/GlobalUIContext';
 
 interface DashboardSidebarProps {
   searchTerm: string;
@@ -46,11 +47,21 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
       return names.length > 0 ? names.join(', ') : (lastRun.location || 'Unknown Location');
   }, [lastRun, zones]);
 
+  const toggleFilter = () => {
+    setIsFilterOpen(!isFilterOpen);
+    if (isLastRunOpen) setIsLastRunOpen(false);
+  };
+
+  const toggleLastRun = () => {
+    setIsLastRunOpen(!isLastRunOpen);
+    if (isFilterOpen) setIsFilterOpen(false);
+  };
+
   return (
     <div className="absolute top-14 left-2 z-20 flex flex-col gap-2 items-start pointer-events-none">
         <div className={`flex flex-col items-start transition-all duration-300 pointer-events-auto ${isFilterOpen ? 'w-64 z-50' : 'w-10 z-40'}`}>
           <button 
-              onClick={() => { setIsFilterOpen(!isFilterOpen); if (isLastRunOpen) setIsLastRunOpen(false); }} 
+              onClick={toggleFilter} 
               className={`w-10 h-10 rounded-full flex items-center justify-center text-white hover:text-emerald-400 relative shrink-0 glass-panel ${isFilterOpen ? 'border-emerald-500/50' : ''}`}
           >
               {isFilterOpen ? <X size={20}/> : <Search size={20}/>}
@@ -72,7 +83,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
                       <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={14} />
                       <select 
                         value={filterCountry}
-                        onChange={(e) => setFilterCountry(e.target.value)}
+                        onChange={(e) => { setFilterCountry(e.target.value); }}
                         className="w-full bg-black/40 text-white rounded-lg pl-8 pr-3 py-2 text-xs border border-gray-600 focus:border-emerald-500 focus:outline-none appearance-none"
                       >
                       <option value="ALL">All Nations</option>
@@ -93,7 +104,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
         {lastRun && (
            <div className="relative pointer-events-auto z-30">
                <button 
-                  onClick={() => { setIsLastRunOpen(!isLastRunOpen); if (isFilterOpen) setIsFilterOpen(false); }}
+                  onClick={toggleLastRun}
                   className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors glass-panel ${isLastRunOpen ? 'text-white border-emerald-500/50' : 'text-emerald-400 hover:text-white'}`}
                >
                    <Activity size={20} />

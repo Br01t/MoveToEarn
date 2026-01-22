@@ -1,7 +1,7 @@
 import React, { forwardRef, useEffect, useState, useRef, useMemo } from 'react';
 import { Zone, User } from '../../types';
 import { getHexPixelPosition } from '../../utils/geo';
-import { Zap, Shield, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Info, Footprints } from 'lucide-react';
+import { Zap, Shield, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Info, Footprints, Swords, AlertTriangle } from 'lucide-react';
 import { useLanguage } from '../../LanguageContext';
 
 interface HexMapProps {
@@ -36,6 +36,19 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
   const [recentlyClaimed, setRecentlyClaimed] = useState<Set<string>>(new Set());
   const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
   const prevOwnersRef = useRef<Record<string, string | null>>({});
+
+  // Calcolo delle distanze personali per zona per identificare conquiste possibili o rischi
+  const userDistMap = useMemo(() => {
+    const dists = new Map<string, number>();
+    user.runHistory.forEach(run => {
+        if (run.zoneBreakdown) {
+            Object.entries(run.zoneBreakdown).forEach(([id, km]) => {
+                dists.set(id, (dists.get(id) || 0) + Number(km));
+            });
+        }
+    });
+    return dists;
+  }, [user.runHistory]);
 
   useEffect(() => {
     const newClaims = new Set<string>();
@@ -76,7 +89,6 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
     const TRIGGER_THRESHOLD = 5 / view.scale;
 
     zones.forEach(z => {
-        // Se la modalità "Esplorazione" è attiva, la bussola punta solo alle zone visitate
         if (showOnlyVisited && visitedZoneIds && !visitedZoneIds.has(z.id)) return;
 
         const pos = getHexPixelPosition(z.x, z.y, HEX_SIZE);
@@ -122,7 +134,6 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
       const processedPairs = new Set<string>(); 
 
       if (showOnlyVisited && visitedZoneIds && visitedZoneIds.size > 1) {
-          // MODALITÀ ESPLORAZIONE: Colleghiamo solo le zone visitate dall'utente (percorso fisico)
           const visitedZones = zones.filter(z => visitedZoneIds.has(z.id));
           
           visitedZones.forEach(startZone => {
@@ -149,7 +160,6 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
               });
           });
       } else {
-          // MODALITÀ STANDARD: Traiettorie per proprietario
           const ownersMap: Record<string, Zone[]> = {};
           zones.forEach(z => {
               if (!z.ownerId) return;
@@ -280,10 +290,14 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
           .compass-active { background: rgba(13, 18, 30, 0.9); backdrop-filter: blur(8px); border: 1px solid rgba(16, 185, 129, 0.6); color: #34d399; animation: compass-pulse 2s infinite ease-in-out; }
           @keyframes icon-float { 0%, 100% { transform: translate(-14px, 49px); } 50% { transform: translate(-14px, 45px); } }
           .animate-icon-float { animation: icon-float 2s ease-in-out infinite; }
-          @keyframes contested-double-pulse { 0%, 100% { stroke-opacity: 1; stroke-width: 2; } 50% { stroke-opacity: 0.5; stroke-width: 8; } }
-          @keyframes hex-scanline { 0% { transform: translateY(-100px); } 100% { transform: translateY(100px); } }
-          .contested-pulse { animation: contested-double-pulse 1.5s infinite ease-in-out; }
+          @keyframes alert-vibrate { 0%, 100% { transform: scale(1) rotate(0); } 25% { transform: scale(1.1) rotate(-5deg); } 75% { transform: scale(1.1) rotate(5deg); } }
+          .alert-vibrate { animation: alert-vibrate 0.4s infinite linear; }
+          @keyframes alert-glow-red { 0%, 100% { stroke: #ef4444; stroke-width: 2; opacity: 1; } 50% { stroke: #b91c1c; stroke-width: 8; opacity: 0.5; } }
+          .alert-glow-red { animation: alert-glow-red 1.5s infinite ease-in-out; }
+          @keyframes opportunity-glow-gold { 0%, 100% { stroke: #fbbf24; stroke-width: 2; opacity: 1; } 50% { stroke: #d97706; stroke-width: 8; opacity: 0.5; } }
+          .opportunity-glow-gold { animation: opportunity-glow-gold 1.5s infinite ease-in-out; }
           .scan-laser { animation: hex-scanline 2s infinite linear; }
+          @keyframes hex-scanline { 0% { transform: translateY(-100px); } 100% { transform: translateY(100px); } }
           .visited-glow { animation: visited-pulse 2s infinite cubic-bezier(0.4, 0, 0.6, 1); }
           @keyframes visited-pulse { 0%, 100% { opacity: 0.4; transform: scale(1); } 50% { opacity: 0.7; transform: scale(1.1); } }
         `}
@@ -328,9 +342,13 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
               const isJustClaimed = recentlyClaimed.has(zone.id);
               const isMine = zone.ownerId === user.id;
               const isVisited = visitedZoneIds?.has(zone.id);
-              
-              // Logica Esplorazione: se attiva, attenua le zone NON visitate
               const dimMode = showOnlyVisited && !isVisited;
+
+              // Calcolo logica avvisi (Conquista possibile / Territorio a rischio)
+              const myDist = userDistMap.get(zone.id) || 0;
+              const isTopRunner = myDist >= zone.recordKm && myDist > 0;
+              const readyToConquer = isTopRunner && !isMine; // Opportunità: Posso conquistare
+              const atRisk = isMine && zone.recordKm > myDist; // Pericolo: Ho perso il record, rischio di perdere la zona
 
               let isMatch = true;
               if (filterMode === 'MINE' && zone.ownerId !== user.id) isMatch = false;
@@ -351,7 +369,6 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
               else if (shielded) { strokeColor = '#06b6d4'; strokeWidth = 3; }
               else if (isSelected) { strokeColor = '#ffffff'; strokeWidth = 4; }
 
-              // Evidenziatore aggiuntivo per Esplorazione
               if (showOnlyVisited && isVisited) {
                   strokeColor = '#10b981';
                   strokeWidth = 6;
@@ -369,6 +386,14 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
                   className="transition-all duration-500"
                   style={{ opacity: isMatch ? (dimMode ? 0.2 : 1) : 0.05, filter: dimMode ? 'grayscale(100%)' : 'none' }}
                 >
+                  {/* Effetti di allerta bordi */}
+                  {atRisk && !isSelected && (
+                      <polygon points={getHexPoints()} fill="none" stroke="#ef4444" className="alert-glow-red" />
+                  )}
+                  {readyToConquer && !isSelected && (
+                      <polygon points={getHexPoints()} fill="none" stroke="#fbbf24" className="opportunity-glow-gold" />
+                  )}
+
                   {isJustClaimed && isMatch && (
                     <polygon points={getHexPoints()} fill="none" stroke="white" strokeWidth="4" className="animate-ping" style={{ transformOrigin: 'center', animationDuration: '1.5s' }} />
                   )}
@@ -398,10 +423,9 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
                   <polygon points={getHexPoints()} fill="none" stroke={innerStroke} strokeWidth={isInnerColored ? 6 : 3} opacity={isInnerColored ? 0.95 : 0.35} transform="scale(0.88)" className="inner-glow-path" style={{ filter: isInnerColored ? `drop-shadow(0 0 12px ${innerStroke})` : 'none' }} />
                   
                   <g pointerEvents="none">
-                      {/* Nomi sempre visibili in Exploration Mode (opacità 0.7 se dim mode) */}
                       <text 
                         x="0" y="-45" textAnchor="middle" fill="white" 
-                        opacity={dimMode ? 1 : 1}
+                        opacity={1}
                         style={{ textShadow: '0 2px 4px rgba(0,0,0,1)', fontFamily: '"Rajdhani", sans-serif' }}
                       >
                           <tspan x="0" dy="0" fontSize="18" fontWeight="900" letterSpacing="0.02em">{displayCity}</tspan>
@@ -416,7 +440,15 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
                         </g>
                       )}
 
-                      {showOnlyVisited && isVisited && (
+                      {/* Icone di allerta (Risk / Opportunity) */}
+                      {!dimMode && (atRisk || readyToConquer) && (
+                          <g transform="translate(-10, 60)" className="alert-vibrate">
+                              {atRisk && <AlertTriangle size={24} color="#ef4444" fill="#7f1d1d" />}
+                              {readyToConquer && <Swords size={24} color="#fbbf24" fill="#78350f" />}
+                          </g>
+                      )}
+
+                      {showOnlyVisited && isVisited && !(atRisk || readyToConquer) && (
                           <g transform="translate(-10, 60)"><Footprints size={20} color="#34d399" /></g>
                       )}
 

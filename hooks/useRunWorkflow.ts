@@ -140,7 +140,14 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction,
           const dbResult = await recordRun(currentUser.id, newRun, modifiedZones);
           if (!dbResult.success) {
               console.error("❌ Sync Error:", dbResult.error);
-              alert(`Sync Failed: ${dbResult.error || 'Database error'}.`);
+              if (dbResult.error === 'GLOBAL_DUPLICATE_DETECTED') {
+                  alert("❌ Sync Conflict: This run has already been uploaded by another user in the ZoneRun network. Files cannot be shared.");
+              } else {
+                  alert(`Sync Failed: ${dbResult.error || 'Database error'}.`);
+              }
+              // Interrompiamo la coda se c'è un errore grave
+              setPendingRunsQueue([]);
+              setPendingRunData(null);
               return; 
           }
       }
@@ -189,7 +196,6 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction,
           shieldExpiresAt: Date.now() + (ITEM_DURATION_SEC * 1000) 
       };
 
-      // Persist to Database
       if (mintZone) {
           const dbRes = await mintZone(newZone, placementResult.shiftedZones);
           if (!dbRes.success) {

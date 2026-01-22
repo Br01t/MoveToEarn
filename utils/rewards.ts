@@ -108,11 +108,6 @@ export const checkAchievement = (item: Mission | Badge, currentUser: User, curre
 };
 
 // --- PROCESS RUN & REWARDS ---
-/**
- * Logica per assegnare i KM alle zone coinvolte e calcolare i guadagni.
- * Regola richiesta: Controlla solo punto iniziale e finale. 
- * Se ricadono in due zone diverse, divide KM, Premi Utente e Pool Interessi a metà (50/50).
- */
 export const processRunRewards = (
     data: RunAnalysisData, 
     user: User, 
@@ -130,7 +125,6 @@ export const processRunRewards = (
     const { startPoint, endPoint } = data;
     const RADIUS_KM = 1.0; 
 
-    // Identifichiamo le zone di partenza e arrivo
     const startZone = allZones.find(z => getDistanceFromLatLonInKm(startPoint.lat, startPoint.lng, z.lat, z.lng) <= RADIUS_KM);
     const endZone = allZones.find(z => getDistanceFromLatLonInKm(endPoint.lat, endPoint.lng, z.lat, z.lng) <= RADIUS_KM);
 
@@ -138,18 +132,14 @@ export const processRunRewards = (
     
     if (startZone && endZone) {
         if (startZone.id === endZone.id) {
-            // Stessa zona: 100% dei dati assegnati a questa zona
             zoneKmBuckets[startZone.id] = totalKm;
         } else {
-            // Zone diverse: 50% dei KM a ciascuna (Logica richiesta dall'utente)
-            zoneKmBuckets[startZone.id] = totalKm / 2;
-            zoneKmBuckets[endZone.id] = totalKm / 2;
+            zoneKmBuckets[startZone.id] = parseFloat((totalKm / 2).toFixed(4));
+            zoneKmBuckets[endZone.id] = parseFloat((totalKm / 2).toFixed(4));
         }
     } else if (startZone) {
-        // Solo partenza in zona: 100% assegnato qui
         zoneKmBuckets[startZone.id] = totalKm;
     } else if (endZone) {
-        // Solo arrivo in zona: 100% assegnato qui
         zoneKmBuckets[endZone.id] = totalKm;
     }
 
@@ -159,7 +149,6 @@ export const processRunRewards = (
     let totalRunEarned = 0;
     let isReinforced = false;
 
-    // Se non abbiamo zone coinvolte, i KM sono "dispersi" (guadagno base 100% per l'utente)
     if (involvedZoneIds.length === 0) {
         totalRunEarned = totalKm * RUN_RATE_BASE;
     } else {
@@ -170,28 +159,20 @@ export const processRunRewards = (
                 const kmForThisZone = zoneKmBuckets[id];
                 involvedZoneNames.push(zone.name);
 
-                // Calcolo Tasso Reward (Boost se la zona è potenziata)
                 const isBoosted = zone.boostExpiresAt && zone.boostExpiresAt > Date.now();
                 const rate = isBoosted ? RUN_RATE_BOOST : RUN_RATE_BASE;
-                
-                // Ricompensa generata specificamente per la quota KM di questa zona
                 const generatedReward = kmForThisZone * rate;
 
-                // Split Reward: 98% utente, 2% pool interessi della zona
                 totalRunEarned += generatedReward * REWARD_SPLIT_USER;
                 const poolAddition = generatedReward * REWARD_SPLIT_POOL;
 
-                // Aggiornamento statistiche community della zona (divise proporzionalmente)
                 const updatedZone = {
                     ...zone,
-                    recordKm: zone.recordKm + kmForThisZone, 
                     totalKm: (zone.totalKm || 0) + kmForThisZone,
-                    interestPool: zone.interestPool + poolAddition // Anche gli interessi sono divisi
+                    interestPool: (zone.interestPool || 0) + poolAddition
                 };
 
                 zoneUpdates[zoneIdx] = updatedZone;
-
-                // Check se l'utente ha rinforzato il proprio territorio (anche se parzialmente)
                 if (zone.ownerId === user.id) isReinforced = true;
             }
         });

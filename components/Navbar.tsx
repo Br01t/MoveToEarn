@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { ViewState, User } from '../types';
 import { Map, ShoppingBag, Trophy, Wallet, LogOut, Package, User as UserIcon, Settings, Target, Volume2, VolumeX } from 'lucide-react';
@@ -13,9 +14,14 @@ interface NavbarProps {
 
 const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, user, onLogout }) => {
   const { toggleLanguage, language, t } = useLanguage();
-  const { isMuted, toggleMute } = useGlobalUI();
+  const { isMuted, toggleMute, playSound } = useGlobalUI();
 
   if (!user) return null;
+
+  const handleNavClick = (view: ViewState) => {
+    // playSound rimosso: gestito dal listener globale in App.tsx
+    onNavigate(view);
+  };
 
   const NavItem = ({ view, icon: Icon, label, isAdmin = false, mobileLabel, compact = false }: { view: ViewState; icon: any; label: string; isAdmin?: boolean; mobileLabel?: string; compact?: boolean }) => {
     const isActive = currentView === view;
@@ -24,7 +30,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, user, onLogout
 
     return (
       <button
-        onClick={() => onNavigate(view)}
+        onClick={() => handleNavClick(view)}
         className={`flex flex-col items-center justify-center rounded-lg transition-colors ${
           compact ? 'py-2.5 w-full' : 'py-2 px-3 md:flex-row md:space-x-2'
         } ${isActive ? activeClass : inactiveClass}`}
@@ -45,7 +51,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, user, onLogout
           
           {/* LEFT: LOGO */}
           <div className="flex items-center shrink-0 min-w-[150px]">
-            <span className="text-3xl font-black uppercase tracking-widest bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-500 cursor-pointer" onClick={() => onNavigate('DASHBOARD')}>
+            <span className="text-3xl font-black uppercase tracking-widest bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-500 cursor-pointer" onClick={() => handleNavClick('DASHBOARD')}>
               ZoneRun
             </span>
           </div>
@@ -71,7 +77,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, user, onLogout
           {/* RIGHT: UTILS */}
           <div className="flex items-center justify-end shrink-0 min-w-[150px] gap-3">
             <button
-              onClick={toggleLanguage}
+              onClick={() => { toggleLanguage(); }}
               className="p-2 text-xl hover:scale-110 transition-transform bg-gray-800 rounded-lg border border-gray-700 hover:border-gray-500"
               title="Switch Language"
             >
@@ -102,12 +108,12 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, user, onLogout
 
       {/* MOBILE TOP BAR */}
       <nav className="bg-gray-900 border-b border-gray-800 sticky top-0 z-50 h-16 md:hidden flex justify-between items-center px-4 shadow-lg">
-          <span className="text-2xl font-black uppercase tracking-widest bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-500" onClick={() => onNavigate('DASHBOARD')}>
+          <span className="text-2xl font-black uppercase tracking-widest bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-500" onClick={() => handleNavClick('DASHBOARD')}>
             ZoneRun
           </span>
           <div className="flex items-center gap-3">
              <button
-                onClick={toggleLanguage}
+                onClick={() => { toggleLanguage(); }}
                 className="text-2xl hover:scale-110 transition-transform"
               >
                 {language === 'en' ? '🇮🇹' : '🇬🇧'}
@@ -121,7 +127,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, user, onLogout
              </button>
 
              {user.isAdmin && (
-                 <button onClick={() => onNavigate('ADMIN')} className={`text-gray-400 ${currentView === 'ADMIN' ? 'text-red-400' : ''}`}>
+                 <button onClick={() => handleNavClick('ADMIN')} className={`text-gray-400 ${currentView === 'ADMIN' ? 'text-red-400' : ''}`}>
                     <Settings size={24}/>
                  </button>
              )}

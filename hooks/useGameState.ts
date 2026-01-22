@@ -1,37 +1,67 @@
 
 import { useGameData } from './gameState/useGameData';
-import { useGameAuth } from './gameState/useGameAuth';
-import { useGameActions } from './gameState/useGameActions';
-import { useAdminActions } from './gameState/useAdminActions';
+import { useUser } from './gameState/useUser';
+import { useZones } from './gameState/useZones';
+import { useInventory } from './gameState/useInventory';
+import { useTransactions } from './gameState/useTransactions';
+import { useMissions } from './gameState/useMissions';
+import { useAdmin } from './gameState/useAdmin';
+import { useGlobalUI } from '../contexts/GlobalUIContext';
 
 export const useGameState = () => {
   const data = useGameData();
-  const auth = useGameAuth(data.setUser, data.setZones, data.setRecoveryMode);
-  
-  // Update: Passing missing dependencies from useGameData to useGameActions
-  const actions = useGameActions({
+  const { playSound } = useGlobalUI();
+
+  const transactions = useTransactions({
+      user: data.user,
+      setUser: data.setUser,
+      setTransactions: data.setTransactions,
+      govToRunRate: data.govToRunRate
+  });
+
+  const userActions = useUser({
+      user: data.user,
+      setUser: data.setUser,
+      fetchUserProfile: data.fetchUserProfile,
+      logTransaction: transactions.logTransaction,
+      playSound // Passiamo il controllo sonoro
+  });
+
+  const zonesActions = useZones({
       user: data.user,
       zones: data.zones,
       setUser: data.setUser,
       setZones: data.setZones,
-      setTransactions: data.setTransactions,
-      setMarketItems: data.setMarketItems,
-      setAllUsers: data.setAllUsers,
-      fetchUserProfile: data.fetchUserProfile,
-      govToRunRate: data.govToRunRate,
-      uploadFile: data.uploadFile,
-      setBugReports: data.setBugReports,
-      setSuggestions: data.setSuggestions
+      logTransaction: transactions.logTransaction,
+      playSound // Passiamo il controllo sonoro
   });
 
-  const admin = useAdminActions({
+  const inventoryActions = useInventory({
+      user: data.user,
+      zones: data.zones,
+      setZones: data.setZones,
+      setMarketItems: data.setMarketItems,
+      fetchUserProfile: data.fetchUserProfile,
+      logTransaction: transactions.logTransaction,
+      playSound // Passiamo il controllo sonoro
+  });
+
+  const missionsActions = useMissions({
+      user: data.user,
+      uploadFile: data.uploadFile,
+      setBugReports: data.setBugReports,
+      setSuggestions: data.setSuggestions,
+      playSound // Passiamo il controllo sonoro
+  });
+
+  const adminActions = useAdmin({
       fetchGameData: data.fetchGameData,
       user: data.user,
       lastBurnTimestamp: data.lastBurnTimestamp,
       setLastBurnTimestamp: data.setLastBurnTimestamp,
       fetchUserProfile: data.fetchUserProfile,
       setAllUsers: data.setAllUsers,
-      logTransaction: actions.logTransaction,
+      logTransaction: transactions.logTransaction,
       setBugReports: data.setBugReports,
       setSuggestions: data.setSuggestions,
       setZones: data.setZones,
@@ -40,11 +70,12 @@ export const useGameState = () => {
 
   return {
     ...data,
-    ...auth,
-    ...actions,
-    ...admin,
-    refreshData: data.fetchGameData, 
-    // Explicitly exposing uploadFile from data hook
-    uploadFile: data.uploadFile
+    ...userActions,
+    ...zonesActions,
+    ...inventoryActions,
+    ...transactions,
+    ...missionsActions,
+    ...adminActions,
+    refreshData: data.fetchGameData
   };
 };

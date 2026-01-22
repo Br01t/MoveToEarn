@@ -15,7 +15,7 @@ type FeatureKey = 'earn_run' | 'earn_gov' | 'spend' | 'burn';
 
 const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
   const { t, tRich, language, toggleLanguage } = useLanguage();
-  const { isMuted, toggleMute } = useGlobalUI();
+  const { isMuted, toggleMute, playSound } = useGlobalUI();
   const [activeFeature, setActiveFeature] = useState<FeatureKey | null>(null);
 
   const features: { key: FeatureKey; icon: any; color: string }[] = [
@@ -31,6 +31,16 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
           title: t(`landing.modal.${key}_title`),
           body: tRich(`landing.modal.${key}_body`)
       };
+  };
+
+  const handleActionClick = (action: () => void) => {
+    playSound('CLICK');
+    action();
+  };
+
+  const handleNavAction = (view: ViewState) => {
+    playSound('CLICK');
+    onNavigate(view);
   };
 
   const activeContent = getModalContent(activeFeature);
@@ -58,7 +68,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
 
       {/* --- NAVBAR --- */}
       <header className="relative z-50 px-6 py-6 flex justify-between items-center max-w-7xl mx-auto w-full">
-        <div className="flex items-center gap-3 cursor-pointer group" onClick={() => onNavigate('LANDING')}>
+        <div className="flex items-center gap-3 cursor-pointer group" onClick={() => handleNavAction('LANDING')}>
           <div className="relative">
              <div className="absolute inset-0 bg-emerald-500 blur-md opacity-20 group-hover:opacity-40 transition-opacity rounded-lg"></div>
              <div className="glass-panel p-2.5 rounded-lg border-white/10 group-hover:border-emerald-500/50 transition-colors relative z-10">
@@ -80,7 +90,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
             </button>
 
             <button
-                onClick={toggleLanguage}
+                onClick={() => handleActionClick(toggleLanguage)}
                 className="px-4 py-2 text-xs font-bold glass-panel text-gray-400 hover:text-white rounded-lg transition-all border border-white/10 hover:border-white/30"
             >
                 {language === 'en' ? 'IT' : 'EN'}
@@ -120,7 +130,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
             
             {/* Primary: Start */}
             <button
-              onClick={onLogin}
+              onClick={() => handleActionClick(onLogin)}
               data-text={t('landing.start_btn')}
               className="btn-glitch group relative w-full sm:w-auto px-10 py-5 bg-white text-black font-black text-lg rounded-xl transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-3 overflow-hidden shadow-[0_0_40px_rgba(255,255,255,0.3)] hover:shadow-[0_0_60px_rgba(16,185,129,0.6)]"
             >
@@ -132,7 +142,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
 
             {/* Secondary: Game Rules */}
             <button 
-              onClick={() => onNavigate('RULES')}
+              onClick={() => handleNavAction('RULES')}
               className="group w-full sm:w-auto px-8 py-5 glass-panel hover:bg-gray-800 text-white font-bold text-lg rounded-xl transition-all flex items-center justify-center gap-3"
             >
               <Terminal size={18} className="text-gray-500 group-hover:text-emerald-400 transition-colors" />
@@ -141,7 +151,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
 
             {/* Tertiary: Whitepaper */}
             <button 
-              onClick={() => onNavigate('WHITEPAPER')}
+              onClick={() => handleNavAction('WHITEPAPER')}
               className="group w-full sm:w-auto px-8 py-5 glass-panel bg-transparent hover:bg-gray-900 border-white/5 hover:border-white/20 text-gray-400 hover:text-white font-bold text-lg rounded-xl transition-all flex items-center justify-center gap-3"
             >
               <BookOpen size={18} className="text-gray-600 group-hover:text-cyan-400 transition-colors" />
@@ -160,7 +170,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
                   title={t(`landing.card.${feature.key}`)}
                   description={tRich(`landing.card.${feature.key}_desc`)}
                   color={feature.color}
-                  onClick={() => setActiveFeature(feature.key)}
+                  onClick={() => { playSound('OPEN'); setActiveFeature(feature.key); }}
                 />
               </div>
           ))}
@@ -181,7 +191,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
                         'from-red-900 to-gray-900'
                     } relative`}>
                         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-30"></div>
-                        <button onClick={() => setActiveFeature(null)} className="absolute top-4 right-4 bg-black/40 hover:bg-black/60 p-2 rounded-full text-white transition-colors">
+                        <button onClick={() => { playSound('CLICK'); setActiveFeature(null); }} className="absolute top-4 right-4 bg-black/40 hover:bg-black/60 p-2 rounded-full text-white transition-colors">
                             <X size={24} />
                         </button>
                         <div className="absolute bottom-6 left-8 flex items-center gap-4">
@@ -199,7 +209,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
                         
                         <div className="mt-8 pt-6 border-t border-gray-800 flex justify-end">
                             <button 
-                                onClick={() => setActiveFeature(null)}
+                                onClick={() => { playSound('CLICK'); setActiveFeature(null); }}
                                 className="px-6 py-3 bg-white text-black font-bold uppercase tracking-wide rounded-xl hover:bg-gray-200 transition-colors"
                             >
                                 {t('landing.close')}
@@ -215,7 +225,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
   );
 };
 
-// Reusable Feature Card Component
+// Reusable Feature Card Component - Updated to accept ReactNode for description
 const FeatureCard = ({ icon, title, description, color, onClick }: { icon: any, title: string, description: React.ReactNode, color: string, onClick: () => void }) => {
     const borderClass = {
         emerald: 'hover:border-emerald-500/50',
