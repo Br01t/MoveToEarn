@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { User, Zone, InventoryItem, ViewState, Badge, RunAnalysisData } from '../types';
-import { UploadCloud, History, X, Calendar, Waypoints, Circle, Footprints } from 'lucide-react';
+import { UploadCloud, History, X, Calendar, Waypoints, Circle, Footprints, Info } from 'lucide-react';
 import Pagination from './Pagination';
 import { useLanguage } from '../LanguageContext';
 import { getHexPixelPosition } from '../utils/geo';
@@ -38,6 +38,9 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [showGlobalTrajectories, setShowGlobalTrajectories] = useState(false);
   const [showOnlyVisited, setShowOnlyVisited] = useState(false);
   
+  const [activeTooltip, setActiveTooltip] = useState<'EXPLORATION' | 'TRAJECTORIES' | null>(null);
+  const tooltipTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Search & Filter State
   const [searchTerm, setSearchTerm] = useState('');
   const [filterMode, setFilterMode] = useState<'ALL' | 'MINE' | 'ENEMY'>('ALL');
@@ -60,7 +63,6 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   const prevZonesLengthRef = useRef(0);
 
-  // Calcolo zone visitate dall'utente (Exploration Mode Logic)
   const visitedZoneIds = useMemo(() => {
     const ids = new Set<string>();
     user.runHistory.forEach(run => {
@@ -259,13 +261,19 @@ const Dashboard: React.FC<DashboardProps> = ({
       }
   };
 
-  // Logic to handle mutual exclusivity between Exploration and Global Trajectories
+  const showTooltipTemporarily = (type: 'EXPLORATION' | 'TRAJECTORIES') => {
+      if (tooltipTimeoutRef.current) clearTimeout(tooltipTimeoutRef.current);
+      setActiveTooltip(type);
+      tooltipTimeoutRef.current = setTimeout(() => setActiveTooltip(null), 2500);
+  };
+
   const handleToggleExploration = () => {
     const nextValue = !showOnlyVisited;
     setShowOnlyVisited(nextValue);
     if (nextValue) {
       setShowGlobalTrajectories(false);
     }
+    showTooltipTemporarily('EXPLORATION');
   };
 
   const handleToggleTrajectories = () => {
@@ -274,6 +282,7 @@ const Dashboard: React.FC<DashboardProps> = ({
     if (nextValue) {
       setShowOnlyVisited(false);
     }
+    showTooltipTemporarily('TRAJECTORIES');
   };
 
   const ownerDetails = selectedZone ? getOwnerDetails(selectedZone.ownerId) : null;
@@ -303,37 +312,62 @@ const Dashboard: React.FC<DashboardProps> = ({
           onRecenter={handleRecenter}
       />
 
+      {activeTooltip && (
+          <div className="md:hidden fixed top-20 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-xs animate-slide-down pointer-events-none">
+              <div className={`glass-panel-heavy p-4 rounded-2xl border shadow-2xl flex items-start gap-3 ${activeTooltip === 'EXPLORATION' ? 'border-emerald-500/50 text-emerald-400' : 'border-cyan-500/50 text-cyan-400'}`}>
+                  <Info size={20} className="shrink-0 mt-0.5" />
+                  <p className="text-xs font-bold leading-tight">
+                      {t(`dash.tooltip.${activeTooltip.toLowerCase()}`)}
+                  </p>
+              </div>
+          </div>
+      )}
+
       <div className="absolute top-2 right-2 z-20 flex flex-col gap-2 pointer-events-none">
           <div className="flex flex-col gap-2 pointer-events-auto">
-              {/* Tasto Esplorazione - SOPRA */}
-              <button 
-                onClick={handleToggleExploration}
-                className={`relative w-10 h-10 rounded-lg border shadow-lg transition-all duration-300 flex items-center justify-center ${
-                    showOnlyVisited 
-                    ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.3)]' 
-                    : 'bg-gray-800/90 text-gray-500 border-gray-700 hover:text-white'
-                }`}
-                title="Esplorazione"
-              >
-                  <Footprints size={20} className={showOnlyVisited ? 'animate-pulse' : ''} />
-                  <div className={`absolute top-1 right-1 w-1.5 h-1.5 rounded-full border border-black/50 ${showOnlyVisited ? 'bg-emerald-400 shadow-[0_0_5px_#10b981]' : 'bg-gray-600'}`}></div>
-              </button>
-
-              {/* Tasto Traiettorie - SOTTO */}
-              <button 
-                onClick={handleToggleTrajectories}
-                className={`relative w-10 h-10 rounded-lg border shadow-lg transition-all duration-300 flex items-center justify-center ${
-                    showGlobalTrajectories 
-                    ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/50 shadow-[0_0_15px_rgba(6,182,212,0.3)]' 
-                    : 'bg-gray-800/90 text-gray-500 border-gray-700 hover:text-white'
-                }`}
-                title="Toggle Traiettorie"
-              >
-                  <Waypoints size={20} className={showGlobalTrajectories ? 'animate-pulse' : ''} />
-                  <div className={`absolute top-1 right-1 w-1.5 h-1.5 rounded-full border border-black/50 ${showGlobalTrajectories ? 'bg-emerald-400 animate-pulse shadow-[0_0_5px_#10b981]' : 'bg-gray-600'}`}></div>
-              </button>
               
-              {/* Controlli Zoom - Ripristinati sotto i toggle */}
+              <div className="relative group/tooltip">
+                  <button 
+                    onClick={handleToggleExploration}
+                    onMouseEnter={() => setActiveTooltip('EXPLORATION')}
+                    onMouseLeave={() => setActiveTooltip(null)}
+                    className={`relative w-10 h-10 rounded-lg border shadow-lg transition-all duration-300 flex items-center justify-center ${
+                        showOnlyVisited 
+                        ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.3)]' 
+                        : 'bg-gray-800/90 text-gray-500 border-gray-700 hover:text-white'
+                    }`}
+                  >
+                      <Footprints size={20} className={showOnlyVisited ? 'animate-pulse' : ''} />
+                      <div className={`absolute top-1 right-1 w-1.5 h-1.5 rounded-full border border-black/50 ${showOnlyVisited ? 'bg-emerald-400 shadow-[0_0_5px_#10b981]' : 'bg-gray-600'}`}></div>
+                  </button>
+                  
+                  <div className={`hidden md:block absolute right-full mr-3 top-1/2 -translate-y-1/2 px-3 py-2 bg-gray-900/95 backdrop-blur-xl border border-white/10 rounded-lg shadow-2xl transition-opacity pointer-events-none whitespace-nowrap text-[11px] font-bold text-emerald-400 z-50 ${activeTooltip === 'EXPLORATION' ? 'opacity-100' : 'opacity-0'}`}>
+                    {t('dash.tooltip.exploration')}
+                    <div className="absolute -right-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-gray-900 border-r border-t border-white/10 rotate-45"></div>
+                  </div>
+              </div>
+
+              <div className="relative group/tooltip">
+                  <button 
+                    onClick={handleToggleTrajectories}
+                    onMouseEnter={() => setActiveTooltip('TRAJECTORIES')}
+                    onMouseLeave={() => setActiveTooltip(null)}
+                    className={`relative w-10 h-10 rounded-lg border shadow-lg transition-all duration-300 flex items-center justify-center ${
+                        showGlobalTrajectories 
+                        ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/50 shadow-[0_0_15px_rgba(6,182,212,0.3)]' 
+                        : 'bg-gray-800/90 text-gray-500 border-gray-700 hover:text-white'
+                    }`}
+                  >
+                      <Waypoints size={20} className={showGlobalTrajectories ? 'animate-pulse' : ''} />
+                      <div className={`absolute top-1 right-1 w-1.5 h-1.5 rounded-full border border-black/50 ${showGlobalTrajectories ? 'bg-emerald-400 animate-pulse shadow-[0_0_5px_#10b981]' : 'bg-gray-600'}`}></div>
+                  </button>
+
+                  <div className={`hidden md:block absolute right-full mr-3 top-1/2 -translate-y-1/2 px-3 py-2 bg-gray-900/95 backdrop-blur-xl border border-white/10 rounded-lg shadow-2xl transition-opacity pointer-events-none whitespace-nowrap text-[11px] font-bold text-cyan-400 z-50 ${activeTooltip === 'TRAJECTORIES' ? 'opacity-100' : 'opacity-0'}`}>
+                    {t('dash.tooltip.trajectories')}
+                    <div className="absolute -right-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-gray-900 border-r border-t border-white/10 rotate-45"></div>
+                  </div>
+              </div>
+              
               <DashboardControls onZoomIn={zoomIn} onZoomOut={zoomOut} />
           </div>
       </div>

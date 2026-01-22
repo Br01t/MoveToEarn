@@ -55,6 +55,9 @@ export const it = {
     "dash.sync_btn_sub": "Sincronizza",
     "dash.sync_btn_main": "Attività",
     "dash.compass.hint": "Naviga in questa direzione per scoprire settori esistenti o riduci le dimensioni della mappa.",
+    "dash.tooltip.exploration": "Modalità Esplorazione: Evidenzia le zone in cui hai corso e visualizza il tuo percorso personale.",
+    "dash.tooltip.trajectories": "Traiettorie Globali: Visualizza i collegamenti di proprietà tra tutti i settori sulla mappa.",
+    
     "zone.owner_info": "Controllore Zona",
     "zone.you": "(Tu)",
     "zone.status": "Stato",
@@ -328,6 +331,7 @@ export const it = {
     "mission.2.desc": "Raggiungi 50 km totali.",
     "badge.1.name": "Primi 10K",
     "badge.1.desc": "Raggiungi 10 km totali.",
+
     "ach.mission_complete": "Missione Completata",
     "ach.badge_unlocked": "Badge Sbloccato",
     "ach.reward_claimed": "Premio Riscosso",

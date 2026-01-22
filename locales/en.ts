@@ -58,6 +58,8 @@ export const en = {
     "dash.legend.boosted": "Boosted",
     "dash.legend.shielded": "Shielded",
     "dash.compass.hint": "Navigate in this direction to discover existing sectors or reduce map dimensions.",
+    "dash.tooltip.exploration": "Exploration Mode: Highlights zones you've run in and visualizes your personal path.",
+    "dash.tooltip.trajectories": "Global Trajectories: Visualizes ownership links between all sectors on the map.",
 
     "zone.owner_info": "Zone Controller",
     "zone.you": "(You)",
