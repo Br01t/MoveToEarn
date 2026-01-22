@@ -1,7 +1,7 @@
 import React, { forwardRef, useEffect, useState, useRef, useMemo } from 'react';
 import { Zone, User } from '../../types';
 import { getHexPixelPosition } from '../../utils/geo';
-import { Zap, Shield, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Info } from 'lucide-react';
+import { Zap, Shield, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Info, Footprints } from 'lucide-react';
 import { useLanguage } from '../../LanguageContext';
 
 interface HexMapProps {
@@ -14,6 +14,8 @@ interface HexMapProps {
   filterCountry: string;
   searchTerm: string;
   showGlobalTrajectories?: boolean;
+  showOnlyVisited?: boolean;
+  visitedZoneIds?: Set<string>;
   onMouseDown: (e: React.MouseEvent) => void;
   onMouseMove: (e: React.MouseEvent) => void;
   onMouseUp: () => void;
@@ -27,6 +29,7 @@ const HEX_SIZE = 100;
 const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({ 
     zones, user, view, selectedZoneId, onZoneClick, 
     filterMode, filterCountry, searchTerm, showGlobalTrajectories,
+    showOnlyVisited, visitedZoneIds,
     onMouseDown, onMouseMove, onMouseUp, onTouchStart, onTouchMove, onTouchEnd
 }, ref) => {
   const { t } = useLanguage();
@@ -73,6 +76,9 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
     const TRIGGER_THRESHOLD = 5 / view.scale;
 
     zones.forEach(z => {
+        // Se la modalità "Esplorazione" è attiva, la bussola punta solo alle zone visitate
+        if (showOnlyVisited && visitedZoneIds && !visitedZoneIds.has(z.id)) return;
+
         const pos = getHexPixelPosition(z.x, z.y, HEX_SIZE);
         const distN = minWorldY - pos.y; 
         const distS = pos.y - maxWorldY; 
@@ -86,7 +92,7 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
     });
 
     return state;
-  }, [zones, view.x, view.y, view.scale]);
+  }, [zones, view.x, view.y, view.scale, showOnlyVisited, visitedZoneIds]);
 
   const getOwnerAttributes = (id: string | null) => {
     if (!id) return { color: 'rgba(255,255,255,0.1)', speed: 1.0 };
@@ -115,51 +121,75 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
       const connections: { d: string, key: string, color: string, speed: number, isMine: boolean }[] = [];
       const processedPairs = new Set<string>(); 
 
-      const ownersMap: Record<string, Zone[]> = {};
-      zones.forEach(z => {
-          if (!z.ownerId) return;
-          if (!ownersMap[z.ownerId]) ownersMap[z.ownerId] = [];
-          ownersMap[z.ownerId].push(z);
-      });
-
-      Object.entries(ownersMap).forEach(([ownerId, ownerZones]) => {
-          const isMine = ownerId === user.id;
+      if (showOnlyVisited && visitedZoneIds && visitedZoneIds.size > 1) {
+          // MODALITÀ ESPLORAZIONE: Colleghiamo solo le zone visitate dall'utente (percorso fisico)
+          const visitedZones = zones.filter(z => visitedZoneIds.has(z.id));
           
-          if (!showGlobalTrajectories && !isMine) return;
-          if (ownerZones.length < 2) return;
-
-          const attrs = getOwnerAttributes(ownerId);
-
-          ownerZones.forEach(startZone => {
+          visitedZones.forEach(startZone => {
               const startPos = getHexPixelPosition(startZone.x, startZone.y, HEX_SIZE);
-              const neighbors = ownerZones
+              const neighbors = visitedZones
                   .filter(z => z.id !== startZone.id)
                   .map(endZone => {
                       const endPos = getHexPixelPosition(endZone.x, endZone.y, HEX_SIZE);
                       const dist = Math.sqrt(Math.pow(endPos.x - startPos.x, 2) + Math.pow(endPos.y - startPos.y, 2));
                       return { zone: endZone, dist, pos: endPos };
                   })
-                  .sort((a, b) => a.dist - b.dist); 
+                  .sort((a, b) => a.dist - b.dist);
 
-              const closestNeighbors = neighbors.slice(0, 2);
-              closestNeighbors.forEach(target => {
-                  const pairKey = [startZone.id, target.zone.id].sort().join('-');
+              neighbors.slice(0, 2).forEach(target => {
+                  const pairKey = `exp-${[startZone.id, target.zone.id].sort().join('-')}`;
                   if (!processedPairs.has(pairKey)) {
                       processedPairs.add(pairKey);
-                      const endPos = target.pos;
-                      const midX = (startPos.x + endPos.x) / 2;
-                      const midY = (startPos.y + endPos.y) / 2;
+                      const midX = (startPos.x + target.pos.x) / 2;
+                      const midY = (startPos.y + target.pos.y) / 2;
                       const altitude = 100 + (target.dist * 0.2); 
-                      const controlX = midX;
-                      const controlY = midY - altitude;
-                      const pathData = `M ${startPos.x} ${startPos.y} Q ${controlX} ${controlY} ${endPos.x} ${endPos.y}`;
-                      connections.push({ d: pathData, key: pairKey, color: attrs.color, speed: attrs.speed, isMine });
+                      const pathData = `M ${startPos.x} ${startPos.y} Q ${midX} ${midY - altitude} ${target.pos.x} ${target.pos.y}`;
+                      connections.push({ d: pathData, key: pairKey, color: '#10b981', speed: 0.7, isMine: true });
                   }
               });
           });
-      });
+      } else {
+          // MODALITÀ STANDARD: Traiettorie per proprietario
+          const ownersMap: Record<string, Zone[]> = {};
+          zones.forEach(z => {
+              if (!z.ownerId) return;
+              if (!ownersMap[z.ownerId]) ownersMap[z.ownerId] = [];
+              ownersMap[z.ownerId].push(z);
+          });
+
+          Object.entries(ownersMap).forEach(([ownerId, ownerZones]) => {
+              const isMine = ownerId === user.id;
+              if (!showGlobalTrajectories && !isMine) return;
+              if (ownerZones.length < 2) return;
+
+              const attrs = getOwnerAttributes(ownerId);
+              ownerZones.forEach(startZone => {
+                  const startPos = getHexPixelPosition(startZone.x, startZone.y, HEX_SIZE);
+                  const neighbors = ownerZones
+                      .filter(z => z.id !== startZone.id)
+                      .map(endZone => {
+                          const endPos = getHexPixelPosition(endZone.x, endZone.y, HEX_SIZE);
+                          const dist = Math.sqrt(Math.pow(endPos.x - startPos.x, 2) + Math.pow(endPos.y - startPos.y, 2));
+                          return { zone: endZone, dist, pos: endPos };
+                      })
+                      .sort((a, b) => a.dist - b.dist); 
+
+                  neighbors.slice(0, 2).forEach(target => {
+                      const pairKey = [startZone.id, target.zone.id].sort().join('-');
+                      if (!processedPairs.has(pairKey)) {
+                          processedPairs.add(pairKey);
+                          const midX = (startPos.x + target.pos.x) / 2;
+                          const midY = (startPos.y + target.pos.y) / 2;
+                          const altitude = 100 + (target.dist * 0.2); 
+                          const pathData = `M ${startPos.x} ${startPos.y} Q ${midX} ${midY - altitude} ${target.pos.x} ${target.pos.y}`;
+                          connections.push({ d: pathData, key: pairKey, color: attrs.color, speed: attrs.speed, isMine });
+                      }
+                  });
+              });
+          });
+      }
       return connections;
-  }, [zones, user.id, showGlobalTrajectories]);
+  }, [zones, user.id, showGlobalTrajectories, showOnlyVisited, visitedZoneIds]);
 
   const getHexPoints = () => {
     const angles = [30, 90, 150, 210, 270, 330];
@@ -183,14 +213,11 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
           if (parts.length >= 2) {
               const locationPart = parts[0];
               const country = parts[1];
-              
               const locSegments = locationPart.split(', ');
               if (locSegments.length >= 1) {
                   const city = locSegments[locSegments.length - 1];
                   const street = locSegments.slice(0, locSegments.length - 1).join(', ');
-                  
                   const details = street ? `${street} - ${country}` : country;
-                  
                   return { city, details };
               }
           }
@@ -202,24 +229,9 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
 
   const CompassArrow = ({ dir, isActive, icon: Icon, positionClasses, isMobile = false }: { dir: string, isActive: boolean, icon: any, positionClasses: string, isMobile?: boolean }) => {
       const showTooltip = activeTooltip === dir && isActive;
-      
-      const getFlexDir = () => {
-          if (dir === 'north' && !isMobile) return 'flex-col-reverse';
-          return 'flex-col';
-      };
-
-      const getTooltipAlignment = () => {
-          if (isMobile) {
-              return 'left-0 origin-left';
-          }
-          if (dir === 'west') return 'left-2';
-          if (dir === 'east') return 'right-2';
-          return 'left-1/2 -translate-x-1/2';
-      };
-
-      const tooltipTopClass = isMobile 
-        ? 'bottom-11' 
-        : (dir === 'north' ? 'top-14' : 'bottom-14');
+      const getFlexDir = () => (dir === 'north' && !isMobile) ? 'flex-col-reverse' : 'flex-col';
+      const getTooltipAlignment = () => isMobile ? 'left-0 origin-left' : (dir === 'west' ? 'left-2' : (dir === 'east' ? 'right-2' : 'left-1/2 -translate-x-1/2'));
+      const tooltipTopClass = isMobile ? 'bottom-11' : (dir === 'north' ? 'top-14' : 'bottom-14');
 
       return (
           <div 
@@ -238,7 +250,6 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
                       <Info size={10} className="text-emerald-400 mt-0.5 shrink-0"/> {t('dash.compass.hint')}
                   </p>
               </div>
-
               <div className={`compass-plate ${isActive ? 'compass-active' : 'compass-base'}`}>
                   <Icon className="w-4 h-4 md:w-6 md:h-6" strokeWidth={isActive ? 3 : 1.5} />
               </div>
@@ -259,172 +270,53 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
     >
       <style>
         {`
-          @keyframes dash-flight {
-            from { stroke-dashoffset: 24; }
-            to { stroke-dashoffset: 0; }
-          }
-          .flight-path {
-            stroke-dasharray: 12, 12;
-            animation: dash-flight var(--flight-speed, 0.8s) linear infinite;
-            filter: drop-shadow(0 0 8px currentColor) drop-shadow(0 0 2px white);
-            pointer-events: none;
-            stroke-linecap: round;
-          }
-          .inner-glow-path {
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            pointer-events: none;
-          }
-          @keyframes compass-pulse {
-            0%, 100% { transform: scale(1); opacity: 0.8; filter: drop-shadow(0 0 5px #10b981); }
-            50% { transform: scale(1.1); opacity: 1; filter: drop-shadow(0 0 15px #10b981); }
-          }
-          .compass-plate {
-            border-radius: 50%;
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-            cursor: pointer;
-          }
-          @media (min-width: 768px) {
-            .compass-plate {
-                width: 42px;
-                height: 42px;
-            }
-          }
-          .compass-base {
-            background: rgba(30, 41, 59, 0.4);
-            backdrop-filter: blur(4px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            color: rgba(255, 255, 255, 0.2);
-          }
-          .compass-active {
-            background: rgba(13, 18, 30, 0.9);
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(16, 185, 129, 0.6);
-            color: #34d399;
-            animation: compass-pulse 2s infinite ease-in-out;
-          }
-          @keyframes icon-float {
-            0%, 100% { transform: translate(-14px, 49px); }
-            50% { transform: translate(-14px, 45px); }
-          }
-          .animate-icon-float {
-            animation: icon-float 2s ease-in-out infinite;
-          }
+          @keyframes dash-flight { from { stroke-dashoffset: 24; } to { stroke-dashoffset: 0; } }
+          .flight-path { stroke-dasharray: 12, 12; animation: dash-flight var(--flight-speed, 0.8s) linear infinite; filter: drop-shadow(0 0 8px currentColor) drop-shadow(0 0 2px white); pointer-events: none; stroke-linecap: round; }
+          .inner-glow-path { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); pointer-events: none; }
+          @keyframes compass-pulse { 0%, 100% { transform: scale(1); opacity: 0.8; filter: drop-shadow(0 0 5px #10b981); } 50% { transform: scale(1.1); opacity: 1; filter: drop-shadow(0 0 15px #10b981); } }
+          .compass-plate { border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; }
+          @media (min-width: 768px) { .compass-plate { width: 42px; height: 42px; } }
+          .compass-base { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(4px); border: 1px solid rgba(255, 255, 255, 0.05); color: rgba(255, 255, 255, 0.2); }
+          .compass-active { background: rgba(13, 18, 30, 0.9); backdrop-filter: blur(8px); border: 1px solid rgba(16, 185, 129, 0.6); color: #34d399; animation: compass-pulse 2s infinite ease-in-out; }
+          @keyframes icon-float { 0%, 100% { transform: translate(-14px, 49px); } 50% { transform: translate(-14px, 45px); } }
+          .animate-icon-float { animation: icon-float 2s ease-in-out infinite; }
           @keyframes contested-double-pulse { 0%, 100% { stroke-opacity: 1; stroke-width: 2; } 50% { stroke-opacity: 0.5; stroke-width: 8; } }
           @keyframes hex-scanline { 0% { transform: translateY(-100px); } 100% { transform: translateY(100px); } }
           .contested-pulse { animation: contested-double-pulse 1.5s infinite ease-in-out; }
           .scan-laser { animation: hex-scanline 2s infinite linear; }
+          .visited-glow { animation: visited-pulse 2s infinite cubic-bezier(0.4, 0, 0.6, 1); }
+          @keyframes visited-pulse { 0%, 100% { opacity: 0.4; transform: scale(1); } 50% { opacity: 0.7; transform: scale(1.1); } }
         `}
       </style>
 
       <div className="absolute inset-0 pointer-events-none z-40">
-          
           <div className="md:hidden absolute bottom-44 left-6 w-32 h-32 pointer-events-none">
-                <CompassArrow 
-                    dir="north" 
-                    isActive={compassState.north} 
-                    icon={ChevronUp} 
-                    positionClasses="top-0 left-1/2 -translate-x-1/2" 
-                    isMobile={true}
-                />
-                <CompassArrow 
-                    dir="south" 
-                    isActive={compassState.south} 
-                    icon={ChevronDown} 
-                    positionClasses="bottom-0 left-1/2 -translate-x-1/2" 
-                    isMobile={true}
-                />
-                <CompassArrow 
-                    dir="east" 
-                    isActive={compassState.east} 
-                    icon={ChevronRight} 
-                    positionClasses="right-0 top-1/2 -translate-y-1/2" 
-                    isMobile={true}
-                />
-                <CompassArrow 
-                    dir="west" 
-                    isActive={compassState.west} 
-                    icon={ChevronLeft} 
-                    positionClasses="left-0 top-1/2 -translate-y-1/2" 
-                    isMobile={true}
-                />
+                <CompassArrow dir="north" isActive={compassState.north} icon={ChevronUp} positionClasses="top-0 left-1/2 -translate-x-1/2" isMobile={true} />
+                <CompassArrow dir="south" isActive={compassState.south} icon={ChevronDown} positionClasses="bottom-0 left-1/2 -translate-x-1/2" isMobile={true} />
+                <CompassArrow dir="east" isActive={compassState.east} icon={ChevronRight} positionClasses="right-0 top-1/2 -translate-y-1/2" isMobile={true} />
+                <CompassArrow dir="west" isActive={compassState.west} icon={ChevronLeft} positionClasses="left-0 top-1/2 -translate-y-1/2" isMobile={true} />
           </div>
-
           <div className="hidden md:block absolute inset-0 pointer-events-none">
-                <CompassArrow 
-                    dir="north" 
-                    isActive={compassState.north} 
-                    icon={ChevronUp} 
-                    positionClasses="top-4 left-1/2 -translate-x-1/2" 
-                />
-                <CompassArrow 
-                    dir="south" 
-                    isActive={compassState.south} 
-                    icon={ChevronDown} 
-                    positionClasses="bottom-36 left-1/2 -translate-x-1/2" 
-                />
-                <CompassArrow 
-                    dir="east" 
-                    isActive={compassState.east} 
-                    icon={ChevronRight} 
-                    positionClasses="right-2 top-1/2 -translate-y-1/2" 
-                />
-                <CompassArrow 
-                    dir="west" 
-                    isActive={compassState.west} 
-                    icon={ChevronLeft} 
-                    positionClasses="left-2 top-1/2 -translate-y-1/2" 
-                    isMobile={true}
-                />
+                <CompassArrow dir="north" isActive={compassState.north} icon={ChevronUp} positionClasses="top-4 left-1/2 -translate-x-1/2" />
+                <CompassArrow dir="south" isActive={compassState.south} icon={ChevronDown} positionClasses="bottom-36 left-1/2 -translate-x-1/2" />
+                <CompassArrow dir="east" isActive={compassState.east} icon={ChevronRight} positionClasses="right-2 top-1/2 -translate-y-1/2" />
+                <CompassArrow dir="west" isActive={compassState.west} icon={ChevronLeft} positionClasses="left-2 top-1/2 -translate-y-1/2" isMobile={true} />
           </div>
       </div>
 
-      <svg 
-        ref={ref}
-        width="100%" 
-        height="100%"
-        className="touch-none select-none"
-      >
+      <svg ref={ref} width="100%" height="100%" className="touch-none select-none">
         <defs>
-          <pattern id="tech-dots" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
-             <circle cx="2" cy="2" r="1" fill="rgba(255,255,255,0.15)" />
-          </pattern>
-          <filter id="glow-flight-strong" x="-100%" y="-100%" width="300%" height="300%">
-            <feGaussianBlur stdDeviation="6" result="blur" />
-            <feComposite in="SourceGraphic" in2="blur" operator="over" />
-          </filter>
-          <radialGradient id="grad-my-zone" cx="50%" cy="50%" r="70%" fx="50%" fy="50%">
-            <stop offset="40%" style={{ stopColor: '#059669', stopOpacity: 0.8 }} />
-            <stop offset="100%" style={{ stopColor: '#064e3b', stopOpacity: 0.9 }} />
-          </radialGradient>
-          <radialGradient id="grad-enemy-zone" cx="50%" cy="50%" r="70%" fx="50%" fy="50%">
-            <stop offset="40%" style={{ stopColor: '#b91c1c', stopOpacity: 0.8 }} />
-            <stop offset="100%" style={{ stopColor: '#450a0a', stopOpacity: 0.9 }} />
-          </radialGradient>
+          <pattern id="tech-dots" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1" fill="rgba(255,255,255,0.15)" /></pattern>
+          <filter id="glow-flight-strong" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="6" result="blur" /><feComposite in="SourceGraphic" in2="blur" operator="over" /></filter>
+          <radialGradient id="grad-my-zone" cx="50%" cy="50%" r="70%" fx="50%" fy="50%"><stop offset="40%" style={{ stopColor: '#059669', stopOpacity: 0.8 }} /><stop offset="100%" style={{ stopColor: '#064e3b', stopOpacity: 0.9 }} /></radialGradient>
+          <radialGradient id="grad-enemy-zone" cx="50%" cy="50%" r="70%" fx="50%" fy="50%"><stop offset="40%" style={{ stopColor: '#b91c1c', stopOpacity: 0.8 }} /><stop offset="100%" style={{ stopColor: '#450a0a', stopOpacity: 0.9 }} /></radialGradient>
           <clipPath id="hex-clip"><polygon points={getHexPoints()} /></clipPath>
         </defs>
 
         <g transform={`translate(${view.x},${view.y}) scale(${view.scale})`}>
             <g className="connections-layer" style={{ pointerEvents: 'none' }}>
                 {flightPaths.map(conn => (
-                    <path 
-                        key={conn.key} 
-                        d={conn.d} 
-                        stroke={conn.color} 
-                        strokeWidth={conn.isMine ? 10 : 8} 
-                        fill="none" 
-                        className="flight-path" 
-                        strokeLinecap="round" 
-                        opacity={conn.isMine ? 1 : 0.95}
-                        style={{ 
-                            filter: 'url(#glow-flight-strong)',
-                            '--flight-speed': `${conn.speed}s` 
-                        } as any}
-                    />
+                    <path key={conn.key} d={conn.d} stroke={conn.color} strokeWidth={conn.isMine ? 10 : 8} fill="none" className="flight-path" strokeLinecap="round" opacity={conn.isMine ? 1 : 0.95} style={{ filter: 'url(#glow-flight-strong)', '--flight-speed': `${conn.speed}s` } as any} />
                 ))}
             </g>
 
@@ -435,24 +327,19 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
               const shielded = isShieldActive(zone);
               const isJustClaimed = recentlyClaimed.has(zone.id);
               const isMine = zone.ownerId === user.id;
-
-              const isContested = isSelected && !isMine;
+              const isVisited = visitedZoneIds?.has(zone.id);
               
-              const attrs = getOwnerAttributes(zone.ownerId);
+              // Logica Esplorazione: se attiva, attenua le zone NON visitate
+              const dimMode = showOnlyVisited && !isVisited;
 
               let isMatch = true;
               if (filterMode === 'MINE' && zone.ownerId !== user.id) isMatch = false;
               if (filterMode === 'ENEMY' && zone.ownerId === user.id) isMatch = false;
               if (filterCountry !== 'ALL') {
-                  if (filterCountry === 'Other') {
-                      if (zone.name.match(/\-\s[A-Z]{2}$/)) isMatch = false;
-                  } else {
-                      if (!zone.name.endsWith(` - ${filterCountry}`)) isMatch = false;
-                  }
+                  if (filterCountry === 'Other') { if (zone.name.match(/\-\s[A-Z]{2}$/)) isMatch = false; } 
+                  else { if (!zone.name.endsWith(` - ${filterCountry}`)) isMatch = false; }
               }
-              if (searchTerm && !zone.name.toLowerCase().includes(searchTerm.toLowerCase())) {
-                  isMatch = false;
-              }
+              if (searchTerm && !zone.name.toLowerCase().includes(searchTerm.toLowerCase())) isMatch = false;
 
               const { city, details } = getZoneLabelParts(zone.name);
               const displayCity = city.length > 16 ? city.substring(0, 14) + '..' : city;
@@ -464,28 +351,33 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
               else if (shielded) { strokeColor = '#06b6d4'; strokeWidth = 3; }
               else if (isSelected) { strokeColor = '#ffffff'; strokeWidth = 4; }
 
+              // Evidenziatore aggiuntivo per Esplorazione
+              if (showOnlyVisited && isVisited) {
+                  strokeColor = '#10b981';
+                  strokeWidth = 6;
+              }
+
               const isInnerColored = !!(showGlobalTrajectories && zone.ownerId);
+              const attrs = getOwnerAttributes(zone.ownerId);
               const innerStroke = isInnerColored ? attrs.color : "rgba(255,255,255,0.35)";
-              const innerWidth = isInnerColored ? 6 : 3;
-              const innerOpacity = isInnerColored ? 0.95 : 0.35;
 
               return (
                 <g 
                   key={zone.id} 
                   transform={`translate(${pos.x},${pos.y})`}
                   onClick={(e) => { e.stopPropagation(); onZoneClick(zone); }}
-                  className={`transition-all duration-300 group ${isMatch ? 'cursor-pointer' : 'pointer-events-none'}`}
-                  style={{ opacity: isMatch ? (isSelected ? 1 : 0.9) : 0.05, filter: isMatch ? 'none' : 'grayscale(100%)' }}
+                  className="transition-all duration-500"
+                  style={{ opacity: isMatch ? (dimMode ? 0.2 : 1) : 0.05, filter: dimMode ? 'grayscale(100%)' : 'none' }}
                 >
                   {isJustClaimed && isMatch && (
                     <polygon points={getHexPoints()} fill="none" stroke="white" strokeWidth="4" className="animate-ping" style={{ transformOrigin: 'center', animationDuration: '1.5s' }} />
                   )}
 
-                  {isContested && (
-                    <>
-                      <polygon points={getHexPoints()} fill="none" stroke="#fbbf24" strokeWidth="6" className="contested-pulse" opacity="0.4" />
-                      <polygon points={getHexPoints()} fill="none" stroke="#ffffff" strokeWidth="2" className="contested-pulse" style={{ animationDelay: '0.5s' }} />
-                    </>
+                  {showOnlyVisited && isVisited && (
+                      <g className="visited-glow">
+                          <polygon points={getHexPoints()} fill="#10b981" opacity="0.1" transform="scale(1.2)" />
+                          <circle r="12" cx="0" cy="0" fill="#10b981" opacity="0.6" />
+                      </g>
                   )}
 
                   <polygon
@@ -494,66 +386,41 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
                     stroke={strokeColor}
                     strokeWidth={strokeWidth}
                     strokeLinejoin="round"
-                    className="transition-all duration-300 group-hover:brightness-125"
+                    className="transition-all duration-300 hover:brightness-125"
                     style={{ filter: isSelected ? 'drop-shadow(0 0 15px rgba(255,255,255,0.4))' : 'drop-shadow(0 4px 6px rgba(0,0,0,0.5))' }}
                   />
 
                   {isSelected && (
-                    <g clipPath="url(#hex-clip)">
-                      <rect x="-100" y="-100" width="200" height="20" fill="rgba(255,255,255,0.2)" className="scan-laser" style={{ filter: 'blur(8px)' }} />
-                    </g>
+                    <g clipPath="url(#hex-clip)"><rect x="-100" y="-100" width="200" height="20" fill="rgba(255,255,255,0.2)" className="scan-laser" style={{ filter: 'blur(8px)' }} /></g>
                   )}
 
                   <polygon points={getHexPoints()} fill="url(#tech-dots)" opacity="0.3" pointerEvents="none" transform="scale(0.95)" />
-                  
-                  <polygon 
-                    points={getHexPoints()} 
-                    fill="none" 
-                    stroke={innerStroke} 
-                    strokeWidth={innerWidth} 
-                    opacity={innerOpacity}
-                    transform="scale(0.88)" 
-                    className="inner-glow-path group-hover:opacity-100" 
-                    style={{ 
-                        filter: isInnerColored ? `drop-shadow(0 0 12px ${innerStroke})` : 'none'
-                    }}
-                  />
+                  <polygon points={getHexPoints()} fill="none" stroke={innerStroke} strokeWidth={isInnerColored ? 6 : 3} opacity={isInnerColored ? 0.95 : 0.35} transform="scale(0.88)" className="inner-glow-path" style={{ filter: isInnerColored ? `drop-shadow(0 0 12px ${innerStroke})` : 'none' }} />
                   
                   <g pointerEvents="none">
+                      {/* Nomi sempre visibili in Exploration Mode (opacità 0.7 se dim mode) */}
                       <text 
-                          x="0" 
-                          y="-45"
-                          textAnchor="middle" 
-                          fill="white" 
-                          style={{ textShadow: '0 2px 4px rgba(0,0,0,1)', fontFamily: '"Rajdhani", sans-serif' }}
+                        x="0" y="-45" textAnchor="middle" fill="white" 
+                        opacity={dimMode ? 1 : 1}
+                        style={{ textShadow: '0 2px 4px rgba(0,0,0,1)', fontFamily: '"Rajdhani", sans-serif' }}
                       >
-                          <tspan x="0" dy="0" fontSize="18" fontWeight="900" letterSpacing="0.02em">
-                              {displayCity}
-                          </tspan>
-                          
-                          {details && (
-                              <tspan 
-                                  x="0" 
-                                  dy="1.3em"
-                                  fontSize="15" 
-                                  fontWeight="600"
-                                  fill="rgba(255,255,255,0.8)"
-                              >
-                                  {displayDetails}
-                              </tspan>
-                          )}
+                          <tspan x="0" dy="0" fontSize="18" fontWeight="900" letterSpacing="0.02em">{displayCity}</tspan>
+                          {details && <tspan x="0" dy="1.3em" fontSize="15" fontWeight="600" fill="rgba(255,255,255,0.8)">{displayDetails}</tspan>}
                       </text>
 
-                      <g transform="translate(-40, -5)">
-                          <rect x="0" y="0" width="80" height="44" rx="8" fill="rgba(0,0,0,0.7)" stroke={isMine ? 'rgba(52, 211, 153, 0.6)' : 'rgba(239, 68, 68, 0.6)'} strokeWidth="1.5" />
-                          <text x="40" y="16" textAnchor="middle" fill="rgba(200, 210, 255, 0.7)" fontSize="14" fontWeight="bold" style={{ fontFamily: 'monospace' }}>
-                              {(zone.totalKm || 0).toFixed(1)} km
-                          </text>
-                          <text x="40" y="34" textAnchor="middle" fill={isMine ? '#34d399' : '#fca5a5'} fontSize="12" fontWeight="bold" style={{ fontFamily: 'monospace', textShadow: '0 1px 2px black' }}>
-                              {(zone.interestPool || 0).toFixed(2)}
-                          </text>
-                      </g>
-                      {(shielded || boosted) && (
+                      {!dimMode && (
+                        <g transform="translate(-40, -5)">
+                            <rect x="0" y="0" width="80" height="44" rx="8" fill="rgba(0,0,0,0.7)" stroke={isMine ? 'rgba(52, 211, 153, 0.6)' : 'rgba(239, 68, 68, 0.6)'} strokeWidth="1.5" />
+                            <text x="40" y="16" textAnchor="middle" fill="rgba(200, 210, 255, 0.7)" fontSize="14" fontWeight="bold" style={{ fontFamily: 'monospace' }}>{(zone.totalKm || 0).toFixed(1)} km</text>
+                            <text x="40" y="34" textAnchor="middle" fill={isMine ? '#34d399' : '#fca5a5'} fontSize="12" fontWeight="bold" style={{ fontFamily: 'monospace', textShadow: '0 1px 2px black' }}>{(zone.interestPool || 0).toFixed(2)}</text>
+                        </g>
+                      )}
+
+                      {showOnlyVisited && isVisited && (
+                          <g transform="translate(-10, 60)"><Footprints size={20} color="#34d399" /></g>
+                      )}
+
+                      {!dimMode && (shielded || boosted) && (
                           <g className="animate-icon-float">
                               {shielded && !boosted && <Shield size={28} color="#67e8f9" fill="rgba(8, 145, 178, 0.8)" style={{ filter: 'drop-shadow(0 0 5px #06b6d4)' }} />}
                               {boosted && <Zap size={28} color="#fbbf24" fill="rgba(217, 119, 6, 0.8)" style={{ filter: 'drop-shadow(0 0 5px #f59e0b)' }} />}
@@ -569,17 +436,4 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
   );
 });
 
-export default React.memo(HexMapComponent, (prevProps, nextProps) => {
-    return (
-        prevProps.zones === nextProps.zones &&
-        prevProps.view.x === nextProps.view.x &&
-        prevProps.view.y === nextProps.view.y &&
-        prevProps.view.scale === nextProps.view.scale &&
-        prevProps.selectedZoneId === nextProps.selectedZoneId &&
-        prevProps.filterMode === nextProps.filterMode &&
-        prevProps.filterCountry === nextProps.filterCountry &&
-        prevProps.searchTerm === nextProps.searchTerm &&
-        prevProps.showGlobalTrajectories === nextProps.showGlobalTrajectories &&
-        prevProps.user.id === nextProps.user.id
-    );
-});
+export default React.memo(HexMapComponent);

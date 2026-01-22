@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { User, Zone, InventoryItem, ViewState, Badge, RunAnalysisData } from '../types';
-import { UploadCloud, History, X, Calendar, Waypoints, Circle } from 'lucide-react';
+import { UploadCloud, History, X, Calendar, Waypoints, Circle, Footprints } from 'lucide-react';
 import Pagination from './Pagination';
 import { useLanguage } from '../LanguageContext';
 import { getHexPixelPosition } from '../utils/geo';
@@ -36,6 +36,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [selectedZone, setSelectedZone] = useState<Zone | null>(null);
   const [zoneLeaderboard, setZoneLeaderboard] = useState<any[]>([]);
   const [showGlobalTrajectories, setShowGlobalTrajectories] = useState(false);
+  const [showOnlyVisited, setShowOnlyVisited] = useState(false);
   
   // Search & Filter State
   const [searchTerm, setSearchTerm] = useState('');
@@ -44,7 +45,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [historyPage, setHistoryPage] = useState(1);
 
-  // Map View State - Zoom out limit expanded to 0.05
+  // Map View State
   const [view, setView] = useState({ x: window.innerWidth / 2, y: window.innerHeight / 2, scale: 0.8 });
   
   // Dragging & Pinch State
@@ -58,6 +59,17 @@ const Dashboard: React.FC<DashboardProps> = ({
   const svgRef = useRef<SVGSVGElement>(null);
 
   const prevZonesLengthRef = useRef(0);
+
+  // Calcolo zone visitate dall'utente (Exploration Mode Logic)
+  const visitedZoneIds = useMemo(() => {
+    const ids = new Set<string>();
+    user.runHistory.forEach(run => {
+        if (run.involvedZones) {
+            run.involvedZones.forEach(id => ids.add(id));
+        }
+    });
+    return ids;
+  }, [user.runHistory]);
 
   const boostItem: InventoryItem | undefined = user.inventory.find(i => i.type === 'BOOST');
   const defenseItem: InventoryItem | undefined = user.inventory.find(i => i.type === 'DEFENSE');
@@ -247,6 +259,23 @@ const Dashboard: React.FC<DashboardProps> = ({
       }
   };
 
+  // Logic to handle mutual exclusivity between Exploration and Global Trajectories
+  const handleToggleExploration = () => {
+    const nextValue = !showOnlyVisited;
+    setShowOnlyVisited(nextValue);
+    if (nextValue) {
+      setShowGlobalTrajectories(false);
+    }
+  };
+
+  const handleToggleTrajectories = () => {
+    const nextValue = !showGlobalTrajectories;
+    setShowGlobalTrajectories(nextValue);
+    if (nextValue) {
+      setShowOnlyVisited(false);
+    }
+  };
+
   const ownerDetails = selectedZone ? getOwnerDetails(selectedZone.ownerId) : null;
 
   return (
@@ -275,21 +304,37 @@ const Dashboard: React.FC<DashboardProps> = ({
       />
 
       <div className="absolute top-2 right-2 z-20 flex flex-col gap-2 pointer-events-none">
-          <button 
-            onClick={() => setShowGlobalTrajectories(!showGlobalTrajectories)}
-            className={`relative w-10 h-10 rounded-lg border shadow-lg transition-all duration-300 flex items-center justify-center pointer-events-auto ${
-                showGlobalTrajectories 
-                ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50' 
-                : 'bg-gray-800/90 text-gray-500 border-gray-700 hover:text-white'
-            }`}
-            title="Toggle Traiettorie"
-          >
-              <Waypoints size={20} className={showGlobalTrajectories ? 'animate-pulse' : ''} />
-              <div className={`absolute top-1 right-1 w-1.5 h-1.5 rounded-full border border-black/50 ${showGlobalTrajectories ? 'bg-emerald-400 animate-pulse shadow-[0_0_5px_#10b981]' : 'bg-gray-600'}`}></div>
-          </button>
-          
           <div className="flex flex-col gap-2 pointer-events-auto">
-            <DashboardControls onZoomIn={zoomIn} onZoomOut={zoomOut} />
+              {/* Tasto Esplorazione - SOPRA */}
+              <button 
+                onClick={handleToggleExploration}
+                className={`relative w-10 h-10 rounded-lg border shadow-lg transition-all duration-300 flex items-center justify-center ${
+                    showOnlyVisited 
+                    ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.3)]' 
+                    : 'bg-gray-800/90 text-gray-500 border-gray-700 hover:text-white'
+                }`}
+                title="Esplorazione"
+              >
+                  <Footprints size={20} className={showOnlyVisited ? 'animate-pulse' : ''} />
+                  <div className={`absolute top-1 right-1 w-1.5 h-1.5 rounded-full border border-black/50 ${showOnlyVisited ? 'bg-emerald-400 shadow-[0_0_5px_#10b981]' : 'bg-gray-600'}`}></div>
+              </button>
+
+              {/* Tasto Traiettorie - SOTTO */}
+              <button 
+                onClick={handleToggleTrajectories}
+                className={`relative w-10 h-10 rounded-lg border shadow-lg transition-all duration-300 flex items-center justify-center ${
+                    showGlobalTrajectories 
+                    ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/50 shadow-[0_0_15px_rgba(6,182,212,0.3)]' 
+                    : 'bg-gray-800/90 text-gray-500 border-gray-700 hover:text-white'
+                }`}
+                title="Toggle Traiettorie"
+              >
+                  <Waypoints size={20} className={showGlobalTrajectories ? 'animate-pulse' : ''} />
+                  <div className={`absolute top-1 right-1 w-1.5 h-1.5 rounded-full border border-black/50 ${showGlobalTrajectories ? 'bg-emerald-400 animate-pulse shadow-[0_0_5px_#10b981]' : 'bg-gray-600'}`}></div>
+              </button>
+              
+              {/* Controlli Zoom - Ripristinati sotto i toggle */}
+              <DashboardControls onZoomIn={zoomIn} onZoomOut={zoomOut} />
           </div>
       </div>
 
@@ -322,6 +367,8 @@ const Dashboard: React.FC<DashboardProps> = ({
           filterCountry={filterCountry}
           searchTerm={searchTerm}
           showGlobalTrajectories={showGlobalTrajectories}
+          showOnlyVisited={showOnlyVisited}
+          visitedZoneIds={visitedZoneIds}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
