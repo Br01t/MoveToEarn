@@ -344,11 +344,11 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
               const isVisited = visitedZoneIds?.has(zone.id);
               const dimMode = showOnlyVisited && !isVisited;
 
-              // Calcolo logica avvisi (Conquista possibile / Territorio a rischio)
-              const myDist = userDistMap.get(zone.id) || 0;
-              const isTopRunner = myDist >= zone.recordKm && myDist > 0;
-              const readyToConquer = isTopRunner && !isMine; // Opportunità: Posso conquistare
-              const atRisk = isMine && zone.recordKm > myDist; // Pericolo: Ho perso il record, rischio di perdere la zona
+            //   // Calcolo logica avvisi (Conquista possibile / Territorio a rischio)
+            //   const myDist = userDistMap.get(zone.id) || 0;
+            //   const isTopRunner = myDist >= zone.recordKm && myDist > 0;
+            //   const readyToConquer = isTopRunner && !isMine; // Opportunità: Posso conquistare
+            //   const atRisk = isMine && zone.recordKm > myDist; // Pericolo: Ho perso il record, rischio di perdere la zona
 
               let isMatch = true;
               if (filterMode === 'MINE' && zone.ownerId !== user.id) isMatch = false;
@@ -386,13 +386,13 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
                   className="transition-all duration-500"
                   style={{ opacity: isMatch ? (dimMode ? 0.2 : 1) : 0.05, filter: dimMode ? 'grayscale(100%)' : 'none' }}
                 >
-                  {/* Effetti di allerta bordi */}
-                  {atRisk && !isSelected && (
+
+                  {/* {atRisk && !isSelected && (
                       <polygon points={getHexPoints()} fill="none" stroke="#ef4444" className="alert-glow-red" />
                   )}
                   {readyToConquer && !isSelected && (
                       <polygon points={getHexPoints()} fill="none" stroke="#fbbf24" className="opportunity-glow-gold" />
-                  )}
+                  )} */}
 
                   {isJustClaimed && isMatch && (
                     <polygon points={getHexPoints()} fill="none" stroke="white" strokeWidth="4" className="animate-ping" style={{ transformOrigin: 'center', animationDuration: '1.5s' }} />
@@ -440,8 +440,7 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
                         </g>
                       )}
 
-                      {/* Icone di allerta (Risk / Opportunity) */}
-                      {!dimMode && (atRisk || readyToConquer) && (
+                      {/* {!dimMode && (atRisk || readyToConquer) && (
                           <g transform="translate(-10, 60)" className="alert-vibrate">
                               {atRisk && <AlertTriangle size={24} color="#ef4444" fill="#7f1d1d" />}
                               {readyToConquer && <Swords size={24} color="#fbbf24" fill="#78350f" />}
@@ -450,7 +449,7 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
 
                       {showOnlyVisited && isVisited && !(atRisk || readyToConquer) && (
                           <g transform="translate(-10, 60)"><Footprints size={20} color="#34d399" /></g>
-                      )}
+                      )} */}
 
                       {!dimMode && (shielded || boosted) && (
                           <g className="animate-icon-float">
