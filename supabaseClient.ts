@@ -1,23 +1,53 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-// 1. Prova a leggere dal file .env (assicurati che inizino con VITE_)
-const env = (import.meta as any).env;
-const envUrl = env.VITE_SUPABASE_URL;
-const envKey = env.VITE_SUPABASE_ANON_KEY;
+const getEnv = (key: string): string | undefined => {
+  const env = (import.meta as any).env;
+  if (env && env[key]) return env[key];
+  try {
+    if (process.env && process.env[key]) return process.env[key];
+  } catch (e) {}
+  return undefined;
+};
 
-
-// Logica di selezione
-const supabaseUrl = envUrl;
-const supabaseAnonKey = envKey;
+const supabaseUrl = getEnv('VITE_SUPABASE_URL') || getEnv('SUPABASE_URL');
+const supabaseAnonKey = getEnv('VITE_SUPABASE_ANON_KEY') || getEnv('SUPABASE_ANON_KEY') || getEnv('API_KEY');
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn("⚠️ ATTENZIONE: Credenziali Supabase mancanti! Il login non funzionerà.");
-  console.warn("Assicurati di avere un file .env con VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY, oppure incollale in supabaseClient.ts");
+  console.error("❌ ERRORE CRITICO: Credenziali Supabase mancanti!");
 }
 
-// Usa valori placeholder se tutto manca per evitare crash immediati, ma le chiamate falliranno
 export const supabase = createClient(
-  supabaseUrl || 'https://placeholder.supabase.co',
-  supabaseAnonKey || 'placeholder'
+  supabaseUrl || 'https://placeholder-url.supabase.co',
+  supabaseAnonKey || 'placeholder-key'
 );
+
+export const safeRpc = async (fnName: string, params: any, retryCount = 2) => {
+  let attempt = 0;
+  while (attempt <= retryCount) {
+    try {
+      const { data, error } = await supabase.rpc(fnName, params);
+      if (error) {
+        // Se è un errore di rete, riproviamo
+        if (error.message.includes('fetch') || error.code === 'PGRST301') {
+          attempt++;
+          if (attempt <= retryCount) {
+            await new Promise(r => setTimeout(r, 1000 * attempt));
+            continue;
+          }
+        }
+        throw error;
+      }
+      return { data, success: true };
+    } catch (err: any) {
+      if (attempt >= retryCount) {
+        return { 
+          success: false, 
+          error: err.message || 'Errore di connessione al protocollo.' 
+        };
+      }
+      attempt++;
+    }
+  }
+  return { success: false, error: 'Protocollo non raggiungibile.' };
+};

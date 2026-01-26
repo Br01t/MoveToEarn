@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { User, Zone, Item, Mission, Badge, InventoryItem, BugReport, LeaderboardConfig, LevelConfig, Suggestion, Transaction, RunEntry, AchievementLog } from '../../types';
 import { supabase } from '../../supabaseClient';
 
@@ -19,8 +19,12 @@ export const useGameData = () => {
   const [recoveryMode, setRecoveryMode] = useState(false);
   const [lastBurnTimestamp, setLastBurnTimestamp] = useState<number>(0);
   const [totalBurned, setTotalBurned] = useState<number>(0);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncError, setSyncError] = useState<string | null>(null);
 
-  const fetchGameData = async () => {
+  const fetchGameData = useCallback(async () => {
+      setIsSyncing(true);
+      setSyncError(null);
       try {
           const [
               profilesRes, missionsRes, badgesRes, itemsRes, zonesRes,
@@ -39,6 +43,11 @@ export const useGameData = () => {
               supabase.from('transactions').select('amount').eq('description', 'Global Burn Protocol (System)')
           ]);
 
+          // Validazione rapida risposte critiche
+          if (profilesRes.error || zonesRes.error) {
+              throw new Error("Errore durante la sincronizzazione con la griglia.");
+          }
+
           if (profilesRes.data) {
               const usersMap: Record<string, Omit<User, 'inventory'>> = {};
               profilesRes.data.forEach((p: any) => {
@@ -47,9 +56,9 @@ export const useGameData = () => {
                   
                   usersMap[p.id] = {
                       id: p.id,
-                      name: p.name || p.username || 'Runner',
+                      name: p.name || p.name || 'Runner',
                       email: p.email,
-                      avatar: p.avatar_url || p.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${p.id}`,
+                      avatar: p.avatar || p.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${p.id}`,
                       runBalance: p.run_balance || 0,
                       govBalance: p.gov_balance || 0,
                       totalKm: p.total_km || 0,
@@ -181,7 +190,7 @@ export const useGameData = () => {
               })));
           }
 
-         let timestampValue = 0;
+          let timestampValue = 0;
           if (lastBurnRes.data && lastBurnRes.data.timestamp) {
               const dbValue = lastBurnRes.data.timestamp;
               if (typeof dbValue === 'string') {
@@ -200,48 +209,51 @@ export const useGameData = () => {
               setTotalBurned(total);
           }
 
-      } catch (err) {
+      } catch (err: any) {
           console.error("❌ [GAME STATE] Critical error fetching data:", err);
+          setSyncError(err.message || "Connessione instabile.");
+      } finally {
+          setIsSyncing(false);
       }
-  };
+  }, []);
 
-  const fetchUserProfile = async (userId: string) => {
-      const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
-      
-      if (data) {
-          const { data: invRows } = await supabase.from('inventory').select('*').eq('user_id', userId);
-          const { data: itemDefs } = await supabase.from('items').select('*');
+  const fetchUserProfile = useCallback(async (userId: string) => {
+      try {
+          const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
+          if (error) throw error;
+          
+          if (data) {
+              const [invRes, itemDefsRes, txRes, runRes] = await Promise.all([
+                  supabase.from('inventory').select('*').eq('user_id', userId),
+                  supabase.from('items').select('*'),
+                  supabase.from('transactions').select('*').eq('user_id', userId).order('timestamp', { ascending: false }).limit(1000),
+                  supabase.from('runs').select('*').eq('user_id', userId).order('timestamp', { ascending: false })
+              ]);
 
-          let builtInventory: InventoryItem[] = [];
-          if (invRows && itemDefs) {
-              builtInventory = invRows.map((row: any) => {
-                  const def = itemDefs.find((i: any) => i.id === row.item_id);
-                  if (!def) return null;
-                  return { ...def, quantity: row.quantity };
-              }).filter((i): i is InventoryItem => i !== null && i !== undefined);
-          }
+              let builtInventory: InventoryItem[] = [];
+              if (invRes.data && itemDefsRes.data) {
+                  builtInventory = invRes.data.map((row: any) => {
+                      const def = itemDefsRes.data.find((i: any) => i.id === row.item_id);
+                      if (!def) return null;
+                      return { ...def, quantity: row.quantity };
+                  }).filter((i): i is InventoryItem => i !== null);
+              }
 
-          const { data: txRows } = await supabase.from('transactions').select('*').eq('user_id', userId).order('timestamp', { ascending: false }).limit(1000);
-          if (txRows) {
-              setTransactions(txRows.map((t: any) => ({
-                  id: t.id,
-                  userId: t.user_id,
-                  type: t.type,
-                  token: t.token,
-                  amount: t.amount,
-                  description: t.description,
-                  timestamp: typeof t.timestamp === 'string' ? new Date(t.timestamp).getTime() : t.timestamp
-              })));
-          }
+              if (txRes.data) {
+                  setTransactions(txRes.data.map((t: any) => ({
+                      id: t.id,
+                      userId: t.user_id,
+                      type: t.type,
+                      token: t.token,
+                      amount: t.amount,
+                      description: t.description,
+                      timestamp: typeof t.timestamp === 'string' ? new Date(t.timestamp).getTime() : t.timestamp
+                  })));
+              }
 
-          const { data: runRows } = await supabase.from('runs').select('*').eq('user_id', userId).order('timestamp', { ascending: false });
-          let runHistory: RunEntry[] = [];
-          if (runRows) {
-              runHistory = runRows.map((r: any) => {
-                  const invZones = Array.isArray(r.involved_zones) ? r.involved_zones : [];
-                  const breakdown = (typeof r.zone_breakdown === 'object' && r.zone_breakdown !== null) ? r.zone_breakdown : {};
-
-                  return {
+              let runHistory: RunEntry[] = [];
+              if (runRes.data) {
+                  runHistory = runRes.data.map((r: any) => ({
                       id: r.id,
                       location: r.location_name || 'Unknown',
                       km: Number(r.km),
@@ -252,66 +264,63 @@ export const useGameData = () => {
                       elevation: Number(r.elevation || 0),
                       maxSpeed: Number(r.max_speed || 0),
                       avgSpeed: Number(r.avg_speed || 0),
-                      involvedZones: invZones,
-                      zoneBreakdown: breakdown
-                  };
+                      involvedZones: Array.isArray(r.involved_zones) ? r.involved_zones : [],
+                      zoneBreakdown: (typeof r.zone_breakdown === 'object' && r.zone_breakdown !== null) ? r.zone_breakdown : {}
+                  }));
+              }
+
+              const dynamicTotalKm = runHistory.reduce((acc, curr) => acc + (Number(curr.km) || 0), 0);
+
+              setUser({
+                  id: data.id,
+                  name: data.name || data.name || 'Runner',
+                  email: data.email,
+                  avatar: data.avatar || data.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.id}`,
+                  runBalance: data.run_balance || 0,
+                  govBalance: data.gov_balance || 0,
+                  totalKm: dynamicTotalKm, 
+                  isPremium: data.is_premium || false,
+                  isAdmin: data.is_admin || false,
+                  inventory: builtInventory,
+                  runHistory: runHistory, 
+                  missionLog: data.mission_log || [],
+                  badgeLog: data.badge_log || [],
+                  completedMissionIds: (data.mission_log || []).map((l: any) => l.id),
+                  earnedBadgeIds: (data.badge_log || []).map((l: any) => l.id),
+                  favoriteBadgeId: data.favorite_badge_id
               });
           }
-
-          const dynamicTotalKm = runHistory.reduce((acc, curr) => acc + (Number(curr.km) || 0), 0);
-
-          setUser({
-              id: data.id,
-              name: data.username || data.name || 'Runner',
-              email: data.email,
-              avatar: data.avatar_url || data.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.id}`,
-              runBalance: data.run_balance || 0,
-              govBalance: data.gov_balance || 0,
-              totalKm: dynamicTotalKm, 
-              isPremium: data.is_premium || false,
-              isAdmin: data.is_admin || false,
-              inventory: builtInventory,
-              runHistory: runHistory, 
-              missionLog: data.mission_log || [],
-              badgeLog: data.badge_log || [],
-              completedMissionIds: (data.mission_log || []).map((l: any) => l.id),
-              earnedBadgeIds: (data.badge_log || []).map((l: any) => l.id),
-              favoriteBadgeId: data.favorite_badge_id
-          });
+      } catch (err) {
+          console.error("❌ Error fetching profile:", err);
       }
-  };
+  }, []);
 
-  const fetchZoneLeaderboard = async (zoneId: string) => {
+  const fetchZoneLeaderboard = useCallback(async (zoneId: string) => {
       try {
           const { data: rpcData, error: rpcError } = await supabase.rpc('get_zone_leaderboard', { target_zone_id: zoneId });
-          
-          if (rpcError) {
-              console.warn("RPC Error in leaderboard:", rpcError.message);
-              return [];
-          }
+          if (rpcError) return [];
 
           if (rpcData && rpcData.length > 0) {
-              const userIds = rpcData.map((r: any) => { return r.user_id; });
-              const { data: profiles } = await supabase.from('profiles').select('id, name, avatar, avatar_url, username').in('id', userIds);
+              const userIds = rpcData.map((r: any) => r.user_id);
+              const { data: profiles } = await supabase.from('profiles').select('id, name, avatar').in('id', userIds);
               
               return rpcData.map((row: any) => {
                   const profile = profiles?.find(p => p.id === row.user_id);
                   return {
                       id: row.user_id,
-                      name: profile?.username || profile?.name || allUsers[row.user_id]?.name || 'Runner',
-                      avatar: profile?.avatar_url || profile?.avatar || allUsers[row.user_id]?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${row.user_id}`,
+                      name: profile?.name || profile?.name || allUsers[row.user_id]?.name || 'Runner',
+                      avatar: profile?.avatar || profile?.avatar || allUsers[row.user_id]?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${row.user_id}`,
                       km: Number(row.km)
                   };
               });
           }
           return [];
       } catch (err) {
-          console.error("Critical error fetching zone leaderboard:", err);
           return [];
       }
-  };
+  }, [allUsers]);
 
-  const uploadFile = async (file: File, folder: string): Promise<string | null> => {
+  const uploadFile = useCallback(async (file: File, folder: string): Promise<string | null> => {
       try {
           const fileExt = file.name.split('.').pop();
           const fileName = `${crypto.randomUUID()}.${fileExt}`;
@@ -321,15 +330,13 @@ export const useGameData = () => {
           const { data } = supabase.storage.from('images').getPublicUrl(filePath);
           return data.publicUrl;
       } catch (err) {
-          console.error("Error uploading file:", err);
           return null;
       }
-  };
+  }, []);
 
   useEffect(() => {
     const initSession = async () => {
       try {
-        // Fix: Use any cast to resolve property existence errors on getSession, likely due to mismatched Supabase types in the environment.
         const { data: { session }, error } = await (supabase.auth as any).getSession();
         if (session) {
             await fetchUserProfile(session.user.id);
@@ -337,32 +344,30 @@ export const useGameData = () => {
         }
         if (error) throw error;
       } catch (err) {
-        console.warn("Supabase auth issue:", err);
+        console.warn("Auth issue:", err);
       } finally {
         setLoading(false);
       }
     };
     initSession();
     
-    // Fix: Use any cast to resolve property existence errors on onAuthStateChange.
     const { data: { subscription } } = (supabase.auth as any).onAuthStateChange((event: any, session: any) => {
       if (event === 'PASSWORD_RECOVERY') setRecoveryMode(true);
       if (session) {
           fetchUserProfile(session.user.id);
           setTimeout(() => fetchGameData(), 500);
-      }
-      else { 
+      } else { 
           setUser(null); 
           setZones([]); 
           setLoading(false);
       }
     });
     return () => subscription.unsubscribe();
-  }, []);
+  }, [fetchGameData, fetchUserProfile]);
 
   return {
       user, zones, allUsers, missions, badges, marketItems, leaderboards, levels, bugReports, suggestions, transactions,
-      govToRunRate, loading, recoveryMode, lastBurnTimestamp, totalBurned,
+      govToRunRate, loading, recoveryMode, lastBurnTimestamp, totalBurned, isSyncing, syncError,
       setUser, setZones, setAllUsers, setTransactions, setMarketItems, setBugReports, setSuggestions, setGovToRunRate, setRecoveryMode, setLastBurnTimestamp, setTotalBurned,
       fetchGameData, fetchUserProfile, fetchZoneLeaderboard, uploadFile
   };

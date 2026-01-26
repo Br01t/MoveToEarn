@@ -65,7 +65,7 @@ const AppContent: React.FC = () => {
     user, zones, setUser, setZones, loading, transactions, logTransaction, recoveryMode,
     lastBurnTimestamp, totalBurned, govToRunRate, marketItems,
     missions, badges, bugReports, suggestions, leaderboards,
-    levels, allUsers, ...gameState
+    levels, allUsers, isSyncing, syncError, refreshData, ...gameState
   } = useGameState();
 
   const runWorkflow = useRunWorkflow({ 
@@ -79,7 +79,6 @@ const AppContent: React.FC = () => {
       user, zones, missions, badges, setUser, logTransaction 
   });
 
-  // --- HANDLERS RIPRISTINATI ---
   const handleClaimZone = (zoneId: string) => {
       if (user && user.runBalance < CONQUEST_COST) {
           setShowFundsModal({ required: CONQUEST_COST, current: user.runBalance });
@@ -94,7 +93,6 @@ const AppContent: React.FC = () => {
       if (itm) {
           gameState.useItem(itm, zoneId);
       } else {
-          // Se non ha l'item, mostriamo il modale o un toast
           showToast(t('alert.need_item') + " Energy Drink", "ERROR");
       }
   };
@@ -109,23 +107,19 @@ const AppContent: React.FC = () => {
       }
   };
 
-  // --- GLOBAL CLICK SOUND ENGINE ---
   useEffect(() => {
     const handleGlobalInteraction = (e: MouseEvent) => {
         if (user && currentView !== "ADMIN") {
             const target = e.target as HTMLElement;
             const isClickable = target.closest('button, a, select, input, [role="button"]') || 
                                window.getComputedStyle(target).cursor === 'pointer';
-            if (isClickable) {
-                playSound('CLICK');
-            }
+            if (isClickable) playSound('CLICK');
         }
     };
     window.addEventListener('mousedown', handleGlobalInteraction, true);
     return () => window.removeEventListener('mousedown', handleGlobalInteraction, true);
   }, [user, currentView, playSound]);
 
-  // REDIRECT & AUTH PROTECTOR
   useEffect(() => {
     if (!loading) {
         if (user) {
@@ -139,12 +133,10 @@ const AppContent: React.FC = () => {
             }
         } else {
             const publicPages: ViewState[] = ["RULES", "WHITEPAPER", "HOW_TO_PLAY", "PRIVACY", "TERMS", "COMMUNITY"];
-            if (currentView !== "LANDING" && !publicPages.includes(currentView)) {
-                setCurrentView("LANDING");
-            }
+            if (currentView !== "LANDING" && !publicPages.includes(currentView)) setCurrentView("LANDING");
         }
     }
-  }, [user, loading, currentView]);
+  }, [user, loading, currentView, showToast]);
 
   if (loading) return <LoadingFallback />;
 
@@ -180,31 +172,23 @@ const AppContent: React.FC = () => {
 
               {!isLanding && user && (
                 <Suspense fallback={<LoadingFallback />}>
-                  {currentView === "DASHBOARD" && <Dashboard user={user} zones={zones} badges={badges} users={allUsers} onSyncRun={runWorkflow.startSync} onClaim={handleClaimZone} 
-                    onBoost={handleBoostZone} 
-                    onDefend={handleDefendZone} 
-                    onNavigate={setCurrentView} onOpenSync={() => setShowSyncModal(true)} onGetZoneLeaderboard={gameState.fetchZoneLeaderboard} />}
-                  
+                  {currentView === "DASHBOARD" && (
+                    <Dashboard 
+                      user={user} zones={zones} badges={badges} users={allUsers} 
+                      isSyncing={isSyncing} syncError={syncError} onRefreshData={refreshData}
+                      onSyncRun={runWorkflow.startSync} onClaim={handleClaimZone} 
+                      onBoost={handleBoostZone} onDefend={handleDefendZone} 
+                      onNavigate={setCurrentView} onOpenSync={() => setShowSyncModal(true)} onGetZoneLeaderboard={gameState.fetchZoneLeaderboard} 
+                    />
+                  )}
                   {currentView === "MARKETPLACE" && <Marketplace user={user} items={marketItems} onBuy={gameState.buyItem} />}
                   {currentView === "WALLET" && <Wallet user={user} transactions={transactions} onBuyFiat={gameState.buyFiatGov} govToRunRate={govToRunRate} onSwapGovToRun={gameState.swapGovToRun} lastBurnTimestamp={lastBurnTimestamp} totalBurned={totalBurned} />}
                   {currentView === "INVENTORY" && <Inventory user={user} zones={zones} onUseItem={gameState.useItem} />}
                   {currentView === "LEADERBOARD" && <Leaderboard users={allUsers} currentUser={user} zones={zones} badges={badges} leaderboards={leaderboards} levels={levels} />}
-                  
-                  {currentView === "PROFILE" && <Profile user={user} zones={zones} missions={missions} badges={badges} levels={levels} leaderboards={leaderboards} bugReports={bugReports} suggestions={suggestions} allUsers={allUsers} onUpdateUser={gameState.updateUser} onUpgradePremium={gameState.upgradePremium} onClaim={handleClaimZone} 
-                    onBoost={handleBoostZone} 
-                    onDefend={handleDefendZone} 
-                    onGetZoneLeaderboard={gameState.fetchZoneLeaderboard} />}
-                  
+                  {currentView === "PROFILE" && <Profile user={user} zones={zones} missions={missions} badges={badges} levels={levels} leaderboards={leaderboards} bugReports={bugReports} suggestions={suggestions} allUsers={allUsers} onUpdateUser={gameState.updateUser} onUpgradePremium={gameState.upgradePremium} onClaim={handleClaimZone} onBoost={handleBoostZone} onDefend={handleDefendZone} onGetZoneLeaderboard={gameState.fetchZoneLeaderboard} />}
                   {currentView === "MISSIONS" && <Missions user={user} zones={zones} missions={missions} badges={badges} />}
-                  
-                  {currentView === "ADMIN" && user.isAdmin && <Admin marketItems={marketItems} missions={missions} badges={badges} zones={zones} govToRunRate={govToRunRate} bugReports={bugReports} suggestions={suggestions} leaderboards={leaderboards} levels={levels} allUsers={allUsers} lastBurnTimestamp={lastBurnTimestamp} 
-                    onAddItem={gameState.addItem} onUpdateItem={gameState.updateItem} onRemoveItem={gameState.removeItem} 
-                    onAddMission={gameState.addMission} onUpdateMission={gameState.updateMission} onRemoveMission={gameState.removeMission} 
-                    onAddBadge={gameState.addBadge} onUpdateBadge={gameState.updateBadge} onRemoveBadge={gameState.removeBadge} 
-                    onUpdateZone={gameState.updateZone} onDeleteZone={gameState.deleteZone} 
-                    onTriggerBurn={gameState.triggerGlobalBurn} onDistributeRewards={gameState.distributeZoneRewards} 
-                    onResetSeason={() => {}} onUpdateExchangeRate={gameState.setGovToRunRate} onRefreshData={gameState.refreshData} />}
-                  
+
+                  {currentView === "ADMIN" && user.isAdmin && <Admin marketItems={marketItems} missions={missions} badges={badges} zones={zones} govToRunRate={govToRunRate} bugReports={bugReports} suggestions={suggestions} leaderboards={leaderboards} levels={levels} allUsers={allUsers} lastBurnTimestamp={lastBurnTimestamp} onAddItem={gameState.addItem} onUpdateItem={gameState.updateItem} onRemoveItem={gameState.removeItem} onAddMission={gameState.addMission} onUpdateMission={gameState.updateMission} onRemoveMission={gameState.removeMission} onAddBadge={gameState.addBadge} onUpdateBadge={gameState.updateBadge} onRemoveBadge={gameState.removeBadge} onUpdateZone={gameState.updateZone} onDeleteZone={gameState.deleteZone} onTriggerBurn={gameState.triggerGlobalBurn} onDistributeRewards={gameState.distributeZoneRewards} onResetSeason={() => {}} onUpdateExchangeRate={gameState.setGovToRunRate} onRefreshData={refreshData} />}
                   {currentView === "REPORT_BUG" && <ReportBug onReport={gameState.reportBug} />}
                   {currentView === "SUGGESTION" && <SuggestionPage onSubmit={gameState.submitSuggestion} />}
                 </Suspense>
@@ -222,14 +206,7 @@ const AppContent: React.FC = () => {
           </main>
 
           <Suspense fallback={null}>
-            {showLoginModal && (
-                <LoginModal 
-                    onClose={() => { setShowLoginModal(false); gameState.setRecoveryMode(false); }}
-                    onLogin={gameState.login} onRegister={gameState.register}
-                    onResetPassword={gameState.resetPassword} onUpdatePassword={gameState.updatePassword}
-                    initialView={recoveryMode ? 'UPDATE_PASSWORD' : 'LOGIN'}
-                />
-            )}
+            {showLoginModal && <LoginModal onClose={() => { setShowLoginModal(false); gameState.setRecoveryMode(false); }} onLogin={gameState.login} onRegister={gameState.register} onResetPassword={gameState.resetPassword} onUpdatePassword={gameState.updatePassword} initialView={recoveryMode ? 'UPDATE_PASSWORD' : 'LOGIN'} />}
             {showSyncModal && user && <SyncModal onClose={() => setShowSyncModal(false)} onNavigate={setCurrentView} onSyncRun={runWorkflow.startSync} user={user} />}
             {showFundsModal && <InsufficientFundsModal onClose={() => setShowFundsModal(null)} onNavigate={setCurrentView} requiredAmount={showFundsModal.required} currentBalance={showFundsModal.current} />}
             {runWorkflow.zoneCreationQueue.length > 0 && <ZoneDiscoveryModal isOpen={true} data={{ lat: runWorkflow.zoneCreationQueue[0].lat, lng: runWorkflow.zoneCreationQueue[0].lng, defaultName: runWorkflow.zoneCreationQueue[0].defaultName, cost: MINT_COST, reward: MINT_REWARD_GOV }} onConfirm={runWorkflow.confirmZoneCreation} onDiscard={runWorkflow.discardZoneCreation} />}
