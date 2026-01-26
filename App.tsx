@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef, Suspense } from "react";
 import Navbar from "./components/Navbar";
 import LandingPage from "./components/LandingPage";
@@ -146,14 +145,14 @@ const AppContent: React.FC = () => {
 
   return (
     <div className="min-h-screen font-sans flex flex-col relative text-slate-200">
-      <div className="fixed inset-0 z-[-1] bg-gray-950 pointer-events-none overflow-hidden">
+      <div className="fixed inset-0 z-[-1] bg-gray-950 pointer-events-none overflow-hidden" aria-hidden="true">
           <div className="absolute inset-0 bg-gradient-to-b from-gray-900 via-gray-950 to-black"></div>
       </div>
 
       <div className={`relative z-10 flex flex-col min-h-screen ${showNavbar && !isDashboard ? "pb-40 md:pb-0" : ""}`}>
           {showNavbar && <Navbar currentView={currentView} onNavigate={setCurrentView} user={user} onLogout={gameState.logout} />}
 
-          <main className="flex-1 relative flex flex-col">
+          <main className="flex-1 relative flex flex-col" role="main">
             <Suspense fallback={null}>
                 <PWAInstallPrompt 
                     isAuthenticated={!!user} 
@@ -187,7 +186,6 @@ const AppContent: React.FC = () => {
                   {currentView === "LEADERBOARD" && <Leaderboard users={allUsers} currentUser={user} zones={zones} badges={badges} leaderboards={leaderboards} levels={levels} />}
                   {currentView === "PROFILE" && <Profile user={user} zones={zones} missions={missions} badges={badges} levels={levels} leaderboards={leaderboards} bugReports={bugReports} suggestions={suggestions} allUsers={allUsers} onUpdateUser={gameState.updateUser} onUpgradePremium={gameState.upgradePremium} onClaim={handleClaimZone} onBoost={handleBoostZone} onDefend={handleDefendZone} onGetZoneLeaderboard={gameState.fetchZoneLeaderboard} />}
                   {currentView === "MISSIONS" && <Missions user={user} zones={zones} missions={missions} badges={badges} />}
-
                   {currentView === "ADMIN" && user.isAdmin && <Admin marketItems={marketItems} missions={missions} badges={badges} zones={zones} govToRunRate={govToRunRate} bugReports={bugReports} suggestions={suggestions} leaderboards={leaderboards} levels={levels} allUsers={allUsers} lastBurnTimestamp={lastBurnTimestamp} onAddItem={gameState.addItem} onUpdateItem={gameState.updateItem} onRemoveItem={gameState.removeItem} onAddMission={gameState.addMission} onUpdateMission={gameState.updateMission} onRemoveMission={gameState.removeMission} onAddBadge={gameState.addBadge} onUpdateBadge={gameState.updateBadge} onRemoveBadge={gameState.removeBadge} onUpdateZone={gameState.updateZone} onDeleteZone={gameState.deleteZone} onTriggerBurn={gameState.triggerGlobalBurn} onDistributeRewards={gameState.distributeZoneRewards} onResetSeason={() => {}} onUpdateExchangeRate={gameState.setGovToRunRate} onRefreshData={refreshData} />}
                   {currentView === "REPORT_BUG" && <ReportBug onReport={gameState.reportBug} />}
                   {currentView === "SUGGESTION" && <SuggestionPage onSubmit={gameState.submitSuggestion} />}
