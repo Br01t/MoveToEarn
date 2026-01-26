@@ -49,7 +49,7 @@ export const useAdmin = ({ fetchGameData, user, lastBurnTimestamp, setLastBurnTi
   };
 
   const addItem = async (item: Item) => {
-      const { error } = await supabase.from('items').insert({ name: item.name, description: item.description, price_run: item.priceRun, quantity: item.quantity, type: item.type, effect_value: item.effectValue, icon: item.icon });
+      const { error } = await supabase.from('items').insert({id: item.id, name: item.name, description: item.description, price_run: item.priceRun, quantity: item.quantity, type: item.type, effect_value: item.effectValue, icon: item.icon });
       if (!error) await fetchGameData();
       return { error: error?.message, success: !error };
   };
