@@ -48,7 +48,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, user, onLogout
     <>
       {/* MOBILE TOP BAR */}
       <nav 
-        className="md:hidden bg-gray-950/95 backdrop-blur-md border-b border-gray-800 sticky top-0 z-50 h-14 flex items-center justify-between px-4"
+        className="md:hidden bg-gray-950/95 backdrop-blur-md border-b border-gray-800 sticky top-0 z-50 h-16 flex items-center justify-between px-4"
         role="banner"
         aria-label="Mobile Header"
       >
