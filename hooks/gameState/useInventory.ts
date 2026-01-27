@@ -1,4 +1,3 @@
-
 import { supabase } from '../../supabaseClient';
 import { User, Zone, Item, InventoryItem } from '../../types';
 import { ITEM_DURATION_SEC } from '../../constants';
@@ -21,7 +20,7 @@ export const useInventory = ({ user, zones, setZones, setMarketItems, fetchUserP
       if (!user) return;
       
       try {
-          // Allineamento parametri con atomic_buy_item nel DB
+          // 1. Chiamata RPC per gestire l'acquisto lato database (transazionale)
           const { data, error: rpcError } = await supabase.rpc('atomic_buy_item', {
               p_user_id: user.id,
               p_item_id: item.id,
@@ -33,13 +32,36 @@ export const useInventory = ({ user, zones, setZones, setMarketItems, fetchUserP
               throw new Error(rpcError?.message || data?.error || "Transaction failed");
           }
 
+          // 2. Registrazione Transazione USCITA (Costo RUN)
+          // Usiamo il tipo 'ITEM' perché il WalletCharts lo interpreta correttamente come uscita RUN per acquisto
+          await logTransaction(
+              user.id, 
+              'OUT', 
+              'ITEM', 
+              item.priceRun, 
+              `Market Purchase: ${item.name}`
+          );
+
+          // 3. Registrazione Transazione ENTRATA (Se è un pacchetto GOV)
+          if (item.type === 'CURRENCY') {
+              await logTransaction(
+                  user.id, 
+                  'IN', 
+                  'GOV', 
+                  item.effectValue, 
+                  `Market Item: ${item.name}`
+              );
+          }
+
           playSound('SUCCESS');
           showToast(item.name + " purchased!", 'SUCCESS');
           
-          // Re-sync local state
-          await fetchUserProfile(user.id);
-          // Aggiorna stock locale in modo ottimistico
+          // 4. Aggiornamento Stock Ottimistico
           setMarketItems(prev => prev.map(i => i.id === item.id ? { ...i, quantity: Math.max(0, i.quantity - 1) } : i));
+
+          // 5. Re-sync del profilo per aggiornare i saldi reali dal DB
+          await fetchUserProfile(user.id);
+          
       } catch (err: any) {
           console.error("Purchase Error:", err);
           playSound('ERROR');

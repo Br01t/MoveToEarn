@@ -6,6 +6,7 @@ import { useGlobalUI } from '../../contexts/GlobalUIContext';
 interface AdminHookProps {
     fetchGameData: () => Promise<void>;
     user: User | null;
+    setUser: React.Dispatch<React.SetStateAction<User | null>>;
     lastBurnTimestamp: number;
     setLastBurnTimestamp: React.Dispatch<React.SetStateAction<number>>;
     fetchUserProfile: (id: string) => Promise<void>;
@@ -17,7 +18,7 @@ interface AdminHookProps {
     allUsers: Record<string, Omit<User, 'inventory'>>;
 }
 
-export const useAdmin = ({ fetchGameData, user, lastBurnTimestamp, setLastBurnTimestamp, fetchUserProfile, setAllUsers, logTransaction, setBugReports, setSuggestions, setZones, allUsers }: AdminHookProps) => {
+export const useAdmin = ({ fetchGameData, user, setUser, lastBurnTimestamp, setLastBurnTimestamp, fetchUserProfile, setAllUsers, logTransaction, setBugReports, setSuggestions, setZones, allUsers }: AdminHookProps) => {
   const { showToast } = useGlobalUI();
 
   const triggerGlobalBurn = async () => {
@@ -192,17 +193,50 @@ export const useAdmin = ({ fetchGameData, user, lastBurnTimestamp, setLastBurnTi
   };
 
   const adjustUserBalance = async (userId: string, runChange: number, govChange: number) => {
-      const { data: profile } = await supabase.from('profiles').select('run_balance, gov_balance').eq('id', userId).single();
-      if (!profile) return { success: false, error: "User not found" };
-      const newRun = (profile.run_balance || 0) + runChange;
-      const newGov = (profile.gov_balance || 0) + govChange;
-      const { error } = await supabase.from('profiles').update({ run_balance: newRun, gov_balance: newGov }).eq('id', userId);
+      // 1. Recupero utente dallo stato locale per avere i valori correnti
+      const targetUser = allUsers[userId];
+      if (!targetUser) return { success: false, error: "User not found in memory" };
+
+      // 2. Calcolo nuovi saldi (impedendo valori negativi)
+      const newRun = Math.max(0, parseFloat(((targetUser.runBalance || 0) + runChange).toFixed(2)));
+      const newGov = Math.max(0, parseFloat(((targetUser.govBalance || 0) + govChange).toFixed(2)));
+
+      // 3. Update diretto sulla tabella profiles
+      const { error } = await supabase.from('profiles')
+          .update({ 
+              run_balance: newRun, 
+              gov_balance: newGov 
+          })
+          .eq('id', userId);
+
       if (!error) {
-          await logTransaction(userId, runChange >= 0 ? 'IN' : 'OUT', 'RUN', Math.abs(runChange), 'Admin Adjustment');
-          await logTransaction(userId, govChange >= 0 ? 'IN' : 'OUT', 'GOV', Math.abs(govChange), 'Admin Adjustment');
-          setAllUsers(prev => ({ ...prev, [userId]: { ...prev[userId], runBalance: newRun, govBalance: newGov } }));
+          // 4. Log delle transazioni per audit (solo se c'è un cambiamento effettivo)
+          if (Math.abs(runChange) > 0) {
+              await logTransaction(userId, runChange >= 0 ? 'IN' : 'OUT', 'RUN', Math.abs(runChange), 'Admin Balance Adjustment');
+          }
+          if (Math.abs(govChange) > 0) {
+              await logTransaction(userId, govChange >= 0 ? 'IN' : 'OUT', 'GOV', Math.abs(govChange), 'Admin Balance Adjustment');
+          }
+
+          // 5. Aggiornamento stato locale di tutti gli utenti
+          setAllUsers(prev => ({ 
+              ...prev, 
+              [userId]: { 
+                  ...prev[userId], 
+                  runBalance: newRun, 
+                  govBalance: newGov 
+              } 
+          }));
+
+          // 6. Sincronizzazione utente corrente (HUD) se l'admin modifica se stesso
+          if (user && userId === user.id) {
+              setUser(prev => prev ? { ...prev, runBalance: newRun, govBalance: newGov } : null);
+          }
+          
+          return { success: true };
       }
-      return { success: !error, error: error?.message };
+
+      return { success: false, error: error?.message || "Failed to update profile" };
   };
 
   return { triggerGlobalBurn, addItem, updateItem, removeItem, addMission, updateMission, removeMission, addBadge, updateBadge, removeBadge, updateZone, deleteZone, distributeZoneRewards, updateBugStatus, deleteBugReport, deleteSuggestion, addLeaderboard, updateLeaderboard, deleteLeaderboard, resetLeaderboard, addLevel, updateLevel, deleteLevel, revokeUserAchievement, adjustUserBalance };

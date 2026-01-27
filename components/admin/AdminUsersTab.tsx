@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { User, Mission, Badge, LevelConfig } from '../../types';
-import { Search, User as UserIcon, Award, Target, Trash2, CheckCircle, AlertTriangle, Coins, Wallet, RefreshCw } from 'lucide-react';
+import { Search, User as UserIcon, Award, Target, Trash2, CheckCircle, AlertTriangle, Coins, Wallet, RefreshCw, Loader2 } from 'lucide-react';
 import { NotificationToast, ConfirmModal } from './AdminUI';
 
 interface AdminUsersTabProps {
@@ -19,6 +19,7 @@ const AdminUsersTab: React.FC<AdminUsersTabProps> = ({ allUsers, missions, badge
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [balanceAmount, setBalanceAmount] = useState<string>('');
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
   
   // UI Feedback
   const [notification, setNotification] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
@@ -31,7 +32,6 @@ const AdminUsersTab: React.FC<AdminUsersTabProps> = ({ allUsers, missions, badge
 
   const selectedUser = selectedUserId ? allUsers[selectedUserId] : null;
 
-  // Calculate Level for Selected User
   const getUserLevel = (user: Omit<User, 'inventory'>) => {
       if (!levels || levels.length === 0) return 1;
       const currentLevelConfig = levels.slice().reverse().find(l => user.totalKm >= l.minKm) || levels[0];
@@ -39,7 +39,14 @@ const AdminUsersTab: React.FC<AdminUsersTabProps> = ({ allUsers, missions, badge
   };
 
   const handleRevoke = (type: 'MISSION' | 'BADGE', itemId: string, itemName: string) => {
-      if (!selectedUserId || !onRevokeAchievement) return;
+      if (!selectedUserId) {
+          setNotification({ message: "No user selected", type: 'error' });
+          return;
+      }
+      if (!onRevokeAchievement) {
+          setNotification({ message: "Revoke function not linked in App.tsx", type: 'error' });
+          return;
+      }
 
       setConfirmAction({
           title: `Revoke ${type === 'MISSION' ? 'Mission' : 'Badge'}`,
@@ -57,7 +64,18 @@ const AdminUsersTab: React.FC<AdminUsersTabProps> = ({ allUsers, missions, badge
   };
 
   const handleBalanceUpdate = async (type: 'RUN' | 'GOV', operation: 'ADD' | 'REMOVE') => {
-      if (!selectedUserId || !onAdjustBalance || !balanceAmount) return;
+      if (!selectedUserId) {
+          setNotification({ message: "Please select a user first", type: 'error' });
+          return;
+      }
+      if (!onAdjustBalance) {
+          setNotification({ message: "Adjust Balance function not linked in App.tsx", type: 'error' });
+          return;
+      }
+      if (!balanceAmount) {
+          setNotification({ message: "Please enter an amount", type: 'error' });
+          return;
+      }
       
       const amount = parseFloat(balanceAmount);
       if (isNaN(amount) || amount <= 0) {
@@ -68,13 +86,19 @@ const AdminUsersTab: React.FC<AdminUsersTabProps> = ({ allUsers, missions, badge
       const runChange = type === 'RUN' ? (operation === 'ADD' ? amount : -amount) : 0;
       const govChange = type === 'GOV' ? (operation === 'ADD' ? amount : -amount) : 0;
 
-      const result = await onAdjustBalance(selectedUserId, runChange, govChange);
-      
-      if (result.success) {
-          setNotification({ message: `Balance updated successfully`, type: 'success' });
-          setBalanceAmount('');
-      } else {
-          setNotification({ message: result.error || "Update failed", type: 'error' });
+      setIsUpdating(true);
+      try {
+          const result = await onAdjustBalance(selectedUserId, runChange, govChange);
+          if (result.success) {
+              setNotification({ message: `Balance updated successfully`, type: 'success' });
+              setBalanceAmount('');
+          } else {
+              setNotification({ message: result.error || "Update failed", type: 'error' });
+          }
+      } catch (err: any) {
+          setNotification({ message: err.message || "Network Error", type: 'error' });
+      } finally {
+          setIsUpdating(false);
       }
   };
 
@@ -130,14 +154,7 @@ const AdminUsersTab: React.FC<AdminUsersTabProps> = ({ allUsers, missions, badge
             <div className="flex-1 overflow-y-auto p-2 space-y-1">
                 {filteredUsers.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-center text-gray-500 p-4">
-                        {Object.keys(allUsers).length === 0 ? (
-                            <>
-                                <p className="text-xs mb-2">No users found.</p>
-                                <button onClick={handleManualRefresh} className="text-xs text-emerald-400 hover:underline">Try Refreshing</button>
-                            </>
-                        ) : (
-                            <p className="text-xs">No users match filter.</p>
-                        )}
+                        <p className="text-xs">No users match filter.</p>
                     </div>
                 ) : (
                     filteredUsers.map(user => (
@@ -165,7 +182,13 @@ const AdminUsersTab: React.FC<AdminUsersTabProps> = ({ allUsers, missions, badge
                     <p>Select a user to manage achievements.</p>
                 </div>
             ) : (
-                <div className="flex flex-col h-full">
+                <div className="flex flex-col h-full relative">
+                    {isUpdating && (
+                        <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] z-50 flex items-center justify-center">
+                            <Loader2 className="text-emerald-400 animate-spin" size={48} />
+                        </div>
+                    )}
+                    
                     {/* Header Details */}
                     <div className="p-6 border-b border-gray-700 bg-gray-900/30 flex items-center gap-4">
                         <img src={selectedUser.avatar} className="w-16 h-16 rounded-full border-2 border-gray-600 object-cover" alt={selectedUser.name} />
@@ -189,10 +212,8 @@ const AdminUsersTab: React.FC<AdminUsersTabProps> = ({ allUsers, missions, badge
                         </div>
                     </div>
 
-                    {/* Content Tabs */}
+                    {/* Content */}
                     <div className="flex-1 overflow-y-auto p-6 space-y-8">
-                        
-                        {/* Wallet Management Section */}
                         <div>
                             <h4 className="text-lg font-bold text-white mb-4 flex items-center gap-2 border-b border-gray-700 pb-2">
                                 <Wallet size={20} className="text-blue-400" /> 
@@ -222,7 +243,6 @@ const AdminUsersTab: React.FC<AdminUsersTabProps> = ({ allUsers, missions, badge
                             </div>
                         </div>
 
-                        {/* Missions Section */}
                         <div>
                             <h4 className="text-lg font-bold text-white mb-4 flex items-center gap-2 border-b border-gray-700 pb-2">
                                 <Target size={20} className="text-emerald-400" /> 
@@ -255,7 +275,6 @@ const AdminUsersTab: React.FC<AdminUsersTabProps> = ({ allUsers, missions, badge
                             )}
                         </div>
 
-                        {/* Badges Section */}
                         <div>
                             <h4 className="text-lg font-bold text-white mb-4 flex items-center gap-2 border-b border-gray-700 pb-2">
                                 <Award size={20} className="text-yellow-400" /> 
@@ -290,7 +309,6 @@ const AdminUsersTab: React.FC<AdminUsersTabProps> = ({ allUsers, missions, badge
                                 </div>
                             )}
                         </div>
-
                     </div>
                 </div>
             )}

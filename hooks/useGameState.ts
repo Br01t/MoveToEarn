@@ -57,6 +57,7 @@ export const useGameState = () => {
   const adminActions = useAdmin({
       fetchGameData: data.fetchGameData,
       user: data.user,
+      setUser: data.setUser,
       lastBurnTimestamp: data.lastBurnTimestamp,
       setLastBurnTimestamp: data.setLastBurnTimestamp,
       fetchUserProfile: data.fetchUserProfile,
