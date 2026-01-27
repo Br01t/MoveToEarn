@@ -98,7 +98,8 @@ const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuy
             tx.type === 'OUT' && 
             (tx.description.toLowerCase().includes('burn') || 
              tx.description.toLowerCase().includes('tax') || 
-             tx.description.toLowerCase().includes('distruzione'))
+             tx.description.toLowerCase().includes('distruzione') ||
+             tx.description.toLowerCase().includes('protocol'))
         )
         .reduce((sum, tx) => sum + tx.amount, 0);
   }, [transactions, user.id]);
