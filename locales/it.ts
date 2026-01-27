@@ -369,7 +369,7 @@ export const it = {
     "wallet.deflationary": "Modello di Scarsità",
     "wallet.burn_event": "Evento Burn",
     "wallet.next_burn": "Prossimo Burn in:",
-    "wallet.run_burned": "RUN Bruciati",
+    "wallet.run_burned": "RUN personali bruciati",
     "wallet.tax_rate": "Tasso Tassa",
     "wallet.trans_history": "Storico Transazioni",
     "wallet.chart.balance": "Saldo",

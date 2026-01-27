@@ -379,7 +379,7 @@ export const en = {
     "wallet.deflationary": "Scarcity Model",
     "wallet.burn_event": "Burn Event",
     "wallet.next_burn": "Next Burn in:",
-    "wallet.run_burned": "RUN Burned",
+    "wallet.run_burned": "Personal RUN Burned",
     "wallet.tax_rate": "Tax Rate",
     "wallet.trans_history": "Transaction History",
     "wallet.chart.balance": "Balance",
