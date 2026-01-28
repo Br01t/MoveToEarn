@@ -1,5 +1,4 @@
-
-import { supabase } from '../../supabaseClient';
+import { supabase, safeRpc } from '../../supabaseClient';
 import { Item, Mission, Badge, Zone, LeaderboardConfig, LevelConfig, User, AchievementLog, Transaction } from '../../types';
 import { useGlobalUI } from '../../contexts/GlobalUIContext';
 
@@ -24,18 +23,14 @@ export const useAdmin = ({ fetchGameData, user, setUser, lastBurnTimestamp, setL
   const triggerGlobalBurn = async () => {
       if (!user?.isAdmin) return { success: false, message: "Unauthorized" };
       
-      // 1. Snapshot dei saldi attuali per calcolare il delta dopo
       const prevBalances = { ...allUsers };
       
-      // 2. Eseguiamo il burn globale (logica server-side esistente)
-      const { data, error } = await supabase.rpc('trigger_global_burn', { admin_uuid: user.id });
+      const rpcRes = await safeRpc('trigger_global_burn', { admin_uuid: user.id });
       
-      if (error) {
-          showToast("Burn fallito: " + error.message, 'ERROR');
-          return { success: false, message: error.message };
+      if (!rpcRes.success) {
+          showToast("Burn fallito: " + (rpcRes as any).error, 'ERROR');
+          return { success: false, message: (rpcRes as any).error };
       }
-      
-      // 3. Recuperiamo i nuovi profili per vedere l'impatto reale
       const { data: newProfiles } = await supabase.from('profiles').select('id, run_balance');
       
       if (newProfiles) {
@@ -48,7 +43,6 @@ export const useAdmin = ({ fetchGameData, user, setUser, lastBurnTimestamp, setL
               const newBalance = profile.run_balance || 0;
               const burnedAmount = oldBalance - newBalance;
 
-              // Registriamo la transazione solo se l'utente ha effettivamente subito un burn > 0
               if (burnedAmount > 0.0001) {
                   burnTransactions.push({
                       id: crypto.randomUUID(),
@@ -62,7 +56,6 @@ export const useAdmin = ({ fetchGameData, user, setUser, lastBurnTimestamp, setL
               }
           });
 
-          // 4. Inserimento massivo delle transazioni nel DB per la visibilità degli utenti
           if (burnTransactions.length > 0) {
               await supabase.from('transactions').insert(burnTransactions);
           }
@@ -70,18 +63,16 @@ export const useAdmin = ({ fetchGameData, user, setUser, lastBurnTimestamp, setL
       
       setLastBurnTimestamp(Date.now());
       showToast(`Burn completato!`, 'SUCCESS');
-      
-      // Refresh totale dei dati per sincronizzare l'interfaccia dell'admin
       await fetchUserProfile(user.id);
       await fetchGameData();
       
-      return { success: true, totalBurned: data.total_burned };
+      return { success: true, totalBurned: rpcRes.data.total_burned };
   };
 
   const distributeZoneRewards = async () => {
-      const { data, error } = await supabase.rpc('distribute_zone_rewards');
-      if (error) {
-          showToast("Distribuzione fallita: " + error.message, 'ERROR');
+      const rpcRes = await safeRpc('distribute_zone_rewards', {});
+      if (!rpcRes.success) {
+          showToast("Distribuzione fallita: " + (rpcRes as any).error, 'ERROR');
       } else {
           showToast(`Rewards distribuite correttamente.`, 'SUCCESS');
           await fetchGameData();
