@@ -163,6 +163,8 @@ export const it = {
     "inv.inspect": "Ispeziona",
     "inv.owned": "Posseduti",
     "inv.item_desc": "Descrizione Oggetto",
+    "inv.restriction": "Restrizione Uso",
+    "inv.restriction_single": "Solo un effetto attivo alla volta",
     "inv.effect_power": "Potenza Effetto",
     "inv.select_zone": "Seleziona Zona Target",
     "inv.no_zones": "Nessuna Zona Posseduta",

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { InventoryItem, User, Zone } from '../types';
 import { Shield, Zap, Package, MapPin, X, Info, Clock, AlertTriangle, Box } from 'lucide-react';
@@ -157,18 +156,18 @@ const Inventory: React.FC<InventoryProps> = ({ user, zones, onUseItem }) => {
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
-                    <div className="p-3 bg-black/40 rounded-lg border border-white/5 flex items-center gap-3">
+                    {/* <div className="p-3 bg-black/40 rounded-lg border border-white/5 flex items-center gap-3">
                         <div className="bg-emerald-500/20 p-1.5 rounded text-emerald-400"><Info size={16}/></div>
                         <div>
                             <span className="block text-[9px] text-gray-500 uppercase font-bold">{t('inv.effect_power')}</span>
                             <span className="text-white font-mono font-bold text-lg">{selectedItem.effectValue}x</span>
                         </div>
-                    </div>
+                    </div> */}
                     <div className="p-3 bg-black/40 rounded-lg border border-white/5 flex items-center gap-3">
                         <div className="bg-orange-500/20 p-1.5 rounded text-orange-400"><AlertTriangle size={16}/></div>
                         <div>
-                            <span className="block text-[9px] text-gray-500 uppercase font-bold">Restriction</span>
-                            <span className="text-orange-300 text-[10px] leading-tight">Single active effect only</span>
+                            <span className="block text-[9px] text-gray-500 uppercase font-bold">{t('inv.restriction')}</span>
+                            <span className="text-orange-300 text-[10px] leading-tight">{t('inv.restriction_single')}</span>
                         </div>
                     </div>
                 </div>

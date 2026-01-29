@@ -170,6 +170,8 @@ export const en = {
     "inv.inspect": "Inspect",
     "inv.owned": "Owned",
     "inv.item_desc": "Item Description",
+    "inv.restriction": "Usage Restriction",
+    "inv.restriction_single": "Single active effect only",
     "inv.effect_power": "Effect Power",
     "inv.select_zone": "Select Target Zone",
     "inv.no_zones": "No Zones Owned",
