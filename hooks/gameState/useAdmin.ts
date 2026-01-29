@@ -1,6 +1,7 @@
 import { supabase, safeRpc } from '../../supabaseClient';
 import { Item, Mission, Badge, Zone, LeaderboardConfig, LevelConfig, User, AchievementLog, Transaction } from '../../types';
 import { useGlobalUI } from '../../contexts/GlobalUIContext';
+import { logger } from '../../utils/logger';
 
 interface AdminHookProps {
     fetchGameData: () => Promise<void>;
@@ -22,27 +23,21 @@ export const useAdmin = ({ fetchGameData, user, setUser, lastBurnTimestamp, setL
 
   const triggerGlobalBurn = async () => {
       if (!user?.isAdmin) return { success: false, message: "Unauthorized" };
-      
       const prevBalances = { ...allUsers };
-      
       const rpcRes = await safeRpc('trigger_global_burn', { admin_uuid: user.id });
-      
       if (!rpcRes.success) {
           showToast("Burn fallito: " + (rpcRes as any).error, 'ERROR');
           return { success: false, message: (rpcRes as any).error };
       }
       const { data: newProfiles } = await supabase.from('profiles').select('id, run_balance');
-      
       if (newProfiles) {
           const burnTransactions: any[] = [];
           const timestamp = Date.now();
           const description = "Global Burn Protocol (System)";
-
           newProfiles.forEach(profile => {
               const oldBalance = prevBalances[profile.id]?.runBalance || 0;
               const newBalance = profile.run_balance || 0;
               const burnedAmount = oldBalance - newBalance;
-
               if (burnedAmount > 0.0001) {
                   burnTransactions.push({
                       id: crypto.randomUUID(),
@@ -55,18 +50,44 @@ export const useAdmin = ({ fetchGameData, user, setUser, lastBurnTimestamp, setL
                   });
               }
           });
-
           if (burnTransactions.length > 0) {
               await supabase.from('transactions').insert(burnTransactions);
           }
       }
-      
       setLastBurnTimestamp(Date.now());
       showToast(`Burn completato!`, 'SUCCESS');
       await fetchUserProfile(user.id);
       await fetchGameData();
-      
       return { success: true, totalBurned: rpcRes.data.total_burned };
+  };
+
+  const triggerMaintenance = async () => {
+      logger.info("🛠️ [MAINTENANCE] Initiation requested...");
+      if (!user?.isAdmin) {
+          logger.error("❌ [MAINTENANCE] Unauthorized: user is not admin");
+          return;
+      }
+      
+      try {
+          const rpcRes = await safeRpc('recalculate_all_zones', {});
+          
+          if (rpcRes.success) {
+              if (rpcRes.data.success) {
+                  logger.info("✅ [MAINTENANCE] SQL Execution Success:", rpcRes.data);
+                  showToast(`Ricalcolo completato: ${rpcRes.data.zones_updated || 0} zone aggiornate`, 'SUCCESS');
+                  await fetchGameData();
+              } else {
+                  logger.error("❌ [MAINTENANCE] SQL Logic Error:", rpcRes.data.error);
+                  showToast("Errore DB: " + rpcRes.data.error, 'ERROR');
+              }
+          } else {
+              logger.error("❌ [MAINTENANCE] RPC Network/Auth Failed:", (rpcRes as any).error);
+              showToast("Errore di rete: " + (rpcRes as any).error, 'ERROR');
+          }
+      } catch (err: any) {
+          logger.error("❌ [MAINTENANCE] Exception:", err.message);
+          showToast("Errore Critico: " + err.message, 'ERROR');
+      }
   };
 
   const distributeZoneRewards = async () => {
@@ -223,51 +244,20 @@ export const useAdmin = ({ fetchGameData, user, setUser, lastBurnTimestamp, setL
   };
 
   const adjustUserBalance = async (userId: string, runChange: number, govChange: number) => {
-      // 1. Recupero utente dallo stato locale per avere i valori correnti
       const targetUser = allUsers[userId];
       if (!targetUser) return { success: false, error: "User not found in memory" };
-
-      // 2. Calcolo nuovi saldi (impedendo valori negativi)
       const newRun = Math.max(0, parseFloat(((targetUser.runBalance || 0) + runChange).toFixed(2)));
       const newGov = Math.max(0, parseFloat(((targetUser.govBalance || 0) + govChange).toFixed(2)));
-
-      // 3. Update diretto sulla tabella profiles
-      const { error } = await supabase.from('profiles')
-          .update({ 
-              run_balance: newRun, 
-              gov_balance: newGov 
-          })
-          .eq('id', userId);
-
+      const { error } = await supabase.from('profiles').update({ run_balance: newRun, gov_balance: newGov }).eq('id', userId);
       if (!error) {
-          // 4. Log delle transazioni per audit (solo se c'è un cambiamento effettivo)
-          if (Math.abs(runChange) > 0) {
-              await logTransaction(userId, runChange >= 0 ? 'IN' : 'OUT', 'RUN', Math.abs(runChange), 'Admin Balance Adjustment');
-          }
-          if (Math.abs(govChange) > 0) {
-              await logTransaction(userId, govChange >= 0 ? 'IN' : 'OUT', 'GOV', Math.abs(govChange), 'Admin Balance Adjustment');
-          }
-
-          // 5. Aggiornamento stato locale di tutti gli utenti
-          setAllUsers(prev => ({ 
-              ...prev, 
-              [userId]: { 
-                  ...prev[userId], 
-                  runBalance: newRun, 
-                  govBalance: newGov 
-              } 
-          }));
-
-          // 6. Sincronizzazione utente corrente (HUD) se l'admin modifica se stesso
-          if (user && userId === user.id) {
-              setUser(prev => prev ? { ...prev, runBalance: newRun, govBalance: newGov } : null);
-          }
-          
+          if (Math.abs(runChange) > 0) { await logTransaction(userId, runChange >= 0 ? 'IN' : 'OUT', 'RUN', Math.abs(runChange), 'Admin Balance Adjustment'); }
+          if (Math.abs(govChange) > 0) { await logTransaction(userId, govChange >= 0 ? 'IN' : 'OUT', 'GOV', Math.abs(govChange), 'Admin Balance Adjustment'); }
+          setAllUsers(prev => ({ ...prev, [userId]: { ...prev[userId], runBalance: newRun, govBalance: newGov } }));
+          if (user && userId === user.id) { setUser(prev => prev ? { ...prev, runBalance: newRun, govBalance: newGov } : null); }
           return { success: true };
       }
-
       return { success: false, error: error?.message || "Failed to update profile" };
   };
 
-  return { triggerGlobalBurn, addItem, updateItem, removeItem, addMission, updateMission, removeMission, addBadge, updateBadge, removeBadge, updateZone, deleteZone, distributeZoneRewards, updateBugStatus, deleteBugReport, deleteSuggestion, addLeaderboard, updateLeaderboard, deleteLeaderboard, resetLeaderboard, addLevel, updateLevel, deleteLevel, revokeUserAchievement, adjustUserBalance };
+  return { triggerGlobalBurn, triggerMaintenance, addItem, updateItem, removeItem, addMission, updateMission, removeMission, addBadge, updateBadge, removeBadge, updateZone, deleteZone, distributeZoneRewards, updateBugStatus, deleteBugReport, deleteSuggestion, addLeaderboard, updateLeaderboard, deleteLeaderboard, resetLeaderboard, addLevel, updateLevel, deleteLevel, revokeUserAchievement, adjustUserBalance };
 };

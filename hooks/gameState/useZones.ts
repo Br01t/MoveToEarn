@@ -1,4 +1,3 @@
-
 import { safeRpc } from '../../supabaseClient';
 import { User, Zone, RunEntry } from '../../types';
 import { CONQUEST_COST, CONQUEST_REWARD_GOV, MINT_COST, MINT_REWARD_GOV } from '../../constants';
@@ -29,21 +28,15 @@ export const useZones = ({ user, zones, setUser, setZones, playSound }: ZonesHoo
       try {
           logger.info(`Starting atomic DB sync for run ${runData.id}...`);
 
-          const involvedZoneIds = new Set(runData.involvedZones || []);
-          const zonesUpdatePayload = updatedZones
-              .filter(z => involvedZoneIds.has(z.id))
-              .map(z => ({
-                  id: z.id,
-                  interest_pool: z.interestPool,
-                  total_km: z.totalKm,
-                  record_km: z.recordKm,
-                  defense_level: z.defenseLevel
-              }));
-
+          /**
+           * Sincronizzazione con la firma SQL:
+           * p_location_name -> match database
+           * NO p_zones_to_update -> rimosso perché il DB aggiorna le zone tramite il ciclo su p_zone_breakdown
+           */
           const rpcRes = await safeRpc('atomic_record_run', {
               p_user_id: userId,
               p_run_id: runData.id,
-              p_location: runData.location,
+              p_location_name: runData.location, // Match esatto con SQL
               p_km: runData.km,
               p_duration: Math.floor(runData.duration || 0),
               p_run_earned: runData.runEarned,
@@ -53,8 +46,7 @@ export const useZones = ({ user, zones, setUser, setZones, playSound }: ZonesHoo
               p_elevation: Math.floor(runData.elevation || 0),
               p_timestamp: runData.timestamp,
               p_involved_zones: runData.involvedZones || [],
-              p_zone_breakdown: runData.zoneBreakdown || {},
-              p_zones_to_update: zonesUpdatePayload
+              p_zone_breakdown: runData.zoneBreakdown || {}
           });
 
           if (!rpcRes.success) {

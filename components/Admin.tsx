@@ -25,8 +25,7 @@ interface AdminProps {
   leaderboards?: LeaderboardConfig[];
   levels?: LevelConfig[];
   allUsers?: Record<string, Omit<User, 'inventory'>>;
-  lastBurnTimestamp?: number; // <--- POTREBBE ESSERE UNDEFINED
-  // ... (Azioni CRUD e Configurazione) ...
+  lastBurnTimestamp?: number; 
   onAddItem: (item: Item) => Promise<{ error?: string; success?: boolean }>;
   onUpdateItem: (item: Item) => Promise<{ error?: string; success?: boolean }>;
   onRemoveItem: (id: string) => Promise<{ error?: string; success?: boolean }>;
@@ -38,12 +37,11 @@ interface AdminProps {
   onRemoveBadge: (id: string) => Promise<{ error?: string; success?: boolean }>;
   onUpdateZone: (id: string, updates: Partial<Zone>) => Promise<{ error?: string; success?: boolean }>;
   onDeleteZone: (id: string) => Promise<{ error?: string; success?: boolean }>;
-  // Config Actions
   onTriggerBurn: () => Promise<any>;
+  onTriggerMaintenance?: () => Promise<void>;
   onDistributeRewards: () => void;
   onResetSeason: () => void;
   onUpdateExchangeRate: (rate: number) => void;
-  // ... (Azioni Leaderboard & Levels, Bugs & Suggestions, Users) ...
   onAddLeaderboard?: (config: LeaderboardConfig) => Promise<{ error?: string; success?: boolean }>;
   onUpdateLeaderboard?: (config: LeaderboardConfig) => Promise<{ error?: string; success?: boolean }>;
   onDeleteLeaderboard?: (id: string) => Promise<{ error?: string; success?: boolean }>;
@@ -51,11 +49,10 @@ interface AdminProps {
   onAddLevel?: (level: LevelConfig) => Promise<{ error?: string; success?: boolean }>;
   onUpdateLevel?: (level: LevelConfig) => Promise<{ error?: string; success?: boolean }>;
   onDeleteLevel?: (id: string) => Promise<{ error?: string; success?: boolean }>;
-  // Bugs & Suggestions
   onUpdateBugStatus?: (id: string, status: any) => Promise<{ error?: string; success?: boolean }>;
   onDeleteBugReport?: (id: string) => Promise<{ error?: string; success?: boolean }>;
   onDeleteSuggestion?: (id: string) => Promise<{ error?: string; success?: boolean }>;
-  // Users
+  // Fix: Removed duplicate onRevokeUserAchievement property from interface definition
   onRevokeUserAchievement?: (userId: string, type: 'MISSION' | 'BADGE', idToRemove: string) => Promise<{ error?: string; success?: boolean }>;
   onAdjustBalance?: (userId: string, runChange: number, govChange: number) => Promise<{ error?: string; success?: boolean }>;
   onRefreshData?: () => Promise<void>;
@@ -63,12 +60,12 @@ interface AdminProps {
 
 const Admin: React.FC<AdminProps> = ({ 
   marketItems, missions, badges, zones, govToRunRate, bugReports = [], suggestions = [], leaderboards = [], levels = [], allUsers = {}, 
-  lastBurnTimestamp: lastBurnTimestampProp, // Rinominiamo per evitare confusione
+  lastBurnTimestamp: lastBurnTimestampProp, 
   onAddItem, onUpdateItem, onRemoveItem,
   onAddMission, onUpdateMission, onRemoveMission,
   onAddBadge, onUpdateBadge, onRemoveBadge,
   onUpdateZone, onDeleteZone,
-  onTriggerBurn, onDistributeRewards, onUpdateExchangeRate, 
+  onTriggerBurn, onTriggerMaintenance, onDistributeRewards, onUpdateExchangeRate, 
   onAddLeaderboard, onUpdateLeaderboard, onDeleteLeaderboard, onResetLeaderboard,
   onAddLevel, onUpdateLevel, onDeleteLevel,
   onUpdateBugStatus, onDeleteBugReport, onDeleteSuggestion,
@@ -76,21 +73,10 @@ const Admin: React.FC<AdminProps> = ({
 }) => {
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<'ITEMS' | 'ECONOMY' | 'MISSIONS' | 'ZONES' | 'LEADERBOARD' | 'REPORTS' | 'IDEAS' | 'LEVELS' | 'USERS'>('ITEMS');
-  
-  // Assicuriamo che il timestamp sia un numero, usando 0 come default se non definito
   const lastBurnTimestamp = lastBurnTimestampProp || 0;
-  // Trigger data refresh when Admin component mounts.
-  useEffect(() => {
-      // Questo effect si attiva quando lastBurnTimestamp cambia
-      if (lastBurnTimestamp > 0) {
-      }
-  }, [lastBurnTimestamp]); // Dipendenza dalla prop
 
-  // Trigger data refresh when Admin component mounts.
   useEffect(() => {
-      if (onRefreshData) {
-          onRefreshData();
-      }
+      if (onRefreshData) onRefreshData();
   }, []);
 
   return (
@@ -109,92 +95,15 @@ const Admin: React.FC<AdminProps> = ({
         ))}
       </div>
 
-      {activeTab === 'ITEMS' && (
-          <AdminItemsTab 
-              items={marketItems} 
-              onAddItem={onAddItem} 
-              onUpdateItem={onUpdateItem} 
-              onRemoveItem={onRemoveItem} 
-          />
-      )}
-
-      {activeTab === 'MISSIONS' && (
-          <AdminMissionsTab 
-              missions={missions} 
-              badges={badges}
-              onAddMission={onAddMission} 
-              onUpdateMission={onUpdateMission} 
-              onRemoveMission={onRemoveMission}
-              onAddBadge={onAddBadge}
-              onUpdateBadge={onUpdateBadge}
-              onRemoveBadge={onRemoveBadge}
-          />
-      )}
-
-      {activeTab === 'ZONES' && (
-          <AdminZonesTab 
-              zones={zones} 
-              onUpdateZone={onUpdateZone} 
-              onDeleteZone={onDeleteZone} 
-          />
-      )}
-
-      {activeTab === 'USERS' && (
-          <AdminUsersTab
-              allUsers={allUsers}
-              missions={missions}
-              badges={badges}
-              levels={levels}
-              onRevokeAchievement={onRevokeUserAchievement}
-              onAdjustBalance={onAdjustBalance}
-              onRefreshData={onRefreshData}
-          />
-      )}
-
-      {activeTab === 'ECONOMY' && (
-          <AdminEconomyTab 
-              govToRunRate={govToRunRate} 
-              lastBurnTimestamp={lastBurnTimestamp} // Passiamo il valore pulito (0 se non definito)
-              onUpdateExchangeRate={onUpdateExchangeRate} 
-              onTriggerBurn={onTriggerBurn} 
-              onDistributeRewards={onDistributeRewards} 
-          />
-      )}
-
-      {activeTab === 'LEADERBOARD' && (
-          <AdminLeaderboardTab 
-              leaderboards={leaderboards || []}
-              onAddLeaderboard={onAddLeaderboard}
-              onUpdateLeaderboard={onUpdateLeaderboard}
-              onDeleteLeaderboard={onDeleteLeaderboard}
-              onResetLeaderboard={onResetLeaderboard}
-          />
-      )}
-
-      {activeTab === 'LEVELS' && (
-          <AdminLevelsTab
-              levels={levels || []}
-              onAddLevel={onAddLevel}
-              onUpdateLevel={onUpdateLevel}
-              onDeleteLevel={onDeleteLevel}
-          />
-      )}
-
-      {activeTab === 'REPORTS' && (
-          <AdminReportsTab 
-              bugReports={bugReports} 
-              onUpdateStatus={onUpdateBugStatus}
-              onDelete={onDeleteBugReport}
-          />
-      )}
-
-      {activeTab === 'IDEAS' && (
-          <AdminSuggestionsTab 
-              suggestions={suggestions} 
-              onDelete={onDeleteSuggestion}
-          />
-      )}
-
+      {activeTab === 'ITEMS' && <AdminItemsTab items={marketItems} onAddItem={onAddItem} onUpdateItem={onUpdateItem} onRemoveItem={onRemoveItem} />}
+      {activeTab === 'MISSIONS' && <AdminMissionsTab missions={missions} badges={badges} onAddMission={onAddMission} onUpdateMission={onUpdateMission} onRemoveMission={onRemoveMission} onAddBadge={onAddBadge} onUpdateBadge={onUpdateBadge} onRemoveBadge={onRemoveBadge} />}
+      {activeTab === 'ZONES' && <AdminZonesTab zones={zones} onUpdateZone={onUpdateZone} onDeleteZone={onDeleteZone} />}
+      {activeTab === 'USERS' && <AdminUsersTab allUsers={allUsers} missions={missions} badges={badges} levels={levels} onRevokeAchievement={onRevokeUserAchievement} onAdjustBalance={onAdjustBalance} onRefreshData={onRefreshData} />}
+      {activeTab === 'ECONOMY' && <AdminEconomyTab govToRunRate={govToRunRate} lastBurnTimestamp={lastBurnTimestamp} onUpdateExchangeRate={onUpdateExchangeRate} onTriggerBurn={onTriggerBurn} onTriggerMaintenance={onTriggerMaintenance} onDistributeRewards={onDistributeRewards} />}
+      {activeTab === 'LEADERBOARD' && <AdminLeaderboardTab leaderboards={leaderboards || []} onAddLeaderboard={onAddLeaderboard} onUpdateLeaderboard={onUpdateLeaderboard} onDeleteLeaderboard={onDeleteLeaderboard} onResetLeaderboard={onResetLeaderboard} />}
+      {activeTab === 'LEVELS' && <AdminLevelsTab levels={levels || []} onAddLevel={onAddLevel} onUpdateLevel={onUpdateLevel} onDeleteLevel={onDeleteLevel} />}
+      {activeTab === 'REPORTS' && <AdminReportsTab bugReports={bugReports} onUpdateStatus={onUpdateBugStatus} onDelete={onDeleteBugReport} />}
+      {activeTab === 'IDEAS' && <AdminSuggestionsTab suggestions={suggestions} onDelete={onDeleteSuggestion} />}
     </div>
   );
 };
