@@ -212,6 +212,7 @@ const AppContent: React.FC = () => {
                       onDeleteZone={gameState.deleteZone} 
                       onTriggerBurn={gameState.triggerGlobalBurn} 
                       onTriggerMaintenance={gameState.triggerMaintenance} 
+                      onTriggerUserMaintenance={gameState.triggerUserMaintenance}
                       onDistributeRewards={gameState.distributeZoneRewards} 
                       onResetSeason={() => {}} 
                       onUpdateExchangeRate={gameState.setGovToRunRate} 

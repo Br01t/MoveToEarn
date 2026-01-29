@@ -39,6 +39,7 @@ interface AdminProps {
   onDeleteZone: (id: string) => Promise<{ error?: string; success?: boolean }>;
   onTriggerBurn: () => Promise<any>;
   onTriggerMaintenance?: () => Promise<void>;
+  onTriggerUserMaintenance?: () => Promise<void>;
   onDistributeRewards: () => void;
   onResetSeason: () => void;
   onUpdateExchangeRate: (rate: number) => void;
@@ -52,7 +53,6 @@ interface AdminProps {
   onUpdateBugStatus?: (id: string, status: any) => Promise<{ error?: string; success?: boolean }>;
   onDeleteBugReport?: (id: string) => Promise<{ error?: string; success?: boolean }>;
   onDeleteSuggestion?: (id: string) => Promise<{ error?: string; success?: boolean }>;
-  // Fix: Removed duplicate onRevokeUserAchievement property from interface definition
   onRevokeUserAchievement?: (userId: string, type: 'MISSION' | 'BADGE', idToRemove: string) => Promise<{ error?: string; success?: boolean }>;
   onAdjustBalance?: (userId: string, runChange: number, govChange: number) => Promise<{ error?: string; success?: boolean }>;
   onRefreshData?: () => Promise<void>;
@@ -65,7 +65,7 @@ const Admin: React.FC<AdminProps> = ({
   onAddMission, onUpdateMission, onRemoveMission,
   onAddBadge, onUpdateBadge, onRemoveBadge,
   onUpdateZone, onDeleteZone,
-  onTriggerBurn, onTriggerMaintenance, onDistributeRewards, onUpdateExchangeRate, 
+  onTriggerBurn, onTriggerMaintenance, onTriggerUserMaintenance, onDistributeRewards, onUpdateExchangeRate, 
   onAddLeaderboard, onUpdateLeaderboard, onDeleteLeaderboard, onResetLeaderboard,
   onAddLevel, onUpdateLevel, onDeleteLevel,
   onUpdateBugStatus, onDeleteBugReport, onDeleteSuggestion,
@@ -99,7 +99,7 @@ const Admin: React.FC<AdminProps> = ({
       {activeTab === 'MISSIONS' && <AdminMissionsTab missions={missions} badges={badges} onAddMission={onAddMission} onUpdateMission={onUpdateMission} onRemoveMission={onRemoveMission} onAddBadge={onAddBadge} onUpdateBadge={onUpdateBadge} onRemoveBadge={onRemoveBadge} />}
       {activeTab === 'ZONES' && <AdminZonesTab zones={zones} onUpdateZone={onUpdateZone} onDeleteZone={onDeleteZone} />}
       {activeTab === 'USERS' && <AdminUsersTab allUsers={allUsers} missions={missions} badges={badges} levels={levels} onRevokeAchievement={onRevokeUserAchievement} onAdjustBalance={onAdjustBalance} onRefreshData={onRefreshData} />}
-      {activeTab === 'ECONOMY' && <AdminEconomyTab govToRunRate={govToRunRate} lastBurnTimestamp={lastBurnTimestamp} onUpdateExchangeRate={onUpdateExchangeRate} onTriggerBurn={onTriggerBurn} onTriggerMaintenance={onTriggerMaintenance} onDistributeRewards={onDistributeRewards} />}
+      {activeTab === 'ECONOMY' && <AdminEconomyTab govToRunRate={govToRunRate} lastBurnTimestamp={lastBurnTimestamp} onUpdateExchangeRate={onUpdateExchangeRate} onTriggerBurn={onTriggerBurn} onTriggerMaintenance={onTriggerMaintenance} onTriggerUserMaintenance={onTriggerUserMaintenance} onDistributeRewards={onDistributeRewards} />}
       {activeTab === 'LEADERBOARD' && <AdminLeaderboardTab leaderboards={leaderboards || []} onAddLeaderboard={onAddLeaderboard} onUpdateLeaderboard={onUpdateLeaderboard} onDeleteLeaderboard={onDeleteLeaderboard} onResetLeaderboard={onResetLeaderboard} />}
       {activeTab === 'LEVELS' && <AdminLevelsTab levels={levels || []} onAddLevel={onAddLevel} onUpdateLevel={onUpdateLevel} onDeleteLevel={onDeleteLevel} />}
       {activeTab === 'REPORTS' && <AdminReportsTab bugReports={bugReports} onUpdateStatus={onUpdateBugStatus} onDelete={onDeleteBugReport} />}

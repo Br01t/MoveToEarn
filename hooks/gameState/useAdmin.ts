@@ -63,31 +63,35 @@ export const useAdmin = ({ fetchGameData, user, setUser, lastBurnTimestamp, setL
 
   const triggerMaintenance = async () => {
       logger.info("🛠️ [MAINTENANCE] Initiation requested...");
-      if (!user?.isAdmin) {
-          logger.error("❌ [MAINTENANCE] Unauthorized: user is not admin");
-          return;
-      }
-      
+      if (!user?.isAdmin) return;
       try {
           const rpcRes = await safeRpc('recalculate_all_zones', {});
-          
-          if (rpcRes.success) {
-              if (rpcRes.data.success) {
-                  logger.info("✅ [MAINTENANCE] SQL Execution Success:", rpcRes.data);
-                  showToast(`Ricalcolo completato: ${rpcRes.data.zones_updated || 0} zone aggiornate`, 'SUCCESS');
-                  await fetchGameData();
-              } else {
-                  logger.error("❌ [MAINTENANCE] SQL Logic Error:", rpcRes.data.error);
-                  showToast("Errore DB: " + rpcRes.data.error, 'ERROR');
-              }
+          if (rpcRes.success && rpcRes.data.success) {
+              showToast(`Ricalcolo zone completato: ${rpcRes.data.zones_updated || 0} aggiornate`, 'SUCCESS');
+              await fetchGameData();
           } else {
-              logger.error("❌ [MAINTENANCE] RPC Network/Auth Failed:", (rpcRes as any).error);
-              showToast("Errore di rete: " + (rpcRes as any).error, 'ERROR');
+              showToast("Errore: " + (rpcRes as any).error, 'ERROR');
           }
       } catch (err: any) {
-          logger.error("❌ [MAINTENANCE] Exception:", err.message);
           showToast("Errore Critico: " + err.message, 'ERROR');
       }
+  };
+
+  const triggerUserMaintenance = async () => {
+    logger.info("🛠️ [USER MAINTENANCE] Initiation requested...");
+    if (!user?.isAdmin) return;
+    try {
+        const rpcRes = await safeRpc('recalculate_all_users_km', {});
+        if (rpcRes.success && rpcRes.data.success) {
+            showToast(`Ricalcolo KM Utenti completato: ${rpcRes.data.users_updated || 0} aggiornati`, 'SUCCESS');
+            await fetchGameData();
+            if (user) await fetchUserProfile(user.id);
+        } else {
+            showToast("Errore: " + (rpcRes as any).error, 'ERROR');
+        }
+    } catch (err: any) {
+        showToast("Errore Critico: " + err.message, 'ERROR');
+    }
   };
 
   const distributeZoneRewards = async () => {
@@ -259,5 +263,5 @@ export const useAdmin = ({ fetchGameData, user, setUser, lastBurnTimestamp, setL
       return { success: false, error: error?.message || "Failed to update profile" };
   };
 
-  return { triggerGlobalBurn, triggerMaintenance, addItem, updateItem, removeItem, addMission, updateMission, removeMission, addBadge, updateBadge, removeBadge, updateZone, deleteZone, distributeZoneRewards, updateBugStatus, deleteBugReport, deleteSuggestion, addLeaderboard, updateLeaderboard, deleteLeaderboard, resetLeaderboard, addLevel, updateLevel, deleteLevel, revokeUserAchievement, adjustUserBalance };
+  return { triggerGlobalBurn, triggerMaintenance, triggerUserMaintenance, addItem, updateItem, removeItem, addMission, updateMission, removeMission, addBadge, updateBadge, removeBadge, updateZone, deleteZone, distributeZoneRewards, updateBugStatus, deleteBugReport, deleteSuggestion, addLeaderboard, updateLeaderboard, deleteLeaderboard, resetLeaderboard, addLevel, updateLevel, deleteLevel, revokeUserAchievement, adjustUserBalance };
 };

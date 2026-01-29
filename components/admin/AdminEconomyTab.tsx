@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { RefreshCw, Flame, Calendar, CheckCircle, AlertTriangle, Clock, Database } from 'lucide-react'; 
+import { RefreshCw, Flame, Calendar, CheckCircle, AlertTriangle, Clock, Database, Users } from 'lucide-react'; 
 import { NotificationToast, ConfirmModal } from './AdminUI';
 
 interface AdminEconomyTabProps {
@@ -8,15 +8,17 @@ interface AdminEconomyTabProps {
   onUpdateExchangeRate: (rate: number) => void;
   onTriggerBurn: () => Promise<any>;
   onTriggerMaintenance?: () => Promise<void>;
+  onTriggerUserMaintenance?: () => Promise<void>;
   onDistributeRewards: () => void;
 }
 
 const AdminEconomyTab: React.FC<AdminEconomyTabProps> = ({ 
-    govToRunRate, lastBurnTimestamp, onUpdateExchangeRate, onTriggerBurn, onTriggerMaintenance, onDistributeRewards 
+    govToRunRate, lastBurnTimestamp, onUpdateExchangeRate, onTriggerBurn, onTriggerMaintenance, onTriggerUserMaintenance, onDistributeRewards 
 }) => {
   const [exchangeRate, setExchangeRate] = useState(govToRunRate.toString());
   const [showBurnModal, setShowBurnModal] = useState(false);
   const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
+  const [showUserMaintenanceModal, setShowUserMaintenanceModal] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [notification, setNotification] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
 
@@ -77,8 +79,26 @@ const AdminEconomyTab: React.FC<AdminEconomyTabProps> = ({
       if (!onTriggerMaintenance) return;
       setIsProcessing(true);
       setShowMaintenanceModal(false);
-      await onTriggerMaintenance();
-      setIsProcessing(false);
+      try {
+          await onTriggerMaintenance();
+      } catch (e) {
+          console.error("Maintenance execution error:", e);
+      } finally {
+          setIsProcessing(false);
+      }
+  };
+
+  const executeUserMaintenance = async () => {
+    if (!onTriggerUserMaintenance) return;
+    setIsProcessing(true);
+    setShowUserMaintenanceModal(false);
+    try {
+        await onTriggerUserMaintenance();
+    } catch (e) {
+        console.error("User maintenance execution error:", e);
+    } finally {
+        setIsProcessing(false);
+    }
   };
   
   return (
@@ -100,23 +120,42 @@ const AdminEconomyTab: React.FC<AdminEconomyTabProps> = ({
         </div>
 
         {/* SYSTEM MAINTENANCE */}
-        <div className="bg-gray-800 p-6 rounded-xl border border-blue-500/30 relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none"><Database size={120} className="text-blue-400" /></div>
-            <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2 relative z-10">
-                <Database className="text-blue-400" /> System Integrity & Maintenance
-            </h3>
-            <p className="text-sm text-gray-400 mb-6 max-w-2xl relative z-10">
-                This tool scans all historical run records to reconstruct the ground truth for every sector. 
-                Use this to fix potential "counter drift" or after a logic update. <strong>Recalculates record_km.</strong>
-            </p>
-            <button 
-                onClick={() => setShowMaintenanceModal(true)}
-                disabled={isProcessing}
-                className="bg-blue-600 hover:bg-blue-500 disabled:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg transition-all flex items-center gap-2 shadow-lg relative z-10"
-            >
-                {isProcessing ? <RefreshCw className="animate-spin" size={18} /> : <Database size={18} />}
-                Run Full Maintenance
-            </button>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-gray-800 p-6 rounded-xl border border-blue-500/30 relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none"><Database size={80} className="text-blue-400" /></div>
+                <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2 relative z-10">
+                    <Database className="text-blue-400" /> Sectors Maintenance
+                </h3>
+                <p className="text-xs text-gray-400 mb-4 max-w-2xl relative z-10">
+                    Scans all historical runs to reconstruct ground truth for <strong>record_km</strong> in every sector.
+                </p>
+                <button 
+                    onClick={() => setShowMaintenanceModal(true)}
+                    disabled={isProcessing}
+                    className="bg-blue-600 hover:bg-blue-500 disabled:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-all flex items-center gap-2 shadow-lg relative z-10 text-sm"
+                >
+                    {isProcessing ? <RefreshCw className="animate-spin" size={16} /> : <Database size={16} />}
+                    {isProcessing ? 'Processing...' : 'Recalculate Zones'}
+                </button>
+            </div>
+
+            <div className="bg-gray-800 p-6 rounded-xl border border-emerald-500/30 relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none"><Users size={80} className="text-emerald-400" /></div>
+                <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2 relative z-10">
+                    <Users className="text-emerald-400" /> Users Maintenance
+                </h3>
+                <p className="text-xs text-gray-400 mb-4 max-w-2xl relative z-10">
+                    Aggregates KM from all validated runs to align <strong>total_km</strong> in profiles.
+                </p>
+                <button 
+                    onClick={() => setShowUserMaintenanceModal(true)}
+                    disabled={isProcessing}
+                    className="bg-emerald-600 hover:bg-emerald-500 disabled:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-all flex items-center gap-2 shadow-lg relative z-10 text-sm"
+                >
+                    {isProcessing ? <RefreshCw className="animate-spin" size={16} /> : <Users size={16} />}
+                    {isProcessing ? 'Processing...' : 'Recalculate Users KM'}
+                </button>
+            </div>
         </div>
 
         {/* GLOBAL BURN */}
@@ -159,7 +198,8 @@ const AdminEconomyTab: React.FC<AdminEconomyTabProps> = ({
 
         {/* MODALS */}
         {showBurnModal && <ConfirmModal title="INITIATE GLOBAL BURN?" message="This will permanently destroy 2% of all circulating RUN tokens. This action cannot be undone." onConfirm={executeBurn} onCancel={() => setShowBurnModal(false)} isDestructive confirmLabel="CONFIRM BURN" />}
-        {showMaintenanceModal && <ConfirmModal title="RUN SYSTEM MAINTENANCE?" message="This will scan every activity ever recorded to verify zone records. It may take a few seconds." onConfirm={executeMaintenance} onCancel={() => setShowMaintenanceModal(false)} confirmLabel="Start Maintenance" />}
+        {showMaintenanceModal && <ConfirmModal title="RUN SECTOR MAINTENANCE?" message="This will scan every activity ever recorded to verify zone records. It may take a few seconds." onConfirm={executeMaintenance} onCancel={() => setShowMaintenanceModal(false)} confirmLabel="Start Maintenance" />}
+        {showUserMaintenanceModal && <ConfirmModal title="RUN USER MAINTENANCE?" message="This will aggregate kilometers from all validated runs to align 'total_km' in user profiles. This ensures leaderboard accuracy." onConfirm={executeUserMaintenance} onCancel={() => setShowUserMaintenanceModal(false)} confirmLabel="Start Maintenance" />}
     </div>
   );
 };
