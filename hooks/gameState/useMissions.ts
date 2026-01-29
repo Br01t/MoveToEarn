@@ -18,7 +18,15 @@ export const useMissions = ({ user, uploadFile, setBugReports, setSuggestions, p
               const resUrl = await uploadFile(screenshot, 'bugs');
               if (resUrl) screenshotUrl = resUrl;
           }
-          const newReport = { user_id: user.id, user_name: user.name, description, screenshot: screenshotUrl, timestamp: Date.now(), status: 'OPEN' };
+          const newReport = { 
+              id: crypto.randomUUID(),
+              user_id: user.id, 
+              user_name: user.name, 
+              description, 
+              screenshot: screenshotUrl, 
+              timestamp: Date.now(), 
+              status: 'OPEN' 
+          };
           const { data, error } = await supabase.from('bug_reports').insert(newReport).select().single();
           if (error) throw error;
           
@@ -36,7 +44,14 @@ export const useMissions = ({ user, uploadFile, setBugReports, setSuggestions, p
   const submitSuggestion = async (title: string, description: string) => {
       if (!user) return false;
       try {
-          const newSuggestion = { user_id: user.id, user_name: user.name, title, description, timestamp: Date.now() };
+          const newSuggestion = { 
+              id: crypto.randomUUID(),
+              user_id: user.id, 
+              user_name: user.name, 
+              title, 
+              description, 
+              timestamp: Date.now() 
+          };
           const { data, error } = await supabase.from('suggestions').insert(newSuggestion).select().single();
           if (error) throw error;
 
