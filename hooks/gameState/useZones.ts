@@ -2,7 +2,6 @@ import { safeRpc } from '../../supabaseClient';
 import { User, Zone, RunEntry } from '../../types';
 import { CONQUEST_COST, CONQUEST_REWARD_GOV, MINT_COST, MINT_REWARD_GOV } from '../../constants';
 import { useGlobalUI } from '../../contexts/GlobalUIContext';
-import { sendSlackNotification } from '../../utils/slack';
 import { useLanguage } from '../../LanguageContext';
 import { logger } from '../../utils/logger';
 
@@ -28,15 +27,10 @@ export const useZones = ({ user, zones, setUser, setZones, playSound }: ZonesHoo
       try {
           logger.info(`Starting atomic DB sync for run ${runData.id}...`);
 
-          /**
-           * Sincronizzazione con la firma SQL:
-           * p_location_name -> match database
-           * NO p_zones_to_update -> rimosso perché il DB aggiorna le zone tramite il ciclo su p_zone_breakdown
-           */
           const rpcRes = await safeRpc('atomic_record_run', {
               p_user_id: userId,
               p_run_id: runData.id,
-              p_location_name: runData.location, // Match esatto con SQL
+              p_location_name: runData.location,
               p_km: runData.km,
               p_duration: Math.floor(runData.duration || 0),
               p_run_earned: runData.runEarned,
@@ -53,7 +47,8 @@ export const useZones = ({ user, zones, setUser, setZones, playSound }: ZonesHoo
               throw new Error((rpcRes as any).error || "Atomic transaction failed");
           }
 
-          sendSlackNotification(`*Activity Synced!* \nAgent: \`${user?.name}\` \nDistance: \`${runData.km.toFixed(2)} KM\``, 'INFO', 'SYNC');
+          // NOTIFICA SLACK: Rimosso invio manuale. 
+          // Gestito da Supabase Webhook sulla tabella 'runs' -> smart-processor
           return { success: true };
 
       } catch (err: any) {
@@ -94,7 +89,8 @@ export const useZones = ({ user, zones, setUser, setZones, playSound }: ZonesHoo
           setUser({ ...user, runBalance: newRun, govBalance: newGov });
           
           playSound('SUCCESS');
-          sendSlackNotification(`*Zone Minted!* \nController: \`${user.name}\` \nSector: \`${newZone.name}\``, 'SUCCESS', 'MAP');
+          // NOTIFICA SLACK: Rimosso invio manuale.
+          // Gestito da Supabase Webhook sulla tabella 'zones' -> smart-processor
           return { success: true };
       } catch (err: any) {
           logger.error("Mint Error:", err);
@@ -130,7 +126,8 @@ export const useZones = ({ user, zones, setUser, setZones, playSound }: ZonesHoo
           playSound('SUCCESS');
           showToast(`${t('alert.zone_claimed')} +${CONQUEST_REWARD_GOV} GOV`, 'SUCCESS');
           
-          sendSlackNotification(`*Sector Conquered!* \nNew Controller: \`${user.name}\` \nSector: \`${zone.name}\``, 'ALERT', 'MAP');
+          // NOTIFICA SLACK: Rimosso invio manuale.
+          // L'UPDATE sulla tabella 'zones' attiverà il webhook se configurato.
       } catch (err: any) {
           logger.error("Claim Error:", err);
           showToast(`Conquest failed: ${err.message}`, 'ERROR');

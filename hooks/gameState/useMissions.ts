@@ -1,14 +1,11 @@
-
 import { supabase } from '../../supabaseClient';
 import { User, BugReport, Suggestion } from '../../types';
-import { sendSlackNotification } from '../../utils/slack';
 
 interface MissionsHookProps {
     user: User | null;
     uploadFile: (file: File, folder: string) => Promise<string | null>;
     setBugReports: React.Dispatch<React.SetStateAction<BugReport[]>>;
     setSuggestions: React.Dispatch<React.SetStateAction<Suggestion[]>>;
-    // Fix: Added playSound to MissionsHookProps to fix type error in useGameState
     playSound?: (type: any) => void;
 }
 
@@ -25,14 +22,12 @@ export const useMissions = ({ user, uploadFile, setBugReports, setSuggestions, p
           const { data, error } = await supabase.from('bug_reports').insert(newReport).select().single();
           if (error) throw error;
           
-          // Fix: Added success sound feedback
           if (playSound) playSound('SUCCESS');
 
           setBugReports(prev => [{ id: data.id, userId: data.user_id, userName: data.user_name, description: data.description, screenshot: data.screenshot, timestamp: data.timestamp, status: data.status }, ...prev]);
-          sendSlackNotification(`*New Bug Report!* from ${user.name}`, 'WARNING', 'BUGS');
+          
           return true;
       } catch (err) {
-          // Fix: Added error sound feedback
           if (playSound) playSound('ERROR');
           return false;
       }
@@ -45,14 +40,12 @@ export const useMissions = ({ user, uploadFile, setBugReports, setSuggestions, p
           const { data, error } = await supabase.from('suggestions').insert(newSuggestion).select().single();
           if (error) throw error;
 
-          // Fix: Added success sound feedback
           if (playSound) playSound('SUCCESS');
 
           setSuggestions(prev => [{ id: data.id, userId: data.user_id, userName: data.user_name, title: data.title, description: data.description, timestamp: data.timestamp }, ...prev]);
-          sendSlackNotification(`*New Strategy Proposed!* by ${user.name}`, 'INFO', 'IDEAS');
+          
           return true;
       } catch (err) {
-          // Fix: Added error sound feedback
           if (playSound) playSound('ERROR');
           return false;
       }
