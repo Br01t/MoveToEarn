@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { User, Zone, Mission, Badge, AchievementLog } from '../types';
 import { checkAchievement } from '../utils/rewards';
 import { supabase } from '../supabaseClient';
@@ -16,6 +15,8 @@ interface AchievementProps {
 export const useAchievements = ({ user, zones, missions, badges, setUser, logTransaction }: AchievementProps) => {
   const [achievementQueue, setAchievementQueue] = useState<{ type: 'MISSION' | 'BADGE'; item: Mission | Badge }[]>([]);
   const [claimSummary, setClaimSummary] = useState<{ count: number; totalRun: number; totalGov: number } | null>(null);
+  
+  const processedIdsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     if (!user) return;
@@ -32,8 +33,9 @@ export const useAchievements = ({ user, zones, missions, badges, setUser, logTra
 
     // Check Missions
     missions.forEach((m) => {
-      if (!newMissionLog.some(log => log.id === m.id)) {
+      if (!newMissionLog.some(log => log.id === m.id) && !processedIdsRef.current.has(m.id)) {
         if (checkAchievement(m, user, zones)) {
+           processedIdsRef.current.add(m.id);
            newMissionLog.push({ id: m.id, claimedAt: timestamp });
            
            // WELCOME BONUS LOGIC: First mission gives 300 RUN instead of 150
@@ -46,9 +48,7 @@ export const useAchievements = ({ user, zones, missions, badges, setUser, logTra
            if (m.rewardGov) additionalGov += m.rewardGov;
            hasChanges = true;
            
-           // Wrap item with potentially modified reward for the UI notification
-           const displayItem = { ...m, rewardRun: runReward };
-           newUnlockQueue.push({ type: 'MISSION', item: displayItem });
+           newUnlockQueue.push({ type: 'MISSION', item: { ...m, rewardRun: runReward } });
            
            if (runReward > 0) logTransaction(user.id, 'IN', 'RUN', runReward, `Mission Reward: ${m.title}`);
            if (m.rewardGov && m.rewardGov > 0) logTransaction(user.id, 'IN', 'GOV', m.rewardGov, `Mission Reward: ${m.title}`);
@@ -58,8 +58,9 @@ export const useAchievements = ({ user, zones, missions, badges, setUser, logTra
 
     // Check Badges
     badges.forEach((b) => {
-      if (!newBadgeLog.some(log => log.id === b.id)) {
+      if (!newBadgeLog.some(log => log.id === b.id) && !processedIdsRef.current.has(b.id)) {
         if (checkAchievement(b, user, zones)) {
+           processedIdsRef.current.add(b.id);
            newBadgeLog.push({ id: b.id, claimedAt: timestamp });
            
            const rRun = b.rewardRun || 0;
@@ -95,16 +96,12 @@ export const useAchievements = ({ user, zones, missions, badges, setUser, logTra
       );
       
       const updateDb = async () => {
-          const { error } = await supabase.from('profiles').update({
+          await supabase.from('profiles').update({
               mission_log: newMissionLog,
               badge_log: newBadgeLog,
               run_balance: newRunBalance,
               gov_balance: newGovBalance
           }).eq('id', user.id);
-
-          if (error) {
-              console.error("❌ Failed to save achievements to DB:", error);
-          }
       };
       updateDb();
       
@@ -120,29 +117,9 @@ export const useAchievements = ({ user, zones, missions, badges, setUser, logTra
   };
 
   const handleClaimAllNotifications = () => {
-      let totalRun = 0;
-      let totalGov = 0;
-
-      achievementQueue.forEach(entry => {
-          if (entry.type === 'MISSION') {
-              const m = entry.item as Mission;
-              totalRun += m.rewardRun;
-              if (m.rewardGov) totalGov += m.rewardGov;
-          } else {
-              const b = entry.item as Badge;
-              totalRun += (b.rewardRun || 0);
-              if (b.rewardGov) totalGov += b.rewardGov;
-          }
-      });
-
-      const count = achievementQueue.length;
-
       setAchievementQueue([]);
-      setClaimSummary({ count, totalRun, totalGov });
-
-      setTimeout(() => {
-          setClaimSummary(null);
-      }, 3000);
+      setClaimSummary({ count: achievementQueue.length, totalRun: 0, totalGov: 0 });
+      setTimeout(() => setClaimSummary(null), 3000);
   };
 
   return {
