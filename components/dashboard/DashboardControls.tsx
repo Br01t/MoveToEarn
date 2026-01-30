@@ -34,14 +34,14 @@ const DashboardControls: React.FC<DashboardControlsProps> = ({ onZoomIn, onZoomO
                     <span className="flex items-center gap-2"><div className="w-2.5 h-2.5 bg-amber-400 rounded-sm shadow-[0_0_5px_#fbbf24]"></div> {t('dash.legend.boosted')}</span>
                     <span className="flex items-center gap-2"><div className="w-2.5 h-2.5 bg-cyan-400 rounded-sm shadow-[0_0_5px_#22d3ee]"></div> {t('dash.legend.shielded')}</span>
                     
-                    <div className="h-px bg-white/10 my-1"></div>
+                    {/* <div className="h-px bg-white/10 my-1"></div>
                     
                     <span className="flex items-center gap-2 text-yellow-400 font-bold">
                         <Swords size={12} className="shrink-0" /> {t('dash.legend.ready_conquest')}
                     </span>
                     <span className="flex items-center gap-2 text-red-400 font-bold">
                         <AlertTriangle size={12} className="shrink-0" /> {t('dash.legend.at_risk')}
-                    </span>
+                    </span> */}
                </div>
            )}
         </div>
