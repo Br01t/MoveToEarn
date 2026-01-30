@@ -303,6 +303,14 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
         `}
       </style>
 
+      <div 
+        className="absolute inset-0 z-0 opacity-15 pointer-events-none"
+        style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='98' viewBox='0 0 56 98'%3E%3Cpath d='M28 66L0 50L0 16L28 0L56 16L56 50L28 66L28 100' fill='none' stroke='%2310b981' stroke-width='2' stroke-opacity='0.5'/%3E%3C/svg%3E")`,
+            backgroundSize: '56px 98px'
+        }}
+      />
+
       <div className="absolute inset-0 pointer-events-none z-40">
           <div className="md:hidden absolute bottom-44 left-6 w-32 h-32 pointer-events-none">
                 <CompassArrow dir="north" isActive={compassState.north} icon={ChevronUp} positionClasses="top-0 left-1/2 -translate-x-1/2" isMobile={true} />
@@ -322,8 +330,8 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
         <defs>
           <pattern id="tech-dots" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1" fill="rgba(255,255,255,0.15)" /></pattern>
           <filter id="glow-flight-strong" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="6" result="blur" /><feComposite in="SourceGraphic" in2="blur" operator="over" /></filter>
-          <radialGradient id="grad-my-zone" cx="50%" cy="50%" r="70%" fx="50%" fy="50%"><stop offset="40%" style={{ stopColor: '#059669', stopOpacity: 0.8 }} /><stop offset="100%" style={{ stopColor: '#064e3b', stopOpacity: 0.9 }} /></radialGradient>
-          <radialGradient id="grad-enemy-zone" cx="50%" cy="50%" r="70%" fx="50%" fy="50%"><stop offset="40%" style={{ stopColor: '#b91c1c', stopOpacity: 0.8 }} /><stop offset="100%" style={{ stopColor: '#450a0a', stopOpacity: 0.9 }} /></radialGradient>
+          <radialGradient id="grad-my-zone" cx="50%" cy="50%" r="70%" fx="50%" fy="50%"><stop offset="40%" style={{ stopColor: '#059669', stopOpacity: 1 }} /><stop offset="100%" style={{ stopColor: '#064e3b', stopOpacity: 0.9 }} /></radialGradient>
+          <radialGradient id="grad-enemy-zone" cx="50%" cy="50%" r="70%" fx="50%" fy="50%"><stop offset="40%" style={{ stopColor: '#b91c1c', stopOpacity: 1 }} /><stop offset="100%" style={{ stopColor: '#450a0a', stopOpacity: 0.9 }} /></radialGradient>
           <clipPath id="hex-clip"><polygon points={getHexPoints()} /></clipPath>
         </defs>
 
