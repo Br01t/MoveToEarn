@@ -320,8 +320,8 @@ export const en = {
     "profile.zone_runs": "Runs",
     "profile.zone_total": "Total",
 
-    "miss.title": "Operations",
-    "miss.subtitle": "Complete objectives to earn RUN and unlock Badges.",
+    "miss.title": "Achievements",
+    "miss.subtitle": "Complete objectives to earn RUN and unlock Badges and Missions.",
     "miss.log": "Active Missions",
     "miss.search_missions": "Search missions...",
     "miss.filter.all": "ALL",
