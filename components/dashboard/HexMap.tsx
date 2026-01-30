@@ -330,8 +330,8 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
         <defs>
           <pattern id="tech-dots" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1" fill="rgba(255,255,255,0.15)" /></pattern>
           <filter id="glow-flight-strong" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="6" result="blur" /><feComposite in="SourceGraphic" in2="blur" operator="over" /></filter>
-          <radialGradient id="grad-my-zone" cx="50%" cy="50%" r="70%" fx="50%" fy="50%"><stop offset="40%" style={{ stopColor: '#059669', stopOpacity: 1 }} /><stop offset="100%" style={{ stopColor: '#064e3b', stopOpacity: 0.9 }} /></radialGradient>
-          <radialGradient id="grad-enemy-zone" cx="50%" cy="50%" r="70%" fx="50%" fy="50%"><stop offset="40%" style={{ stopColor: '#b91c1c', stopOpacity: 1 }} /><stop offset="100%" style={{ stopColor: '#450a0a', stopOpacity: 0.9 }} /></radialGradient>
+          <radialGradient id="grad-my-zone" cx="50%" cy="50%" r="70%" fx="50%" fy="50%"><stop offset="40%" style={{ stopColor: '#059669', stopOpacity: 1 }} /><stop offset="100%" style={{ stopColor: '#064e3b', stopOpacity: 1 }} /></radialGradient>
+          <radialGradient id="grad-enemy-zone" cx="50%" cy="50%" r="70%" fx="50%" fy="50%"><stop offset="40%" style={{ stopColor: '#b91c1c', stopOpacity: 1 }} /><stop offset="100%" style={{ stopColor: '#450a0a', stopOpacity: 1 }} /></radialGradient>
           <clipPath id="hex-clip"><polygon points={getHexPoints()} /></clipPath>
         </defs>
 
