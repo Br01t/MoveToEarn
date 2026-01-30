@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { User, Zone, InventoryItem, ViewState, Badge, RunAnalysisData } from '../types';
 import { UploadCloud, History, X, Calendar, Waypoints, Circle, Footprints, Info, RefreshCw, AlertTriangle } from 'lucide-react';
@@ -23,6 +22,7 @@ interface DashboardProps {
   onBoost: (zoneId: string) => void;
   onDefend: (zoneId: string) => void;
   onNavigate: (view: ViewState) => void;
+  onNavigateSilent?: (view: ViewState) => void;
   onOpenSync: () => void;
   onGetZoneLeaderboard: (zoneId: string) => Promise<any[]>;
   onRefreshData?: () => void;
@@ -265,7 +265,9 @@ const Dashboard: React.FC<DashboardProps> = ({
       ref={containerRef}
       className="relative w-full h-[calc(100vh-56px)] md:h-[calc(100vh-64px)] overflow-hidden bg-transparent shadow-inner"
     >
-      <DashboardHUD runBalance={user.runBalance} govBalance={user.govBalance} />
+      <div id="dashboard-hud-balances">
+        <DashboardHUD runBalance={user.runBalance} govBalance={user.govBalance} />
+      </div>
 
       <div className="absolute top-14 right-2 z-30 flex flex-col items-end gap-2 pointer-events-none">
           {isSyncing && (
@@ -313,6 +315,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           <div className="flex flex-col gap-2 pointer-events-auto">
               <div className="relative group/tooltip">
                   <button 
+                    id="toggle-exploration"
                     onClick={handleToggleExploration}
                     onMouseEnter={() => setActiveTooltip('EXPLORATION')}
                     onMouseLeave={() => setActiveTooltip(null)}
@@ -328,6 +331,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               </div>
               <div className="relative group/tooltip">
                   <button 
+                    id="toggle-trajectories"
                     onClick={handleToggleTrajectories}
                     onMouseEnter={() => setActiveTooltip('TRAJECTORIES')}
                     onMouseLeave={() => setActiveTooltip(null)}
@@ -349,8 +353,9 @@ const Dashboard: React.FC<DashboardProps> = ({
             <div className="absolute inset-0 bg-emerald-500 rounded-full animate-ping opacity-20 duration-1000"></div>
             <div className="absolute inset-0 bg-emerald-400 rounded-full blur-xl opacity-40"></div>
             <button 
+              id="sync-trigger-btn"
               onClick={onOpenSync}
-              className="relative group flex items-center gap-2 md:gap-3 px-4 py-2.5 md:px-8 md:py-4 bg-gray-900/90 backdrop-blur-xl border-2 border-emerald-400 rounded-full shadow-[0_0_30px_rgba(16,185,129,0.4)] hover:shadow-[0_0_50px_rgba(16,185,129,0.7)] hover:border-emerald-300 hover:scale-105 transition-all duration-300"
+              className="relative group flex items-center gap-2 md:gap-3 px-4 py-2.5 md:px-8 md:py-4 bg-gray-900/90 backdrop-blur-xl border-2 border-emerald-400 rounded-full shadow-[0_0_30px_rgba(16,185,129,0.4)] hover:shadow-[0_0_50px_rgba(16,185,129,0.7)] hover:border-emerald-300 hover:scale-105 transition-all duration-300 pointer-events-auto"
             >
                 <div className="bg-emerald-500 text-black p-1.5 md:p-2 rounded-full shrink-0"><UploadCloud size={20} className="md:w-6 md:h-6 animate-pulse" /></div>
                 <div className="flex flex-col items-start min-w-0">
@@ -360,26 +365,28 @@ const Dashboard: React.FC<DashboardProps> = ({
             </button>
       </div>
 
-      <HexMap
-          ref={svgRef}
-          zones={zones}
-          user={user}
-          view={view}
-          selectedZoneId={selectedZone?.id || null}
-          onZoneClick={setSelectedZone}
-          filterMode={filterMode}
-          filterCountry={filterCountry}
-          searchTerm={searchTerm}
-          showGlobalTrajectories={showGlobalTrajectories}
-          showOnlyVisited={showOnlyVisited}
-          visitedZoneIds={visitedZoneIds}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onTouchStart={() => {}}
-          onTouchMove={() => {}}
-          onTouchEnd={() => {}}
-      />
+      <div id="hex-map-container" className="absolute inset-0 z-0">
+        <HexMap
+            ref={svgRef}
+            zones={zones}
+            user={user}
+            view={view}
+            selectedZoneId={selectedZone?.id || null}
+            onZoneClick={setSelectedZone}
+            filterMode={filterMode}
+            filterCountry={filterCountry}
+            searchTerm={searchTerm}
+            showGlobalTrajectories={showGlobalTrajectories}
+            showOnlyVisited={showOnlyVisited}
+            visitedZoneIds={visitedZoneIds}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onTouchStart={() => {}}
+            onTouchMove={() => {}}
+            onTouchEnd={() => {}}
+        />
+      </div>
 
       {selectedZone && ownerDetails && (
           <ZoneDetails 

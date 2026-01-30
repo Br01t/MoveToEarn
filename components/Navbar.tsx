@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { ViewState, User } from '../types';
 import { Map, ShoppingBag, Trophy, Wallet, LogOut, Package, User as UserIcon, Settings, Target, Volume2, VolumeX } from 'lucide-react';
@@ -22,13 +21,14 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, user, onLogout
     onNavigate(view);
   };
 
-  const NavItem = ({ view, icon: Icon, label, isAdmin = false, mobileLabel, compact = false }: { view: ViewState; icon: any; label: string; isAdmin?: boolean; mobileLabel?: string; compact?: boolean }) => {
+  const NavItem = ({ view, icon: Icon, label, isAdmin = false, mobileLabel, compact = false, id }: { view: ViewState; icon: any; label: string; isAdmin?: boolean; mobileLabel?: string; compact?: boolean, id?: string }) => {
     const isActive = currentView === view;
     const activeClass = isAdmin ? 'text-red-400 bg-red-500/10' : 'text-emerald-400 bg-emerald-500/10';
     const inactiveClass = isAdmin ? 'text-gray-500 hover:text-red-400' : 'text-gray-400 hover:text-white';
 
     return (
       <button
+        id={id}
         onClick={() => handleNavClick(view)}
         aria-current={isActive ? 'page' : undefined}
         aria-label={label}
@@ -104,13 +104,13 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, user, onLogout
           </div>
           
           <div className="flex-1 flex justify-center items-center space-x-1 lg:space-x-2">
-            <NavItem view="DASHBOARD" icon={Map} label={t('nav.map')} />
-            <NavItem view="MARKETPLACE" icon={ShoppingBag} label={t('nav.market')} />
-            <NavItem view="INVENTORY" icon={Package} label={t('nav.inventory')} />
-            <NavItem view="MISSIONS" icon={Target} label={t('nav.missions')} />
-            <NavItem view="LEADERBOARD" icon={Trophy} label={t('nav.rank')} />
-            <NavItem view="WALLET" icon={Wallet} label={t('nav.wallet')} />
-            <NavItem view="PROFILE" icon={UserIcon} label={t('nav.profile')} />
+            <NavItem view="DASHBOARD" icon={Map} label={t('nav.map')} id="nav-item-DASHBOARD" />
+            <NavItem view="MARKETPLACE" icon={ShoppingBag} label={t('nav.market')} id="nav-item-MARKETPLACE" />
+            <NavItem view="INVENTORY" icon={Package} label={t('nav.inventory')} id="nav-item-INVENTORY" />
+            <NavItem view="MISSIONS" icon={Target} label={t('nav.missions')} id="nav-item-MISSIONS" />
+            <NavItem view="LEADERBOARD" icon={Trophy} label={t('nav.rank')} id="nav-item-LEADERBOARD" />
+            <NavItem view="WALLET" icon={Wallet} label={t('nav.wallet')} id="nav-item-WALLET" />
+            <NavItem view="PROFILE" icon={UserIcon} label={t('nav.profile')} id="nav-item-PROFILE" />
             
             {user.isAdmin && (
                 <>
@@ -154,15 +154,15 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, user, onLogout
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-gray-950/95 backdrop-blur-md border-t border-gray-800 z-50 pb-safe shadow-[0_-5px_20px_rgba(0,0,0,0.3)]" role="navigation" aria-label="Mobile Navigation Menu">
         <div className="flex flex-col w-full">
            <div className="grid grid-cols-3 w-full border-b border-gray-800/30">
-               <NavItem view="DASHBOARD" icon={Map} label={t('nav.map')} compact={true} />
-               <NavItem view="MISSIONS" icon={Target} label={t('nav.missions')} compact={true} />
-               <NavItem view="LEADERBOARD" icon={Trophy} label={t('nav.rank')} compact={true} />
+               <NavItem view="DASHBOARD" icon={Map} label={t('nav.map')} compact={true} id="nav-item-DASHBOARD-mobile" />
+               <NavItem view="MISSIONS" icon={Target} label={t('nav.missions')} compact={true} id="nav-item-MISSIONS-mobile" />
+               <NavItem view="LEADERBOARD" icon={Trophy} label={t('nav.rank')} compact={true} id="nav-item-LEADERBOARD-mobile" />
            </div>
            <div className="grid grid-cols-4 w-full">
-               <NavItem view="MARKETPLACE" icon={ShoppingBag} label={t('nav.market')} compact={true} />
-               <NavItem view="PROFILE" icon={UserIcon} label={t('nav.profile')} compact={true} />
-               <NavItem view="INVENTORY" icon={Package} label={t('nav.inventory')} compact={true} />
-               <NavItem view="WALLET" icon={Wallet} label={t('nav.wallet')} compact={true} />
+               <NavItem view="MARKETPLACE" icon={ShoppingBag} label={t('nav.market')} compact={true} id="nav-item-MARKETPLACE-mobile" />
+               <NavItem view="PROFILE" icon={UserIcon} label={t('nav.profile')} compact={true} id="nav-item-PROFILE-mobile" />
+               <NavItem view="INVENTORY" icon={Package} label={t('nav.inventory')} compact={true} id="nav-item-INVENTORY-mobile" />
+               <NavItem view="WALLET" icon={Wallet} label={t('nav.wallet')} compact={true} id="nav-item-WALLET-mobile" />
            </div>
         </div>
       </nav>

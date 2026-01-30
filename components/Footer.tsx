@@ -1,9 +1,9 @@
-
 import React from 'react';
 import { ViewState } from '../types';
 import { useLanguage } from '../LanguageContext';
-import { Download } from 'lucide-react';
+import { Download, HelpCircle } from 'lucide-react';
 import { usePrivacy } from '../contexts/PrivacyContext';
+import { useOnboarding } from '../contexts/OnboardingContext';
 
 interface FooterProps {
     onNavigate: (view: ViewState) => void;
@@ -18,6 +18,7 @@ interface FooterProps {
 const Footer: React.FC<FooterProps> = ({ onNavigate, currentView, isAuthenticated, isHidden, onInstall, isInstallable, isStandalone }) => {
   const { t } = useLanguage();
   const { openBanner } = usePrivacy();
+  const { startTutorial } = useOnboarding();
 
   // 1. DASHBOARD MODE: No Footer
   if (currentView === 'DASHBOARD') {
@@ -52,7 +53,15 @@ const Footer: React.FC<FooterProps> = ({ onNavigate, currentView, isAuthenticate
                </>
            )}
 
-           {/* Install App Button - Visible if installable and not already installed */}
+           {isAuthenticated && (
+               <button 
+                onClick={startTutorial} 
+                className="flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 transition-colors font-bold"
+               >
+                 <HelpCircle size={14} /> Tutorial
+               </button>
+           )}
+
            {isInstallable && !isStandalone && onInstall && (
                <button 
                    onClick={onInstall} 

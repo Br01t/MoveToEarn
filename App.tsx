@@ -7,6 +7,8 @@ import { Layers, CheckCircle, AlertTriangle, X, ShoppingBag, Loader2 } from "luc
 import { LanguageProvider, useLanguage } from "./LanguageContext";
 import { GlobalUIProvider, useGlobalUI } from "./contexts/GlobalUIContext";
 import { PrivacyProvider } from "./contexts/PrivacyContext";
+import { OnboardingProvider, useOnboarding } from "./contexts/OnboardingContext";
+import OnboardingManager from "./components/OnboardingManager";
 import { MINT_COST, MINT_REWARD_GOV, CONQUEST_COST } from "./constants";
 
 // Custom Hooks
@@ -35,7 +37,7 @@ const Footer = React.lazy(() => import("./components/Footer"));
 
 // Modals
 import AchievementModal from "./components/AchievementModal";
-import LoginModal from "./components/auth/LoginModal"; // Spostato a import sincrono per evitare crash Suspense
+import LoginModal from "./components/auth/LoginModal"; 
 const ZoneDiscoveryModal = React.lazy(() => import("./components/ZoneDiscoveryModal"));
 const RunSummaryModal = React.lazy(() => import("./components/RunSummaryModal"));
 const SyncModal = React.lazy(() => import("./components/dashboard/SyncModal"));
@@ -52,6 +54,7 @@ const LoadingFallback = () => (
 const AppContent: React.FC = () => {
   const { t } = useLanguage();
   const { showToast, playSound } = useGlobalUI(); 
+  const { startTutorial, isActive: isTutorialActive } = useOnboarding();
   const [currentView, setCurrentView] = useState<ViewState>("LANDING");
   const [showSyncModal, setShowSyncModal] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -120,6 +123,19 @@ const AppContent: React.FC = () => {
   }, [user, currentView, playSound]);
 
   useEffect(() => {
+    if (!loading && user && currentView === "DASHBOARD" && !isTutorialActive) {
+        const hasDoneTutorial = localStorage.getItem('zr_onboarding_complete');
+        if (!hasDoneTutorial) {
+            const timer = setTimeout(() => {
+                const stillNotDone = !localStorage.getItem('zr_onboarding_complete');
+                if (stillNotDone) startTutorial();
+            }, 1000);
+            return () => clearTimeout(timer);
+        }
+    }
+  }, [user, loading, currentView, isTutorialActive, startTutorial]);
+
+  useEffect(() => {
     if (!loading) {
         if (user) {
             if (currentView === "LANDING") {
@@ -139,14 +155,11 @@ const AppContent: React.FC = () => {
   const showNavbar = !isLanding && user;
   const isDashboard = currentView === "DASHBOARD";
 
-  // MODAL PRIORITY SEQUENCER
   const renderCurrentModal = () => {
-    // Le modali sincrone non hanno bisogno di Suspense
     if (showLoginModal) {
       return <LoginModal onClose={() => { setShowLoginModal(false); gameState.setRecoveryMode(false); }} onLogin={gameState.login} onRegister={gameState.register} onResetPassword={gameState.resetPassword} onUpdatePassword={gameState.updatePassword} initialView={recoveryMode ? 'UPDATE_PASSWORD' : 'LOGIN'} />;
     }
 
-    // Per le modali lazy, usiamo un solo Suspense per evitare overlay multipli durante il caricamento
     return (
       <Suspense fallback={null}>
         {showSyncModal && user && (
@@ -173,6 +186,8 @@ const AppContent: React.FC = () => {
       <div className="fixed inset-0 z-[-1] bg-gray-950 pointer-events-none" aria-hidden="true">
           <div className="absolute inset-0 bg-gradient-to-b from-gray-900 via-gray-950 to-black"></div>
       </div>
+
+      <OnboardingManager currentView={currentView} onNavigate={setCurrentView} />
 
       <div className={`relative z-10 flex flex-col min-h-screen ${showNavbar && !isDashboard ? "pb-40 md:pb-0" : ""}`}>
           {showNavbar && <Navbar currentView={currentView} onNavigate={setCurrentView} user={user} onLogout={gameState.logout} />}
@@ -224,7 +239,9 @@ const App: React.FC = () => (
     <LanguageProvider>
       <GlobalUIProvider>
         <PrivacyProvider>
-          <AppContent />
+          <OnboardingProvider>
+            <AppContent />
+          </OnboardingProvider>
         </PrivacyProvider>
       </GlobalUIProvider>
     </LanguageProvider>
