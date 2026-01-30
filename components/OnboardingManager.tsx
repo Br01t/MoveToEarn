@@ -1,13 +1,13 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useOnboarding } from '../contexts/OnboardingContext';
-import { ChevronRight, ChevronLeft, X, Target, FastForward } from 'lucide-react';
+import { ChevronRight, ChevronLeft, X, Target, FastForward, Globe } from 'lucide-react';
 import { useGlobalUI } from '../contexts/GlobalUIContext';
 import { useLanguage } from '../LanguageContext';
 
 const OnboardingManager: React.FC<{ currentView: string; onNavigate: (v: any) => void }> = ({ currentView, onNavigate }) => {
   const { isActive, currentStepIndex, steps, nextStep, prevStep, stopTutorial, skipTutorial } = useOnboarding();
   const { playSound } = useGlobalUI();
-  const { t } = useLanguage();
+  const { t, language, toggleLanguage } = useLanguage();
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const [tooltipStyle, setTooltipStyle] = useState<React.CSSProperties>({ opacity: 0 });
@@ -160,14 +160,21 @@ const OnboardingManager: React.FC<{ currentView: string; onNavigate: (v: any) =>
           <div className="bg-emerald-500/10 border-b border-emerald-500/20 px-3 py-2 flex justify-between items-center">
             <div className="flex items-center gap-1.5">
                 <div className="bg-emerald-500/20 p-1 rounded">
-                  <Target size={10} className="text-emerald-400 animate-pulse" />
+                  <Target size={12} className="text-emerald-400 animate-pulse" />
                 </div>
-                <span className="text-[8px] font-black uppercase tracking-[0.2em] text-emerald-400">{t('tutorial.controls.step')} {currentStepIndex + 1}/{steps.length}</span>
+                <span className="text-[12px] font-black uppercase tracking-[0.2em] text-emerald-400">{t('tutorial.controls.step')} {currentStepIndex + 1}/{steps.length}</span>
             </div>
             <div className="flex items-center gap-1.5">
                 <button 
+                  onClick={(e) => { e.stopPropagation(); playSound('CLICK'); toggleLanguage(); }}
+                  className="text-[12px] font-bold uppercase tracking-widest text-white hover:text-emerald-400 transition-colors flex items-center gap-1 bg-white/10 px-1.5 py-0.5 rounded-md border border-white/10"
+                >
+                  {language === 'en' ? '🇮🇹' : '🇬🇧'}
+                </button>
+
+                <button 
                   onClick={(e) => { e.stopPropagation(); playSound('CLICK'); skipTutorial(); }}
-                  className="text-[8px] font-bold uppercase tracking-widest text-gray-500 hover:text-emerald-400 transition-colors flex items-center gap-1 bg-white/5 px-1.5 py-0.5 rounded-md"
+                  className="text-[10px] font-bold uppercase tracking-widest text-gray-500 hover:text-emerald-400 transition-colors flex items-center gap-1 bg-white/5 px-1.5 py-0.5 rounded-md"
                 >
                   <FastForward size={8} /> {t('tutorial.controls.skip')}
                 </button>
@@ -197,7 +204,7 @@ const OnboardingManager: React.FC<{ currentView: string; onNavigate: (v: any) =>
               )}
               <button 
                 onClick={(e) => { e.stopPropagation(); playSound('SUCCESS'); nextStep(); }}
-                className="flex-[2] py-2 bg-emerald-500 hover:bg-emerald-400 text-black font-black rounded-lg text-[9px] uppercase flex items-center justify-center gap-1 shadow-lg transition-all active:scale-95"
+                className="flex-[2] py-2 bg-emerald-500 hover:bg-emerald-400 text-black font-black rounded-lg text-[12px] uppercase flex items-center justify-center gap-1 shadow-lg transition-all active:scale-95"
               >
                 {currentStepIndex === steps.length - 1 ? t('tutorial.controls.finish') : t('tutorial.controls.next')} <ChevronRight size={12} />
               </button>

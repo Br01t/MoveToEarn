@@ -608,7 +608,7 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
                         <span className="text-[10px] text-gray-400 font-bold uppercase">{t('miss.reward')}:</span>
                         {rewardRun > 0 && <span className="text-xs text-emerald-400 font-bold font-mono">+{rewardRun} RUN</span>}
                         {rewardGov > 0 && <span className="text-xs text-cyan-400 font-bold font-mono border border-cyan-500/30 px-1 rounded">+{rewardGov} GOV</span>}
-                        {rewardRun === 0 && rewardGov === 0 && <span className="text-xs text-gray-500 font-mono">Nessuna ricompensa</span>}
+                        {rewardRun === 0 && rewardGov === 0 && <span className="text-xs text-gray-500 font-mono">No rewards</span>}
                     </div>
                 </div>
 
