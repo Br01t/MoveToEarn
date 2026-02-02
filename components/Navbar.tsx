@@ -78,6 +78,16 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, user, onLogout
               {isMuted ? <VolumeX size={18} aria-hidden="true" /> : <Volume2 size={18} aria-hidden="true" />}
             </button>
 
+            {user.isAdmin && (
+                <button
+                  onClick={() => handleNavClick('ADMIN')}
+                  className={`p-1.5 transition-colors rounded-lg border ${currentView === 'ADMIN' ? 'text-red-400 border-red-500/40 bg-red-900/20 shadow-[0_0_10px_rgba(239,68,68,0.2)]' : 'text-gray-500 border-gray-800 bg-gray-900 hover:text-red-400'}`}
+                  aria-label={t('nav.admin')}
+                >
+                  <Settings size={18} aria-hidden="true" />
+                </button>
+            )}
+
             <button
               onClick={onLogout}
               className="p-1.5 text-gray-500 hover:text-red-400 transition-colors"
