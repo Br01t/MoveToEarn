@@ -797,7 +797,7 @@ export const it = {
     "tutorial.controls.finish": "Fine",
     "tutorial.controls.step": "Step",
     "tutorial.welcome.title": "Protocollo Inizializzato",
-    "tutorial.welcome.content": "Benvenuto Runner. Questo è il tuo terminale di comando per la conquista territoriale. Iniziamo la calibrazione del sistema.",
+    "tutorial.welcome.content": "Benvenuto, Runner. Questo è il tuo terminale di comando per la conquista territoriale. Iniziamo la calibrazione del sistema. Puoi cambiare lingua in qualsiasi momento tra Italiano e Inglese tramite l’icona con la bandiera, sia durante il tutorial che in tutta l’app.",
     "tutorial.map_grid.title": "La Griglia Globale",
     "tutorial.map_grid.content": "Il mondo è diviso in settori esagonali. Corri nella realtà per scoprirli, coniarli o strapparli ad altri runner.",
     "tutorial.toggle_exp.title": "Analisi Esplorativa",

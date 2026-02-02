@@ -798,7 +798,7 @@ export const en = {
     "tutorial.controls.finish": "Finish",
     "tutorial.controls.step": "Step",
     "tutorial.welcome.title": "Protocol Initialized",
-    "tutorial.welcome.content": "Welcome Runner. This is your command terminal for territorial conquest. Let's begin the system calibration.",
+    "tutorial.welcome.content": "Welcome, Runner. This is your command terminal for territorial conquest. Let's begin the system calibration. You can switch between Italian and English at any time using the flag icon, both during the tutorial and throughout the app.",
     "tutorial.map_grid.title": "The Global Grid",
     "tutorial.map_grid.content": "The world is divided into hexagonal sectors. Run in reality to discover, mint, or seize them from other runners.",
     "tutorial.toggle_exp.title": "Exploratory Analysis",
