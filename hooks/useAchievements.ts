@@ -31,14 +31,12 @@ export const useAchievements = ({ user, zones, missions, badges, setUser, logTra
     const newUnlockQueue: { type: 'MISSION' | 'BADGE'; item: Mission | Badge }[] = [];
     const timestamp = Date.now();
 
-    // Check Missions
     missions.forEach((m) => {
       if (!newMissionLog.some(log => log.id === m.id) && !processedIdsRef.current.has(m.id)) {
         if (checkAchievement(m, user, zones)) {
            processedIdsRef.current.add(m.id);
            newMissionLog.push({ id: m.id, claimedAt: timestamp });
            
-           // WELCOME BONUS LOGIC: First mission gives 300 RUN instead of 150
            let runReward = m.rewardRun;
            if (newMissionLog.length === 1 && runReward === 150) {
                runReward = 300;
@@ -56,7 +54,6 @@ export const useAchievements = ({ user, zones, missions, badges, setUser, logTra
       }
     });
 
-    // Check Badges
     badges.forEach((b) => {
       if (!newBadgeLog.some(log => log.id === b.id) && !processedIdsRef.current.has(b.id)) {
         if (checkAchievement(b, user, zones)) {

@@ -47,8 +47,6 @@ export const useZones = ({ user, zones, setUser, setZones, playSound }: ZonesHoo
               throw new Error((rpcRes as any).error || "Atomic transaction failed");
           }
 
-          // NOTIFICA SLACK: Rimosso invio manuale. 
-          // Gestito da Supabase Webhook sulla tabella 'runs' -> smart-processor
           return { success: true };
 
       } catch (err: any) {
@@ -89,8 +87,6 @@ export const useZones = ({ user, zones, setUser, setZones, playSound }: ZonesHoo
           setUser({ ...user, runBalance: newRun, govBalance: newGov });
           
           playSound('SUCCESS');
-          // NOTIFICA SLACK: Rimosso invio manuale.
-          // Gestito da Supabase Webhook sulla tabella 'zones' -> smart-processor
           return { success: true };
       } catch (err: any) {
           logger.error("Mint Error:", err);
@@ -126,8 +122,6 @@ export const useZones = ({ user, zones, setUser, setZones, playSound }: ZonesHoo
           playSound('SUCCESS');
           showToast(`${t('alert.zone_claimed')} +${CONQUEST_REWARD_GOV} GOV`, 'SUCCESS');
           
-          // NOTIFICA SLACK: Rimosso invio manuale.
-          // L'UPDATE sulla tabella 'zones' attiverà il webhook se configurato.
       } catch (err: any) {
           logger.error("Claim Error:", err);
           showToast(`Conquest failed: ${err.message}`, 'ERROR');

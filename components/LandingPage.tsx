@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Activity, Shield, Coins, TrendingUp, Terminal, BookOpen, ChevronRight, Zap, X, Volume2, VolumeX } from 'lucide-react';
 import { ViewState } from '../types';
@@ -10,7 +9,6 @@ interface LandingPageProps {
   onNavigate: (view: ViewState) => void;
 }
 
-// Feature Definition Type
 type FeatureKey = 'earn_run' | 'earn_gov' | 'spend' | 'burn';
 
 const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
@@ -48,10 +46,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
   return (
     <div className="min-h-screen bg-gray-950 flex flex-col relative overflow-hidden font-sans selection:bg-emerald-500 selection:text-black">
       
-      {/* --- BACKGROUND LAYER (STATIC) --- */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-gray-900 via-gray-950 to-black z-0" />
       
-      {/* High Contrast Hexagonal Grid */}
       <div 
         className="absolute inset-0 z-0 opacity-40 pointer-events-none"
         style={{
@@ -59,14 +55,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
             backgroundSize: '56px 98px'
         }}
       />
-      {/* Vignette Overlay to focus center */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,#000000_100%)] opacity-60 pointer-events-none z-0"></div>
       
-      {/* Static Orbs (Animation Removed) */}
       <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-emerald-500/10 rounded-full blur-[100px] opacity-30 pointer-events-none" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-cyan-600/10 rounded-full blur-[100px] opacity-30 pointer-events-none" />
 
-      {/* --- NAVBAR --- */}
       <header className="relative z-50 px-6 py-6 flex justify-between items-center max-w-7xl mx-auto w-full">
         <div className="flex items-center gap-3 cursor-pointer group" onClick={() => handleNavAction('LANDING')}>
           <div className="relative">
@@ -98,7 +91,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
         </div>
       </header>
 
-      {/* --- HERO SECTION --- */}
       <main className="relative z-10 flex-1 flex flex-col justify-center items-center px-4 text-center pb-20 pt-10">
         
         <div className="mb-10 inline-flex items-center gap-3 px-4 py-1.5 rounded-full glass-panel shadow-[0_0_15px_rgba(16,185,129,0.1)] animate-fade-in-up">
@@ -110,10 +102,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
         </div>
 
         <div className="max-w-5xl mx-auto space-y-8 animate-fade-in-up delay-100 relative">
-          {/* Abstract Hero Glow (Static) */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-emerald-500/5 blur-[80px] rounded-full pointer-events-none"></div>
 
-          {/* Reduced Title Size */}
           <h1 className="text-5xl md:text-7xl font-black text-white tracking-widest uppercase leading-[0.9] drop-shadow-2xl relative z-10">
             Run. Conquer. <br/>
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-cyan-300 to-emerald-400 animate-gradient bg-300%">
@@ -125,10 +115,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
             {tRich('landing.subtitle')}
           </p>
           
-          {/* ACTION BUTTONS */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-12 w-full max-w-lg mx-auto sm:max-w-none relative z-20">
             
-            {/* Primary: Start */}
             <button
               onClick={() => handleActionClick(onLogin)}
               data-text={t('landing.start_btn')}
@@ -140,7 +128,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
               </span>
             </button>
 
-            {/* Secondary: Game Rules */}
             <button 
               onClick={() => handleNavAction('RULES')}
               className="group w-full sm:w-auto px-8 py-5 glass-panel hover:bg-gray-800 text-white font-bold text-lg rounded-xl transition-all flex items-center justify-center gap-3"
@@ -149,7 +136,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
               <span className="uppercase tracking-wide">{t('landing.game_guide_btn')}</span>
             </button>
 
-            {/* Tertiary: Whitepaper */}
             <button 
               onClick={() => handleNavAction('WHITEPAPER')}
               className="group w-full sm:w-auto px-8 py-5 glass-panel bg-transparent hover:bg-gray-900 border-white/5 hover:border-white/20 text-gray-400 hover:text-white font-bold text-lg rounded-xl transition-all flex items-center justify-center gap-3"
@@ -161,7 +147,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
           </div>
         </div>
 
-        {/* FEATURE CARDS - INTERACTIVE */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-32 max-w-7xl mx-auto w-full px-4 animate-fade-in-up delay-300 relative z-20">
           {features.map((feature) => (
               <div key={feature.key}>
@@ -176,14 +161,12 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
           ))}
         </div>
 
-        {/* LEARN MORE MODAL */}
         {activeFeature && activeContent && (
             <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-md p-4 animate-fade-in" onClick={() => setActiveFeature(null)}>
                 <div 
                     className="glass-panel-heavy rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl relative animate-slide-up" 
                     onClick={(e) => e.stopPropagation()}
                 >
-                    {/* Header Image / Gradient */}
                     <div className={`h-32 w-full bg-gradient-to-r ${
                         activeFeature === 'earn_run' ? 'from-emerald-900 to-gray-900' :
                         activeFeature === 'earn_gov' ? 'from-cyan-900 to-gray-900' :
@@ -225,7 +208,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
   );
 };
 
-// Reusable Feature Card Component - Updated to accept ReactNode for description
 const FeatureCard = ({ icon, title, description, color, onClick }: { icon: any, title: string, description: React.ReactNode, color: string, onClick: () => void }) => {
     const borderClass = {
         emerald: 'hover:border-emerald-500/50',
@@ -264,7 +246,6 @@ const FeatureCard = ({ icon, title, description, color, onClick }: { icon: any, 
             Learn More <ChevronRight size={12} />
         </div>
         
-        {/* Glow Hover */}
         <div className={`absolute -bottom-10 -right-10 w-32 h-32 bg-${color}-500/20 blur-[60px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none`}></div>
       </div>
     );

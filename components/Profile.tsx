@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { User, Zone, Mission, Badge, Rarity, LevelConfig, LeaderboardConfig, BugReport, Suggestion } from '../types';
 import { Award, History, Coins, BarChart3, Shield, Trophy, MapPin, ChevronUp, ChevronDown, Users, X, Medal, Crown, Zap, Search, Package } from 'lucide-react';
@@ -9,7 +8,6 @@ import UserSubmissionsModal from './profile/UserSubmissionsModal';
 import LevelUpModal from './profile/LevelUpModal'; 
 import { useGlobalUI } from '../contexts/GlobalUIContext';
 
-// Sub Components
 import ProfileHeader from './profile/ProfileHeader';
 import ProfileAchievementsTab from './profile/ProfileAchievementsTab';
 
@@ -44,7 +42,6 @@ const Profile: React.FC<ProfileProps> = ({
   const [activeTab, setActiveTab] = useState<'ACHIEVEMENTS' | 'HISTORY'>('ACHIEVEMENTS');
   const [showSubmissionsModal, setShowSubmissionsModal] = useState(false);
   
-  // Local states
   const [runPage, setRunPage] = useState(1);
   const [historySearch, setHistorySearch] = useState(''); 
   const [zonePage, setZonePage] = useState(1);
@@ -52,10 +49,8 @@ const Profile: React.FC<ProfileProps> = ({
   const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
   const [zoneLeaderboard, setZoneLeaderboard] = useState<any[]>([]);
   
-  // Level Up State
   const [showLevelUp, setShowLevelUp] = useState(false);
 
-  // --- DERIVED STATS ---
   const myZones = zones.filter(z => z.ownerId === user.id);
   const allEarnedBadges = badges.filter(b => user.earnedBadgeIds.includes(b.id));
   const allCompletedMissions = missions.filter(m => user.completedMissionIds.includes(m.id));
@@ -64,24 +59,20 @@ const Profile: React.FC<ProfileProps> = ({
   const myBugReports = useMemo(() => bugReports.filter(b => b.userId === user.id), [bugReports, user.id]);
   const mySuggestions = useMemo(() => suggestions.filter(s => s.userId === user.id), [suggestions, user.id]);
 
-  // Inventory Calcs
   const totalItems = user.inventory.reduce((acc, i) => acc + i.quantity, 0);
   const boostCount = user.inventory.filter(i => i.type === 'BOOST').reduce((acc, i) => acc + i.quantity, 0);
   const shieldCount = user.inventory.filter(i => i.type === 'DEFENSE').reduce((acc, i) => acc + i.quantity, 0);
 
-  // --- PERFORMANCE METRICS ---
   const validHistory = user.runHistory || [];
   const totalRuns = validHistory.length;
   const maxDistance = totalRuns > 0 ? Math.max(...validHistory.map(r => Number(r.km))).toFixed(2) : '0.00';
   const calculatedTotalKm = validHistory.reduce((acc, curr) => acc + Number(curr.km), 0).toFixed(2);
 
-  // Territory Stats
   const now = Date.now();
   const totalOwned = myZones.length;
   const activeBoosts = myZones.filter(z => z.boostExpiresAt && z.boostExpiresAt > now).length;
   const activeShields = myZones.filter(z => z.shieldExpiresAt && z.shieldExpiresAt > now).length;
 
-  // --- LEVEL LOGIC ---
   let currentLevel = 1;
   let nextLevelKm = 50; 
   let progressToNextLevel = 0;
@@ -107,7 +98,6 @@ const Profile: React.FC<ProfileProps> = ({
       progressToNextLevel = ((currentTotalKmVal - ((currentLevel - 1) * 50)) / 50) * 100;
   }
 
-  // --- LEVEL UP EFFECT ---
   useEffect(() => {
       const storageKey = `zr_level_${user.id}`;
       const stored = localStorage.getItem(storageKey);
@@ -117,7 +107,6 @@ const Profile: React.FC<ProfileProps> = ({
           if (prevLevel !== 0) {
               setShowLevelUp(true);
               playSound('SUCCESS');
-              // Rimossi i confetti come richiesto
           } else {
               localStorage.setItem(storageKey, currentLevel.toString());
           }
@@ -129,7 +118,6 @@ const Profile: React.FC<ProfileProps> = ({
       localStorage.setItem(`zr_level_${user.id}`, currentLevel.toString());
   };
 
-  // --- ZONE DATA LOOKUP ---
   const selectedZone = useMemo(() => zones.find(z => z.id === selectedZoneId), [zones, selectedZoneId]);
 
   useEffect(() => {
@@ -148,7 +136,6 @@ const Profile: React.FC<ProfileProps> = ({
       return { name: userData.name, avatar: userData.avatar, badge: userBadge };
   }, [selectedZone, allUsers, user, badges]);
 
-  // --- ZONE STATS LOGIC ---
   const sortedZoneStats = useMemo(() => {
       const statsMap = new Map<string, { id: string; name: string; count: number; km: number; isOwned: boolean }>();
       myZones.forEach(z => {
@@ -218,7 +205,6 @@ const Profile: React.FC<ProfileProps> = ({
 
   const currentZoneStats = sortedZoneStats.slice((zonePage - 1) * ZONES_PER_PAGE, zonePage * ZONES_PER_PAGE);
 
-  // --- FILTERED HISTORY ---
   const filteredRuns = useMemo(() => {
       return validHistory.filter(run => {
           if (!historySearch) return true;
@@ -234,7 +220,6 @@ const Profile: React.FC<ProfileProps> = ({
   const currentRuns = filteredRuns.slice((runPage - 1) * RUNS_PER_PAGE, runPage * RUNS_PER_PAGE);
   const totalRunPages = Math.ceil(filteredRuns.length / RUNS_PER_PAGE);
 
-  // --- LEADERBOARD LOGIC ---
   const getLeaderboardRank = (board: LeaderboardConfig) => {
       const getScore = (u: any, isCurrentUser: boolean) => {
           const timeFilter = board.lastResetTimestamp || board.startTime || 0;
@@ -280,7 +265,6 @@ const Profile: React.FC<ProfileProps> = ({
   return (
     <div className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
       
-      {/* HEADER */}
       <ProfileHeader 
           user={{...user, totalKm: currentTotalKmVal}} 
           favoriteBadge={favoriteBadge} 
@@ -295,7 +279,6 @@ const Profile: React.FC<ProfileProps> = ({
           onViewSubmissions={() => setShowSubmissionsModal(true)}
       />
 
-      {/* STATS ROW (HUD EFFECT APPLIED) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="glass-panel rounded-xl p-5 relative overflow-hidden flex flex-col justify-between">
               <div className="absolute top-0 right-0 p-4 opacity-5"><Coins size={80}/></div>
@@ -313,7 +296,6 @@ const Profile: React.FC<ProfileProps> = ({
                       <span className="text-xl font-mono font-bold text-cyan-400">{user.govBalance.toFixed(1)}</span>
                   </div>
                   
-                  {/* INVENTORY SUMMARY */}
                   <div className="flex flex-col bg-black/20 p-3 rounded-lg border border-white/5 mt-auto">
                       <div className="flex justify-between items-center mb-2">
                           <span className="text-sm text-gray-400 font-bold flex items-center gap-1">
@@ -360,7 +342,6 @@ const Profile: React.FC<ProfileProps> = ({
               </div>
           </div>
 
-          {/* TERRITORY STATUS */}
           <div className="glass-panel rounded-xl p-5 flex flex-col justify-between">
               <h3 className="text-white font-bold uppercase tracking-wide mb-4 flex items-center gap-2 border-b border-white/10 pb-2">
                   <Shield size={18} className="text-gray-400"/> {t('profile.territory_status')}
@@ -393,7 +374,6 @@ const Profile: React.FC<ProfileProps> = ({
           </div>
       </div>
 
-      {/* LEADERBOARD RANKS */}
       {leaderboards.length > 0 && (
           <div className="glass-panel rounded-xl p-5">
               <h3 className="text-white font-bold uppercase tracking-wide mb-4 flex items-center gap-2">
@@ -430,7 +410,6 @@ const Profile: React.FC<ProfileProps> = ({
           </div>
       )}
 
-      {/* ZONE STATS */}
       <div className="glass-panel rounded-xl p-5">
           <h3 className="text-white font-bold uppercase tracking-wide mb-4 flex items-center gap-2">
               <MapPin size={18} className="text-emerald-400"/> {t('profile.zone_stats')}
@@ -483,7 +462,6 @@ const Profile: React.FC<ProfileProps> = ({
           )}
       </div>
 
-      {/* TABS (Glass Style) */}
       <div className="w-full">
           <div className="glass-panel rounded-xl min-h-[500px] flex flex-col relative z-0">
               <div className="flex border-b border-white/10 bg-black/40 rounded-t-xl">
@@ -510,7 +488,6 @@ const Profile: React.FC<ProfileProps> = ({
                               <div className="text-center py-20 text-gray-500"><History size={48} className="mx-auto mb-4 opacity-20" /><p>{t('profile.no_runs')}</p></div>
                           ) : (
                               <>
-                                {/* SEARCH BAR */}
                                 <div className="relative mb-2">
                                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" size={16} />
                                     <input 
@@ -569,7 +546,6 @@ const Profile: React.FC<ProfileProps> = ({
           </div>
       </div>
 
-      {/* ZONE DETAILS MODAL */}
       {selectedZone && (
           <ZoneStatsModal 
               zone={selectedZone}
@@ -580,7 +556,6 @@ const Profile: React.FC<ProfileProps> = ({
           />
       )}
 
-      {/* SUBMISSIONS MODAL */}
       {showSubmissionsModal && (
           <UserSubmissionsModal 
               bugReports={myBugReports}
@@ -589,7 +564,6 @@ const Profile: React.FC<ProfileProps> = ({
           />
       )}
 
-      {/* LEVEL UP MODAL */}
       {showLevelUp && (
           <LevelUpModal 
               level={currentLevel}

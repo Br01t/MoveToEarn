@@ -11,13 +11,11 @@ import { OnboardingProvider, useOnboarding } from "./contexts/OnboardingContext"
 import OnboardingManager from "./components/OnboardingManager";
 import { MINT_COST, MINT_REWARD_GOV, CONQUEST_COST } from "./constants";
 
-// Custom Hooks
 import { useGameState } from "./hooks/useGameState";
 import { useRunWorkflow } from "./hooks/useRunWorkflow";
 import { useAchievements } from "./hooks/useAchievements";
 import { usePWA } from "./hooks/usePWA";
 
-// Lazy Loaded Components
 const Marketplace = React.lazy(() => import("./components/Marketplace"));
 const Wallet = React.lazy(() => import("./components/Wallet"));
 const Inventory = React.lazy(() => import("./components/Inventory"));
@@ -35,7 +33,6 @@ const ReportBug = React.lazy(() => import("./components/pages/ReportBug"));
 const SuggestionPage = React.lazy(() => import("./components/pages/SuggestionPage"));
 const Footer = React.lazy(() => import("./components/Footer"));
 
-// Modals
 import AchievementModal from "./components/AchievementModal";
 import LoginModal from "./components/auth/LoginModal"; 
 const ZoneDiscoveryModal = React.lazy(() => import("./components/ZoneDiscoveryModal"));

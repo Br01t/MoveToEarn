@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Bug, Camera, Send, CheckCircle, AlertTriangle, Loader2 } from 'lucide-react';
 import { useLanguage } from '../../LanguageContext';
@@ -22,15 +21,12 @@ const ReportBug: React.FC<ReportBugProps> = ({ onReport }) => {
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      // Increased limit to 20MB for high-res mobile photos (compression will reduce this significantly later)
       if (file.size > 20 * 1024 * 1024) { 
           showToast("File too large. Max 20MB.", 'ERROR');
           return;
       }
       
       try {
-          // Compress immediately for preview and preparation
-          // Reduce to 1024px width and 0.6 quality for better readability of bug reports
           const compressed = await compressImage(file, 1024, 0.6);
           setScreenshotFile(compressed);
           setPreviewUrl(URL.createObjectURL(compressed));

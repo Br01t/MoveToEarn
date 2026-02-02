@@ -105,7 +105,6 @@ const AdminEconomyTab: React.FC<AdminEconomyTabProps> = ({
     <div className="space-y-8">
         {notification && <NotificationToast message={notification.message} type={notification.type} onClose={() => setNotification(null)} />}
         
-        {/* SWAP CONFIG */}
         <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
             <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
                 <RefreshCw className="text-cyan-400" /> Swap Configuration
@@ -119,7 +118,6 @@ const AdminEconomyTab: React.FC<AdminEconomyTabProps> = ({
             </div>
         </div>
 
-        {/* SYSTEM MAINTENANCE */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-gray-800 p-6 rounded-xl border border-blue-500/30 relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none"><Database size={80} className="text-blue-400" /></div>
@@ -158,7 +156,6 @@ const AdminEconomyTab: React.FC<AdminEconomyTabProps> = ({
             </div>
         </div>
 
-        {/* GLOBAL BURN */}
         <div className="bg-gray-800 p-6 rounded-xl border border-gray-700 relative overflow-hidden">
             <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none"><Flame size={120} /></div>
             <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2 relative z-10">
@@ -196,7 +193,6 @@ const AdminEconomyTab: React.FC<AdminEconomyTabProps> = ({
             </div>
         </div>
 
-        {/* MODALS */}
         {showBurnModal && <ConfirmModal title="INITIATE GLOBAL BURN?" message="This will permanently destroy 2% of all circulating RUN tokens. This action cannot be undone." onConfirm={executeBurn} onCancel={() => setShowBurnModal(false)} isDestructive confirmLabel="CONFIRM BURN" />}
         {showMaintenanceModal && <ConfirmModal title="RUN SECTOR MAINTENANCE?" message="This will scan every activity ever recorded to verify zone records. It may take a few seconds." onConfirm={executeMaintenance} onCancel={() => setShowMaintenanceModal(false)} confirmLabel="Start Maintenance" />}
         {showUserMaintenanceModal && <ConfirmModal title="RUN USER MAINTENANCE?" message="This will aggregate kilometers from all validated runs to align 'total_km' in user profiles. This ensures leaderboard accuracy." onConfirm={executeUserMaintenance} onCancel={() => setShowUserMaintenanceModal(false)} confirmLabel="Start Maintenance" />}

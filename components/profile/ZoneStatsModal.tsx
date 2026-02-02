@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Zone, User, Badge, Rarity } from '../../types';
 import { X, Crown, Shield, Medal, Lock, Zap, Flag, Award, Mountain, Globe, Home, Landmark, Swords, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users, MapPin, Activity, Coins } from 'lucide-react';
@@ -18,7 +17,6 @@ const ZoneStatsModal: React.FC<ZoneStatsModalProps> = ({
   const { t } = useLanguage();
   const [now, setNow] = useState(Date.now());
 
-  // Update timer to handle expiration while modal is open
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(interval);
@@ -78,10 +76,8 @@ const ZoneStatsModal: React.FC<ZoneStatsModalProps> = ({
             </button>
         </div>
 
-        {/* Content */}
         <div className="p-5 space-y-5 overflow-y-auto max-h-[70vh]">
             
-            {/* Owner Info */}
             {ownerDetails && (
                 <div className="bg-black/30 p-4 rounded-xl border border-white/5 flex items-center gap-4">
                     <div className="relative shrink-0">
@@ -110,7 +106,6 @@ const ZoneStatsModal: React.FC<ZoneStatsModalProps> = ({
                 </div>
             )}
 
-            {/* Stats Grid */}
             <div className="grid grid-cols-2 gap-3">
                 <div className="bg-black/30 p-3 rounded-xl border border-white/5 flex flex-col items-center justify-center text-center">
                      <div className="text-[10px] text-gray-400 uppercase font-bold mb-1">{t('dash.yield')}</div>
@@ -138,7 +133,6 @@ const ZoneStatsModal: React.FC<ZoneStatsModalProps> = ({
                 </div>
             </div>
 
-            {/* NEW: Interest Pool & Global Distance Block */}
             <div className="bg-emerald-900/20 p-4 rounded-xl border border-emerald-500/20 text-center">
                 <div className="mb-3">
                     <div className="text-xs text-emerald-200/70 uppercase font-bold tracking-wider mb-1">{t('zone.interest_pool')}</div>
@@ -152,7 +146,6 @@ const ZoneStatsModal: React.FC<ZoneStatsModalProps> = ({
                 </div>
             </div>
 
-            {/* Leaderboard */}
             <div>
                 <h4 className="text-xs font-bold text-gray-500 uppercase mb-3 flex items-center gap-2 pl-1">
                     <Medal size={14} className="text-yellow-500"/> {t('zone.top_runners')}

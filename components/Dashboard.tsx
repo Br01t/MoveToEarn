@@ -46,17 +46,14 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [activeTooltip, setActiveTooltip] = useState<'EXPLORATION' | 'TRAJECTORIES' | null>(null);
   const tooltipTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Search & Filter State
   const [searchTerm, setSearchTerm] = useState('');
   const [filterMode, setFilterMode] = useState<'ALL' | 'MINE' | 'ENEMY'>('ALL');
   const [filterCountry, setFilterCountry] = useState<string>('ALL');
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [historyPage, setHistoryPage] = useState(1);
 
-  // Map View State
   const [view, setView] = useState({ x: window.innerWidth / 2, y: window.innerHeight / 2, scale: 0.8 });
   
-  // Dragging & Pinch State
   const isDragging = useRef(false);
   const lastMousePos = useRef({ x: 0, y: 0 });
   const initialPinchDistance = useRef<number | null>(null);

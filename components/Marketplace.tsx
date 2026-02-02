@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Item, User } from '../types';
 import { Shield, Zap, ShoppingCart, X, AlertTriangle, CheckCircle, Package, Coins, Clock, TrendingUp, ShoppingBag } from 'lucide-react';
@@ -22,13 +21,12 @@ const Marketplace: React.FC<MarketplaceProps> = ({ user, items, onBuy }) => {
 
   const confirmPurchase = (e: React.MouseEvent) => {
     if (confirmItem) {
-      triggerParticles(e.clientX, e.clientY, '#10b981'); // Emerald explosion
+      triggerParticles(e.clientX, e.clientY, '#10b981');
       onBuy(confirmItem);
       setConfirmItem(null);
     }
   };
 
-  // Check if there are any special currency items (Flash Drops)
   const hasFlashItems = items.some(i => i.type === 'CURRENCY' && i.quantity > 0);
 
   return (
@@ -46,7 +44,6 @@ const Marketplace: React.FC<MarketplaceProps> = ({ user, items, onBuy }) => {
         </div>
       </div>
 
-      {/* FLASH DROP INFO BANNER - Visible ONLY if CURRENCY items exist */}
       {hasFlashItems && (
         <div className="bg-gradient-to-r from-yellow-900/40 to-transparent border-l-4 border-yellow-500 p-6 rounded-r-xl mb-8 relative overflow-hidden group animate-fade-in glass-panel border-y-0 border-r-0">
            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
@@ -134,7 +131,6 @@ const Marketplace: React.FC<MarketplaceProps> = ({ user, items, onBuy }) => {
         </div>
       )}
 
-      {/* Confirmation Modal */}
       {confirmItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in">
           <div className="glass-panel-heavy rounded-2xl w-full max-w-sm overflow-hidden animate-slide-up">

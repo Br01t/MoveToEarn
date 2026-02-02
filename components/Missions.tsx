@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Mission, Badge, User, Zone, Rarity, RunEntry } from '../types';
 import { Target, Award, CheckCircle, Lock, Flag, Crown, Star, Hexagon, Filter, Zap, Mountain, Globe, Home, Landmark, Swords, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users, Search, List } from 'lucide-react';
@@ -20,21 +19,17 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
   const [missionPage, setMissionPage] = useState(1);
   const [badgePage, setBadgePage] = useState(1);
   
-  // Filter States
   const [missionFilter, setMissionFilter] = useState<'ALL' | Rarity>('ALL');
   const [badgeFilter, setBadgeFilter] = useState<'ALL' | Rarity>('ALL');
   
-  // Status Filter States (New)
   const [missionStatus, setMissionStatus] = useState<'ALL' | 'DONE' | 'TODO'>('ALL');
   const [badgeStatus, setBadgeStatus] = useState<'ALL' | 'OWNED' | 'LOCKED'>('ALL');
   
-  // Search States
   const [missionSearch, setMissionSearch] = useState('');
   const [badgeSearch, setBadgeSearch] = useState('');
 
   const ownedZonesCount = zones.filter(z => z.ownerId === user.id).length;
 
-  // --- HELPERS ---
   const calculateStreak = (history: RunEntry[]): number => {
       if (history.length === 0) return 0;
       const days = Array.from(new Set(history.map(run => {
@@ -63,14 +58,11 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
       return streak;
   };
 
-  // Generic function to calculate progress for both Missions and Badges
   const getItemStats = (item: Mission | Badge, isCompleted: boolean): { current: number; target: number; unit: string; percent: number } => {
-      // If already marked as completed/earned by the caller, return 100%
       if (isCompleted) {
           return { current: 1, target: 1, unit: '', percent: 100 };
       }
 
-      // Fallback for manual items (no logic ID)
       if (!item.logicId) {
           if (item.conditionType === 'TOTAL_KM') {
               const target = item.conditionValue || 100;
@@ -80,7 +72,6 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
               const target = item.conditionValue || 1;
               return { current: ownedZonesCount, target, unit: 'zones', percent: Math.min(100, (ownedZonesCount / target) * 100) };
           }
-          // Default manual
           return { current: 0, target: 1, unit: 'task', percent: 0 };
       }
 
@@ -147,7 +138,6 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
           case 97: target = 50; unit = 'badges'; current = user.earnedBadgeIds.length; break;
           case 100: target = 10; unit = 'epic+'; current = badges.filter(b => user.earnedBadgeIds.includes(b.id) && (b.rarity === 'EPIC' || b.rarity === 'LEGENDARY')).length; break;
 
-          // --- DEFAULT / BOOLEAN (0 or 1) ---
           default: 
              target = 1; 
              unit = 'task'; 
@@ -159,15 +149,11 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
       return { current, target, unit, percent };
   };
 
-  // --- DATA PREPARATION & SORTING ---
-  
-  // 1. Process Missions (Calculate Progress & Sort)
   const processedMissions = useMemo(() => {
       return missions.map(m => {
           const isCompleted = user.completedMissionIds.includes(m.id);
           const stats = getItemStats(m, isCompleted);
           
-          // Localization
           const id = m.logicId || m.id; 
           const titleKey = `mission.${id}.title`;
           const descKey = `mission.${id}.desc`;
@@ -182,27 +168,21 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
               stats
           };
       }).sort((a, b) => {
-          // Sort Logic:
-          // 1. Incomplete items first (Completed goes to bottom)
           if (a.isCompleted !== b.isCompleted) return a.isCompleted ? 1 : -1;
           
-          // 2. Highest Percentage First (Closest to completion)
           if (a.stats.percent !== b.stats.percent) return b.stats.percent - a.stats.percent;
           
-          // 3. Newest ID First (Admin created items or just ID sort)
           if (a.id > b.id) return -1;
           if (a.id < b.id) return 1;
           return 0;
       });
   }, [missions, language, t, user.completedMissionIds, user.totalKm, user.runHistory, ownedZonesCount]);
 
-  // 2. Process Badges (Calculate Progress & Sort)
   const processedBadges = useMemo(() => {
       return badges.map(b => {
           const isUnlocked = user.earnedBadgeIds.includes(b.id);
           const stats = getItemStats(b, isUnlocked);
 
-          // Localization
           const id = b.logicId || b.id;
           const titleKey = `badge.${id}.name`;
           const descKey = `badge.${id}.desc`;
@@ -217,21 +197,15 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
               stats
           };
       }).sort((a, b) => {
-          // Sort Logic:
-          // 1. Locked items first (Unlocked goes to bottom)
           if (a.isUnlocked !== b.isUnlocked) return a.isUnlocked ? 1 : -1;
           
-          // 2. Highest Percentage First (Closest to unlock)
           if (a.stats.percent !== b.stats.percent) return b.stats.percent - a.stats.percent;
           
-          // 3. Newest ID First
           if (a.id > b.id) return -1;
           if (a.id < b.id) return 1;
           return 0;
       });
   }, [badges, language, t, user.earnedBadgeIds, user.totalKm, user.runHistory, ownedZonesCount]);
-
-  // --- FILTERING ---
   
   const filteredMissions = processedMissions.filter(m => {
       const matchesRarity = missionFilter === 'ALL' || m.rarity === missionFilter;
@@ -256,8 +230,6 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
 
       return matchesRarity && matchesSearch && matchesStatus;
   });
-
-  // --- PAGINATION ---
   
   const totalMissionPages = Math.ceil(filteredMissions.length / MISSIONS_PER_PAGE);
   const currentMissions = filteredMissions.slice(
@@ -301,7 +273,7 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
           case 'COMMON': return { 
               border: 'border-gray-600', 
               text: 'text-gray-400', 
-              bg: '', // Removed solid background for glass-panel
+              bg: '',
               badge: 'bg-gray-700/50 text-gray-300',
               progress: 'bg-gray-500',
               doneBadge: 'bg-gray-700/50 text-gray-300'
@@ -351,7 +323,6 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
       setBadgePage(1);
   };
 
-  // Reusable Rarity Buttons
   const FilterGroup = ({ currentFilter, onFilterChange }: { currentFilter: 'ALL' | Rarity, onFilterChange: (f: 'ALL' | Rarity) => void }) => (
       <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
         <button 
@@ -387,7 +358,6 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
       </div>
   );
 
-  // Status Filter Component
   const StatusToggle = ({ 
       current, 
       onChange, 
@@ -429,7 +399,6 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
   return (
     <div className="max-w-6xl mx-auto p-4 space-y-8">
       
-      {/* HEADER */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
          <div>
             <h1 className="text-2xl font-bold text-white mb-1 flex items-center gap-2">
@@ -439,21 +408,18 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
          </div>
       </div>
 
-      {/* ACTIVE MISSIONS */}
       <div>
         <div className="flex flex-col gap-4 mb-4">
             <h2 className="text-lg font-bold text-white border-l-4 border-emerald-500 pl-3">{t('miss.log')}</h2>
             
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-center gap-3 w-full md:w-auto">
-                    {/* Status Toggle for Missions */}
                     <StatusToggle 
                         type="MISSION" 
                         current={missionStatus} 
                         onChange={(val) => { setMissionStatus(val); setMissionPage(1); }} 
                     />
 
-                    {/* Search Bar for Missions */}
                     <div className="relative flex-1 md:w-64">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" size={16} />
                         <input 
@@ -469,7 +435,6 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
                     </div>
                 </div>
 
-                {/* Filter Controls */}
                 <FilterGroup currentFilter={missionFilter} onFilterChange={handleMissionFilterChange} />
             </div>
         </div>
@@ -545,21 +510,18 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
         />
       </div>
 
-      {/* BADGE GALLERY */}
       <div>
         <div className="flex flex-col gap-4 mb-4">
             <h2 className="text-lg font-bold text-white border-l-4 border-yellow-500 pl-3">{t('miss.gallery')}</h2>
             
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-center gap-3 w-full md:w-auto">
-                    {/* Status Toggle for Badges */}
                     <StatusToggle 
                         type="BADGE" 
                         current={badgeStatus} 
                         onChange={(val) => { setBadgeStatus(val); setBadgePage(1); }} 
                     />
 
-                    {/* Search Bar for Badges */}
                     <div className="relative flex-1 md:w-64">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" size={16} />
                         <input 
@@ -575,7 +537,6 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
                     </div>
                 </div>
 
-                {/* Filter Controls for Badges */}
                 <FilterGroup currentFilter={badgeFilter} onFilterChange={handleBadgeFilterChange} />
             </div>
         </div>
@@ -600,7 +561,6 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
                     ${badge.isUnlocked ? `glass-panel ${style.border}` : 'glass-panel opacity-60'}`} 
             >
                 
-                {/* TOOLTIP */}
                 <div className="absolute z-50 top-0 left-1/2 transform -translate-x-1/2 mt-[-10px] w-56 p-3 glass-panel-heavy rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
                     <h5 className={`font-bold text-sm mb-1 ${style.text}`}>{badge.name}</h5>
                     <p className="text-xs text-gray-300">{badge.description}</p>
@@ -612,7 +572,6 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
                     </div>
                 </div>
 
-                {/* EFFETTO VISIVO */}
                 {badge.isUnlocked && (badge.rarity === 'LEGENDARY' || badge.rarity === 'EPIC') && (
                     <div className={`absolute top-0 left-0 w-full h-full opacity-10 bg-gradient-to-br ${badge.rarity === 'LEGENDARY' ? 'from-yellow-500 to-transparent' : 'from-purple-500 to-transparent'}`}></div>
                 )}

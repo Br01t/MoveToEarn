@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Mail, ArrowRight, X, Activity, AlertTriangle, Lock, User as UserIcon, KeyRound, CheckCircle, ArrowLeft } from 'lucide-react';
 import { useLanguage } from '../../LanguageContext';

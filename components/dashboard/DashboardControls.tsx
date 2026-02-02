@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Filter, ZoomIn, ZoomOut, Swords, AlertTriangle } from 'lucide-react';
 import { useLanguage } from '../../LanguageContext';

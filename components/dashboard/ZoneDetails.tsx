@@ -49,9 +49,7 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
   const isTopRunner = topRunner ? topRunner.id === user.id : false;
   const isOwner = zone.ownerId === user.id;
   
-  // STATO CRITICO: Top Runner ma non Owner (Opportunità)
   const isRipeForConquest = isTopRunner && !isOwner;
-  // STATO CRITICO: Owner ma non più Top Runner (Pericolo)
   const isTerritoryAtRisk = isOwner && !isTopRunner && zoneLeaderboard.length > 0;
 
   const currentUserStats = zoneLeaderboard.find(u => u.id === user.id);
@@ -112,7 +110,6 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
     >
       <div className="relative p-5 flex flex-col h-full overflow-hidden">
         
-        {/* OPPORTUNITY BANNER */}
         {isRipeForConquest && (
             <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-yellow-600 to-yellow-500 py-1 px-4 flex items-center justify-center gap-2 z-20 shadow-lg">
                 <TrendingUp size={12} className="text-black animate-bounce" />
@@ -120,14 +117,12 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
             </div>
         )}
 
-        {/* RISK BANNER */}
         {isTerritoryAtRisk && (
             <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-red-600 to-red-500 py-1 px-4 flex items-center justify-center gap-2 z-20 shadow-lg">
                 <AlertCircle size={20} className="text-white animate-pulse" />
             </div>
         )}
 
-        {/* CONFIRMATION MODAL OVERLAY */}
         {confirmAction && (
             <div className="absolute inset-0 z-50 bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center animate-fade-in">
                 <div className={`p-4 rounded-full mb-4 ${confirmAction === 'BOOST' ? 'bg-amber-900/40 text-amber-400' : 'bg-cyan-900/40 text-cyan-400'}`}>
@@ -167,7 +162,6 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
           style={{ touchAction: 'pan-y' }}
           onPointerDown={stopEvent}
         >
-            {/* Owner Card */}
             {ownerDetails && (
                 <div className={`glass-panel p-3 rounded-xl flex items-center gap-3 shrink-0 border transition-colors ${isTerritoryAtRisk ? 'border-red-500/40 bg-red-950/20' : 'border-white/5'}`}>
                     <div className="relative shrink-0">
@@ -248,7 +242,6 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
                 <span className="font-mono font-bold text-white text-base">{myKmInZone.toFixed(2)} km</span>
             </div>
 
-            {/* Leaderboard Section */}
             <div className="bg-black/20 rounded-lg border border-white/5 p-3 shrink-0">
                 <h4 className="text-xs font-bold text-gray-400 uppercase mb-3 flex items-center gap-1 tracking-wider">
                     <Medal size={12} className="text-yellow-500"/> {t('zone.top_runners')}
@@ -286,7 +279,6 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
             </div>
         </div>
 
-        {/* Action area */}
         <div className="pt-4 mt-2 border-t border-white/10 shrink-0">
            {isOwner ? (
                 <div className="flex flex-col gap-2">

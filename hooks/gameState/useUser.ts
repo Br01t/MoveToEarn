@@ -1,4 +1,3 @@
-
 import { supabase } from '../../supabaseClient';
 import { User } from '../../types';
 import { useGlobalUI } from '../../contexts/GlobalUIContext';
@@ -28,19 +27,16 @@ export const useUser = ({ user, setUser, fetchUserProfile, logTransaction, playS
   const resetPassword = async (email: string) => {
       const productionUrl = (import.meta as any).env.VITE_SITE_URL;
       const redirectTo = productionUrl || window.location.origin;
-      // Fix: Use any cast to resolve property existence errors on resetPasswordForEmail.
       return await (supabase.auth as any).resetPasswordForEmail(email, { redirectTo });
   };
 
   const updatePassword = async (newPassword: string) => {
-      // Fix: Use any cast to resolve property existence errors on updateUser.
       const res = await (supabase.auth as any).updateUser({ password: newPassword });
       if (!res.error) playSound('SUCCESS');
       return res;
   };
 
   const register = async (email: string, password: string, username: string) => {
-      // Fix: Use any cast to resolve property existence errors on signUp.
       const { data, error } = await (supabase.auth as any).signUp({ email, password, options: { data: { name: username } } });
       if (data.user && !error) {
           playSound('SUCCESS');
@@ -61,8 +57,6 @@ export const useUser = ({ user, setUser, fetchUserProfile, logTransaction, playS
 
   const logout = async () => { 
       try {
-          // playSound('CLICK') rimosso: gestito dal listener globale sull'elemento UI
-          // Fix: Use any cast to resolve property existence errors on signOut.
           await (supabase.auth as any).signOut({ scope: 'global' }); 
           Object.keys(localStorage).forEach(key => {
               if (key.includes('supabase.auth.token') || key.startsWith('sb-')) {

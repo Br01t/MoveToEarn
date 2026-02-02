@@ -1,11 +1,9 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { User, Transaction } from '../types';
 import { Wallet as WalletIcon, CheckCircle, Link as LinkIcon, Activity, Crown, History, ArrowDownLeft, ArrowUpRight, Flame, X, Search, Filter } from 'lucide-react';
 import Pagination from './Pagination';
 import { useLanguage } from '../LanguageContext';
 
-// Sub Components
 import WalletCharts from './wallet/WalletCharts';
 import WalletActions from './wallet/WalletActions';
 
@@ -25,18 +23,15 @@ const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuy
   const { t, tRich } = useLanguage();
   const [isWalletConnected, setIsWalletConnected] = useState(false);
   
-  // History Modal State
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [historyPage, setHistoryPage] = useState(1);
   
-  // New Filter States
   const [historySearch, setHistorySearch] = useState('');
   const [historyFilter, setHistoryFilter] = useState<'ALL' | 'IN' | 'OUT'>('ALL');
   const [historyTokenFilter, setHistoryTokenFilter] = useState<'ALL' | 'RUN' | 'GOV'>('ALL');
 
-  // Countdown State
   const [timeLeft, setTimeLeft] = useState(0);
-  const BURN_COOLDOWN_MS = 30 * 24 * 60 * 60 * 1000; // 30 Days
+  const BURN_COOLDOWN_MS = 30 * 24 * 60 * 60 * 1000;
 
   useEffect(() => {
       const checkTimer = () => {
@@ -64,24 +59,20 @@ const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuy
       return `${d}d ${h}h ${m}m ${s}s`;
   };
 
-  // Filter Transactions for current user, apply search/filter, and sort
   const myTransactions = useMemo(() => {
       let filtered = transactions
         .filter(t => t.userId === user.id)
         .sort((a, b) => b.timestamp - a.timestamp);
 
-      // Apply Search
       if (historySearch) {
           const lowerSearch = historySearch.toLowerCase();
           filtered = filtered.filter(t => t.description.toLowerCase().includes(lowerSearch));
       }
 
-      // Apply Type Filter (IN/OUT)
       if (historyFilter !== 'ALL') {
           filtered = filtered.filter(t => t.type === historyFilter);
       }
 
-      // Apply Token Filter (RUN/GOV)
       if (historyTokenFilter !== 'ALL') {
           filtered = filtered.filter(t => t.token === historyTokenFilter);
       }
@@ -89,7 +80,6 @@ const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuy
       return filtered;
   }, [transactions, user.id, historySearch, historyFilter, historyTokenFilter]);
 
-  // CALCOLO BURN PERSONALE PER IL BANNER
   const personalBurnTotal = useMemo(() => {
       return transactions
         .filter(tx => 
@@ -104,7 +94,6 @@ const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuy
         .reduce((sum, tx) => sum + tx.amount, 0);
   }, [transactions, user.id]);
 
-  // Pagination Logic (Based on filtered results)
   const totalHistoryPages = Math.ceil(myTransactions.length / TRANSACTIONS_PER_PAGE);
   const currentHistory = myTransactions.slice(
       (historyPage - 1) * TRANSACTIONS_PER_PAGE,
@@ -113,12 +102,12 @@ const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuy
 
   const handleSearchChange = (val: string) => {
       setHistorySearch(val);
-      setHistoryPage(1); // Reset to page 1 on search
+      setHistoryPage(1);
   };
 
   const handleFilterChange = (type: 'ALL' | 'IN' | 'OUT') => {
       setHistoryFilter(type);
-      setHistoryPage(1); // Reset to page 1 on filter change
+      setHistoryPage(1);
   };
 
   const handleTokenFilterChange = (token: 'ALL' | 'RUN' | 'GOV') => {
@@ -134,7 +123,6 @@ const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuy
   return (
     <div className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
       
-      {/* HEADER */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-2">
          <div>
             <h1 className="text-3xl font-bold uppercase tracking-widest text-white flex items-center gap-2">
@@ -143,7 +131,6 @@ const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuy
             <p className="text-gray-400 text-sm">{tRich('wallet.subtitle')}</p>
          </div>
          
-         {/* External Wallet Connect */}
          <button 
             onClick={() => setIsWalletConnected(!isWalletConnected)}
             className={`px-4 py-2 rounded-xl font-bold flex items-center gap-2 transition-all border ${
@@ -156,7 +143,6 @@ const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuy
           </button>
       </div>
 
-      {/* PERSONAL BALANCE CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="glass-panel rounded-2xl p-6 flex items-center justify-between relative overflow-hidden">
               <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
@@ -187,10 +173,8 @@ const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuy
           </div>
       </div>
 
-      {/* MAIN CONTENT GRID */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* --- LEFT COL: ACTIONS & HISTORY --- */}
         <div className="flex flex-col gap-6 h-full">
             
             <WalletActions 
@@ -200,7 +184,6 @@ const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuy
                 onSwapGovToRun={onSwapGovToRun}
             />
 
-            {/* RECENT TRANSACTIONS PREVIEW (Non-filtered, just last 5) */}
             <div className="glass-panel rounded-2xl p-6 flex-1 flex flex-col min-h-[300px]">
                 <div className="flex justify-between items-center mb-4">
                    <h3 className="font-bold text-white flex items-center gap-2 text-sm uppercase tracking-wide">
@@ -220,7 +203,6 @@ const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuy
                    </button>
                 </div>
                 <div className="space-y-3 flex-1 overflow-y-auto max-h-[300px]">
-                    {/* FILTER: Exclude 'ITEM' type from the preview widget */}
                     {transactions.filter(t => t.userId === user.id && t.token !== 'ITEM').length === 0 ? (
                         <div className="text-center text-gray-500 py-8 text-xs">No recent transactions.</div>
                     ) : (
@@ -253,7 +235,6 @@ const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuy
 
         </div>
 
-        {/* --- RIGHT COL: CHARTS --- */}
         <div className="lg:col-span-2 space-y-6 h-full flex flex-col">
             <WalletCharts 
                 transactions={transactions} 
@@ -263,7 +244,6 @@ const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuy
         </div>
       </div>
       
-      {/* Burn Stats Footer */}
       <div className="glass-panel rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden border-red-500/20">
           <div className="absolute left-0 top-0 w-1 h-full bg-red-600"></div>
           <div className="absolute -right-10 -bottom-10 opacity-10 pointer-events-none">
@@ -292,12 +272,10 @@ const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuy
           </div>
       </div>
 
-      {/* FULL HISTORY MODAL WITH FILTERS */}
       {showHistoryModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in">
            <div className="bg-gray-900 rounded-2xl border border-gray-700 w-full max-w-2xl shadow-2xl flex flex-col max-h-[85vh]">
               
-              {/* Header & Filters */}
               <div className="p-6 border-b border-gray-700 bg-gray-900 rounded-t-2xl space-y-4">
                  <div className="flex justify-between items-center">
                      <h3 className="text-xl font-bold uppercase tracking-wide text-white flex items-center gap-2">
@@ -308,7 +286,6 @@ const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuy
                      </button>
                  </div>
 
-                 {/* Filters Row */}
                  <div className="flex flex-col sm:flex-row gap-3">
                      <div className="relative flex-1">
                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
@@ -321,7 +298,6 @@ const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuy
                          />
                      </div>
                      <div className="flex flex-wrap gap-2">
-                         {/* Type Filters */}
                          <button 
                             onClick={() => handleFilterChange('ALL')}
                             className={`px-3 py-2 rounded-lg text-xs font-bold uppercase transition-colors ${historyFilter === 'ALL' ? 'bg-white text-black' : 'bg-gray-800 text-gray-400 border border-gray-600 hover:text-white'}`}
@@ -343,7 +319,6 @@ const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuy
 
                          <div className="w-px bg-gray-700 mx-1"></div>
 
-                         {/* Token Filters */}
                          <button 
                             onClick={() => handleTokenFilterChange('RUN')}
                             className={`px-3 py-2 rounded-lg text-xs font-bold uppercase transition-colors ${historyTokenFilter === 'RUN' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500' : 'bg-gray-800 text-gray-400 border border-gray-600 hover:text-emerald-400'}`}
@@ -360,7 +335,6 @@ const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuy
                  </div>
               </div>
               
-              {/* List */}
               <div className="flex-1 overflow-y-auto p-6 space-y-3">
                  {currentHistory.length === 0 ? (
                      <div className="text-center text-gray-500 py-10 flex flex-col items-center">
@@ -394,7 +368,6 @@ const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuy
                  )}
               </div>
 
-              {/* Pagination */}
               <div className="p-4 border-t border-gray-700 bg-gray-900 rounded-b-2xl">
                   <Pagination 
                      currentPage={historyPage} 

@@ -22,9 +22,7 @@ const WalletCharts: React.FC<WalletChartsProps> = ({ transactions, runBalance, g
       });
   };
 
-  // --- LOGICA BALANCE AD ALTA RISOLUZIONE (Ogni Transazione) ---
   const { runHistory, govHistory } = useMemo(() => {
-      // Ordiniamo le transazioni dalla più recente alla più vecchia per il calcolo retroattivo
       const sortedTx = [...transactions].sort((a, b) => b.timestamp - a.timestamp);
       
       const runData: any[] = [];
@@ -33,7 +31,6 @@ const WalletCharts: React.FC<WalletChartsProps> = ({ transactions, runBalance, g
       let currentRun = runBalance;
       let currentGov = govBalance;
 
-      // Punto iniziale: Adesso
       const now = Date.now();
       runData.push({ 
           timestamp: now, 
@@ -57,7 +54,6 @@ const WalletCharts: React.FC<WalletChartsProps> = ({ transactions, runBalance, g
                   amount: tx.amount,
                   txType: tx.type
               });
-              // Torniamo indietro nel tempo: se l'operazione era IN (entrata), prima il saldo era minore
               if (tx.type === 'IN') currentRun -= tx.amount;
               else currentRun += tx.amount;
               currentRun = Math.max(0, currentRun);
@@ -75,7 +71,6 @@ const WalletCharts: React.FC<WalletChartsProps> = ({ transactions, runBalance, g
           }
       });
 
-      // Se non ci sono transazioni, aggiungiamo un punto nel passato per mostrare una linea piatta
       if (runData.length === 1) runData.push({ timestamp: now - 86400000, value: currentRun, desc: 'Initial' });
       if (govData.length === 1) govData.push({ timestamp: now - 86400000, value: currentGov, desc: 'Initial' });
 
@@ -85,7 +80,6 @@ const WalletCharts: React.FC<WalletChartsProps> = ({ transactions, runBalance, g
       };
   }, [transactions, runBalance, govBalance]);
 
-  // --- LOGICA BURN PERSONALE (Aggregata per Giorno) ---
   const userBurnHistory = useMemo(() => {
     const burnMap: Record<string, number> = {};
     
@@ -119,7 +113,6 @@ const WalletCharts: React.FC<WalletChartsProps> = ({ transactions, runBalance, g
     return userBurnHistory.reduce((acc, curr) => acc + curr.amount, 0);
   }, [userBurnHistory]);
 
-  // Formattatori per gli assi
   const formatYAxis = (num: number) => {
       if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
       if (num >= 1000) return (num / 1000).toFixed(1) + 'k';
@@ -131,7 +124,6 @@ const WalletCharts: React.FC<WalletChartsProps> = ({ transactions, runBalance, g
       return `${d.getDate()}/${d.getMonth()+1}`;
   };
 
-  // Tooltip Custom per mostrare le descrizioni delle transazioni
   const CustomTooltip = ({ active, payload, label, color }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
@@ -161,7 +153,6 @@ const WalletCharts: React.FC<WalletChartsProps> = ({ transactions, runBalance, g
 
   return (
     <div className="space-y-6 h-full flex flex-col">
-        {/* RUN CHART */}
         <div className="glass-panel rounded-2xl p-6 flex flex-col shadow-lg border-emerald-500/20 relative overflow-hidden">
             <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500/20"></div>
             <div className="flex justify-between items-start mb-6">
@@ -240,7 +231,6 @@ const WalletCharts: React.FC<WalletChartsProps> = ({ transactions, runBalance, g
             </div>
         </div>
 
-        {/* GOV CHART */}
         <div className="glass-panel rounded-2xl p-6 flex flex-col shadow-lg border-cyan-500/20 relative overflow-hidden">
             <div className="absolute top-0 left-0 w-1 h-full bg-cyan-500/20"></div>
             <div className="flex justify-between items-start mb-6">

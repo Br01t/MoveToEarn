@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { User, Mission, Badge, LevelConfig } from '../../types';
 import { Search, User as UserIcon, Award, Target, Trash2, CheckCircle, AlertTriangle, Coins, Wallet, RefreshCw, Loader2 } from 'lucide-react';
@@ -21,7 +20,6 @@ const AdminUsersTab: React.FC<AdminUsersTabProps> = ({ allUsers, missions, badge
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   
-  // UI Feedback
   const [notification, setNotification] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
   const [confirmAction, setConfirmAction] = useState<{ title: string, message: string, action: () => Promise<void> } | null>(null);
 
@@ -125,7 +123,6 @@ const AdminUsersTab: React.FC<AdminUsersTabProps> = ({ allUsers, missions, badge
             />
         )}
 
-        {/* User List Column */}
         <div className="bg-gray-800 rounded-xl border border-gray-700 flex flex-col overflow-hidden">
             <div className="p-4 border-b border-gray-700 bg-gray-900/50">
                 <div className="flex justify-between items-center mb-3">
@@ -174,7 +171,6 @@ const AdminUsersTab: React.FC<AdminUsersTabProps> = ({ allUsers, missions, badge
             </div>
         </div>
 
-        {/* User Details Column */}
         <div className="md:col-span-2 bg-gray-800 rounded-xl border border-gray-700 flex flex-col overflow-hidden">
             {!selectedUser ? (
                 <div className="flex-1 flex flex-col items-center justify-center text-gray-500">
@@ -189,7 +185,6 @@ const AdminUsersTab: React.FC<AdminUsersTabProps> = ({ allUsers, missions, badge
                         </div>
                     )}
                     
-                    {/* Header Details */}
                     <div className="p-6 border-b border-gray-700 bg-gray-900/30 flex items-center gap-4">
                         <img src={selectedUser.avatar} className="w-16 h-16 rounded-full border-2 border-gray-600 object-cover" alt={selectedUser.name} />
                         <div className="flex-1">
@@ -212,7 +207,6 @@ const AdminUsersTab: React.FC<AdminUsersTabProps> = ({ allUsers, missions, badge
                         </div>
                     </div>
 
-                    {/* Content */}
                     <div className="flex-1 overflow-y-auto p-6 space-y-8">
                         <div>
                             <h4 className="text-lg font-bold text-white mb-4 flex items-center gap-2 border-b border-gray-700 pb-2">

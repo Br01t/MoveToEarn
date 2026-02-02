@@ -43,7 +43,6 @@ export const useGameData = () => {
               supabase.from('transactions').select('amount').eq('description', 'Global Burn Protocol (System)')
           ]);
 
-          // Validazione rapida risposte critiche
           if (profilesRes.error || zonesRes.error) {
               throw new Error("Errore durante la sincronizzazione con la griglia.");
           }

@@ -3,7 +3,6 @@ import { Item, Mission, Badge, Zone, BugReport, LeaderboardConfig, LevelConfig, 
 import { Settings } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 
-// Import Sub-Components
 import AdminItemsTab from './admin/AdminItemsTab';
 import AdminMissionsTab from './admin/AdminMissionsTab';
 import AdminZonesTab from './admin/AdminZonesTab';

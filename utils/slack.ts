@@ -1,7 +1,6 @@
 import { supabase } from '../supabaseClient';
 import { logger } from './logger';
 
-
 export type SlackChannel = 'RUNNERS' | 'MAP' | 'SYNC' | 'BUGS' | 'IDEAS' | 'SYSTEM';
 
 export const sendSlackNotification = async (

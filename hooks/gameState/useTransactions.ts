@@ -1,4 +1,3 @@
-
 import { supabase } from '../../supabaseClient';
 import { User, Transaction } from '../../types';
 import { useGlobalUI } from '../../contexts/GlobalUIContext';

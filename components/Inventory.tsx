@@ -5,7 +5,7 @@ import { useLanguage } from '../LanguageContext';
 
 interface InventoryProps {
   user: User;
-  zones: Zone[]; // Need zones to select a target
+  zones: Zone[];
   onUseItem: (item: InventoryItem, targetZoneId: string) => void;
 }
 
@@ -14,7 +14,6 @@ const Inventory: React.FC<InventoryProps> = ({ user, zones, onUseItem }) => {
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   const [now, setNow] = useState(Date.now());
 
-  // Update timer every minute to keep countdowns relatively fresh without heavy rendering
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(interval);
@@ -48,7 +47,6 @@ const Inventory: React.FC<InventoryProps> = ({ user, zones, onUseItem }) => {
   return (
     <div className="max-w-5xl mx-auto p-6 relative min-h-[80vh]">
       
-      {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
          <div>
             <h1 className="text-3xl font-black uppercase tracking-widest text-white flex items-center gap-3">
@@ -78,7 +76,6 @@ const Inventory: React.FC<InventoryProps> = ({ user, zones, onUseItem }) => {
                 onClick={() => handleItemClick(item)}
                 className="glass-panel rounded-xl p-5 flex flex-col justify-between group hover:border-emerald-500/50 hover:shadow-[0_0_25px_rgba(16,185,129,0.15)] transition-all cursor-pointer relative overflow-hidden"
               >
-                {/* Decorative background glow */}
                 <div className={`absolute -top-10 -right-10 w-32 h-32 rounded-full blur-[60px] opacity-20 pointer-events-none transition-opacity group-hover:opacity-30 ${isDefense ? 'bg-cyan-500' : 'bg-amber-500'}`}></div>
 
                 <div>
@@ -94,7 +91,6 @@ const Inventory: React.FC<InventoryProps> = ({ user, zones, onUseItem }) => {
                           </span>
                         </div>
                       </div>
-                      {/* Quantity Badge */}
                       {item.quantity > 0 && (
                           <div className="flex flex-col items-center justify-center bg-gray-900/80 backdrop-blur border border-white/10 px-2 py-1 rounded min-w-[3rem]">
                             <span className="text-[9px] text-gray-500 uppercase font-bold">QTY</span>
@@ -105,7 +101,6 @@ const Inventory: React.FC<InventoryProps> = ({ user, zones, onUseItem }) => {
                     
                     <div className="h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent mb-3"></div>
 
-                    {/* Description */}
                     <p className="text-xs text-gray-400 mb-6 font-medium leading-relaxed min-h-[2.5rem] line-clamp-2">
                         {item.description}
                     </p>
@@ -120,12 +115,10 @@ const Inventory: React.FC<InventoryProps> = ({ user, zones, onUseItem }) => {
         </div>
       )}
 
-      {/* Item Detail & Usage Modal */}
       {selectedItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fade-in">
           <div className="glass-panel-heavy rounded-2xl w-full max-w-lg shadow-[0_0_50px_rgba(0,0,0,0.6)] overflow-hidden animate-slide-up flex flex-col max-h-[85vh]">
             
-            {/* Modal Header */}
             <div className="p-6 border-b border-white/10 flex justify-between items-start bg-black/20">
               <div className="flex gap-4 items-center">
                  <div className={`p-4 rounded-xl shadow-[0_0_20px_rgba(0,0,0,0.3)] border border-white/10 ${selectedItem.type === 'DEFENSE' ? 'bg-cyan-500/20 text-cyan-400' : 'bg-amber-500/20 text-amber-400'}`}>
@@ -173,7 +166,6 @@ const Inventory: React.FC<InventoryProps> = ({ user, zones, onUseItem }) => {
                 </div>
             </div>
 
-            {/* Zone Selection List */}
             <div className="flex-1 overflow-y-auto p-6 bg-black/5">
                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
                  <MapPin size={14} className="text-emerald-500"/> {t('inv.select_zone')}
@@ -191,7 +183,6 @@ const Inventory: React.FC<InventoryProps> = ({ user, zones, onUseItem }) => {
                     const boostTime = getRemainingTime(zone.boostExpiresAt);
                     const shieldTime = getRemainingTime(zone.shieldExpiresAt);
                     
-                    // Logic to check if we can apply the item
                     const canApply = 
                         (selectedItem.type === 'BOOST' && !boostTime) ||
                         (selectedItem.type === 'DEFENSE' && !shieldTime);
@@ -218,7 +209,6 @@ const Inventory: React.FC<InventoryProps> = ({ user, zones, onUseItem }) => {
                             <span className="font-mono">DEF: {zone.defenseLevel}</span>
                           </div>
 
-                          {/* Active Effects Display */}
                           {(boostTime || shieldTime) && (
                               <div className="flex flex-wrap gap-2 mt-1.5">
                                   {boostTime && (

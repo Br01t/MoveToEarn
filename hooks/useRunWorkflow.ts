@@ -145,7 +145,6 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction,
               } else {
                   alert(`Sync Failed: ${dbResult.error || 'Database error'}.`);
               }
-              // Interrompiamo la coda se c'è un errore grave
               setPendingRunsQueue([]);
               setPendingRunData(null);
               return; 

@@ -100,10 +100,8 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
                 const result = analysis.result;
 
                 if (result.isValid) {
-                    // FIX: La logica precedente usava || tra tempo e statistiche.
-                    // Ora usiamo solo il tempo come identificatore univoco primario.
                     const isDuplicate = user.runHistory.some(run => {
-                        const timeMatch = Math.abs(run.timestamp - result.startTime) < 60000; // 1 minuto di tolleranza
+                        const timeMatch = Math.abs(run.timestamp - result.startTime) < 60000;
                         return timeMatch;
                     });
 
@@ -112,7 +110,6 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
                         lastFailureReason = "Duplicate run detected (Same start time).";
                         addLog(`⚠️ Duplicate ignored: ${fileName} (Start time match)`);
                     } else {
-                        // Evita duplicati anche all'interno dello stesso batch di upload
                         const isBatchDuplicate = newResults.some(res => Math.abs(res.startTime - result.startTime) < 60000);
                         if (!isBatchDuplicate) {
                             newResults.push(result);

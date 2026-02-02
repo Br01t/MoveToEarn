@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { User, Badge, LevelConfig } from '../../types';
 import { Crown, Save, Mail, Camera, CheckCircle, X, Flag, Award, Zap, Mountain, Globe, Home, Landmark, Swords, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users, FileText, Egg, Baby, Activity, MapPin, Smile, Wind, Compass, Navigation, TrendingUp, Move, Target, Watch, Droplets, Shield, Star, BatteryCharging, Flame, Truck, CloudLightning, Hexagon, FastForward, Trophy, Plane, Map, Layers, Briefcase, GraduationCap, Brain, Crosshair, Anchor, Heart, Lock, Disc, Feather, FlagTriangleRight, Globe2, Sparkles, Radio, BookOpen, Waves, Snowflake, CloudRain, ThermometerSnowflake, SunDim, MoonStar, Atom, Sword, Axe, Ghost, Ship, PlusSquare, Skull, ChevronsUp, Orbit, CloudFog, Circle, Infinity, Sparkle, ArrowUpCircle, Clock, Eye, Type, Delete, PenTool, Medal, UploadCloud, Loader2, Edit2, Info, ChevronRight, Image, FileImage, ZoomIn } from 'lucide-react';
@@ -14,7 +13,7 @@ interface ProfileHeaderProps {
   currentLevel: number;
   levelTitle?: string;
   levelIcon?: string;
-  levels?: LevelConfig[]; // Added levels to props
+  levels?: LevelConfig[];
   progressToNextLevel: number;
   onUpdateUser: (updates: Partial<User>) => void;
   onUpgradePremium: () => void;
@@ -61,10 +60,8 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           setIsUploading(true);
           try {
               const originalFile = e.target.files[0];
-              // Compress aggressively: max 250px width (plenty for avatar), 0.6 quality JPEG
               const compressedFile = await compressImage(originalFile, 250, 0.6);
               
-              // Upload with fallback to Base64 if storage fails
               const publicUrl = await uploadFile(compressedFile, 'avatars');
               
               if (publicUrl) {
@@ -81,7 +78,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
       }
   };
 
-  // ... (renderBadgeIcon and renderLevelIcon helper functions remain same as before)
   const renderBadgeIcon = (iconName: string, className: string) => {
       switch(iconName) {
           case 'Flag': return <Flag className={className} />;
@@ -197,14 +193,9 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
       }
   };
 
-  // Helper to get next few levels
   const getNextLevels = () => {
-      // Assuming 'levels' prop is sorted by level, or sort it first
       const sortedLevels = [...levels].sort((a, b) => a.level - b.level);
-      // Find current level index
       const currentIndex = sortedLevels.findIndex(l => l.level === currentLevel);
-      
-      // Get the current one and the next 4
       const startIndex = Math.max(0, currentIndex);
       return sortedLevels.slice(startIndex, startIndex + 5);
   };
@@ -213,7 +204,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
   return (
       <div className="bg-gray-800 rounded-2xl border border-gray-700 overflow-hidden shadow-xl">
-          {/* FULLSCREEN IMAGE OVERLAY */}
           {isImageExpanded && (
                 <div 
                     className="fixed inset-0 z-[250] flex items-center justify-center bg-black/95 backdrop-blur-xl animate-fade-in p-4"
@@ -244,7 +234,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           </div>
           
           <div className="px-6 md:px-8 pb-6 flex flex-col md:flex-row items-end md:items-start gap-6 -mt-12 relative z-10">
-             {/* AVATAR SECTION */}
              <div className={`relative group/avatar ${isEditing ? 'cursor-pointer' : 'cursor-zoom-in'}`} onClick={handleAvatarClick}>
                  <img src={isEditing ? avatar : user.avatar} alt="Avatar" className={`w-32 h-32 rounded-2xl border-4 bg-gray-800 shadow-2xl object-cover transition-colors ${user.isPremium ? 'border-yellow-500' : 'border-gray-700'} ${!isEditing ? 'group-hover/avatar:border-emerald-500/50' : ''}`} />
                  
@@ -296,7 +285,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                         </p>
                         
                         <div className="mt-4 max-w-lg">
-                            {/* Level Title Display - Positioned above Progress */}
                             {levelTitle && (
                                 <div className="mb-2 cursor-pointer group w-fit" onClick={() => setShowLevelModal(true)}>
                                     <span className="text-gray-500 text-[10px] font-bold uppercase tracking-wider mb-0.5 flex items-center gap-1 group-hover:text-emerald-400 transition-colors">
@@ -364,7 +352,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
              )}
           </div>
 
-          {/* LEVEL MODAL */}
           {showLevelModal && (
               <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in" onClick={() => setShowLevelModal(false)}>
                   <div className="bg-gray-900 rounded-2xl border border-gray-700 w-full max-w-sm shadow-2xl relative overflow-hidden animate-slide-up" onClick={e => e.stopPropagation()}>

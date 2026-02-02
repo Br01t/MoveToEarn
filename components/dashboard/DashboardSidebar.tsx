@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Search, X, Globe, Activity, History, Crosshair } from 'lucide-react';
 import { useLanguage } from '../../LanguageContext';
@@ -33,7 +32,6 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isLastRunOpen, setIsLastRunOpen] = useState(false);
 
-  // Resolve location names for last run if available
   const lastRunLocation = React.useMemo(() => {
       if (!lastRun) return '';
       

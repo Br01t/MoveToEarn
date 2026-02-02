@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { MapPin, Crown, X, AlertTriangle, Loader, Navigation } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
@@ -25,7 +24,6 @@ const ZoneDiscoveryModal: React.FC<ZoneDiscoveryModalProps> = ({ isOpen, data, o
   const [isMapLoading, setIsMapLoading] = useState(true);
   const [showMap, setShowMap] = useState(false);
 
-  // 1. Auto-fetch address (Reverse Geocoding via Nominatim - Free)
   useEffect(() => {
     if (isOpen && data.lat && data.lng) {
         setIsAddressLoading(true);
@@ -35,7 +33,6 @@ const ZoneDiscoveryModal: React.FC<ZoneDiscoveryModalProps> = ({ isOpen, data, o
         .then(res => res.json())
         .then(json => {
             if (json && json.address) {
-                // Construct readable address
                 const road = json.address.road || json.address.pedestrian || json.address.park || "";
                 const city = json.address.city || json.address.town || json.address.village || json.address.county || "";
                 const cc = (json.address.country_code || "xx").toUpperCase();
@@ -47,7 +44,6 @@ const ZoneDiscoveryModal: React.FC<ZoneDiscoveryModalProps> = ({ isOpen, data, o
                 
                 setAddress(readable || "Unknown Location");
                 
-                // Smart Pre-fill if name is empty
                 if (!customName) {
                     setCustomName(`${road || 'New Zone'}, ${city} - ${cc}`);
                 }
@@ -61,15 +57,13 @@ const ZoneDiscoveryModal: React.FC<ZoneDiscoveryModalProps> = ({ isOpen, data, o
     }
   }, [isOpen, data.lat, data.lng]);
 
-  // Reset map loading when coordinates change and add delay
   useEffect(() => {
       setShowMap(false);
       setIsMapLoading(true);
       
-      // Delay map rendering to ensure container is stable and prevent zoom glitches
       const timer = setTimeout(() => {
           setShowMap(true);
-      }, 1000); // 1 second delay
+      }, 1000);
 
       return () => clearTimeout(timer);
   }, [data.lat, data.lng]);
@@ -77,12 +71,9 @@ const ZoneDiscoveryModal: React.FC<ZoneDiscoveryModalProps> = ({ isOpen, data, o
   if (!isOpen) return null;
 
   const handleSubmit = () => {
-    // SECURITY: Sanitize input to allow only alphanumeric, spaces, and basic punctuation
-    // This prevents HTML injection or script execution through zone names
     const sanitizedInput = customName.replace(/[^a-zA-Z0-9\s,.-]/g, "").trim();
     const nameToSubmit = sanitizedInput || data.defaultName;
 
-    // Validation: Check format "Name, City - CC"
     const isValidFormat = /.+,.+\s-\s[A-Z]{2}$/.test(nameToSubmit);
 
     if (!isValidFormat && !warning) {
@@ -96,10 +87,8 @@ const ZoneDiscoveryModal: React.FC<ZoneDiscoveryModalProps> = ({ isOpen, data, o
     setAddress(null);
   };
 
-  // Calculate Map Bounding Box for Embed
-  // Adjusted for Aspect Ratio (Width > Height) to prevent OSM from zooming out to fit
-  const latDelta = 0.001;  // ~110m vertical
-  const lngDelta = 0.0025; // ~250m horizontal
+  const latDelta = 0.001;
+  const lngDelta = 0.0025;
   
   const minLon = data.lng - lngDelta;
   const minLat = data.lat - latDelta;
@@ -111,16 +100,12 @@ const ZoneDiscoveryModal: React.FC<ZoneDiscoveryModalProps> = ({ isOpen, data, o
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 animate-fade-in">
       
-      {/* Container: Glass panel heavy */}
       <div className="glass-panel-heavy rounded-2xl w-full max-w-2xl shadow-[0_0_60px_rgba(16,185,129,0.3)] overflow-hidden flex flex-col animate-slide-up relative">
         
-        {/* Background Grid Decoration */}
         <div className="absolute inset-0 bg-[radial-gradient(#10b981_1px,transparent_1px)] [background-size:20px_20px] opacity-10 pointer-events-none"></div>
 
-        {/* TOP: MAP VISUAL (Interactive Embed) */}
         <div className="relative h-72 bg-gray-900 border-b border-white/10 w-full shrink-0 group">
             
-            {/* Loading Skeleton for Map */}
             {(!showMap || isMapLoading) && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-900 z-20 animate-pulse">
                     <Loader size={32} className="text-emerald-500 animate-spin mb-2" />
@@ -130,7 +115,7 @@ const ZoneDiscoveryModal: React.FC<ZoneDiscoveryModalProps> = ({ isOpen, data, o
 
             {showMap && (
                 <iframe 
-                    key={`${data.lat}-${data.lng}`} // Force re-render on coord change
+                    key={`${data.lat}-${data.lng}`}
                     width="100%" 
                     height="100%" 
                     frameBorder="0" 
@@ -141,10 +126,8 @@ const ZoneDiscoveryModal: React.FC<ZoneDiscoveryModalProps> = ({ isOpen, data, o
                 ></iframe>
             )}
             
-            {/* Gradient Overlay for Text Readability */}
             <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-gray-950 via-transparent to-transparent"></div>
             
-            {/* Floating Header on Map */}
             <div className="absolute bottom-5 left-6 right-6 flex justify-between items-end z-20">
                 <div>
                     <h2 className="text-3xl font-black text-white uppercase tracking-wider drop-shadow-md">{t('discovery.title')}</h2>
@@ -160,10 +143,8 @@ const ZoneDiscoveryModal: React.FC<ZoneDiscoveryModalProps> = ({ isOpen, data, o
             </div>
         </div>
 
-        {/* BOTTOM: CONTROLS & STATS */}
         <div className="p-8 flex flex-col gap-6 relative z-10 bg-transparent">
            
-           {/* Naming Input */}
            <div>
               <label className="text-xs font-bold text-gray-400 uppercase mb-2 flex justify-between">
                   <span>{t('discovery.name_label')}</span>
@@ -178,13 +159,12 @@ const ZoneDiscoveryModal: React.FC<ZoneDiscoveryModalProps> = ({ isOpen, data, o
                          setCustomName(e.target.value);
                          setWarning(null); 
                      }}
-                     maxLength={50} // Prevent long inputs
+                     maxLength={50}
                      className={`w-full bg-black/40 border-2 rounded-xl px-5 py-4 text-white placeholder-gray-600 focus:outline-none transition-all font-bold text-lg ${warning ? 'border-yellow-500 focus:border-yellow-500' : 'border-gray-700 focus:border-emerald-500'}`}
                   />
                   {warning && <AlertTriangle className="absolute right-4 top-1/2 -translate-y-1/2 text-yellow-500 animate-pulse" size={20} />}
               </div>
               
-              {/* Validation / Helper Message */}
               <div className={`mt-2 text-xs flex items-start gap-1.5 leading-tight ${warning ? 'text-yellow-400 font-bold' : 'text-gray-500'}`}>
                   {warning ? (
                       <>{warning}</>
@@ -194,7 +174,6 @@ const ZoneDiscoveryModal: React.FC<ZoneDiscoveryModalProps> = ({ isOpen, data, o
               </div>
            </div>
 
-           {/* Compact Stats Row */}
            <div className="grid grid-cols-2 gap-6">
               <div className="bg-black/30 border border-gray-700 rounded-xl p-4 flex items-center justify-between px-5">
                  <span className="text-xs text-red-400 uppercase font-bold tracking-wider">{t('discovery.cost')}</span>
@@ -206,7 +185,6 @@ const ZoneDiscoveryModal: React.FC<ZoneDiscoveryModalProps> = ({ isOpen, data, o
               </div>
            </div>
 
-           {/* Action Buttons */}
            <div className="flex gap-4 pt-2">
                <button 
                  onClick={onDiscard}

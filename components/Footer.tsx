@@ -20,12 +20,10 @@ const Footer: React.FC<FooterProps> = ({ onNavigate, currentView, isAuthenticate
   const { openBanner } = usePrivacy();
   const { startTutorial } = useOnboarding();
 
-  // 1. DASHBOARD MODE: No Footer
   if (currentView === 'DASHBOARD') {
       return null;
   }
 
-  // 2. STANDARD MODE: Static Footer
   return (
     <footer className={`bg-gray-950 border-t border-gray-800 py-10 relative z-30 mt-auto ${isHidden ? 'hidden' : ''}`}>
       <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center text-sm text-gray-500 gap-4">

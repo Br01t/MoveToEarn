@@ -1,4 +1,3 @@
-
 import { useGameData } from './gameState/useGameData';
 import { useUser } from './gameState/useUser';
 import { useZones } from './gameState/useZones';
@@ -24,7 +23,7 @@ export const useGameState = () => {
       setUser: data.setUser,
       fetchUserProfile: data.fetchUserProfile,
       logTransaction: transactions.logTransaction,
-      playSound // Passiamo il controllo sonoro
+      playSound
   });
 
   const zonesActions = useZones({
@@ -33,7 +32,7 @@ export const useGameState = () => {
       setUser: data.setUser,
       setZones: data.setZones,
       logTransaction: transactions.logTransaction,
-      playSound // Passiamo il controllo sonoro
+      playSound
   });
 
   const inventoryActions = useInventory({
@@ -43,7 +42,7 @@ export const useGameState = () => {
       setMarketItems: data.setMarketItems,
       fetchUserProfile: data.fetchUserProfile,
       logTransaction: transactions.logTransaction,
-      playSound // Passiamo il controllo sonoro
+      playSound
   });
 
   const missionsActions = useMissions({
@@ -51,7 +50,7 @@ export const useGameState = () => {
       uploadFile: data.uploadFile,
       setBugReports: data.setBugReports,
       setSuggestions: data.setSuggestions,
-      playSound // Passiamo il controllo sonoro
+      playSound
   });
 
   const adminActions = useAdmin({
