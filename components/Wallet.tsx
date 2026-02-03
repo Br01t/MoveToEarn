@@ -131,7 +131,7 @@ const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuy
             <p className="text-gray-400 text-sm">{tRich('wallet.subtitle')}</p>
          </div>
          
-         <button 
+         {/* <button 
             onClick={() => setIsWalletConnected(!isWalletConnected)}
             className={`px-4 py-2 rounded-xl font-bold flex items-center gap-2 transition-all border ${
               isWalletConnected 
@@ -140,7 +140,7 @@ const Wallet: React.FC<WalletProps> = ({ user, transactions, govToRunRate, onBuy
             }`}
           >
              {isWalletConnected ? <><CheckCircle size={16}/> 0x71...9A23</> : <><LinkIcon size={16}/> {t('wallet.connect')}</>}
-          </button>
+          </button> */}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
