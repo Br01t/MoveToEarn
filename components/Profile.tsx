@@ -1,13 +1,12 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { User, Zone, Mission, Badge, Rarity, LevelConfig, LeaderboardConfig, BugReport, Suggestion } from '../types';
-import { Award, History, Coins, BarChart3, Shield, Trophy, MapPin, ChevronUp, ChevronDown, Users, X, Medal, Crown, Zap, Search, Package } from 'lucide-react';
+import { Award, History, Coins, BarChart3, Shield, Trophy, MapPin, ChevronUp, ChevronDown, Users, X, Medal, Crown, Zap, Search, Package, Activity, Footprints, Timer, TrendingUp, Loader2 } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 import Pagination from './Pagination';
 import ZoneStatsModal from './profile/ZoneStatsModal';
 import UserSubmissionsModal from './profile/UserSubmissionsModal';
 import LevelUpModal from './profile/LevelUpModal'; 
 import { useGlobalUI } from '../contexts/GlobalUIContext';
-
 import ProfileHeader from './profile/ProfileHeader';
 import ProfileAchievementsTab from './profile/ProfileAchievementsTab';
 
@@ -49,6 +48,9 @@ const Profile: React.FC<ProfileProps> = ({
   const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
   const [zoneLeaderboard, setZoneLeaderboard] = useState<any[]>([]);
   
+  const [realRanks, setRealRanks] = useState<Record<string, number>>({});
+  const [loadingRanks, setLoadingRanks] = useState<Set<string>>(new Set());
+
   const [showLevelUp, setShowLevelUp] = useState(false);
 
   const myZones = zones.filter(z => z.ownerId === user.id);
@@ -136,74 +138,82 @@ const Profile: React.FC<ProfileProps> = ({
       return { name: userData.name, avatar: userData.avatar, badge: userBadge };
   }, [selectedZone, allUsers, user, badges]);
 
+  const fetchRealRank = async (zoneId: string) => {
+      if (realRanks[zoneId] !== undefined || loadingRanks.has(zoneId)) return;
+      
+      setLoadingRanks(prev => new Set(prev).add(zoneId));
+      try {
+          const leaderboard = await onGetZoneLeaderboard(zoneId);
+          const index = leaderboard.findIndex(r => r.id === user.id);
+          const rank = index !== -1 ? index + 1 : 999;
+          setRealRanks(prev => ({ ...prev, [zoneId]: rank }));
+      } catch (e) {
+          console.error("Failed to fetch rank for zone", zoneId);
+      } finally {
+          setLoadingRanks(prev => {
+              const next = new Set(prev);
+              next.delete(zoneId);
+              return next;
+          });
+      }
+  };
+
   const sortedZoneStats = useMemo(() => {
       const statsMap = new Map<string, { id: string; name: string; count: number; km: number; isOwned: boolean }>();
-      myZones.forEach(z => {
-          statsMap.set(z.id, { id: z.id, name: z.name, count: 0, km: z.recordKm, isOwned: true });
-      });
-
-      const updateEntry = (zoneId: string, zoneName: string, kmToAdd: number) => {
-          const entry = statsMap.get(zoneId);
-          if (entry) {
-              entry.count += 1;
-              if (!entry.isOwned) entry.km += kmToAdd;
-          } else {
-              statsMap.set(zoneId, { id: zoneId, name: zoneName, count: 1, km: kmToAdd, isOwned: false });
-          }
-      };
-
+      
       validHistory.forEach(run => {
-          const involvedIds = new Set<string>();
-          if (run.involvedZones && run.involvedZones.length > 0) run.involvedZones.forEach(id => involvedIds.add(id));
-          
-          if (involvedIds.size === 0 && run.location) {
-              const cleanLoc = run.location.trim().toLowerCase();
-              const match = zones.find(z => {
-                  const zName = z.name.trim().toLowerCase();
-                  return zName === cleanLoc || zName.startsWith(cleanLoc) || cleanLoc.startsWith(zName);
-              });
-              if (match) involvedIds.add(match.id);
-          }
-
-          const idsArray = Array.from(involvedIds);
-          if (idsArray.length > 0) {
-              idsArray.forEach(zoneId => {
+          if (run.zoneBreakdown) {
+              Object.entries(run.zoneBreakdown).forEach(([zoneId, km]) => {
                   const zoneDef = zones.find(z => z.id === zoneId);
-                  const zoneName = zoneDef ? zoneDef.name : "Unknown Zone";
-                  let runKmForZone = 0;
-                  if (run.zoneBreakdown && run.zoneBreakdown[zoneId]) runKmForZone = Number(run.zoneBreakdown[zoneId]);
-                  else runKmForZone = run.km / idsArray.length;
-                  updateEntry(zoneId, zoneName, runKmForZone);
+                  const entry = statsMap.get(zoneId);
+                  if (entry) {
+                      entry.count += 1;
+                      entry.km += Number(km);
+                  } else {
+                      statsMap.set(zoneId, { 
+                          id: zoneId, 
+                          name: zoneDef?.name || "Unknown Zone", 
+                          count: 1, 
+                          km: Number(km), 
+                          isOwned: zoneDef?.ownerId === user.id 
+                      });
+                  }
               });
           }
       });
 
       const dataWithRank = Array.from(statsMap.values()).map(stat => {
           const zoneObj = zones.find(z => z.id === stat.id);
-          let rank = 999; 
-          if (zoneObj) {
-              if (zoneObj.ownerId === user.id) rank = 1; 
-              else if (zoneObj.recordKm > 0) {
-                  const ratio = stat.km / zoneObj.recordKm;
-                  if (ratio >= 1) rank = 1;
-                  else if (ratio > 0.8) rank = 2;
-                  else if (ratio > 0.6) rank = 3;
-                  else if (ratio > 0.4) rank = 4;
-                  else rank = Math.floor((1 - ratio) * 10) + 5; 
-              } else rank = 1;
+          let rank = realRanks[stat.id];
+          
+          if (rank === undefined) {
+              if (zoneObj?.ownerId === user.id) rank = 1;
+              else rank = 0;
           }
+          
           return { ...stat, rank };
       });
 
       return dataWithRank.sort((a, b) => {
           const modifier = sortConfig.direction === 'asc' ? 1 : -1;
+          if (sortConfig.key === 'rank') {
+              const rA = a.rank === 0 ? 999 : a.rank;
+              const rB = b.rank === 0 ? 999 : b.rank;
+              return (rA - rB) * modifier;
+          }
           if (a[sortConfig.key] < b[sortConfig.key]) return -1 * modifier;
           if (a[sortConfig.key] > b[sortConfig.key]) return 1 * modifier;
           return 0;
       });
-  }, [validHistory, sortConfig, zones, user.id, myZones]);
+  }, [validHistory, sortConfig, zones, user.id, realRanks]);
 
   const currentZoneStats = sortedZoneStats.slice((zonePage - 1) * ZONES_PER_PAGE, zonePage * ZONES_PER_PAGE);
+
+  useEffect(() => {
+      currentZoneStats.forEach(stat => {
+          if (stat.rank === 0) fetchRealRank(stat.id);
+      });
+  }, [currentZoneStats]);
 
   const filteredRuns = useMemo(() => {
       return validHistory.filter(run => {
@@ -235,13 +245,12 @@ const Profile: React.FC<ProfileProps> = ({
                   default: return 0;
               }
           } else {
-              const seed = u.name.length;
               const ratio = (board.type === 'TEMPORARY' || !!board.lastResetTimestamp) ? 0.2 : 1.0;
               switch(board.metric) {
                   case 'TOTAL_KM': return u.totalKm * ratio;
                   case 'OWNED_ZONES': return zones.filter(z => z.ownerId === u.id).length;
-                  case 'RUN_BALANCE': return u.runBalance ?? ((u.totalKm * 10) + (seed * 50));
-                  case 'GOV_BALANCE': return u.govBalance ?? ((u.totalKm / 10) + (seed * 2));
+                  case 'RUN_BALANCE': return u.runBalance || 0;
+                  case 'GOV_BALANCE': return u.govBalance || 0;
                   case 'UNIQUE_ZONES': return Math.floor((u.totalKm * ratio) / 5) + 1;
                   default: return 0;
               }
@@ -285,7 +294,6 @@ const Profile: React.FC<ProfileProps> = ({
               <h3 className="text-white font-bold uppercase tracking-wide mb-4 flex items-center gap-2 border-b border-white/10 pb-2">
                   <Coins size={18} className="text-yellow-500"/> {t('profile.liquid_assets')}
               </h3>
-              
               <div className="space-y-3 relative z-10 flex-1">
                   <div className="flex justify-between items-end bg-black/20 p-3 rounded-lg border border-white/5">
                       <span className="text-sm text-gray-400 font-bold">{t('profile.run_balance')}</span>
@@ -295,7 +303,6 @@ const Profile: React.FC<ProfileProps> = ({
                       <span className="text-sm text-gray-400 font-bold">{t('profile.gov_holdings')}</span>
                       <span className="text-xl font-mono font-bold text-cyan-400">{user.govBalance.toFixed(1)}</span>
                   </div>
-                  
                   <div className="flex flex-col bg-black/20 p-3 rounded-lg border border-white/5 mt-auto">
                       <div className="flex justify-between items-center mb-2">
                           <span className="text-sm text-gray-400 font-bold flex items-center gap-1">
@@ -304,19 +311,9 @@ const Profile: React.FC<ProfileProps> = ({
                           <span className="text-xl font-mono font-bold text-white">{totalItems}</span>
                       </div>
                       <div className="flex gap-2">
-                          {boostCount > 0 && (
-                              <span className="text-[10px] bg-amber-900/40 text-amber-400 px-2 py-0.5 rounded border border-amber-500/20 font-bold flex items-center gap-1">
-                                  <Zap size={10} className="fill-amber-400"/> {boostCount}
-                              </span>
-                          )}
-                          {shieldCount > 0 && (
-                              <span className="text-[10px] bg-cyan-900/40 text-cyan-400 px-2 py-0.5 rounded border border-cyan-500/20 font-bold flex items-center gap-1">
-                                  <Shield size={10} className="fill-cyan-400"/> {shieldCount}
-                              </span>
-                          )}
-                          {totalItems === 0 && (
-                              <span className="text-[10px] text-gray-600 italic">Empty Backpack</span>
-                          )}
+                          {boostCount > 0 && <span className="text-[10px] bg-amber-900/40 text-amber-400 px-2 py-0.5 rounded border border-amber-500/20 font-bold flex items-center gap-1"><Zap size={10} className="fill-amber-400"/> {boostCount}</span>}
+                          {shieldCount > 0 && <span className="text-[10px] bg-cyan-900/40 text-cyan-400 px-2 py-0.5 rounded border border-cyan-500/20 font-bold flex items-center gap-1"><Shield size={10} className="fill-cyan-400"/> {shieldCount}</span>}
+                          {totalItems === 0 && <span className="text-[10px] text-gray-600 italic">Empty Backpack</span>}
                       </div>
                   </div>
               </div>
@@ -327,18 +324,9 @@ const Profile: React.FC<ProfileProps> = ({
                   <BarChart3 size={18} className="text-gray-400"/> {t('profile.perf_metrics')}
               </h3>
               <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-400 font-medium">{t('profile.longest_run')}</span>
-                      <span className="text-white font-mono font-bold text-lg">{maxDistance} km</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-400 font-medium">{t('profile.total_dist')}</span>
-                      <span className="text-white font-mono font-bold text-lg">{calculatedTotalKm} km</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-400 font-medium">{t('profile.total_runs')}</span>
-                      <span className="text-white font-mono font-bold text-lg">{totalRuns}</span>
-                  </div>
+                  <div className="flex justify-between items-center"><span className="text-sm text-gray-400 font-medium">{t('profile.longest_run')}</span><span className="text-white font-mono font-bold text-lg">{maxDistance} km</span></div>
+                  <div className="flex justify-between items-center"><span className="text-sm text-gray-400 font-medium">{t('profile.total_dist')}</span><span className="text-white font-mono font-bold text-lg">{calculatedTotalKm} km</span></div>
+                  <div className="flex justify-between items-center"><span className="text-sm text-gray-400 font-medium">{t('profile.total_runs')}</span><span className="text-white font-mono font-bold text-lg">{totalRuns}</span></div>
               </div>
           </div>
 
@@ -346,28 +334,17 @@ const Profile: React.FC<ProfileProps> = ({
               <h3 className="text-white font-bold uppercase tracking-wide mb-4 flex items-center gap-2 border-b border-white/10 pb-2">
                   <Shield size={18} className="text-gray-400"/> {t('profile.territory_status')}
               </h3>
-              
               <div className="bg-black/30 p-3 rounded-lg border border-white/5 flex items-center justify-between mb-3">
-                   <div className="flex items-center gap-2">
-                       <div className="p-1.5 bg-emerald-500/20 rounded text-emerald-400">
-                           <MapPin size={16} />
-                       </div>
-                       <span className="text-xs text-gray-400 font-bold uppercase tracking-wider">{t('profile.owned_zones')}</span>
-                   </div>
+                   <div className="flex items-center gap-2"><div className="p-1.5 bg-emerald-500/20 rounded text-emerald-400"><MapPin size={16} /></div><span className="text-xs text-gray-400 font-bold uppercase tracking-wider">{t('profile.owned_zones')}</span></div>
                    <span className="text-2xl font-mono font-bold text-white">{totalOwned}</span>
               </div>
-
               <div className="grid grid-cols-2 gap-3">
                   <div className="bg-black/30 p-3 rounded-lg border border-white/5 flex flex-col items-center justify-center">
-                      <div className="flex items-center gap-1 text-xl font-mono font-bold text-white mb-1">
-                          <Zap size={16} className="text-amber-400 fill-amber-400" /> {activeBoosts}
-                      </div>
+                      <div className="flex items-center gap-1 text-xl font-mono font-bold text-white mb-1"><Zap size={16} className="text-amber-400 fill-amber-400" /> {activeBoosts}</div>
                       <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">{t('zone.boosted')}</span>
                   </div>
                   <div className="bg-black/30 p-3 rounded-lg border border-white/5 flex flex-col items-center justify-center">
-                      <div className="flex items-center gap-1 text-xl font-mono font-bold text-white mb-1">
-                          <Shield size={16} className="text-cyan-400 fill-cyan-400/50" /> {activeShields}
-                      </div>
+                      <div className="flex items-center gap-1 text-xl font-mono font-bold text-white mb-1"><Shield size={16} className="text-cyan-400 fill-cyan-400/50" /> {activeShields}</div>
                       <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">{t('zone.shielded')}</span>
                   </div>
               </div>
@@ -388,20 +365,15 @@ const Profile: React.FC<ProfileProps> = ({
                               <div className="flex justify-between items-start mb-2 gap-2">
                                   <div className="min-w-0">
                                       <h4 className="font-bold text-white text-xs truncate uppercase tracking-wider" title={lb.title}>{lb.title}</h4>
-                                      <span className={`text-[9px] uppercase font-bold px-1 py-0.5 rounded ${lb.type === 'PERMANENT' ? 'bg-gray-800 text-gray-500' : 'bg-purple-900/50 text-purple-400'}`}>
-                                          {lb.type === 'PERMANENT' ? 'Seas.' : 'Evt.'}
-                                      </span>
+                                      <span className={`text-[9px] uppercase font-bold px-1 py-0.5 rounded ${lb.type === 'PERMANENT' ? 'bg-gray-800 text-gray-500' : 'bg-purple-900/50 text-purple-400'}`}>{lb.type === 'PERMANENT' ? 'Seas.' : 'Evt.'}</span>
                                   </div>
                                   <div className={`flex flex-col items-center justify-center w-8 h-8 rounded-lg shrink-0 ${isTop3 ? 'bg-yellow-500 text-black' : 'bg-gray-800 text-gray-400'}`}>
-                                      <span className="text-[9px] font-bold">#</span>
-                                      <span className="text-sm font-black leading-none font-mono">{rank}</span>
+                                      <span className="text-[9px] font-bold">#</span><span className="text-sm font-black leading-none font-mono">{rank}</span>
                                   </div>
                               </div>
                               <div className="mt-1 pt-2 border-t border-white/10 flex justify-between items-center">
                                   <span className="text-[9px] text-gray-500 uppercase font-bold truncate pr-1 hidden sm:block">{t('profile.score')}</span>
-                                  <span className={`font-mono text-xs font-bold truncate ${isTop3 ? 'text-yellow-400' : 'text-emerald-400'}`}>
-                                      {score.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 1 })}
-                                  </span>
+                                  <span className={`font-mono text-xs font-bold truncate ${isTop3 ? 'text-yellow-400' : 'text-emerald-400'}`}>{score.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 1 })}</span>
                               </div>
                           </div>
                       );
@@ -433,21 +405,20 @@ const Profile: React.FC<ProfileProps> = ({
                       </div>
                       <div className="divide-y divide-white/10">
                           {currentZoneStats.map((stat, idx) => {
+                              const isLoading = loadingRanks.has(stat.id) || stat.rank === 0;
                               const rank = stat.rank; 
-                              let rankColor = "text-gray-500";
-                              let rankIcon = null;
                               
-                              if (rank === 1) {
-                                  rankColor = "text-yellow-400";
-                                  rankIcon = <Crown size={12} className="fill-yellow-400 inline mb-0.5 mr-1" />;
-                              }
-                              else if (rank === 2) rankColor = "text-gray-300";
-                              else if (rank === 3) rankColor = "text-amber-600";
-
                               return (
-                                  <div key={idx} className="grid grid-cols-12 gap-2 p-3 items-center hover:bg-white/5 transition-colors cursor-pointer group" onClick={() => setSelectedZoneId(stat.id)}>
-                                      <div className={`col-span-2 md:col-span-1 text-center font-black ${rankColor} text-sm flex items-center justify-center font-mono`}>
-                                          {rankIcon} #{rank}
+                                  <div key={stat.id} className="grid grid-cols-12 gap-2 p-3 items-center hover:bg-white/5 transition-colors cursor-pointer group" onClick={() => setSelectedZoneId(stat.id)}>
+                                      <div className="col-span-2 md:col-span-1 text-center font-black text-sm flex items-center justify-center font-mono">
+                                          {isLoading ? (
+                                              <Loader2 size={12} className="animate-spin text-gray-600" />
+                                          ) : (
+                                              <>
+                                                {rank === 1 && <Crown size={12} className="fill-yellow-400 text-yellow-400 mr-1" />}
+                                                <span className={rank === 1 ? "text-yellow-400" : (rank <= 3 ? "text-gray-300" : "text-gray-500")}>#{rank === 999 ? '?' : rank}</span>
+                                              </>
+                                          )}
                                       </div>
                                       <div className="col-span-6 md:col-span-7 font-bold text-white text-xs truncate group-hover:text-emerald-400 transition-colors uppercase tracking-wide" title={stat.name}>{stat.name}</div>
                                       <div className="col-span-2 text-right font-mono text-white font-bold text-xs">{stat.count}</div>
@@ -490,26 +461,9 @@ const Profile: React.FC<ProfileProps> = ({
                               <>
                                 <div className="relative mb-2">
                                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" size={16} />
-                                    <input 
-                                        type="text" 
-                                        placeholder="Search history by location or date..." 
-                                        className="w-full bg-black/40 border border-gray-600 rounded-lg pl-9 pr-8 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
-                                        value={historySearch}
-                                        onChange={(e) => {
-                                            setHistorySearch(e.target.value);
-                                            setRunPage(1); 
-                                        }}
-                                    />
-                                    {historySearch && (
-                                        <button 
-                                            onClick={() => { setHistorySearch(''); setRunPage(1); }}
-                                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-white"
-                                        >
-                                            <X size={14} />
-                                        </button>
-                                    )}
+                                    <input type="text" placeholder="Search history by location or date..." className="w-full bg-black/40 border border-gray-600 rounded-lg pl-9 pr-8 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none" value={historySearch} onChange={(e) => { setHistorySearch(e.target.value); setRunPage(1); }} />
+                                    {historySearch && <button onClick={() => { setHistorySearch(''); setRunPage(1); }} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-white"><X size={14} /></button>}
                                 </div>
-
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-left">
                                         <thead className="text-[10px] uppercase font-bold text-gray-500 border-b border-gray-700 tracking-wider">
@@ -523,7 +477,6 @@ const Profile: React.FC<ProfileProps> = ({
                                                     const locationDisplay = (run.involvedZones && run.involvedZones.length > 0)
                                                         ? run.involvedZones.map(id => zones.find(z => z.id === id)?.name).filter(Boolean).join(', ')
                                                         : run.location;
-
                                                     return (
                                                         <tr key={run.id} className="hover:bg-white/5 transition-colors">
                                                             <td className="py-3 pl-2 text-gray-400 text-xs font-mono">{new Date(run.timestamp).toLocaleDateString()}</td>
@@ -546,7 +499,7 @@ const Profile: React.FC<ProfileProps> = ({
           </div>
       </div>
 
-      {selectedZone && (
+      {selectedZoneId && selectedZone && (
           <ZoneStatsModal 
               zone={selectedZone}
               user={user}
