@@ -1,6 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { User, Badge, LevelConfig } from '../../types';
-import { Crown, Save, Mail, Camera, CheckCircle, X, Flag, Award, Zap, Mountain, Globe, Home, Landmark, Swords, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users, FileText, Egg, Baby, Activity, MapPin, Smile, Wind, Compass, Navigation, TrendingUp, Move, Target, Watch, Droplets, Shield, Star, BatteryCharging, Flame, Truck, CloudLightning, Hexagon, FastForward, Trophy, Plane, Map, Layers, Briefcase, GraduationCap, Brain, Crosshair, Anchor, Heart, Lock, Disc, Feather, FlagTriangleRight, Globe2, Sparkles, Radio, BookOpen, Waves, Snowflake, CloudRain, ThermometerSnowflake, SunDim, MoonStar, Atom, Sword, Axe, Ghost, Ship, PlusSquare, Skull, ChevronsUp, Orbit, CloudFog, Circle, Infinity, Sparkle, ArrowUpCircle, Clock, Eye, Type, Delete, PenTool, Medal, UploadCloud, Loader2, Edit2, Info, ChevronRight, Image, FileImage, ZoomIn } from 'lucide-react';
+import { Crown, Save, Mail, Camera, CheckCircle, X, Flag, Award, Zap, Mountain, Globe, Home, Landmark, Swords, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users, FileText, Egg, Baby, Activity, MapPin, Smile, Wind, Compass, Navigation, TrendingUp, Move, Target, Watch, Droplets, Shield, Star, BatteryCharging, Flame, Truck, CloudLightning, Hexagon, FastForward, Trophy, Plane, Map, Layers, Briefcase, GraduationCap, Brain, Crosshair, Anchor, Heart, Lock, Disc, Feather, FlagTriangleRight, Globe2, Sparkles, Radio, BookOpen, Waves, Snowflake, CloudRain, ThermometerSnowflake, SunDim, MoonStar, Atom, Sword, Axe, Ghost, Ship, PlusSquare, Skull, ChevronsUp, Orbit, CloudFog, Circle, Infinity, Sparkle, ArrowUpCircle, Clock, Eye, Type, Delete, PenTool, Medal, UploadCloud, Loader2, Edit2, Info, ChevronRight, Image, FileImage, ZoomIn, AlertCircle } from 'lucide-react';
 import { useLanguage } from '../../LanguageContext';
 import { compressImage } from '../../utils/imageCompression';
 import { useGameState } from '../../hooks/useGameState';
@@ -13,7 +13,7 @@ interface ProfileHeaderProps {
   currentLevel: number;
   levelTitle?: string;
   levelIcon?: string;
-  levels?: LevelConfig[];
+  levels?: LevelConfig[]; 
   progressToNextLevel: number;
   onUpdateUser: (updates: Partial<User>) => void;
   onUpgradePremium: () => void;
@@ -34,6 +34,10 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   const [isUploading, setIsUploading] = useState(false);
   const [showLevelModal, setShowLevelModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const isDefaultAvatar = useMemo(() => {
+    return user.avatar.includes('dicebear.com') || user.avatar.includes('ui-avatars.com') || user.avatar.includes('api.dicebear.com');
+  }, [user.avatar]);
 
   const handleSave = () => {
     onUpdateUser({ name, email, avatar });
@@ -61,7 +65,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           try {
               const originalFile = e.target.files[0];
               const compressedFile = await compressImage(originalFile, 250, 0.6);
-              
               const publicUrl = await uploadFile(compressedFile, 'avatars');
               
               if (publicUrl) {
@@ -235,7 +238,17 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           
           <div className="px-6 md:px-8 pb-6 flex flex-col md:flex-row items-end md:items-start gap-6 -mt-12 relative z-10">
              <div className={`relative group/avatar ${isEditing ? 'cursor-pointer' : 'cursor-zoom-in'}`} onClick={handleAvatarClick}>
-                 <img src={isEditing ? avatar : user.avatar} alt="Avatar" className={`w-32 h-32 rounded-2xl border-4 bg-gray-800 shadow-2xl object-cover transition-colors ${user.isPremium ? 'border-yellow-500' : 'border-gray-700'} ${!isEditing ? 'group-hover/avatar:border-emerald-500/50' : ''}`} />
+                 <img 
+                    src={isEditing ? avatar : user.avatar} 
+                    alt="Avatar" 
+                    className={`w-32 h-32 rounded-2xl border-4 bg-gray-800 shadow-2xl object-cover transition-all duration-700 ${
+                        user.isPremium ? 'border-yellow-500' : 'border-gray-700'
+                    } ${
+                        isDefaultAvatar && !isEditing 
+                        ? 'ring-4 ring-emerald-500/20 animate-pulse border-emerald-500/40' 
+                        : 'group-hover/avatar:border-emerald-500/50'
+                    }`} 
+                 />
                  
                  <div className="absolute -bottom-3 -right-3 bg-gray-900 text-white text-xs font-bold px-3 py-1 rounded-lg border border-gray-600 shadow-lg z-20 flex items-center gap-1.5 pointer-events-none">
                     {levelIcon ? renderLevelIcon(levelIcon, "w-3 h-3 text-emerald-400") : null}
@@ -276,8 +289,16 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                                     <span className="text-[10px] font-bold uppercase tracking-wider">{favoriteBadge.name}</span>
                                 </div>
                             )}
-                            <button onClick={() => setIsEditing(true)} className="text-gray-500 hover:text-emerald-400 p-1 hover:bg-gray-700/50 rounded-lg transition-colors">
-                                <Edit2 size={18}/>
+                            <button 
+                                onClick={() => setIsEditing(true)} 
+                                className={`p-2 rounded-lg transition-all transform hover:scale-110 active:scale-95 ${
+                                    isDefaultAvatar 
+                                    ? 'text-white bg-emerald-500 border-emerald-400 animate-pulse shadow-[0_0_20px_rgba(16,185,129,0.5)] border-2' 
+                                    : 'text-gray-500 hover:text-emerald-400 hover:bg-gray-700/50'
+                                }`}
+                                title={isDefaultAvatar ? "Upload Profile image" : "Edit Profile"}
+                            >
+                                <Edit2 size={20} className={isDefaultAvatar ? 'stroke-[3px]' : ''} />
                             </button>
                         </div>
                         <p className="text-gray-400 flex items-center gap-2 text-sm mt-1">
@@ -337,7 +358,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
              {!isEditing && (
                 <div className="flex flex-col gap-2 mt-4 md:mt-8 items-end min-w-[140px]">
-                    {/* {!user.isPremium && (
+                     {/* {!user.isPremium && (
                         <button onClick={onUpgradePremium} className="w-full px-5 py-2.5 bg-yellow-600 hover:bg-yellow-500 text-white font-bold rounded-xl text-sm shadow-lg flex items-center justify-center gap-2 transition-colors">
                             <Crown size={16} /> {t('profile.upgrade_pro')}
                         </button>
