@@ -318,7 +318,7 @@ export const it = {
     "miss.filter.all": "TUTTE",
     "miss.filter.common": "COMUNI",
     "miss.filter.rare": "RARE",
-    "miss.filter.epic": "EPIC",
+    "miss.filter.epic": "EPICHE",
     "miss.filter.legendary": "LEGGENDARIE",
     "miss.no_found": "Nessuna missione trovata.",
     "miss.clear_filter": "Pulisci filtri",
