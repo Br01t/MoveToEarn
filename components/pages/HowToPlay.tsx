@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { ArrowLeft, Download, Monitor, Smartphone, FileText, Database, CheckCircle, ExternalLink, Map, Activity, Zap, Apple, Watch } from 'lucide-react'; 
 import { useLanguage } from '../../LanguageContext';

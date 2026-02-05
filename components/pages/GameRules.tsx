@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { ArrowLeft, Terminal, Map as MapIcon, ShoppingBag, Package, Target, Trophy, Wallet, User as UserIcon, BookOpen, Activity, Swords, Zap, Coins, Download } from 'lucide-react';
 import { ViewState } from '../../types';
@@ -19,7 +18,6 @@ export const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate, isAuth
       </h2>
   );
 
-  // Helper for the clean interface cards - Update desc type to ReactNode
   const InterfaceCard = ({ icon: Icon, title, desc, className = "" }: { icon: any, title: string, desc: React.ReactNode, className?: string }) => (
     <div className={`glass-panel rounded-2xl p-6 transition-all duration-300 group ${className}`}>
         <div className="flex items-center gap-4 mb-3">
@@ -35,10 +33,8 @@ export const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate, isAuth
   return (
     <div className="min-h-screen bg-gray-950 relative overflow-hidden pb-24 font-sans selection:bg-emerald-500 selection:text-black">
       
-      {/* --- BACKGROUND LAYER (MATCHING LANDING) --- */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-gray-900 via-gray-950 to-black z-0" />
       
-      {/* High Contrast Hexagonal Grid */}
       <div 
         className="absolute inset-0 z-0 opacity-40 pointer-events-none"
         style={{
@@ -46,16 +42,13 @@ export const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate, isAuth
             backgroundSize: '56px 98px'
         }}
       />
-      {/* Vignette Overlay */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,#000000_100%)] opacity-60 pointer-events-none z-0"></div>
       
-      {/* Static Orbs */}
       <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-emerald-500/10 rounded-full blur-[100px] opacity-30 pointer-events-none" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-cyan-600/10 rounded-full blur-[100px] opacity-30 pointer-events-none" />
       
       <div className="max-w-5xl mx-auto p-6 md:p-8 relative z-10">
         
-        {/* Nav row */}
         <div className="mb-12 flex justify-between items-center">
             {onBack ? (
               <button 
@@ -78,7 +71,6 @@ export const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate, isAuth
             )}
         </div>
 
-        {/* Title */}
         <div className="text-center mb-16">
             <div className="inline-flex p-4 glass-panel rounded-full mb-6 shadow-2xl relative overflow-hidden group">
                 <div className="absolute inset-0 bg-emerald-500/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
@@ -89,14 +81,12 @@ export const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate, isAuth
             </h1>
             <p className="text-xl text-gray-400 font-light">{t('rules.subtitle')}</p>
             
-            {/* New Gamification Intro */}
             <div className="mt-12 text-left glass-panel p-8 rounded-2xl relative overflow-hidden shadow-2xl">
                 <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-emerald-500 to-cyan-500"></div>
                 <h3 className="text-2xl font-bold text-white mb-4">{t('rules.intro.title')}</h3>
                 <p className="text-gray-300 text-lg leading-relaxed">{tRich('rules.intro.body')}</p>
             </div>
 
-            {/* Links Block */}
             {onNavigate && (
                 <div className="flex flex-col md:flex-row items-center justify-center gap-4 mt-8">
                     <button 
@@ -120,12 +110,10 @@ export const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate, isAuth
 
         <div className="space-y-16">
 
-            {/* GAME MECHANICS - STYLE A (Action Oriented) */}
             <section>
                 <SectionHeader icon={Activity} title={t('rules.gameplay.title')} />
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* 1. MOVE */}
                     <div className="group relative glass-panel border-l-4 border-emerald-500 p-6 rounded-r-xl shadow-lg hover:-translate-y-1 transition-transform border-y border-r border-white/5">
                         <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-r-xl pointer-events-none"></div>
                         <div className="flex justify-between items-start mb-4">
@@ -135,7 +123,6 @@ export const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate, isAuth
                         <p className="text-gray-300 leading-relaxed font-medium">{tRich('rules.mech.move_desc')}</p>
                     </div>
 
-                    {/* 2. MINT */}
                     <div className="group relative glass-panel border-l-4 border-purple-500 p-6 rounded-r-xl shadow-lg hover:-translate-y-1 transition-transform border-y border-r border-white/5">
                         <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-r-xl pointer-events-none"></div>
                         <div className="flex justify-between items-start mb-4">
@@ -145,7 +132,6 @@ export const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate, isAuth
                         <p className="text-gray-300 leading-relaxed font-medium">{tRich('rules.mech.mint_desc')}</p>
                     </div>
 
-                    {/* 3. CONQUER */}
                     <div className="group relative glass-panel border-l-4 border-red-500 p-6 rounded-r-xl shadow-lg hover:-translate-y-1 transition-transform border-y border-r border-white/5">
                         <div className="absolute inset-0 bg-gradient-to-r from-red-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-r-xl pointer-events-none"></div>
                         <div className="flex justify-between items-start mb-4">
@@ -155,7 +141,6 @@ export const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate, isAuth
                         <p className="text-gray-300 leading-relaxed font-medium">{tRich('rules.mech.conquer_desc')}</p>
                     </div>
 
-                    {/* 4. EARN */}
                     <div className="group relative glass-panel border-l-4 border-yellow-500 p-6 rounded-r-xl shadow-lg hover:-translate-y-1 transition-transform border-y border-r border-white/5">
                         <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-r-xl pointer-events-none"></div>
                         <div className="flex justify-between items-start mb-4">
@@ -167,20 +152,11 @@ export const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate, isAuth
                 </div>
             </section>
 
-            {/* INTERFACE GUIDE - STYLE B (Modern / Clean / Professional) */}
             <section>
                 <SectionHeader icon={Terminal} title={t('rules.nav.title')} />
                 <p className="text-gray-400 mb-8 text-sm max-w-2xl glass-panel p-4 rounded-xl">{t('rules.nav.desc')}</p>
 
-                {/* 
-                   GRID LOGIC: 
-                   - lg:grid-cols-12 allows granular control.
-                   - Row 1: 4 items (lg:col-span-3 each) = 12 columns
-                   - Row 2: 3 items (lg:col-span-4 each) = 12 columns
-                   - This ensures the bottom 3 items expand to fill the full width.
-                */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6">
-                    {/* ROW 1: 4 Items (25% width each on LG) */}
                     <InterfaceCard 
                         icon={MapIcon} 
                         title={t('rules.nav.dash')} 
@@ -206,7 +182,6 @@ export const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate, isAuth
                         className="lg:col-span-3"
                     />
 
-                    {/* ROW 2: 3 Items (33.3% width each on LG) */}
                     <InterfaceCard 
                         icon={Trophy} 
                         title={t('rules.nav.rank')} 
@@ -220,7 +195,6 @@ export const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate, isAuth
                         className="lg:col-span-4"
                     />
                     
-                    {/* Last Item: Full width on tablet (md:col-span-2) to avoid gap, 1/3 width on desktop */}
                     <InterfaceCard 
                         icon={UserIcon} 
                         title={t('rules.nav.profile')} 

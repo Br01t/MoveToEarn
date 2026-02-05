@@ -108,7 +108,6 @@ const ProfileAchievementsTab: React.FC<ProfileAchievementsTabProps> = ({ user, e
 
   return (
       <div className="space-y-8">
-          {/* BADGES SECTION */}
           <div>
               <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
                   <div className="flex items-center gap-2">
@@ -116,7 +115,6 @@ const ProfileAchievementsTab: React.FC<ProfileAchievementsTabProps> = ({ user, e
                       <span className="text-[9px] text-gray-500 italic hidden md:inline">{t('profile.tap_equip')}</span>
                   </div>
                   
-                  {/* Badges Filter */}
                   <div className="flex flex-wrap gap-2 justify-center md:justify-end">
                       <FilterButton label={t('miss.filter.all')} isActive={badgeFilter === 'ALL'} onClick={() => { setBadgeFilter('ALL'); setBadgePage(1); }} variant="ALL" />
                       <FilterButton label={t('miss.filter.common')} isActive={badgeFilter === 'COMMON'} onClick={() => { setBadgeFilter('COMMON'); setBadgePage(1); }} variant="COMMON" />
@@ -141,7 +139,6 @@ const ProfileAchievementsTab: React.FC<ProfileAchievementsTabProps> = ({ user, e
                             
                             return (
                               <div key={badge.id} className="relative group flex flex-col items-center">
-                                  {/* TOOLTIP */}
                                   <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-3 glass-panel-heavy rounded-xl shadow-2xl opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none z-[100] transform scale-90 group-hover:scale-100">
                                       <div className="flex items-center gap-2 mb-1.5">
                                           <div className={`p-1.5 rounded-lg ${glowStyles.split(' ')[2]} ${glowStyles.split(' ')[3]}`}>
@@ -185,12 +182,10 @@ const ProfileAchievementsTab: React.FC<ProfileAchievementsTabProps> = ({ user, e
               )}
           </div>
 
-          {/* MISSIONS LOG SECTION */}
           <div className="pt-8 border-t border-gray-700/50">
               <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
                   <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t('profile.missions_log')}</h4>
                   
-                  {/* Missions Filter */}
                   <div className="flex flex-wrap gap-2 justify-center md:justify-end">
                       <FilterButton label={t('miss.filter.all')} isActive={missionLogFilter === 'ALL'} onClick={() => { setMissionLogFilter('ALL'); setCompletedMissionPage(1); }} variant="ALL" />
                       <FilterButton label={t('miss.filter.common')} isActive={missionLogFilter === 'COMMON'} onClick={() => { setMissionLogFilter('COMMON'); setCompletedMissionPage(1); }} variant="COMMON" />
@@ -203,7 +198,6 @@ const ProfileAchievementsTab: React.FC<ProfileAchievementsTabProps> = ({ user, e
               <div className="space-y-2">
                   {currentCompletedMissions.map(m => (
                       <div key={m.id} className="relative group">
-                          {/* MISSION TOOLTIP */}
                           <div className="absolute bottom-full left-4 mb-2 w-64 p-4 glass-panel-heavy rounded-2xl shadow-2xl opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none z-[100] transform scale-95 group-hover:scale-100 origin-bottom-left">
                               <div className="flex items-center gap-2 mb-2">
                                   <div className={`p-1.5 rounded bg-white/5 ${getRarityText(m.rarity)}`}>

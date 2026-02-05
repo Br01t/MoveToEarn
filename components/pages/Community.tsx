@@ -32,7 +32,6 @@ const Community: React.FC = () => {
 
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-8 space-y-12 pb-24">
-      {/* HEADER SECTION */}
       <div className="text-center space-y-6 mb-16">
         <div className="inline-flex p-4 glass-panel rounded-full mb-2 shadow-[0_0_20px_rgba(16,185,129,0.1)]">
             <Users className="text-emerald-400" size={48} />
@@ -44,7 +43,6 @@ const Community: React.FC = () => {
           {t('page.comm.subtitle')}
         </p>
 
-        {/* EMAIL INTERACTIVE SECTION */}
         <div className="flex flex-col items-center gap-3 pt-6">
             <span className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-500/60">{t('page.comm.email')}</span>
             <div className="flex items-center gap-2">
@@ -81,9 +79,7 @@ const Community: React.FC = () => {
         </div>
       </div>
 
-      {/* SOCIAL GRID - 4 CARDS (2x2 on Desktop) */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* DISCORD */}
           <CommunityCard 
             icon={MessageCircle} 
             title={t('page.comm.discord')} 
@@ -91,7 +87,6 @@ const Community: React.FC = () => {
             colorClass="indigo-400"
           />
 
-          {/* TELEGRAM */}
           <CommunityCard 
             icon={Send} 
             title={t('page.comm.telegram')} 
@@ -99,7 +94,6 @@ const Community: React.FC = () => {
             colorClass="sky-400"
           />
 
-          {/* X / TWITTER */}
           <CommunityCard 
             icon={Twitter} 
             title={t('page.comm.twitter')} 
@@ -107,7 +101,6 @@ const Community: React.FC = () => {
             colorClass="white"
           />
 
-          {/* INSTAGRAM */}
           <CommunityCard 
             icon={Instagram} 
             title={t('page.comm.instagram')} 
@@ -116,7 +109,6 @@ const Community: React.FC = () => {
           />
       </div>
 
-      {/* FOOTER / SUPPORT SECTION */}
       <div className="mt-20 glass-panel p-10 rounded-3xl border-emerald-500/20 text-center relative overflow-hidden group shadow-2xl">
           <div className="absolute inset-0 bg-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
           <div className="relative z-10">
@@ -125,7 +117,6 @@ const Community: React.FC = () => {
                   {t('page.comm.footer_desc')}
               </p>
           </div>
-          {/* Decorative background element */}
           <div className="absolute -bottom-6 -right-6 opacity-5 group-hover:opacity-10 transition-opacity">
               <Users size={120} className="text-emerald-400" />
           </div>

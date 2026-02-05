@@ -139,7 +139,6 @@ const Inventory: React.FC<InventoryProps> = ({ user, zones, onUseItem }) => {
               </button>
             </div>
             
-            {/* Full Description Section */}
             <div className="p-6 bg-black/10 border-b border-white/5 space-y-4">
                 <div>
                     <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">{t('inv.item_desc')}</h4>

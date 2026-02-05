@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { ArrowRightLeft, Info, Crown, ArrowDown, Activity, CreditCard, Euro, CheckCircle, ArrowRight, X } from 'lucide-react';
 import { useLanguage } from '../../LanguageContext';
@@ -55,7 +54,6 @@ const WalletActions: React.FC<WalletActionsProps> = ({ govBalance, govToRunRate,
 
   return (
     <>
-        {/* SWAP CARD (GOV -> RUN) */}
         <div className="glass-panel rounded-2xl p-6 relative overflow-visible shrink-0">
             <div className="relative z-10">
                 <div className="flex items-center justify-between mb-2">
@@ -63,7 +61,6 @@ const WalletActions: React.FC<WalletActionsProps> = ({ govBalance, govToRunRate,
                         <ArrowRightLeft className="text-yellow-400" /> {t('wallet.swap.title')}
                     </h2>
                     
-                    {/* Info Tooltip Icon */}
                     <div className="relative group">
                         <Info size={16} className="text-gray-500 hover:text-emerald-400 cursor-help transition-colors" />
                         <div className="absolute bottom-full right-0 mb-2 w-48 p-3 bg-gray-900 border border-gray-600 rounded-xl shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 text-[10px] text-gray-300 leading-relaxed">
@@ -162,12 +159,10 @@ const WalletActions: React.FC<WalletActionsProps> = ({ govBalance, govToRunRate,
             </div>
         </div> */}
 
-        {/* CUSTOM SWAP CONFIRMATION MODAL */}
         {showSwapConfirm && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in">
                 <div className="glass-panel-heavy rounded-2xl w-full max-w-sm overflow-hidden flex flex-col relative animate-slide-up">
                     
-                    {/* Confetti if success */}
                     {swapSuccess && (
                         <div className="absolute inset-0 pointer-events-none z-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-emerald-500/10 to-transparent animate-pulse"></div>
                     )}

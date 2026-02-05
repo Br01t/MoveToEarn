@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Mission, Badge } from '../types';
 import { Trophy, CheckCircle, X, Award, Target, Sparkles, Layers } from 'lucide-react';
@@ -17,14 +16,13 @@ const AchievementModal: React.FC<AchievementModalProps> = ({ data, onClose, onCl
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    // Small delay for animation trigger
     const timer = setTimeout(() => setIsVisible(true), 50);
     return () => clearTimeout(timer);
   }, []);
 
   const handleClose = () => {
     setIsVisible(false);
-    setTimeout(onClose, 300); // Wait for exit animation
+    setTimeout(onClose, 300);
   };
 
   const handleClaimAll = () => {
@@ -33,14 +31,11 @@ const AchievementModal: React.FC<AchievementModalProps> = ({ data, onClose, onCl
   };
 
   const isMission = type === 'MISSION';
-  // Check rewardRun for both Missions and Badges
   const rewardRun = (item as any).rewardRun || 0;
   const rewardGov = (item as any).rewardGov || 0;
   
-  // Theme colors based on type
   const themeColor = isMission ? 'emerald' : 'yellow';
   const glowColor = isMission ? 'shadow-[0_0_60px_rgba(16,185,129,0.3)]' : 'shadow-[0_0_60px_rgba(234,179,8,0.3)]';
-  // Background refined to match HUD style but keep burst intent
   const bgGradient = isMission 
     ? 'from-emerald-900/40 to-transparent' 
     : 'from-yellow-900/40 to-transparent';
@@ -50,16 +45,13 @@ const AchievementModal: React.FC<AchievementModalProps> = ({ data, onClose, onCl
       <div 
         className={`relative w-full max-w-sm glass-panel-heavy rounded-2xl p-1 ${glowColor} transition-all duration-300 transform ${isVisible ? 'scale-100 opacity-100' : 'scale-90 opacity-0'}`}
       >
-        {/* Inner Gradient Layer for burst effect */}
         <div className={`absolute inset-0 z-0 bg-gradient-to-b ${bgGradient} rounded-2xl opacity-50`}></div>
 
-        {/* Confetti / Sparkles decoration */}
         <div className="absolute -top-6 -left-6 text-white/20 animate-bounce delay-100"><Sparkles size={40} /></div>
         <div className="absolute -bottom-6 -right-6 text-white/20 animate-bounce delay-300"><Sparkles size={40} /></div>
 
         <div className="relative z-10 p-6 flex flex-col items-center text-center overflow-hidden">
             
-            {/* Header Badge */}
             <div className={`mb-6 p-4 rounded-full border-2 border-${themeColor}-500/50 bg-black/40 relative group`}>
                 <div className={`absolute inset-0 rounded-full opacity-20 bg-${themeColor}-500 animate-pulse`}></div>
                 {isMission ? (
@@ -81,7 +73,6 @@ const AchievementModal: React.FC<AchievementModalProps> = ({ data, onClose, onCl
                 {isMission ? (item as Mission).description : (item as Badge).description}
             </p>
 
-            {/* Reward Box */}
             {(rewardRun > 0 || rewardGov > 0) && (
                 <div className="mb-6 bg-black/40 border border-white/10 px-6 py-3 rounded-lg flex flex-col items-center gap-1 w-full">
                     <span className="text-[10px] text-gray-500 uppercase font-bold">{t('ach.reward_claimed')}</span>
@@ -115,7 +106,6 @@ const AchievementModal: React.FC<AchievementModalProps> = ({ data, onClose, onCl
                 {isMission ? t('ach.claim_btn') : t('ach.awesome_btn')}
             </button>
 
-            {/* Claim All Button - Only visible if there are more items */}
             {remainingCount > 0 && (
                 <button 
                     onClick={handleClaimAll}
