@@ -2,7 +2,6 @@ import { User, Zone, RunEntry, Mission, Badge, RunAnalysisData } from '../types'
 import { getDistanceFromLatLonInKm } from './geo';
 import { RUN_RATE_BASE, RUN_RATE_BOOST, REWARD_SPLIT_USER, REWARD_SPLIT_POOL } from '../constants';
 
-// --- STREAK CALCULATION ---
 export const calculateStreak = (history: RunEntry[]): number => {
     if (history.length === 0) return 0;
     
@@ -107,7 +106,21 @@ export const checkAchievement = (item: Mission | Badge, currentUser: User, curre
     }
 };
 
-// --- PROCESS RUN & REWARDS ---
+const findClosestZone = (lat: number, lng: number, zones: Zone[], maxRadius: number): Zone | null => {
+    let closest: Zone | null = null;
+    let minDistance = maxRadius;
+
+    zones.forEach(z => {
+        const d = getDistanceFromLatLonInKm(lat, lng, z.lat, z.lng);
+        if (d <= minDistance) {
+            minDistance = d;
+            closest = z;
+        }
+    });
+
+    return closest;
+};
+
 export const processRunRewards = (
     data: RunAnalysisData, 
     user: User, 
@@ -125,8 +138,8 @@ export const processRunRewards = (
     const { startPoint, endPoint } = data;
     const RADIUS_KM = 1.0; 
 
-    const startZone = allZones.find(z => getDistanceFromLatLonInKm(startPoint.lat, startPoint.lng, z.lat, z.lng) <= RADIUS_KM);
-    const endZone = allZones.find(z => getDistanceFromLatLonInKm(endPoint.lat, endPoint.lng, z.lat, z.lng) <= RADIUS_KM);
+    const startZone = findClosestZone(startPoint.lat, startPoint.lng, allZones, RADIUS_KM);
+    const endZone = findClosestZone(endPoint.lat, endPoint.lng, allZones, RADIUS_KM);
 
     const zoneKmBuckets: Record<string, number> = {};
     

@@ -14,6 +14,19 @@ interface RunWorkflowProps {
     mintZone?: (newZone: Zone, shiftedZones: Zone[]) => Promise<{ success: boolean; error?: string }>;
 }
 
+const findClosestZone = (lat: number, lng: number, zones: Zone[], maxRadius: number): Zone | null => {
+    let closest: Zone | null = null;
+    let minDistance = maxRadius;
+    zones.forEach(z => {
+        const d = getDistanceFromLatLonInKm(lat, lng, z.lat, z.lng);
+        if (d <= minDistance) {
+            minDistance = d;
+            closest = z;
+        }
+    });
+    return closest;
+};
+
 export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction, recordRun, mintZone }: RunWorkflowProps) => {
   const [pendingRunsQueue, setPendingRunsQueue] = useState<RunAnalysisData[]>([]);
   const [zoneCreationQueue, setZoneCreationQueue] = useState<{
@@ -69,9 +82,10 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction,
     const { startPoint, endPoint } = data;
     const sessionZonesUnique = sessionCreatedZonesRef.current.filter(sz => !zones.some(z => z.id === sz.id));
     const allZones = [...zones, ...sessionZonesUnique];
+    const DETECTION_RADIUS = 1.0;
 
-    let startZone = allZones.find(z => getDistanceFromLatLonInKm(startPoint.lat, startPoint.lng, z.lat, z.lng) < 1.0);
-    let endZone = allZones.find(z => getDistanceFromLatLonInKm(endPoint.lat, endPoint.lng, z.lat, z.lng) < 1.0);
+    let startZone = findClosestZone(startPoint.lat, startPoint.lng, allZones, DETECTION_RADIUS);
+    let endZone = findClosestZone(endPoint.lat, endPoint.lng, allZones, DETECTION_RADIUS);
 
     const zonesToCreate: { lat: number; lng: number; defaultName: string; type: 'START' | 'END' }[] = [];
 
@@ -84,7 +98,7 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction,
     }
 
     const distStartEnd = getDistanceFromLatLonInKm(startPoint.lat, startPoint.lng, endPoint.lat, endPoint.lng);
-    if (!endZone && distStartEnd > 1.0) {
+    if (!endZone && distStartEnd > DETECTION_RADIUS) {
         zonesToCreate.push({
              lat: endPoint.lat, lng: endPoint.lng,
              defaultName: `New Zone ${Math.floor(endPoint.lat*100)},${Math.floor(endPoint.lng*100)}`,
