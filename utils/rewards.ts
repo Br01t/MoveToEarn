@@ -19,7 +19,7 @@ export const calculateStreak = (history: RunEntry[]): number => {
     const todayTime = today.getTime();
     const diffSinceLastRun = (todayTime - days[0]) / (1000 * 60 * 60 * 24);
 
-    if (diffSinceLastRun > 1) return 0; // Streak broken
+    if (diffSinceLastRun > 1) return 0; 
 
     for (let i = 0; i < days.length - 1; i++) {
         const current = days[i];
@@ -34,7 +34,6 @@ export const calculateStreak = (history: RunEntry[]): number => {
     return streak;
 };
 
-// --- ACHIEVEMENT LOGIC ---
 export const checkAchievement = (item: Mission | Badge, currentUser: User, currentZones: Zone[]): boolean => {
     if (item.conditionType === 'TOTAL_KM' && item.conditionValue) {
         return currentUser.totalKm >= item.conditionValue;
@@ -136,24 +135,45 @@ export const processRunRewards = (
 } => {
     const totalKm = data.totalKm;
     const { startPoint, endPoint } = data;
-    const RADIUS_KM = 1.0; 
+    
+    const DETECTION_RADIUS = 0.8; 
 
-    const startZone = findClosestZone(startPoint.lat, startPoint.lng, allZones, RADIUS_KM);
-    const endZone = findClosestZone(endPoint.lat, endPoint.lng, allZones, RADIUS_KM);
+    let primaryZone: Zone | null = null;
+    let minCombinedDist = Infinity;
+
+    allZones.forEach(z => {
+        const distStart = getDistanceFromLatLonInKm(startPoint.lat, startPoint.lng, z.lat, z.lng);
+        const distEnd = getDistanceFromLatLonInKm(endPoint.lat, endPoint.lng, z.lat, z.lng);
+        
+        if (distStart <= DETECTION_RADIUS && distEnd <= DETECTION_RADIUS) {
+            const combinedDist = distStart + distEnd;
+            if (combinedDist < minCombinedDist) {
+                minCombinedDist = combinedDist;
+                primaryZone = z;
+            }
+        }
+    });
 
     const zoneKmBuckets: Record<string, number> = {};
-    
-    if (startZone && endZone) {
-        if (startZone.id === endZone.id) {
+
+    if (primaryZone) {
+        zoneKmBuckets[primaryZone.id] = totalKm;
+    } else {
+        const startZone = findClosestZone(startPoint.lat, startPoint.lng, allZones, DETECTION_RADIUS);
+        const endZone = findClosestZone(endPoint.lat, endPoint.lng, allZones, DETECTION_RADIUS);
+
+        if (startZone && endZone) {
+            if (startZone.id === endZone.id) {
+                zoneKmBuckets[startZone.id] = totalKm;
+            } else {
+                zoneKmBuckets[startZone.id] = parseFloat((totalKm / 2).toFixed(4));
+                zoneKmBuckets[endZone.id] = parseFloat((totalKm / 2).toFixed(4));
+            }
+        } else if (startZone) {
             zoneKmBuckets[startZone.id] = totalKm;
-        } else {
-            zoneKmBuckets[startZone.id] = parseFloat((totalKm / 2).toFixed(4));
-            zoneKmBuckets[endZone.id] = parseFloat((totalKm / 2).toFixed(4));
+        } else if (endZone) {
+            zoneKmBuckets[endZone.id] = totalKm;
         }
-    } else if (startZone) {
-        zoneKmBuckets[startZone.id] = totalKm;
-    } else if (endZone) {
-        zoneKmBuckets[endZone.id] = totalKm;
     }
 
     const involvedZoneIds = Object.keys(zoneKmBuckets);
@@ -163,6 +183,7 @@ export const processRunRewards = (
     let isReinforced = false;
 
     if (involvedZoneIds.length === 0) {
+        // Se non tocchi nessuna zona, guadagni comunque i RUN base ma non alimenti pool
         totalRunEarned = totalKm * RUN_RATE_BASE;
     } else {
         involvedZoneIds.forEach(id => {
