@@ -105,7 +105,7 @@ export const checkAchievement = (item: Mission | Badge, currentUser: User, curre
     }
 };
 
-const findClosestZone = (lat: number, lng: number, zones: Zone[], maxRadius: number): Zone | null => {
+const findClosestZoneCenter = (lat: number, lng: number, zones: Zone[], maxRadius: number): Zone | null => {
     let closest: Zone | null = null;
     let minDistance = maxRadius;
 
@@ -137,30 +137,44 @@ export const processRunRewards = (
     const { startPoint, endPoint } = data;
     
     const DETECTION_RADIUS = 0.8; 
+    const LOOP_THRESHOLD = 0.4;
 
-    let primaryZone: Zone | null = null;
-    let minCombinedDist = Infinity;
-
-    allZones.forEach(z => {
-        const distStart = getDistanceFromLatLonInKm(startPoint.lat, startPoint.lng, z.lat, z.lng);
-        const distEnd = getDistanceFromLatLonInKm(endPoint.lat, endPoint.lng, z.lat, z.lng);
-        
-        if (distStart <= DETECTION_RADIUS && distEnd <= DETECTION_RADIUS) {
-            const combinedDist = distStart + distEnd;
-            if (combinedDist < minCombinedDist) {
-                minCombinedDist = combinedDist;
-                primaryZone = z;
-            }
-        }
-    });
+    const distStartEnd = getDistanceFromLatLonInKm(startPoint.lat, startPoint.lng, endPoint.lat, endPoint.lng);
 
     const zoneKmBuckets: Record<string, number> = {};
+    let primaryZone: Zone | null = null;
 
-    if (primaryZone) {
-        zoneKmBuckets[primaryZone.id] = totalKm;
-    } else {
-        const startZone = findClosestZone(startPoint.lat, startPoint.lng, allZones, DETECTION_RADIUS);
-        const endZone = findClosestZone(endPoint.lat, endPoint.lng, allZones, DETECTION_RADIUS);
+    if (distStartEnd <= LOOP_THRESHOLD) {
+        primaryZone = findClosestZoneCenter(startPoint.lat, startPoint.lng, allZones, DETECTION_RADIUS);
+        
+        if (primaryZone) {
+            zoneKmBuckets[primaryZone.id] = totalKm;
+        }
+    } 
+    
+    if (Object.keys(zoneKmBuckets).length === 0) {
+        let minCombinedDist = Infinity;
+        allZones.forEach(z => {
+            const distStart = getDistanceFromLatLonInKm(startPoint.lat, startPoint.lng, z.lat, z.lng);
+            const distEnd = getDistanceFromLatLonInKm(endPoint.lat, endPoint.lng, z.lat, z.lng);
+            
+            if (distStart <= DETECTION_RADIUS && distEnd <= DETECTION_RADIUS) {
+                const combinedDist = distStart + distEnd;
+                if (combinedDist < minCombinedDist) {
+                    minCombinedDist = combinedDist;
+                    primaryZone = z;
+                }
+            }
+        });
+
+        if (primaryZone) {
+            zoneKmBuckets[primaryZone.id] = totalKm;
+        }
+    }
+
+    if (Object.keys(zoneKmBuckets).length === 0) {
+        const startZone = findClosestZoneCenter(startPoint.lat, startPoint.lng, allZones, DETECTION_RADIUS);
+        const endZone = findClosestZoneCenter(endPoint.lat, endPoint.lng, allZones, DETECTION_RADIUS);
 
         if (startZone && endZone) {
             if (startZone.id === endZone.id) {
@@ -183,7 +197,6 @@ export const processRunRewards = (
     let isReinforced = false;
 
     if (involvedZoneIds.length === 0) {
-        // Se non tocchi nessuna zona, guadagni comunque i RUN base ma non alimenti pool
         totalRunEarned = totalKm * RUN_RATE_BASE;
     } else {
         involvedZoneIds.forEach(id => {

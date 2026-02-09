@@ -14,7 +14,7 @@ interface RunWorkflowProps {
     mintZone?: (newZone: Zone, shiftedZones: Zone[]) => Promise<{ success: boolean; error?: string }>;
 }
 
-const findClosestZone = (lat: number, lng: number, zones: Zone[], maxRadius: number): Zone | null => {
+const findClosestZoneCenter = (lat: number, lng: number, zones: Zone[], maxRadius: number): Zone | null => {
     let closest: Zone | null = null;
     let minDistance = maxRadius;
     zones.forEach(z => {
@@ -82,29 +82,45 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction,
     const { startPoint, endPoint } = data;
     const sessionZonesUnique = sessionCreatedZonesRef.current.filter(sz => !zones.some(z => z.id === sz.id));
     const allZones = [...zones, ...sessionZonesUnique];
-    const DETECTION_RADIUS = 1.0;
+    
+    const DETECTION_RADIUS = 0.8;
+    const LOOP_THRESHOLD = 0.4;
 
-    let startZone = findClosestZone(startPoint.lat, startPoint.lng, allZones, DETECTION_RADIUS);
-    let endZone = findClosestZone(endPoint.lat, endPoint.lng, allZones, DETECTION_RADIUS);
+    const distStartEnd = getDistanceFromLatLonInKm(startPoint.lat, startPoint.lng, endPoint.lat, endPoint.lng);
 
     const zonesToCreate: { lat: number; lng: number; defaultName: string; type: 'START' | 'END' }[] = [];
 
-    if (!startZone) {
-        zonesToCreate.push({
-            lat: startPoint.lat, lng: startPoint.lng,
-            defaultName: `New Zone ${Math.floor(startPoint.lat*100)},${Math.floor(startPoint.lng*100)}`,
-            type: 'START'
-        });
+    if (distStartEnd <= LOOP_THRESHOLD) {
+        let match = findClosestZoneCenter(startPoint.lat, startPoint.lng, allZones, DETECTION_RADIUS);
+        if (!match) {
+            zonesToCreate.push({
+                lat: startPoint.lat, lng: startPoint.lng,
+                defaultName: `New Zone ${Math.floor(startPoint.lat*100)},${Math.floor(startPoint.lng*100)}`,
+                type: 'START'
+            });
+        }
+    } else {
+        let startZone = findClosestZoneCenter(startPoint.lat, startPoint.lng, allZones, DETECTION_RADIUS);
+        let endZone = findClosestZoneCenter(endPoint.lat, endPoint.lng, allZones, DETECTION_RADIUS);
+
+        if (!startZone) {
+            zonesToCreate.push({
+                lat: startPoint.lat, lng: startPoint.lng,
+                defaultName: `New Zone ${Math.floor(startPoint.lat*100)},${Math.floor(startPoint.lng*100)}`,
+                type: 'START'
+            });
+        }
+        if (!endZone) {
+            zonesToCreate.push({
+                 lat: endPoint.lat, lng: endPoint.lng,
+                 defaultName: `New Zone ${Math.floor(endPoint.lat*100)},${Math.floor(endPoint.lng*100)}`,
+                 type: 'END'
+            });
+        }
     }
 
-    const distStartEnd = getDistanceFromLatLonInKm(startPoint.lat, startPoint.lng, endPoint.lat, endPoint.lng);
-    if (!endZone && distStartEnd > DETECTION_RADIUS) {
-        zonesToCreate.push({
-             lat: endPoint.lat, lng: endPoint.lng,
-             defaultName: `New Zone ${Math.floor(endPoint.lat*100)},${Math.floor(endPoint.lng*100)}`,
-             type: 'END'
-        });
-    }
+    console.log("✨ Discovery outcome:", zonesToCreate.length > 0 ? `Proposed ${zonesToCreate.length} new zones` : "All points covered.");
+    console.groupEnd();
 
     if (zonesToCreate.length > 0) {
         setPendingRunData(data);
@@ -154,11 +170,6 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction,
           const dbResult = await recordRun(currentUser.id, newRun, modifiedZones);
           if (!dbResult.success) {
               console.error("❌ Sync Error:", dbResult.error);
-              if (dbResult.error === 'GLOBAL_DUPLICATE_DETECTED') {
-                  alert("❌ Sync Conflict: This run has already been uploaded by another user in the ZoneRun network. Files cannot be shared.");
-              } else {
-                  alert(`Sync Failed: ${dbResult.error || 'Database error'}.`);
-              }
               setPendingRunsQueue([]);
               setPendingRunData(null);
               return; 
@@ -213,7 +224,6 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction,
           const dbRes = await mintZone(newZone, placementResult.shiftedZones);
           if (!dbRes.success) {
               console.error("❌ Minting failed in DB:", dbRes.error);
-              alert(`Failed to save new zone: ${dbRes.error}`);
               return { success: false };
           }
       }
