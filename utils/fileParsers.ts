@@ -7,20 +7,16 @@ export interface ActivityPoint {
     time: Date;
 }
 
+export interface ActivityResult {
+    points: ActivityPoint[];
+    distance?: number; // Distanza in KM letta dai metadati del file
+}
+
 // Helper: Parse FIT file (Binary)
-export const parseFIT = (buffer: ArrayBuffer): Promise<ActivityPoint[][]> => {
-    console.log("📂 [PARSER] Avvio parsing FIT. Dimensione buffer:", buffer.byteLength);
-    
+export const parseFIT = (buffer: ArrayBuffer): Promise<ActivityResult[]> => {
     return new Promise((resolve, reject) => {
         try {
-            // Risolve il costruttore per compatibilità ESM/CJS
             const ParserClass = (FitParser as any).default || FitParser;
-            if (typeof ParserClass !== 'function') {
-                console.error("❌ [PARSER] FitParser constructor non trovato.");
-                reject(new Error("Inizializzazione FIT Parser fallita."));
-                return;
-            }
-
             const parser = new ParserClass({
                 force: true,
                 speedUnit: 'km/h',
@@ -30,245 +26,126 @@ export const parseFIT = (buffer: ArrayBuffer): Promise<ActivityPoint[][]> => {
                 mode: 'cascade', 
             });
 
-            // Converte ArrayBuffer in Uint8Array per il parser
             const uint8Array = new Uint8Array(buffer);
 
             parser.parse(uint8Array, (error: any, data: any) => {
                 if (error) {
-                    console.error("❌ [PARSER] Errore FIT:", error);
-                    reject(new Error(`Errore nel parse del file FIT: ${error.message || error}`));
+                    reject(new Error(`Errore FIT: ${error.message}`));
                     return;
                 }
 
                 const points: ActivityPoint[] = [];
-                // Alcuni file FIT usano 'records', altri 'record' o strutture annidate
                 const records = data.records || data.record || [];
                 
-                // Se non ci sono record principali, controlliamo sessioni/laps (Garmin/Wahoo)
                 if (records.length === 0 && data.activity?.sessions) {
-                    data.activity.sessions.forEach((session: any) => {
-                        if (session.laps) {
-                            session.laps.forEach((lap: any) => {
-                                if (lap.records) records.push(...lap.records);
-                                else if (lap.record) records.push(...lap.record);
-                            });
-                        }
+                    data.activity.sessions.forEach((s: any) => {
+                        if (s.laps) s.laps.forEach((l: any) => records.push(...(l.records || l.record || [])));
                     });
                 }
 
                 for (const record of records) {
-                    // Supporto a diversi nomi di campo (position_lat, lat, latitude)
                     const rawLat = record.position_lat ?? record.lat ?? record.latitude;
                     const rawLng = record.position_long ?? record.lng ?? record.longitude ?? record.position_lon;
-                    const timestamp = record.timestamp;
-
-                    // Solo record con coordinate GPS reali e tempo
-                    if (rawLat !== undefined && rawLng !== undefined && timestamp) {
-                        // CONVERSIONE INTELLIGENTE: Semicircles -> Gradi
-                        // I semicircoli sono valori interi grandi. Se il valore assoluto è > 180, convertiamo.
-                        // Se è <= 180, il parser ha già fornito i gradi o il file è in gradi.
+                    if (rawLat !== undefined && rawLng !== undefined && record.timestamp) {
                         const SEMICIRCLE_CONVERSION = 180 / 2147483648;
                         const lat = Math.abs(rawLat) > 180 ? rawLat * SEMICIRCLE_CONVERSION : rawLat;
                         const lng = Math.abs(rawLng) > 180 ? rawLng * SEMICIRCLE_CONVERSION : rawLng;
-                        
-                        const ele = record.enhanced_altitude || record.altitude || 0;
-                        
-                        points.push({
-                            lat,
-                            lng,
-                            ele,
-                            time: new Date(timestamp)
-                        });
+                        points.push({ lat, lng, ele: record.enhanced_altitude || record.altitude || 0, time: new Date(record.timestamp) });
                     }
                 }
 
+                // Estrazione Distanza Totale dai metadati FIT (total_distance è in metri)
+                let fileDist: number | undefined = undefined;
+                if (data.sessions && data.sessions[0] && data.sessions[0].total_distance !== undefined) {
+                    fileDist = data.sessions[0].total_distance / 1000;
+                }
+
                 if (points.length < 2) {
-                    console.warn("⚠️ [PARSER] File FIT senza punti GPS validi.");
-                    reject(new Error("Nessun punto GPS trovato nel file FIT."));
+                    reject(new Error("File FIT senza dati GPS."));
                 } else {
-                    // Ordina per tempo
                     points.sort((a, b) => a.time.getTime() - b.time.getTime());
-                    console.log(`✅ [PARSER] Estratti ${points.length} punti dal FIT.`);
-                    resolve([points]);
+                    resolve([{ points, distance: fileDist }]);
                 }
             });
         } catch (err: any) {
-            console.error("❌ [PARSER] Errore critico FIT:", err);
             reject(new Error(`Crash Parser FIT: ${err.message}`));
         }
     });
 };
 
-// Helper: Parse JSON
-export const parseJSON = (text: string): ActivityPoint[][] => {
-    console.log("📂 [PARSER] Rilevato formato JSON.");
-    try {
-        const json = JSON.parse(text);
-        const points: ActivityPoint[] = [];
-        
-        let candidates: any[] = [];
-        
-        if (Array.isArray(json)) candidates = json;
-        else if (Array.isArray(json.data)) candidates = json.data;
-        else if (Array.isArray(json.points)) candidates = json.points;
-        else if (Array.isArray(json.track)) candidates = json.track;
-        else if (Array.isArray(json.locations)) candidates = json.locations;
-
-        if (candidates.length < 2) throw new Error("Nessun punto traccia nel JSON.");
-
-        for (const p of candidates) {
-            const lat = p.latitude || p.lat || p.y;
-            const lng = p.longitude || p.lon || p.lng || p.x;
-            const ele = p.elevation || p.ele || p.altitude || p.alt || 0;
-            const timeStr = p.timestamp || p.time || p.date || p.startTime;
-
-            if (lat !== undefined && lng !== undefined && timeStr) {
-                const time = new Date(timeStr);
-                if (!isNaN(time.getTime())) {
-                    points.push({
-                        lat: parseFloat(lat),
-                        lng: parseFloat(lng),
-                        ele: parseFloat(ele),
-                        time: time
-                    });
-                }
-            }
-        }
-
-        if (points.length < 2) throw new Error("Coordinate GPS valide non trovate nel JSON.");
-        
-        points.sort((a, b) => a.time.getTime() - b.time.getTime());
-        return [points];
-
-    } catch (e: any) {
-        console.error("JSON Parse Error:", e);
-        throw new Error("Formato JSON non valido.");
-    }
-};
-
-// Helper: Parse CSV
-export const parseCSV = (text: string): ActivityPoint[][] => {
-    console.log("📂 [PARSER] Rilevato formato CSV.");
-    const lines = text.split(/\r?\n/);
-    if (lines.length < 2) throw new Error("File CSV vuoto.");
-
-    const headerRow = lines[0].toLowerCase();
-    const delimiter = headerRow.includes(';') ? ';' : ',';
-    const headers = headerRow.split(delimiter).map(h => h.trim().replace(/['"]+/g, ''));
-
-    const latIdx = headers.findIndex(h => h.includes('lat'));
-    const lngIdx = headers.findIndex(h => h.includes('lon') || h.includes('lng'));
-    const eleIdx = headers.findIndex(h => h.includes('ele') || h.includes('alt'));
-    const timeIdx = headers.findIndex(h => h.includes('time') || h.includes('date'));
-
-    if (latIdx === -1 || lngIdx === -1 || timeIdx === -1) {
-        throw new Error("CSV manca di colonne obbligatorie (Latitude, Longitude, Time).");
-    }
-
-    const points: ActivityPoint[] = [];
-
-    for (let i = 1; i < lines.length; i++) {
-        const line = lines[i].trim();
-        if (!line) continue;
-        
-        const cols = line.split(delimiter).map(c => c.trim().replace(/['"]+/g, ''));
-        if (cols.length <= Math.max(latIdx, lngIdx, timeIdx)) continue;
-
-        const latVal = parseFloat(cols[latIdx]);
-        const lngVal = parseFloat(cols[lngIdx]);
-        const eleVal = eleIdx !== -1 ? parseFloat(cols[eleIdx]) : 0;
-        const timeStr = cols[timeIdx];
-
-        if (!isNaN(latVal) && !isNaN(lngVal) && timeStr) {
-            let time: Date;
-            if (/^\d+$/.test(timeStr)) {
-                const ts = parseInt(timeStr);
-                time = new Date(ts < 100000000000 ? ts * 1000 : ts); 
-            } else {
-                time = new Date(timeStr);
-            }
-
-            if (!isNaN(time.getTime())) {
-                points.push({ lat: latVal, lng: lngVal, ele: eleVal, time });
-            }
-        }
-    }
-
-    if (points.length < 2) throw new Error("Nessun punto GPS estratto dal CSV.");
-    
-    points.sort((a, b) => a.time.getTime() - b.time.getTime());
-    return [points];
-};
-
-// XML Parsers (GPX/TCX)
-export const parseTCX = (xmlDoc: Document): ActivityPoint[][] => {
-    const tracks: ActivityPoint[][] = [];
+// Helper: Parse TCX
+export const parseTCX = (xmlDoc: Document): ActivityResult[] => {
+    const results: ActivityResult[] = [];
     const activities = xmlDoc.getElementsByTagName("Activity");
 
     for (let i = 0; i < activities.length; i++) {
         const activity = activities[i];
         const laps = activity.getElementsByTagName("Lap");
         const activityPoints: ActivityPoint[] = [];
+        let totalMeters = 0;
 
         for (let j = 0; j < laps.length; j++) {
             const lap = laps[j];
-            const track = lap.getElementsByTagName("Track")[0]; 
-            if (!track) continue;
+            // TCX DistanceMeters è standard per ogni Lap
+            const distNode = lap.getElementsByTagName("DistanceMeters")[0];
+            if (distNode?.textContent) totalMeters += parseFloat(distNode.textContent);
 
-            const trackpoints = track.getElementsByTagName("Trackpoint");
+            const trackpoints = lap.getElementsByTagName("Trackpoint");
             for (let k = 0; k < trackpoints.length; k++) {
                 const tp = trackpoints[k];
-                const timeStr = tp.getElementsByTagName("Time")[0]?.textContent;
                 const position = tp.getElementsByTagName("Position")[0];
-                const altitude = tp.getElementsByTagName("AltitudeMeters")[0];
-
+                const timeStr = tp.getElementsByTagName("Time")[0]?.textContent;
                 if (timeStr && position) {
-                    const latStr = position.getElementsByTagName("LatitudeDegrees")[0]?.textContent;
-                    const lngStr = position.getElementsByTagName("LongitudeDegrees")[0]?.textContent;
-                    const eleStr = altitude?.textContent;
-
-                    if (latStr && lngStr) {
-                        const time = new Date(timeStr);
-                        if (!isNaN(time.getTime())) {
-                            activityPoints.push({
-                                lat: parseFloat(latStr),
-                                lng: parseFloat(lngStr),
-                                ele: eleStr ? parseFloat(eleStr) : 0,
-                                time: time
-                            });
-                        }
+                    const lat = position.getElementsByTagName("LatitudeDegrees")[0]?.textContent;
+                    const lng = position.getElementsByTagName("LongitudeDegrees")[0]?.textContent;
+                    const ele = tp.getElementsByTagName("AltitudeMeters")[0]?.textContent;
+                    if (lat && lng) {
+                        activityPoints.push({ lat: parseFloat(lat), lng: parseFloat(lng), ele: ele ? parseFloat(ele) : 0, time: new Date(timeStr) });
                     }
                 }
             }
         }
         if (activityPoints.length >= 2) {
             activityPoints.sort((a, b) => a.time.getTime() - b.time.getTime());
-            tracks.push(activityPoints);
+            results.push({ points: activityPoints, distance: totalMeters > 0 ? totalMeters / 1000 : undefined });
         }
     }
-    return tracks;
+    return results;
 };
 
-export const parseGPXInternal = (xmlDoc: Document): ActivityPoint[][] => {
-    const tracks: ActivityPoint[][] = [];
+// Helper: Parse GPX
+export const parseGPXInternal = (xmlDoc: Document): ActivityResult[] => {
+    const results: ActivityResult[] = [];
     const trkNodes = xmlDoc.getElementsByTagName("trk");
 
-    const extractPointsFromNode = (node: Element) => {
+    // Prova a cercare estensioni di distanza totale nel metadato GPX (Strava/Garmin extensions)
+    let globalDistance: number | undefined = undefined;
+    const extensions = xmlDoc.getElementsByTagName("extensions");
+    for (let i = 0; i < extensions.length; i++) {
+        const ext = extensions[i];
+        const distNode = ext.getElementsByTagName("distance")[0] || 
+                         ext.getElementsByTagName("TotalDistance")[0] ||
+                         ext.getElementsByTagName("gpxtpx:distance")[0];
+        if (distNode && distNode.textContent) {
+            const val = parseFloat(distNode.textContent);
+            globalDistance = val > 500 ? val / 1000 : val; // Se > 500 probabilmente sono metri
+            break;
+        }
+    }
+
+    const processTrk = (node: Element) => {
         const trkpts = node.getElementsByTagName("trkpt");
         const points = [];
         for (let i = 0; i < trkpts.length; i++) {
             const p = trkpts[i];
-            const lat = parseFloat(p.getAttribute("lat") || "0");
-            const lng = parseFloat(p.getAttribute("lon") || "0");
-            const eleNode = p.getElementsByTagName("ele")[0];
-            const ele = eleNode && eleNode.textContent ? parseFloat(eleNode.textContent) : 0;
             const timeNode = p.getElementsByTagName("time")[0];
-            
             if (timeNode && timeNode.textContent) {
-                 const time = new Date(timeNode.textContent);
-                 if (!isNaN(time.getTime())) {
-                     points.push({ lat, lng, ele, time });
-                 }
+                 points.push({
+                    lat: parseFloat(p.getAttribute("lat") || "0"),
+                    lng: parseFloat(p.getAttribute("lon") || "0"),
+                    ele: parseFloat(p.getElementsByTagName("ele")[0]?.textContent || "0"),
+                    time: new Date(timeNode.textContent)
+                 });
             }
         }
         return points;
@@ -276,67 +153,50 @@ export const parseGPXInternal = (xmlDoc: Document): ActivityPoint[][] => {
 
     if (trkNodes.length > 0) {
         for (let i = 0; i < trkNodes.length; i++) {
-             const points = extractPointsFromNode(trkNodes[i]);
+             const points = processTrk(trkNodes[i]);
              if (points.length >= 2) {
                  points.sort((a, b) => a.time.getTime() - b.time.getTime());
-                 tracks.push(points);
+                 results.push({ points, distance: globalDistance });
              }
         }
     } else {
-        const allTrkPts = xmlDoc.getElementsByTagName("trkpt");
-        if (allTrkPts.length >= 2) {
-             const points = [];
-             for (let i = 0; i < allTrkPts.length; i++) {
-                const p = allTrkPts[i];
-                const lat = parseFloat(p.getAttribute("lat") || "0");
-                const lng = parseFloat(p.getAttribute("lon") || "0");
-                const ele = parseFloat(p.getElementsByTagName("ele")[0]?.textContent || "0");
-                const timeStr = p.getElementsByTagName("time")[0]?.textContent;
-                if(timeStr) {
-                    const time = new Date(timeStr);
-                    if(!isNaN(time.getTime())) points.push({ lat, lng, ele, time });
-                }
-             }
-             if (points.length >= 2) {
-                 points.sort((a, b) => a.time.getTime() - b.time.getTime());
-                 tracks.push(points);
-             }
+        const allPts = processTrk(xmlDoc as any);
+        if (allPts.length >= 2) {
+            allPts.sort((a, b) => a.time.getTime() - b.time.getTime());
+            results.push({ points: allPts, distance: globalDistance });
         }
     }
-    return tracks;
+    return results;
 };
 
 // Main Parser Entry
-export const parseActivityFile = async (data: string | ArrayBuffer, filename: string): Promise<ActivityPoint[][]> => {
-    console.log("📂 [PARSER] Analisi file:", filename);
+export const parseActivityFile = async (data: string | ArrayBuffer, filename: string): Promise<ActivityResult[]> => {
     const lowerName = filename.toLowerCase();
-
-    // Gestione binaria per FIT
-    if (lowerName.endsWith('.fit') && typeof data !== 'string') {
-        return parseFIT(data as ArrayBuffer);
-    }
-
-    if (typeof data !== 'string') throw new Error("Contenuto non valido per il parser testuale.");
-
-    if (lowerName.endsWith('.json')) return parseJSON(data);
-    if (lowerName.endsWith('.csv')) return parseCSV(data);
+    if (lowerName.endsWith('.fit') && typeof data !== 'string') return parseFIT(data as ArrayBuffer);
+    if (typeof data !== 'string') throw new Error("Dati non validi.");
 
     try {
         const parser = new DOMParser();
         const xmlDoc = parser.parseFromString(data, "text/xml");
-        const parserError = xmlDoc.getElementsByTagName("parsererror");
-        
-        if (parserError.length > 0) throw new Error("File XML malformato.");
+        if (xmlDoc.getElementsByTagName("parsererror").length > 0) throw new Error("XML Error.");
 
         if (xmlDoc.getElementsByTagName("TrainingCenterDatabase").length > 0) {
             return parseTCX(xmlDoc);
-        } else if (xmlDoc.getElementsByTagName("gpx").length > 0 || xmlDoc.getElementsByTagName("trk").length > 0) {
+        } else {
             return parseGPXInternal(xmlDoc);
         }
     } catch (e) {
-        if (data.trim().startsWith('{') || data.trim().startsWith('[')) return parseJSON(data);
-        throw e;
+        try {
+            const json = JSON.parse(data);
+            const points = (json.points || json.data || []).map((p: any) => ({
+                lat: p.lat || p.latitude,
+                lng: p.lng || p.longitude,
+                ele: p.ele || p.elevation || 0,
+                time: new Date(p.time || p.timestamp)
+            }));
+            return [{ points, distance: json.distance || json.total_km }];
+        } catch {
+            throw new Error("Formato file non supportato.");
+        }
     }
-
-    throw new Error("Formato sconosciuto. Usa GPX, TCX, FIT, JSON o CSV.");
 };

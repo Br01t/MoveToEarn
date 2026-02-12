@@ -2,7 +2,6 @@ export type ViewState = 'LANDING' | 'DASHBOARD' | 'MARKETPLACE' | 'INVENTORY' | 
 
 export type Rarity = 'COMMON' | 'RARE' | 'EPIC' | 'LEGENDARY';
 
-// New types for the 100 items
 export type AchievementCategory = 'Distance' | 'Speed' | 'Technical' | 'TimeOfDay' | 'Zone' | 'Streak' | 'Exploration' | 'Social' | 'Meta' | 'Special' | 'Event' | 'Training' | 'Performance' | 'Endurance' | 'Economy' | 'Onboarding';
 export type Difficulty = 'Easy' | 'Medium' | 'Hard' | 'Expert' | 'Special';
 
@@ -21,15 +20,11 @@ export interface Mission {
   title: string;
   description: string;
   rewardRun: number; 
-  rewardGov?: number; // Added optional GOV reward
+  rewardGov?: number;
   rarity: Rarity;
-  
-  // Legacy System (Preserved but optional)
   conditionType?: 'TOTAL_KM' | 'OWN_ZONES';
   conditionValue?: number;
-
-  // New System (For the 100 new missions)
-  logicId?: number; // 1-100 from PDF
+  logicId?: number;
   category?: AchievementCategory;
   difficulty?: Difficulty;
 }
@@ -38,16 +33,12 @@ export interface Badge {
   id: string;
   name: string;
   description: string;
-  icon: string; // Lucide icon name
+  icon: string;
   rarity: Rarity;
   rewardRun?: number;
-  rewardGov?: number; // Added optional GOV reward
-
-  // Legacy System (Preserved but optional)
+  rewardGov?: number;
   conditionType?: 'TOTAL_KM' | 'OWN_ZONES';
   conditionValue?: number;
-
-  // New System
   logicId?: number;
   category?: AchievementCategory;
   difficulty?: Difficulty;
@@ -60,14 +51,11 @@ export interface RunEntry {
   timestamp: number;
   govEarned?: number;
   runEarned: number;
-
-  // New Metrics for 100 Missions logic
-  duration?: number; // minutes
-  elevation?: number; // meters
-  maxSpeed?: number; // km/h
-  avgSpeed?: number; // km/h
+  duration?: number;
+  elevation?: number;
+  maxSpeed?: number;
+  avgSpeed?: number;
   involvedZones?: string[];
-  // NEW: Exact breakdown of KM per zone ID { "zone-uuid": 5.2, "zone-uuid-2": 1.1 }
   zoneBreakdown?: Record<string, number>; 
 }
 
@@ -85,18 +73,13 @@ export interface User {
   govBalance: number;
   totalKm: number;
   isPremium: boolean;
-  isAdmin: boolean; // Added Admin Flag
+  isAdmin: boolean;
   inventory: InventoryItem[];
   runHistory: RunEntry[];
-  
-  // New Logging System
   missionLog: AchievementLog[];
   badgeLog: AchievementLog[];
-  
-  // Derived helper arrays for backward compatibility with UI components
   completedMissionIds: string[];
   earnedBadgeIds: string[];
-  
   favoriteBadgeId?: string;
 }
 
@@ -104,16 +87,17 @@ export interface Zone {
   id: string;
   x: number;
   y: number;
-  lat: number; // Geographical Latitude
-  lng: number; // Geographical Longitude
+  lat: number; 
+  lng: number; 
+  location: string;
   ownerId: string | null;
   name: string;
   defenseLevel: number;
   recordKm: number;
-  totalKm: number; // Global Total Distance by all users
+  totalKm: number;
   interestRate: number;
-  interestPool: number; // Interest Pool for the zone (accumulates 2% of RUN)
-  lastDistributionTime?: number; // Track when rewards were last distributed
+  interestPool: number;
+  lastDistributionTime?: number;
   boostExpiresAt?: number;
   shieldExpiresAt?: number;
 }
@@ -145,7 +129,7 @@ export interface BugReport {
   userId: string;
   userName: string;
   description: string;
-  screenshot?: string; // Base64 string
+  screenshot?: string;
   timestamp: number;
   status: 'OPEN' | 'WIP' | 'FIXED' | 'RESOLVED';
 }
@@ -179,13 +163,12 @@ export interface LevelConfig {
   level: number;
   minKm: number;
   title?: string;
-  icon?: string; // ADDED: Icon support for levels
+  icon?: string;
 }
 
 export interface GameState {
   currentUser: User | null;
   zones: Zone[];
-  // UPDATED: Allow runBalance and govBalance for other users
   users: Record<string, Omit<User, 'inventory'>>;
   items: Item[];
   missions: Mission[];
@@ -195,11 +178,10 @@ export interface GameState {
   levels: LevelConfig[];
 }
 
-// Data passed from Dashboard to App during Sync
 export interface RunAnalysisData {
   fileName: string;
   totalKm: number;
-  startTime: number; // Exact GPS start timestamp
+  startTime: number;
   durationMinutes: number;
   avgSpeed: number;
   maxSpeed: number;

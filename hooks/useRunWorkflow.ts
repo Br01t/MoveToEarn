@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { User, Zone, RunAnalysisData, RunEntry } from '../types';
-import { getDistanceFromLatLonInKm, insertZoneAndShift } from '../utils/geo';
+import { getDistanceFromLatLonInKm, insertZoneAndShift, decodePostGISLocation } from '../utils/geo';
 import { processRunRewards } from '../utils/rewards';
 import { MINT_COST, MINT_REWARD_GOV, ITEM_DURATION_SEC, DEFAULT_ZONE_INTEREST_RATE } from '../constants';
 
@@ -14,17 +14,25 @@ interface RunWorkflowProps {
     mintZone?: (newZone: Zone, shiftedZones: Zone[]) => Promise<{ success: boolean; error?: string }>;
 }
 
-const findClosestZoneCenter = (lat: number, lng: number, zones: Zone[], maxRadius: number): Zone | null => {
-    let closest: Zone | null = null;
-    let minDistance = maxRadius;
-    zones.forEach(z => {
-        const d = getDistanceFromLatLonInKm(lat, lng, z.lat, z.lng);
-        if (d <= minDistance) {
-            minDistance = d;
-            closest = z;
-        }
-    });
-    return closest;
+const findClosestZoneDiscovery = (lat: number, lng: number, zones: Zone[], maxRadius: number, label: string): Zone | null => {
+    const sorted = zones.map(z => {
+        const decoded = decodePostGISLocation(z.location);
+        return {
+            zone: z,
+            actualCoords: decoded,
+            distance: getDistanceFromLatLonInKm(lat, lng, decoded.lat, decoded.lng)
+        };
+    }).sort((a, b) => a.distance - b.distance);
+
+    const best = sorted[0];
+    if (best && best.distance <= maxRadius) {
+        console.log(`   📍 [DISCOVERY] Match trovato: ${best.zone.name} a ${best.distance.toFixed(4)}km`);
+        return best.zone;
+    }
+    if (best) {
+        console.log(`   ✨ [DISCOVERY] Nuova area rilevata. Il settore più vicino è ${best.zone.name} a ${best.distance.toFixed(4)}km.`);
+    }
+    return null;
 };
 
 export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction, recordRun, mintZone }: RunWorkflowProps) => {
@@ -62,8 +70,7 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction,
 
   useEffect(() => {
       if (pendingRunsQueue.length > 0 && zoneCreationQueue.length === 0 && !pendingRunData) {
-          const nextRun = pendingRunsQueue[0];
-          analyzeForNewZones(nextRun);
+          analyzeForNewZones(pendingRunsQueue[0]);
       } 
       else if (pendingRunsQueue.length === 0 && batchStatsRef.current.totalKm > 0 && !runSummary && zoneCreationQueue.length === 0 && !pendingRunData) {
           const stats = batchStatsRef.current;
@@ -84,42 +91,18 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction,
     const allZones = [...zones, ...sessionZonesUnique];
     
     const DETECTION_RADIUS = 0.8;
-    const LOOP_THRESHOLD = 0.4;
+    const isLoop = getDistanceFromLatLonInKm(startPoint.lat, startPoint.lng, endPoint.lat, endPoint.lng) < 0.25;
 
-    const distStartEnd = getDistanceFromLatLonInKm(startPoint.lat, startPoint.lng, endPoint.lat, endPoint.lng);
-
+    console.group(`🔍 [DISCOVERY] Analisi per: ${data.fileName}`);
     const zonesToCreate: { lat: number; lng: number; defaultName: string; type: 'START' | 'END' }[] = [];
 
-    if (distStartEnd <= LOOP_THRESHOLD) {
-        let match = findClosestZoneCenter(startPoint.lat, startPoint.lng, allZones, DETECTION_RADIUS);
-        if (!match) {
-            zonesToCreate.push({
-                lat: startPoint.lat, lng: startPoint.lng,
-                defaultName: `New Zone ${Math.floor(startPoint.lat*100)},${Math.floor(startPoint.lng*100)}`,
-                type: 'START'
-            });
-        }
-    } else {
-        let startZone = findClosestZoneCenter(startPoint.lat, startPoint.lng, allZones, DETECTION_RADIUS);
-        let endZone = findClosestZoneCenter(endPoint.lat, endPoint.lng, allZones, DETECTION_RADIUS);
-
-        if (!startZone) {
-            zonesToCreate.push({
-                lat: startPoint.lat, lng: startPoint.lng,
-                defaultName: `New Zone ${Math.floor(startPoint.lat*100)},${Math.floor(startPoint.lng*100)}`,
-                type: 'START'
-            });
-        }
-        if (!endZone) {
-            zonesToCreate.push({
-                 lat: endPoint.lat, lng: endPoint.lng,
-                 defaultName: `New Zone ${Math.floor(endPoint.lat*100)},${Math.floor(endPoint.lng*100)}`,
-                 type: 'END'
-            });
-        }
+    if (!findClosestZoneDiscovery(startPoint.lat, startPoint.lng, allZones, DETECTION_RADIUS, "Inizio")) {
+        zonesToCreate.push({ lat: startPoint.lat, lng: startPoint.lng, defaultName: `Area ${Math.floor(startPoint.lat*100)},${Math.floor(startPoint.lng*100)}`, type: 'START' });
     }
 
-    console.log("✨ Discovery outcome:", zonesToCreate.length > 0 ? `Proposed ${zonesToCreate.length} new zones` : "All points covered.");
+    if (!isLoop && !findClosestZoneDiscovery(endPoint.lat, endPoint.lng, allZones, DETECTION_RADIUS, "Fine")) {
+        zonesToCreate.push({ lat: endPoint.lat, lng: endPoint.lng, defaultName: `Area ${Math.floor(endPoint.lat*100)},${Math.floor(endPoint.lng*100)}`, type: 'END' });
+    }
     console.groupEnd();
 
     if (zonesToCreate.length > 0) {
@@ -133,12 +116,9 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction,
   const finalizeRun = async (data: RunAnalysisData, currentUser: User, currentZones: Zone[]) => {
       const allZonesMap = new Map<string, Zone>();
       currentZones.forEach(z => allZonesMap.set(z.id, z));
-      sessionCreatedZonesRef.current.forEach(z => {
-          if (!allZonesMap.has(z.id)) allZonesMap.set(z.id, z);
-      });
+      sessionCreatedZonesRef.current.forEach(z => { if (!allZonesMap.has(z.id)) allZonesMap.set(z.id, z); });
       
-      const fullZoneList = Array.from(allZonesMap.values());
-      const result = processRunRewards(data, currentUser, fullZoneList);
+      const result = processRunRewards(data, currentUser, Array.from(allZonesMap.values()));
 
       const newRun: RunEntry = {
           id: crypto.randomUUID(), 
@@ -161,15 +141,13 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction,
           totalKm: currentUser.totalKm + data.totalKm
       };
 
-      const modifiedZones = result.zoneUpdates.filter(u => {
-          const original = allZonesMap.get(u.id);
-          return !original || u !== original;
-      });
-
       if (recordRun) {
+          const modifiedZones = result.zoneUpdates.filter(u => {
+              const original = allZonesMap.get(u.id);
+              return !original || u !== original;
+          });
           const dbResult = await recordRun(currentUser.id, newRun, modifiedZones);
           if (!dbResult.success) {
-              console.error("❌ Sync Error:", dbResult.error);
               setPendingRunsQueue([]);
               setPendingRunData(null);
               return; 
@@ -178,7 +156,6 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction,
 
       setZones(result.zoneUpdates);
       setUser(finalUser);
-      
       batchStatsRef.current.totalKm += data.totalKm;
       batchStatsRef.current.duration += data.durationMinutes;
       batchStatsRef.current.runEarned += result.totalRunEarned;
@@ -191,27 +168,20 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction,
 
   const confirmZoneCreation = async (customName: string) => {
       if (!user || !pendingRunData) return { success: false, msg: "No active run" };
-      
       const pendingZone = zoneCreationQueue[0];
       if (user.runBalance < MINT_COST) return { success: false, msg: "Insufficient funds" };
 
-      const hasCountryCode = / - [A-Z]{2}$/.test(customName);
-      const countryCode = hasCountryCode ? customName.split(' - ').pop() || "XX" : "XX";
-      const finalName = hasCountryCode ? customName : `${customName} - XX`;
-
+      const countryCode = customName.split(' - ').pop() || "XX";
       const sessionZonesUnique = sessionCreatedZonesRef.current.filter(sz => !zones.some(z => z.id === sz.id));
-      const currentAllZones = [...zones, ...sessionZonesUnique];
-      
-      const placementResult = insertZoneAndShift(pendingZone.lat, pendingZone.lng, countryCode, currentAllZones);
+      const placementResult = insertZoneAndShift(pendingZone.lat, pendingZone.lng, countryCode, [...zones, ...sessionZonesUnique]);
 
       const newZone: Zone = {
           id: crypto.randomUUID(),
-          x: placementResult.x,
-          y: placementResult.y,
-          lat: pendingZone.lat,
-          lng: pendingZone.lng,
+          x: placementResult.x, y: placementResult.y,
+          lat: pendingZone.lat, lng: pendingZone.lng,
+          location: '', // Verrà popolata dal DB all'invio
           ownerId: user.id,
-          name: finalName,
+          name: customName,
           defenseLevel: 1,
           recordKm: 0, 
           totalKm: 0,
@@ -222,28 +192,18 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction,
 
       if (mintZone) {
           const dbRes = await mintZone(newZone, placementResult.shiftedZones);
-          if (!dbRes.success) {
-              console.error("❌ Minting failed in DB:", dbRes.error);
-              return { success: false };
-          }
+          if (!dbRes.success) return { success: false };
       }
 
       sessionCreatedZonesRef.current.push(newZone);
-      
-      const nextZonesState = [...zones, newZone].map(z => {
-          const shiftUpdate = placementResult.shiftedZones.find(s => s.id === z.id);
-          return shiftUpdate ? { ...z, x: shiftUpdate.x, y: shiftUpdate.y } : z;
+      const updatedUser = { ...user, runBalance: user.runBalance - MINT_COST, govBalance: user.govBalance + MINT_REWARD_GOV };
+      const nextZones = [...zones, newZone].map(z => {
+          const shift = placementResult.shiftedZones.find(s => s.id === z.id);
+          return shift ? { ...z, x: shift.x, y: shift.y } : z;
       });
-
-      const updatedUser = { 
-          ...user, 
-          runBalance: user.runBalance - MINT_COST,
-          govBalance: user.govBalance + MINT_REWARD_GOV 
-      };
-
-      setZones(nextZonesState);
+      setZones(nextZones);
       setUser(updatedUser);
-      proceedQueue(updatedUser, nextZonesState);
+      proceedQueue(updatedUser, nextZones);
       return { success: true };
   };
 
@@ -255,9 +215,7 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction,
   const proceedQueue = (currentUser: User, currentZones: Zone[]) => {
       const nextQueue = zoneCreationQueue.slice(1);
       setZoneCreationQueue(nextQueue);
-      if (nextQueue.length === 0 && pendingRunData) {
-          finalizeRun(pendingRunData, currentUser, currentZones);
-      }
+      if (nextQueue.length === 0 && pendingRunData) finalizeRun(pendingRunData, currentUser, currentZones);
   };
 
   return {

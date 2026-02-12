@@ -47,7 +47,7 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
         }
 
         if (filteredFiles.length < files.length) {
-            showToast("Some files were ignored (unsupported format).", 'ERROR');
+            showToast("Alcuni file sono stati ignorati (formato non supportato).", 'ERROR');
         }
 
         setSelectedFiles(filteredFiles);
@@ -79,24 +79,26 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
     const FOURTEEN_DAYS_MS = 14 * 24 * 60 * 60 * 1000;
     const cutoffTimestamp = Date.now() - FOURTEEN_DAYS_MS;
 
-    addLog(`Preparing to process files... Cutoff: ${new Date(cutoffTimestamp).toLocaleDateString()}`);
+    addLog(`Preparazione analisi... Cutoff: ${new Date(cutoffTimestamp).toLocaleDateString()}`);
 
     const processSingleFileContent = async (content: string | ArrayBuffer, fileName: string) => {
         try {
-            const tracks = await parseActivityFile(content, fileName);
+            // Riceviamo ActivityResult[] (che include points e distance opzionale)
+            const activities = await parseActivityFile(content, fileName);
             let validInFile = 0;
 
-            for (let idx = 0; idx < tracks.length; idx++) {
-                const points = tracks[idx];
-                if (points.length === 0) continue;
+            for (let idx = 0; idx < activities.length; idx++) {
+                const act = activities[idx];
+                if (act.points.length === 0) continue;
 
-                if (points[0].time.getTime() < cutoffTimestamp) {
+                if (act.points[0].time.getTime() < cutoffTimestamp) {
                     ignoredOldCount++;
-                    addLog(`ℹ️ Skipping ${fileName}: activity older than 14 days.`);
+                    addLog(`ℹ️ Saltato ${fileName}: attività più vecchia di 14 giorni.`);
                     continue;
                 }
 
-                const analysis = analyzeRun(points, tracks.length > 1 ? `${fileName} (Track ${idx+1})` : fileName);
+                // Passiamo la distanza estratta dai metadati (se disponibile) ad analyzeRun
+                const analysis = analyzeRun(act.points, activities.length > 1 ? `${fileName} (Traccia ${idx+1})` : fileName, act.distance);
                 const result = analysis.result;
 
                 if (result.isValid) {
@@ -107,8 +109,8 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
 
                     if (isDuplicate) {
                         duplicateCount++;
-                        lastFailureReason = "Duplicate run detected (Same start time).";
-                        addLog(`⚠️ Duplicate ignored: ${fileName} (Start time match)`);
+                        lastFailureReason = "Corsa duplicata rilevata.";
+                        addLog(`⚠️ Duplicato ignorato: ${fileName}`);
                     } else {
                         const isBatchDuplicate = newResults.some(res => Math.abs(res.startTime - result.startTime) < 60000);
                         if (!isBatchDuplicate) {
@@ -118,8 +120,8 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
                         }
                     }
                 } else {
-                    lastFailureReason = result.failureReason || "Validation Error";
-                    addLog(`❌ Failed ${fileName}: ${lastFailureReason}`);
+                    lastFailureReason = result.failureReason || "Errore Validazione";
+                    addLog(`❌ Fallito ${fileName}: ${lastFailureReason}`);
                 }
             }
             return validInFile;
@@ -189,7 +191,7 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
                 setFailureDetail(t('sync.error.7days'));
             } else {
                 setErrorType('INVALID');
-                setFailureDetail(lastFailureReason || "No valid data found.");
+                setFailureDetail(lastFailureReason || "Nessun dato valido trovato.");
             }
             setUploadStep('ERROR');
         }
@@ -276,7 +278,7 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
                                     <FileText className={`mb-3 ${selectedFiles.length > 0 ? 'text-emerald-400' : 'text-gray-500 group-hover:text-emerald-300'}`} size={32} />
                                     {selectedFiles.length > 0 ? (
                                         <div className="text-center">
-                                            <span className="text-white font-bold block text-sm">{selectedFiles.length} File(s) Selected</span>
+                                            <span className="text-white font-bold block text-sm">{selectedFiles.length} File Selezionati</span>
                                             <span className="text-xs text-emerald-400">{t('sync.ready')}</span>
                                         </div>
                                     ) : (
@@ -328,14 +330,14 @@ const SyncModal: React.FC<SyncModalProps> = ({ onClose, onNavigate, onSyncRun, u
                             </div>
                             <div className="text-center">
                                 <h3 className="text-xl font-bold text-white mb-2">{t('sync.success')}</h3>
-                                <div className="text-sm text-gray-300 mb-2">{validResults.length} run(s) validated.</div>
+                                <div className="text-sm text-gray-300 mb-2">{validResults.length} corsa/e validate.</div>
                                 <div className="grid grid-cols-2 gap-4 text-sm text-gray-300 mb-2 mt-4">
                                     <div className="bg-black/30 p-2 rounded border border-gray-700">
-                                        <span className="block text-[10px] text-gray-500 uppercase">Total Dist</span>
+                                        <span className="block text-[10px] text-gray-500 uppercase">Dist. Totale</span>
                                         <span className="font-mono text-white">{validResults.reduce((acc, r) => acc + r.totalKm, 0).toFixed(2)} km</span>
                                     </div>
                                     <div className="bg-black/30 p-2 rounded border border-gray-700">
-                                        <span className="block text-[10px] text-gray-500 uppercase">Total Time</span>
+                                        <span className="block text-[10px] text-gray-500 uppercase">Tempo Totale</span>
                                         <span className="font-mono text-white">{Math.floor(validResults.reduce((acc, r) => acc + r.durationMinutes, 0))} min</span>
                                     </div>
                                 </div>

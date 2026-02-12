@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { User, Zone, Item, Mission, Badge, InventoryItem, BugReport, LeaderboardConfig, LevelConfig, Suggestion, Transaction, RunEntry, AchievementLog } from '../../types';
 import { supabase } from '../../supabaseClient';
+import { decodePostGISLocation } from '../../utils/geo';
 
 export const useGameData = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -44,172 +45,75 @@ export const useGameData = () => {
           ]);
 
           if (profilesRes.error || zonesRes.error) {
-              throw new Error("Errore durante la sincronizzazione con la griglia.");
+              throw new Error("Errore sincronizzazione protocollo.");
           }
 
           if (profilesRes.data) {
               const usersMap: Record<string, Omit<User, 'inventory'>> = {};
               profilesRes.data.forEach((p: any) => {
-                  const mLog = (p.mission_log || []) as AchievementLog[];
-                  const bLog = (p.badge_log || []) as AchievementLog[];
-                  
                   usersMap[p.id] = {
                       id: p.id,
-                      name: p.name || p.name || 'Runner',
+                      name: p.name || 'Runner',
                       email: p.email,
-                      avatar: p.avatar || p.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${p.id}`,
+                      avatar: p.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${p.id}`,
                       runBalance: p.run_balance || 0,
                       govBalance: p.gov_balance || 0,
                       totalKm: p.total_km || 0,
                       isPremium: p.is_premium || false,
                       isAdmin: p.is_admin || false,
                       runHistory: [], 
-                      missionLog: mLog,
-                      badgeLog: bLog,
-                      completedMissionIds: mLog.map(x => x.id),
-                      earnedBadgeIds: bLog.map(x => x.id),
+                      missionLog: p.mission_log || [],
+                      badgeLog: p.badge_log || [],
+                      completedMissionIds: (p.mission_log || []).map((x: any) => x.id),
+                      earnedBadgeIds: (p.badge_log || []).map((x: any) => x.id),
                       favoriteBadgeId: p.favorite_badge_id
                   };
               });
               setAllUsers(usersMap);
           }
 
-          if (missionsRes.data) {
-              setMissions(missionsRes.data.map((m: any) => ({
-                  id: m.id,
-                  title: m.title,
-                  description: m.description,
-                  rewardRun: m.reward_run,
-                  rewardGov: m.reward_gov,
-                  rarity: m.rarity,
-                  logicId: m.logic_id,
-                  category: m.category,
-                  difficulty: m.difficulty,
-                  conditionType: m.condition_type,
-                  conditionValue: m.condition_value
-              })));
-          }
-
-          if (badgesRes.data) {
-              setBadges(badgesRes.data.map((b: any) => ({
-                  id: b.id,
-                  name: b.name,
-                  description: b.description,
-                  icon: b.icon,
-                  rarity: b.rarity,
-                  rewardRun: b.reward_run,
-                  rewardGov: b.reward_gov,
-                  logicId: b.logic_id,
-                  category: b.category,
-                  difficulty: b.difficulty,
-                  conditionType: b.condition_type,
-                  conditionValue: b.condition_value
-              })));
-          }
-
-          if (itemsRes.data) {
-              setMarketItems(itemsRes.data.map((i: any) => ({
-                  id: i.id,
-                  name: i.name,
-                  description: i.description,
-                  priceRun: i.price_run,
-                  quantity: i.quantity,
-                  type: i.type,
-                  effectValue: i.effect_value,
-                  icon: i.icon
-              })));
-          }
+          if (missionsRes.data) setMissions(missionsRes.data.map((m: any) => ({ ...m, rewardRun: m.reward_run, rewardGov: m.reward_gov, logicId: m.logic_id, conditionType: m.condition_type, conditionValue: m.condition_value })));
+          if (badgesRes.data) setBadges(badgesRes.data.map((b: any) => ({ ...b, rewardRun: b.reward_run, rewardGov: b.reward_gov, logicId: b.logic_id, conditionType: b.condition_type, conditionValue: b.condition_value })));
+          if (itemsRes.data) setMarketItems(itemsRes.data.map((i: any) => ({ ...i, priceRun: i.price_run, effectValue: i.effect_value })));
 
           if (zonesRes.data) {
-              const mappedZones = zonesRes.data.map((z: any) => ({
-                  id: z.id,
-                  name: z.name || z.location || 'Unknown Zone', 
-                  ownerId: z.owner_id,
-                  x: z.x,
-                  y: z.y,
-                  lat: z.lat || 0,
-                  lng: z.lng || 0,
-                  defenseLevel: z.defense_level || 1, 
-                  recordKm: z.record_km,
-                  totalKm: z.total_km || z.record_km || 0,
-                  interestRate: z.interest_rate,
-                  interestPool: z.interest_pool || 0,
-                  lastDistributionTime: z.last_distribution_time || 0,
-                  boostExpiresAt: z.boost_expires_at,
-                  shieldExpiresAt: z.shield_expires_at
+              setZones(zonesRes.data.map((z: any) => {
+                  const decoded = decodePostGISLocation(z.location);
+                  return {
+                      id: z.id,
+                      name: z.name || 'Unknown Zone',
+                      ownerId: z.owner_id,
+                      x: z.x, y: z.y,
+                      // SORGENTE UNICA: decodifichiamo l'hex location invece di usare le colonne lat/lng
+                      lat: decoded.lat,
+                      lng: decoded.lng,
+                      location: z.location,
+                      defenseLevel: z.defense_level || 1,
+                      recordKm: z.record_km || 0,
+                      totalKm: z.total_km || 0,
+                      interestRate: z.interest_rate || 2.0,
+                      interestPool: z.interest_pool || 0,
+                      lastDistributionTime: z.last_distribution_time,
+                      boostExpiresAt: z.boost_expires_at,
+                      shieldExpiresAt: z.shield_expires_at
+                  };
               }));
-              setZones(mappedZones);
           }
 
-          if (leaderboardsRes.data) {
-              setLeaderboards(leaderboardsRes.data.map((l: any) => ({
-                  id: l.id,
-                  title: l.title,
-                  description: l.description,
-                  metric: l.metric,
-                  type: l.type,
-                  startTime: l.start_time,
-                  endTime: l.end_time,
-                  rewardPool: l.reward_pool,
-                  rewardCurrency: l.reward_currency,
-                  lastResetTimestamp: l.last_reset_timestamp
-              })));
-          }
+          if (leaderboardsRes.data) setLeaderboards(leaderboardsRes.data.map((l: any) => ({ ...l, startTime: l.start_time, endTime: l.end_time, rewardPool: l.reward_pool, rewardCurrency: l.reward_currency, lastResetTimestamp: l.last_reset_timestamp })));
+          if (levelsRes.data) setLevels(levelsRes.data.map((l: any) => ({ ...l, minKm: l.min_km })));
+          if (reportsRes.data) setBugReports(reportsRes.data.map((r: any) => ({ ...r, userId: r.user_id, userName: r.user_name })));
+          if (suggestionsRes.data) setSuggestions(suggestionsRes.data.map((s: any) => ({ ...s, userId: s.user_id, userName: s.user_name })));
 
-          if (levelsRes.data) {
-              setLevels(levelsRes.data.map((l: any) => ({
-                  id: l.id,
-                  level: l.level,
-                  minKm: l.min_km,
-                  title: l.title,
-                  icon: l.icon
-              })));
+          if (lastBurnRes.data?.timestamp) {
+              setLastBurnTimestamp(new Date(lastBurnRes.data.timestamp).getTime());
           }
-
-          if (reportsRes.data) {
-              setBugReports(reportsRes.data.map((r: any) => ({
-                  id: r.id,
-                  userId: r.user_id,
-                  userName: r.user_name,
-                  description: r.description,
-                  screenshot: r.screenshot,
-                  timestamp: r.timestamp,
-                  status: r.status
-              })));
-          }
-
-          if (suggestionsRes.data) {
-              setSuggestions(suggestionsRes.data.map((s: any) => ({
-                  id: s.id,
-                  userId: s.user_id,
-                  userName: s.user_name,
-                  title: s.title,
-                  description: s.description,
-                  timestamp: s.timestamp
-              })));
-          }
-
-          let timestampValue = 0;
-          if (lastBurnRes.data && lastBurnRes.data.timestamp) {
-              const dbValue = lastBurnRes.data.timestamp;
-              if (typeof dbValue === 'string') {
-                  const ms = new Date(dbValue).getTime();
-                  if (!isNaN(ms) && ms > 1000000000000) {
-                      timestampValue = ms;
-                  }
-              } else if (typeof dbValue === 'number' && dbValue > 1000000000000) {
-                  timestampValue = dbValue;
-              }
-          }
-          setLastBurnTimestamp(timestampValue);
-
           if (totalBurnRes.data) {
-              const total = totalBurnRes.data.reduce((acc, curr) => acc + (curr.amount || 0), 0);
-              setTotalBurned(total);
+              setTotalBurned(totalBurnRes.data.reduce((acc, curr) => acc + (curr.amount || 0), 0));
           }
 
       } catch (err: any) {
-          console.error("❌ [GAME STATE] Critical error fetching data:", err);
+          console.error("❌ [DATA] Fetch error:", err);
           setSyncError(err.message || "Connessione instabile.");
       } finally {
           setIsSyncing(false);
@@ -225,7 +129,7 @@ export const useGameData = () => {
               const [invRes, itemDefsRes, txRes, runRes] = await Promise.all([
                   supabase.from('inventory').select('*').eq('user_id', userId),
                   supabase.from('items').select('*'),
-                  supabase.from('transactions').select('*').eq('user_id', userId).order('timestamp', { ascending: false }).limit(1000),
+                  supabase.from('transactions').select('*').eq('user_id', userId).order('timestamp', { ascending: false }).limit(50),
                   supabase.from('runs').select('*').eq('user_id', userId).order('timestamp', { ascending: false })
               ]);
 
@@ -234,20 +138,12 @@ export const useGameData = () => {
                   builtInventory = invRes.data.map((row: any) => {
                       const def = itemDefsRes.data.find((i: any) => i.id === row.item_id);
                       if (!def) return null;
-                      return { ...def, quantity: row.quantity };
+                      return { ...def, priceRun: def.price_run, effectValue: def.effect_value, quantity: row.quantity };
                   }).filter((i): i is InventoryItem => i !== null);
               }
 
               if (txRes.data) {
-                  setTransactions(txRes.data.map((t: any) => ({
-                      id: t.id,
-                      userId: t.user_id,
-                      type: t.type,
-                      token: t.token,
-                      amount: t.amount,
-                      description: t.description,
-                      timestamp: typeof t.timestamp === 'string' ? new Date(t.timestamp).getTime() : t.timestamp
-                  })));
+                  setTransactions(txRes.data.map((t: any) => ({ ...t, userId: t.user_id, timestamp: new Date(t.timestamp).getTime() })));
               }
 
               let runHistory: RunEntry[] = [];
@@ -256,32 +152,30 @@ export const useGameData = () => {
                       id: r.id,
                       location: r.location_name || 'Unknown',
                       km: Number(r.km),
-                      timestamp: typeof r.timestamp === 'string' ? new Date(r.timestamp).getTime() : r.timestamp,
+                      timestamp: new Date(r.timestamp).getTime(),
                       runEarned: Number(r.run_earned),
                       govEarned: Number(r.gov_earned || 0),
                       duration: Number(r.duration || 0),
                       elevation: Number(r.elevation || 0),
                       maxSpeed: Number(r.max_speed || 0),
                       avgSpeed: Number(r.avg_speed || 0),
-                      involvedZones: Array.isArray(r.involved_zones) ? r.involved_zones : [],
-                      zoneBreakdown: (typeof r.zone_breakdown === 'object' && r.zone_breakdown !== null) ? r.zone_breakdown : {}
+                      involvedZones: r.involved_zones || [],
+                      zoneBreakdown: r.zone_breakdown || {}
                   }));
               }
 
-              const dynamicTotalKm = runHistory.reduce((acc, curr) => acc + (Number(curr.km) || 0), 0);
-
               setUser({
                   id: data.id,
-                  name: data.name || data.name || 'Runner',
+                  name: data.name || 'Runner',
                   email: data.email,
-                  avatar: data.avatar || data.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.id}`,
+                  avatar: data.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.id}`,
                   runBalance: data.run_balance || 0,
                   govBalance: data.gov_balance || 0,
-                  totalKm: dynamicTotalKm, 
+                  totalKm: data.total_km || 0,
                   isPremium: data.is_premium || false,
                   isAdmin: data.is_admin || false,
                   inventory: builtInventory,
-                  runHistory: runHistory, 
+                  runHistory: runHistory,
                   missionLog: data.mission_log || [],
                   badgeLog: data.badge_log || [],
                   completedMissionIds: (data.mission_log || []).map((l: any) => l.id),
@@ -290,7 +184,7 @@ export const useGameData = () => {
               });
           }
       } catch (err) {
-          console.error("❌ Error fetching profile:", err);
+          console.error("❌ [PROFILE] Fetch error:", err);
       }
   }, []);
 
@@ -298,67 +192,53 @@ export const useGameData = () => {
       try {
           const { data: rpcData, error: rpcError } = await supabase.rpc('get_zone_leaderboard', { target_zone_id: zoneId });
           if (rpcError) return [];
-
-          if (rpcData && rpcData.length > 0) {
+          if (rpcData) {
               const userIds = rpcData.map((r: any) => r.user_id);
               const { data: profiles } = await supabase.from('profiles').select('id, name, avatar').in('id', userIds);
-              
               return rpcData.map((row: any) => {
                   const profile = profiles?.find(p => p.id === row.user_id);
                   return {
                       id: row.user_id,
-                      name: profile?.name || profile?.name || allUsers[row.user_id]?.name || 'Runner',
-                      avatar: profile?.avatar || profile?.avatar || allUsers[row.user_id]?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${row.user_id}`,
+                      name: profile?.name || 'Runner',
+                      avatar: profile?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${row.user_id}`,
                       km: Number(row.km)
                   };
               });
           }
           return [];
-      } catch (err) {
-          return [];
-      }
-  }, [allUsers]);
+      } catch (err) { return []; }
+  }, []);
 
   const uploadFile = useCallback(async (file: File, folder: string): Promise<string | null> => {
       try {
-          const fileExt = file.name.split('.').pop();
-          const fileName = `${crypto.randomUUID()}.${fileExt}`;
+          const fileName = `${crypto.randomUUID()}.${file.name.split('.').pop()}`;
           const filePath = `${folder}/${fileName}`;
           const { error: uploadError } = await supabase.storage.from('images').upload(filePath, file);
           if (uploadError) throw uploadError;
           const { data } = supabase.storage.from('images').getPublicUrl(filePath);
           return data.publicUrl;
-      } catch (err) {
-          return null;
-      }
+      } catch (err) { return null; }
   }, []);
 
   useEffect(() => {
     const initSession = async () => {
       try {
-        const { data: { session }, error } = await (supabase.auth as any).getSession();
+        const { data: { session } } = await supabase.auth.getSession();
         if (session) {
             await fetchUserProfile(session.user.id);
             await fetchGameData();
         }
-        if (error) throw error;
-      } catch (err) {
-        console.warn("Auth issue:", err);
-      } finally {
-        setLoading(false);
-      }
+      } catch (err) { console.warn("Auth issue:", err); }
+      finally { setLoading(false); }
     };
     initSession();
-    
-    const { data: { subscription } } = (supabase.auth as any).onAuthStateChange((event: any, session: any) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'PASSWORD_RECOVERY') setRecoveryMode(true);
       if (session) {
           fetchUserProfile(session.user.id);
           setTimeout(() => fetchGameData(), 500);
       } else { 
-          setUser(null); 
-          setZones([]); 
-          setLoading(false);
+          setUser(null); setZones([]); setLoading(false);
       }
     });
     return () => subscription.unsubscribe();
