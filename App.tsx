@@ -78,6 +78,13 @@ const AppContent: React.FC = () => {
       user, zones, missions, badges, setUser, logTransaction 
   });
 
+  useEffect(() => {
+    if (recoveryMode) {
+      setShowLoginModal(true);
+      setCurrentView("LANDING");
+    }
+  }, [recoveryMode]);
+
   const handleClaimZone = (zoneId: string) => {
       if (user && user.runBalance < CONQUEST_COST) {
           setShowFundsModal({ required: CONQUEST_COST, current: user.runBalance });
@@ -134,6 +141,12 @@ const AppContent: React.FC = () => {
 
   useEffect(() => {
     if (!loading) {
+        if (recoveryMode) {
+            setCurrentView("LANDING");
+            setShowLoginModal(true);
+            return;
+        }
+
         if (user) {
             if (currentView === "LANDING") {
                 setCurrentView("DASHBOARD");
@@ -144,7 +157,7 @@ const AppContent: React.FC = () => {
             if (currentView !== "LANDING" && !publicPages.includes(currentView)) setCurrentView("LANDING");
         }
     }
-  }, [user, loading, currentView]);
+  }, [user, loading, currentView, recoveryMode]);
 
   if (loading) return <LoadingFallback />;
 

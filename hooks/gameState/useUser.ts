@@ -15,8 +15,7 @@ export const useUser = ({ user, setUser, fetchUserProfile, logTransaction, playS
   const { showToast } = useGlobalUI();
 
   const login = async (email: string, password: string) => {
-      // Fix: Use any cast to resolve property existence errors on signInWithPassword.
-      const res = await (supabase.auth as any).signInWithPassword({ email, password });
+      const res = await supabase.auth.signInWithPassword({ email, password });
       if (res.data.user) {
           playSound('SUCCESS');
           await fetchUserProfile(res.data.user.id);
@@ -25,19 +24,27 @@ export const useUser = ({ user, setUser, fetchUserProfile, logTransaction, playS
   };
   
   const resetPassword = async (email: string) => {
-      const productionUrl = (import.meta as any).env.VITE_SITE_URL;
-      const redirectTo = productionUrl || window.location.origin;
-      return await (supabase.auth as any).resetPasswordForEmail(email, { redirectTo });
+      const redirectTo = window.location.origin;
+      return await supabase.auth.resetPasswordForEmail(email, { redirectTo });
   };
 
   const updatePassword = async (newPassword: string) => {
-      const res = await (supabase.auth as any).updateUser({ password: newPassword });
-      if (!res.error) playSound('SUCCESS');
+      const res = await supabase.auth.updateUser({ password: newPassword });
+      if (!res.error) {
+          playSound('SUCCESS');
+          showToast("Password aggiornata! Accedi con le nuove credenziali.", 'SUCCESS');
+          await supabase.auth.signOut();
+          localStorage.removeItem('supabase.auth.token');
+      }
       return res;
   };
 
   const register = async (email: string, password: string, username: string) => {
-      const { data, error } = await (supabase.auth as any).signUp({ email, password, options: { data: { name: username } } });
+      const { data, error } = await supabase.auth.signUp({ 
+          email, 
+          password, 
+          options: { data: { name: username } } 
+      });
       if (data.user && !error) {
           playSound('SUCCESS');
           await supabase.from('profiles').insert({ 
@@ -57,7 +64,7 @@ export const useUser = ({ user, setUser, fetchUserProfile, logTransaction, playS
 
   const logout = async () => { 
       try {
-          await (supabase.auth as any).signOut({ scope: 'global' }); 
+          await supabase.auth.signOut({ scope: 'global' }); 
           Object.keys(localStorage).forEach(key => {
               if (key.includes('supabase.auth.token') || key.startsWith('sb-')) {
                   localStorage.removeItem(key);
@@ -82,10 +89,10 @@ export const useUser = ({ user, setUser, fetchUserProfile, logTransaction, playS
       if (!error) {
           playSound('SUCCESS');
           setUser({ ...user, ...updates });
-          showToast("Profile Updated", 'SUCCESS');
+          showToast("Profilo Aggiornato", 'SUCCESS');
       } else {
           playSound('ERROR');
-          showToast("Update failed: " + error.message, 'ERROR');
+          showToast("Aggiornamento fallito: " + error.message, 'ERROR');
       }
   };
 
@@ -93,7 +100,7 @@ export const useUser = ({ user, setUser, fetchUserProfile, logTransaction, playS
       if (!user) return;
       if (user.govBalance < PREMIUM_COST) {
           playSound('ERROR');
-          showToast("Insufficient GOV for Premium", 'ERROR');
+          showToast("GOV insufficienti per il Premium", 'ERROR');
           return;
       }
 
@@ -107,7 +114,7 @@ export const useUser = ({ user, setUser, fetchUserProfile, logTransaction, playS
           playSound('SUCCESS');
           await logTransaction(user.id, 'OUT', 'GOV', PREMIUM_COST, 'Premium Upgrade');
           setUser({ ...user, isPremium: true, govBalance: newGov });
-          showToast("Agent Status: PREMIUM", 'SUCCESS');
+          showToast("Agente Status: PREMIUM", 'SUCCESS');
       }
   };
 

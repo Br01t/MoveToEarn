@@ -79,10 +79,6 @@ export const useGameData = () => {
           if (zonesRes.data) {
               setZones(zonesRes.data.map((z: any) => {
                   const decoded = decodePostGISLocation(z.location);
-                  // Riconvertiamo record_km e total_km in numeri per sicurezza
-                  const rKm = Number(z.record_km) || 0;
-                  const tKm = Number(z.total_km) || 0;
-
                   return {
                       id: z.id,
                       name: z.name || 'Unknown Zone',
@@ -92,9 +88,8 @@ export const useGameData = () => {
                       lng: decoded.lng,
                       location: z.location,
                       defenseLevel: z.defense_level || 1,
-                      recordKm: rKm,
-                      // FALLBACK: se total_km è 0 ma record_km ha valore, usiamo record_km
-                      totalKm: tKm || rKm || 0,
+                      recordKm: Number(z.record_km) || 0,
+                      totalKm: Number(z.total_km) || Number(z.record_km) || 0,
                       interestRate: z.interest_rate || 2.0,
                       interestPool: Number(z.interest_pool) || 0,
                       lastDistributionTime: z.last_distribution_time,
@@ -125,6 +120,8 @@ export const useGameData = () => {
   }, []);
 
   const fetchUserProfile = useCallback(async (userId: string) => {
+      if (recoveryMode || window.location.hash.includes('type=recovery')) return;
+
       try {
           const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
           if (error) throw error;
@@ -190,43 +187,72 @@ export const useGameData = () => {
       } catch (err) {
           console.error("❌ [PROFILE] Fetch error:", err);
       }
-  }, []);
+  }, [recoveryMode]);
 
   const fetchZoneLeaderboard = useCallback(async (zoneId: string) => {
       try {
-          const { data: rpcData, error: rpcError } = await supabase.rpc('get_zone_leaderboard', { target_zone_id: zoneId });
-          if (rpcError) return [];
-          if (rpcData) {
-              const userIds = rpcData.map((r: any) => r.user_id);
-              const { data: profiles } = await supabase.from('profiles').select('id, name, avatar').in('id', userIds);
-              return rpcData.map((row: any) => {
-                  const profile = profiles?.find(p => p.id === row.user_id);
-                  return {
-                      id: row.user_id,
-                      name: profile?.name || 'Runner',
-                      avatar: profile?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${row.user_id}`,
-                      km: Number(row.km)
-                  };
-              });
-          }
+          const { data, error } = await supabase
+              .from('runs')
+              .select('user_id, zone_breakdown');
+
+          if (error) throw error;
+
+          const runnerStats: Record<string, number> = {};
+          
+          data.forEach(run => {
+              const breakdown = run.zone_breakdown || {};
+              const kmInZone = breakdown[zoneId];
+              if (kmInZone !== undefined) {
+                  runnerStats[run.user_id] = (runnerStats[run.user_id] || 0) + Number(kmInZone);
+              }
+          });
+
+          return Object.entries(runnerStats)
+              .map(([uid, km]) => ({
+                  id: uid,
+                  name: allUsers[uid]?.name || 'Runner',
+                  avatar: allUsers[uid]?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${uid}`,
+                  km: km
+              }))
+              .sort((a, b) => b.km - a.km);
+      } catch (err) {
+          console.error("Zone LB Fetch Error:", err);
           return [];
-      } catch (err) { return []; }
-  }, []);
+      }
+  }, [allUsers]);
 
   const uploadFile = useCallback(async (file: File, folder: string): Promise<string | null> => {
       try {
-          const fileName = `${crypto.randomUUID()}.${file.name.split('.').pop()}`;
+          const fileExt = file.name.split('.').pop();
+          const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
           const filePath = `${folder}/${fileName}`;
-          const { error: uploadError } = await supabase.storage.from('images').upload(filePath, file);
+
+          const { error: uploadError } = await supabase.storage
+              .from('zonerun-assets')
+              .upload(filePath, file);
+
           if (uploadError) throw uploadError;
-          const { data } = supabase.storage.from('images').getPublicUrl(filePath);
+
+          const { data } = supabase.storage
+              .from('zonerun-assets')
+              .getPublicUrl(filePath);
+
           return data.publicUrl;
-      } catch (err) { return null; }
+      } catch (err) {
+          console.error("Upload failed:", err);
+          return null;
+      }
   }, []);
 
   useEffect(() => {
     const initSession = async () => {
       try {
+        if (window.location.hash.includes('type=recovery')) {
+            setRecoveryMode(true);
+            setLoading(false);
+            return;
+        }
+
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
             await fetchUserProfile(session.user.id);
@@ -236,17 +262,23 @@ export const useGameData = () => {
       finally { setLoading(false); }
     };
     initSession();
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'PASSWORD_RECOVERY') setRecoveryMode(true);
-      if (session) {
+      if (event === 'PASSWORD_RECOVERY') {
+          setRecoveryMode(true);
+          setUser(null);
+          return;
+      }
+      
+      if (session && !recoveryMode && !window.location.hash.includes('type=recovery')) {
           fetchUserProfile(session.user.id);
           setTimeout(() => fetchGameData(), 500);
-      } else { 
+      } else if (!session) { 
           setUser(null); setZones([]); setLoading(false);
       }
     });
     return () => subscription.unsubscribe();
-  }, [fetchGameData, fetchUserProfile]);
+  }, [fetchGameData, fetchUserProfile, recoveryMode]);
 
   return {
       user, zones, allUsers, missions, badges, marketItems, leaderboards, levels, bugReports, suggestions, transactions,

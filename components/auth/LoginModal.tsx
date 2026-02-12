@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Mail, ArrowRight, X, Activity, AlertTriangle, Lock, User as UserIcon, KeyRound, CheckCircle, ArrowLeft } from 'lucide-react';
+import { Mail, ArrowRight, X, Activity, AlertTriangle, Lock, User as UserIcon, KeyRound, CheckCircle, ArrowLeft, Loader2 } from 'lucide-react';
 import { useLanguage } from '../../LanguageContext';
 
 interface LoginModalProps {
@@ -34,28 +34,31 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLogin, onRegister, o
     try {
       if (viewState === 'UPDATE_PASSWORD') {
           if (!password) return;
-          if (password.length < 6) throw new Error("Password must be at least 6 characters.");
+          if (password.length < 6) throw new Error("La password deve contenere almeno 6 caratteri.");
           if (onUpdatePassword) {
               const { error } = await onUpdatePassword(password);
               if (error) throw error;
-              setSuccessMsg("Password updated successfully! You can now log in.");
-              setTimeout(onClose, 2000);
+              setSuccessMsg("Password aggiornata con successo! Ora puoi accedere.");
+              setTimeout(() => {
+                  setViewState('LOGIN');
+                  setSuccessMsg(null);
+              }, 2500);
           }
       } else if (viewState === 'RESET') {
           if (!email) return;
           const { error } = await onResetPassword(email);
           if (error) throw error;
-          setSuccessMsg("Check your email for the reset link.");
+          setSuccessMsg("Controlla la tua email per il link di ripristino.");
       } else if (viewState === 'SIGNUP') {
           if (!email || !password || !username) return;
           const { error } = await onRegister(email, password, username);
           if (error) throw error;
-          setSuccessMsg("Identity Verified. Entering the grid...");
+          setSuccessMsg("Identità verificata. Entrando nella griglia...");
       } else {
           if (!email || !password) return;
           const { error } = await onLogin(email, password);
           if (error) throw error;
-          setSuccessMsg("Authenticating...");
+          setSuccessMsg("Autenticazione in corso...");
       }
     } catch (err: any) {
       setErrorMsg(err.message || t('auth.error'));
@@ -76,19 +79,17 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLogin, onRegister, o
       role="dialog"
       aria-modal="true"
       aria-labelledby="auth-modal-title"
-      aria-describedby="auth-modal-desc"
     >
       <div className="relative w-full max-w-md glass-panel-heavy rounded-3xl overflow-hidden shadow-[0_0_60px_rgba(16,185,129,0.15)]">
         <div className="absolute inset-0 bg-[radial-gradient(#10b981_1px,transparent_1px)] [background-size:20px_20px] opacity-10 pointer-events-none"></div>
         
-        {viewState !== 'UPDATE_PASSWORD' && (
+        {viewState !== 'UPDATE_PASSWORD' && !successMsg && (
             <button 
                 type="button" 
                 onClick={onClose} 
-                aria-label="Close modal"
                 className="absolute top-4 right-4 text-gray-500 hover:text-white z-50 transition-colors p-2 hover:bg-white/10 rounded-full"
             >
-              <X size={24} aria-hidden="true" />
+              <X size={24} />
             </button>
         )}
 
@@ -98,24 +99,24 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLogin, onRegister, o
                {viewState === 'RESET' || viewState === 'UPDATE_PASSWORD' ? <KeyRound size={32} className="text-emerald-400" /> : <Activity size={32} className="text-emerald-400" />}
             </div>
             <h2 id="auth-modal-title" className="text-3xl font-black text-white tracking-tighter uppercase mb-1">
-              {viewState === 'SIGNUP' ? 'New Runner' : (viewState === 'RESET' ? 'Reset Password' : (viewState === 'UPDATE_PASSWORD' ? 'Secure Reset' : t('auth.title')))}
+              {viewState === 'SIGNUP' ? 'Nuovo Runner' : (viewState === 'RESET' ? 'Recupero Password' : (viewState === 'UPDATE_PASSWORD' ? 'Nuove Credenziali' : t('auth.title')))}
             </h2>
-            <p id="auth-modal-desc" className="text-gray-400 text-sm">
-              {viewState === 'SIGNUP' ? 'Create your identity to join the grid.' : (viewState === 'RESET' ? 'Enter your email to recover access.' : (viewState === 'UPDATE_PASSWORD' ? 'Create a strong new password.' : t('auth.subtitle')))}
+            <p className="text-gray-400 text-sm">
+              {viewState === 'SIGNUP' ? 'Crea la tua identità per entrare nella griglia.' : (viewState === 'RESET' ? 'Inserisci la tua email per recuperare l\'accesso.' : (viewState === 'UPDATE_PASSWORD' ? 'Inserisci la tua nuova password sicura.' : t('auth.subtitle')))}
             </p>
           </div>
 
           <div className="space-y-6">
             {successMsg ? (
-                <div className="bg-emerald-500/10 border border-emerald-500/50 p-6 rounded-xl flex flex-col items-center gap-4 text-center animate-fade-in" aria-live="assertive">
-                    <CheckCircle size={48} className="text-emerald-400 animate-bounce" aria-hidden="true" />
+                <div className="bg-emerald-500/10 border border-emerald-500/50 p-6 rounded-xl flex flex-col items-center gap-4 text-center animate-fade-in">
+                    <CheckCircle size={48} className="text-emerald-400 animate-bounce" />
                     <p className="text-emerald-300 text-sm font-bold">{successMsg}</p>
                     {viewState === 'RESET' && (
                         <button 
                             onClick={() => handleSwitchView('LOGIN')}
                             className="text-white bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-wider"
                         >
-                            Back to Login
+                            Torna al Login
                         </button>
                     )}
                 </div>
@@ -123,11 +124,10 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLogin, onRegister, o
                 <form onSubmit={handleSubmit} className="space-y-4">
                 {viewState === 'SIGNUP' && (
                     <div>
-                        <label htmlFor="username" className="block text-xs font-bold text-gray-500 uppercase mb-2 pl-1">Username</label>
+                        <label className="block text-xs font-bold text-gray-500 uppercase mb-2 pl-1">Username</label>
                         <div className="relative group">
-                          <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-emerald-400 transition-colors" size={20} aria-hidden="true" />
+                          <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-emerald-400 transition-colors" size={20} />
                           <input 
-                              id="username"
                               type="text" 
                               placeholder="RunnerOne"
                               className="w-full bg-black/40 border border-gray-600 rounded-xl py-3 pl-12 pr-4 text-white focus:outline-none focus:border-emerald-500 transition-all placeholder-gray-600"
@@ -141,11 +141,10 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLogin, onRegister, o
 
                 {viewState !== 'UPDATE_PASSWORD' && (
                     <div>
-                        <label htmlFor="email" className="block text-xs font-bold text-gray-500 uppercase mb-2 pl-1">{t('auth.email_label')}</label>
+                        <label className="block text-xs font-bold text-gray-500 uppercase mb-2 pl-1">{t('auth.email_label')}</label>
                         <div className="relative group">
-                          <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-emerald-400 transition-colors" size={20} aria-hidden="true" />
+                          <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-emerald-400 transition-colors" size={20} />
                           <input 
-                              id="email"
                               type="email" 
                               placeholder={t('auth.email_placeholder')}
                               className="w-full bg-black/40 border border-gray-600 rounded-xl py-3 pl-12 pr-4 text-white focus:outline-none focus:border-emerald-500 transition-all placeholder-gray-600"
@@ -157,11 +156,11 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLogin, onRegister, o
                     </div>
                 )}
 
-                {viewState !== 'RESET' && (
+                {(viewState === 'LOGIN' || viewState === 'SIGNUP' || viewState === 'UPDATE_PASSWORD') && (
                     <div>
                         <div className="flex justify-between items-center mb-2 px-1">
-                            <label htmlFor="password" className="block text-xs font-bold text-gray-500 uppercase">
-                              {viewState === 'UPDATE_PASSWORD' ? 'New Password' : 'Password'}
+                            <label className="block text-xs font-bold text-gray-500 uppercase">
+                              {viewState === 'UPDATE_PASSWORD' ? 'Nuova Password' : 'Password'}
                             </label>
                             {viewState === 'LOGIN' && (
                                 <button 
@@ -174,9 +173,8 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLogin, onRegister, o
                             )}
                         </div>
                         <div className="relative group">
-                          <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-emerald-400 transition-colors" size={20} aria-hidden="true" />
+                          <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-emerald-400 transition-colors" size={20} />
                           <input 
-                              id="password"
                               type="password" 
                               placeholder="••••••••"
                               className="w-full bg-black/40 border border-gray-600 rounded-xl py-3 pl-12 pr-4 text-white focus:outline-none focus:border-emerald-500 transition-all placeholder-gray-600"
@@ -190,55 +188,56 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLogin, onRegister, o
                 )}
 
                 {errorMsg && (
-                    <div className="bg-red-900/30 border border-red-500/50 p-3 rounded-lg flex items-center gap-2 text-red-200 text-xs" role="alert">
-                      <AlertTriangle size={14} className="text-red-400" aria-hidden="true" /> {errorMsg}
+                    <div className="bg-red-900/30 border border-red-500/50 p-3 rounded-lg flex items-center gap-2 text-red-200 text-xs">
+                      <AlertTriangle size={14} className="text-red-400" /> {errorMsg}
                     </div>
                 )}
 
                 <button 
                     type="submit" 
                     disabled={isLoading}
-                    aria-busy={isLoading}
                     className="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-black py-4 rounded-xl shadow-lg transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 disabled:opacity-70"
                 >
                     {isLoading ? (
-                    <span className="animate-pulse">{t('auth.sending')}</span>
+                      <Loader2 size={20} className="animate-spin" />
                     ) : (
                     <>
-                        {viewState === 'SIGNUP' ? 'Sign Up' : (viewState === 'RESET' ? 'Send Reset Link' : (viewState === 'UPDATE_PASSWORD' ? 'Save Password' : 'Login'))} 
-                        {viewState !== 'RESET' && <ArrowRight size={20} aria-hidden="true" />}
+                        {viewState === 'SIGNUP' ? 'Registrati' : (viewState === 'RESET' ? 'Invia Link di Recupero' : (viewState === 'UPDATE_PASSWORD' ? 'Salva Password' : 'Entra'))} 
+                        {viewState !== 'RESET' && <ArrowRight size={20} />}
                     </>
                     )}
                 </button>
                 </form>
             )}
 
-            <div className="text-center pt-4 border-t border-white/10">
-                {viewState === 'RESET' ? (
-                    <button 
-                        type="button"
-                        onClick={() => handleSwitchView('LOGIN')}
-                        className="text-gray-400 hover:text-white font-bold text-xs flex items-center justify-center gap-2 mx-auto"
-                    >
-                        <ArrowLeft size={14} aria-hidden="true" /> Back to Login
-                    </button>
-                ) : viewState === 'UPDATE_PASSWORD' ? (
-                    <p className="text-[10px] text-gray-600 uppercase">Secure session active</p>
-                ) : (
-                    <>
-                        <p className="text-gray-500 text-sm mb-2">
-                            {viewState === 'SIGNUP' ? "Already have an account?" : "Don't have an account?"}
-                        </p>
+            {!successMsg && (
+                <div className="text-center pt-4 border-t border-white/10">
+                    {viewState === 'RESET' ? (
                         <button 
                             type="button"
-                            onClick={() => handleSwitchView(viewState === 'SIGNUP' ? 'LOGIN' : 'SIGNUP')}
-                            className="text-emerald-400 font-bold hover:text-emerald-300 uppercase tracking-wider text-xs"
+                            onClick={() => handleSwitchView('LOGIN')}
+                            className="text-gray-400 hover:text-white font-bold text-xs flex items-center justify-center gap-2 mx-auto"
                         >
-                            {viewState === 'SIGNUP' ? "Switch to Login" : "Create Account"}
+                            <ArrowLeft size={14} /> Torna al Login
                         </button>
-                    </>
-                )}
-            </div>
+                    ) : viewState === 'UPDATE_PASSWORD' ? (
+                        <p className="text-[10px] text-gray-600 uppercase">Sessione di sicurezza attiva</p>
+                    ) : (
+                        <>
+                            <p className="text-gray-500 text-sm mb-2">
+                                {viewState === 'SIGNUP' ? "Hai già un account?" : "Non hai un account?"}
+                            </p>
+                            <button 
+                                type="button"
+                                onClick={() => handleSwitchView(viewState === 'SIGNUP' ? 'LOGIN' : 'SIGNUP')}
+                                className="text-emerald-400 font-bold hover:text-emerald-300 uppercase tracking-wider text-xs"
+                            >
+                                {viewState === 'SIGNUP' ? "Passa al Login" : "Crea Identità"}
+                            </button>
+                        </>
+                    )}
+                </div>
+            )}
           </div>
         </div>
       </div>
