@@ -79,20 +79,24 @@ export const useGameData = () => {
           if (zonesRes.data) {
               setZones(zonesRes.data.map((z: any) => {
                   const decoded = decodePostGISLocation(z.location);
+                  // Riconvertiamo record_km e total_km in numeri per sicurezza
+                  const rKm = Number(z.record_km) || 0;
+                  const tKm = Number(z.total_km) || 0;
+
                   return {
                       id: z.id,
                       name: z.name || 'Unknown Zone',
                       ownerId: z.owner_id,
                       x: z.x, y: z.y,
-                      // SORGENTE UNICA: decodifichiamo l'hex location invece di usare le colonne lat/lng
                       lat: decoded.lat,
                       lng: decoded.lng,
                       location: z.location,
                       defenseLevel: z.defense_level || 1,
-                      recordKm: z.record_km || 0,
-                      totalKm: z.total_km || 0,
+                      recordKm: rKm,
+                      // FALLBACK: se total_km è 0 ma record_km ha valore, usiamo record_km
+                      totalKm: tKm || rKm || 0,
                       interestRate: z.interest_rate || 2.0,
-                      interestPool: z.interest_pool || 0,
+                      interestPool: Number(z.interest_pool) || 0,
                       lastDistributionTime: z.last_distribution_time,
                       boostExpiresAt: z.boost_expires_at,
                       shieldExpiresAt: z.shield_expires_at
