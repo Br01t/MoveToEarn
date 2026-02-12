@@ -5,28 +5,18 @@ export const R = 6371;
 export const deg2rad = (deg: number) => deg * (Math.PI / 180);
 export const rad2deg = (rad: number) => rad * (180 / Math.PI);
 
+/**
+ * Decodifica una stringa HEX PostGIS (EWKB) in coordinate lat/lng.
+ */
 export const decodePostGISLocation = (hex: string): { lat: number; lng: number } => {
     if (!hex || hex.length < 50) return { lat: 0, lng: 0 };
-
     try {
-        // Rimuoviamo eventuali prefissi se presenti (PostGIS standard non li ha in HEX output semplice)
         const pureHex = hex.startsWith('\\x') ? hex.substring(2) : hex;
-        
-        // Convertiamo HEX in Uint8Array
         const bytes = new Uint8Array(pureHex.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)));
         const view = new DataView(bytes.buffer);
-
-        // EWKB Header per Point 4326:
-        // Byte 0: Endianness (01 = Little Endian)
-        // Byte 1-4: Type (01 00 00 20 = Point + SRID flag)
-        // Byte 5-8: SRID (E6 10 00 00 = 4326)
-        // Byte 9-16: X (Longitude) as Double
-        // Byte 17-24: Y (Latitude) as Double
-        
         const isLittleEndian = bytes[0] === 1;
         const lng = view.getFloat64(9, isLittleEndian);
         const lat = view.getFloat64(17, isLittleEndian);
-
         return { lat, lng };
     } catch (e) {
         console.error("Errore decodifica HEX location:", e);
@@ -45,36 +35,50 @@ export const getDistanceFromLatLonInKm = (lat1: number, lon1: number, lat2: numb
   return R * c; 
 };
 
-export const getBearing = (startLat: number, startLng: number, destLat: number, destLng: number) => {
-  const startLatRad = deg2rad(startLat);
-  const startLngRad = deg2rad(startLng);
-  const destLatRad = deg2rad(destLat);
-  const destLngRad = deg2rad(destLng);
-
-  const y = Math.sin(destLngRad - startLngRad) * Math.cos(destLatRad);
-  const x = Math.cos(startLatRad) * Math.sin(destLatRad) -
-            Math.sin(startLatRad) * Math.cos(destLatRad) * Math.cos(destLngRad - startLngRad);
-  const brng = Math.atan2(y, x);
-  return (rad2deg(brng) + 360) % 360;
+/**
+ * Calcola l'angolo (bearing) tra due punti GPS in gradi (0-360).
+ */
+export const getBearing = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+    const y = Math.sin(deg2rad(lon2 - lon1)) * Math.cos(deg2rad(lat2));
+    const x = Math.cos(deg2rad(lat1)) * Math.sin(deg2rad(lat2)) -
+              Math.sin(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.cos(deg2rad(lon2 - lon1));
+    const brng = rad2deg(Math.atan2(y, x));
+    return (brng + 360) % 360;
 };
 
-export const HEX_DIRECTIONS = [
-    { q: 1, r: 0 },
-    { q: 0, r: 1 },
-    { q: -1, r: 1 },
-    { q: -1, r: 0 },
-    { q: 0, r: -1 },
-    { q: 1, r: -1 }
+/**
+ * Mappa un angolo in gradi a una delle 6 direzioni esagonali (0-5).
+ * 0: E, 1: SE, 2: SW, 3: W, 4: NW, 5: NE
+ */
+export const bearingToHexDirection = (bearing: number) => {
+    // 0 gradi è Nord.
+    // Direzioni esagonali (Pointy topped): 
+    // 30deg (NE), 90deg (E), 150deg (SE), 210deg (SW), 270deg (W), 330deg (NW)
+    if (bearing >= 60 && bearing < 120) return 0;   // Est
+    if (bearing >= 120 && bearing < 180) return 1;  // Sud-Est
+    if (bearing >= 180 && bearing < 240) return 2;  // Sud-Ovest
+    if (bearing >= 240 && bearing < 300) return 3;  // Ovest
+    if (bearing >= 300 && bearing < 360) return 4;  // Nord-Ovest
+    return 5; // Nord-Est (360/0 - 60)
+};
+
+const hexOffsets = [
+    { x: 1, y: 0 },   // 0: E
+    { x: 0, y: 1 },   // 1: SE
+    { x: -1, y: 1 },  // 2: SW
+    { x: -1, y: 0 },  // 3: W
+    { x: 0, y: -1 },  // 4: NW
+    { x: 1, y: -1 }   // 5: NE
 ];
 
-export const bearingToHexDirectionIndex = (bearing: number) => {
-    const normalized = (bearing + 360) % 360;
-    if (normalized >= 30 && normalized < 90) return 0;
-    if (normalized >= 90 && normalized < 150) return 1;
-    if (normalized >= 150 && normalized < 210) return 2;
-    if (normalized >= 210 && normalized < 270) return 3;
-    if (normalized >= 270 && normalized < 330) return 4;
-    return 5;
+// Coordinate di proiezione deterministica per l'ancoraggio iniziale dei cluster
+const MAP_SCALE_LAT = 111 / 0.85; 
+const MAP_SCALE_LNG = (111 * Math.cos(deg2rad(45))) / 0.85;
+
+export const latLngToHexCoords = (lat: number, lng: number) => {
+    const r = Math.round(lat * MAP_SCALE_LAT);
+    const q = Math.round(lng * MAP_SCALE_LNG);
+    return { q, r };
 };
 
 export const getHexPixelPosition = (q: number, r: number, size: number) => {
@@ -83,36 +87,30 @@ export const getHexPixelPosition = (q: number, r: number, size: number) => {
     return { x, y };
 };
 
-export const getZoneCountry = (name: string): string => {
-    const parts = name.split(' - ');
-    return parts.length > 1 ? parts[parts.length - 1] : 'XX';
-};
-
+/**
+ * Sposta ricorsivamente una catena di zone in una direzione specifica.
+ */
 const shiftZoneRecursively = (
-    occupantId: string, 
-    pushDirectionIndex: number, 
-    zoneMap: Map<string, Zone>, 
-    coordMap: Map<string, string>,
-    modifiedZones: Map<string, Zone>
+    startX: number, 
+    startY: number, 
+    dirIndex: number, 
+    allZones: Zone[], 
+    shifted: Zone[]
 ) => {
-    const occupier = zoneMap.get(occupantId);
-    if (!occupier) return;
+    const occupant = allZones.find(z => z.x === startX && z.y === startY);
+    if (!occupant) return;
 
-    const dir = HEX_DIRECTIONS[pushDirectionIndex];
-    const newX = occupier.x + dir.q;
-    const newY = occupier.y + dir.r;
-    const newKey = `${newX},${newY}`;
+    const offset = hexOffsets[dirIndex];
+    const nextX = occupant.x + offset.x;
+    const nextY = occupant.y + offset.y;
 
-    const nextOccupantId = coordMap.get(newKey);
-    if (nextOccupantId) {
-        shiftZoneRecursively(nextOccupantId, pushDirectionIndex, zoneMap, coordMap, modifiedZones);
-    }
+    // Se la cella successiva è occupata, sposta anche quella
+    shiftZoneRecursively(nextX, nextY, dirIndex, allZones, shifted);
 
-    const updatedZone = { ...occupier, x: newX, y: newY };
-    coordMap.delete(`${occupier.x},${occupier.y}`);
-    coordMap.set(newKey, occupier.id);
-    zoneMap.set(occupier.id, updatedZone);
-    modifiedZones.set(occupier.id, updatedZone);
+    // Aggiorna la posizione dell'occupante attuale
+    occupant.x = nextX;
+    occupant.y = nextY;
+    shifted.push(occupant);
 };
 
 export const insertZoneAndShift = (
@@ -121,62 +119,51 @@ export const insertZoneAndShift = (
     countryCode: string, 
     currentZones: Zone[]
 ): { x: number, y: number, shiftedZones: Zone[] } => {
-    const zoneMap = new Map<string, Zone>();
-    const coordMap = new Map<string, string>();
-    currentZones.forEach(z => {
-        zoneMap.set(z.id, z);
-        coordMap.set(`${z.x},${z.y}`, z.id);
-    });
+    // 1. Identifichiamo il cluster di riferimento (stessa nazione)
+    const cluster = currentZones.filter(z => z.name.endsWith(` - ${countryCode}`));
 
-    const modifiedZones = new Map<string, Zone>();
-    const sameCountryZones = currentZones.filter(z => getZoneCountry(z.name) === countryCode);
-    
-    let anchor: Zone | null = null;
-    let bearing = 0;
-    let distanceBuffer = 1;
-
-    if (sameCountryZones.length > 0) {
-        let minDist = Infinity;
-        sameCountryZones.forEach(z => {
-            const d = getDistanceFromLatLonInKm(targetLat, targetLng, z.lat, z.lng);
-            if (d < minDist) {
-                minDist = d;
-                anchor = z;
-            }
-        });
-        distanceBuffer = 1; 
-    } else if (currentZones.length > 0) {
-        let minDist = Infinity;
-        currentZones.forEach(z => {
-            const d = getDistanceFromLatLonInKm(targetLat, targetLng, z.lat, z.lng);
-            if (d < minDist) {
-                minDist = d;
-                anchor = z;
-            }
-        });
-        distanceBuffer = 4;
-    } else {
-        return { x: 0, y: 0, shiftedZones: [] };
+    // 2. Se il cluster è vuoto, usiamo la proiezione deterministica come ancora
+    if (cluster.length === 0) {
+        const { q, r } = latLngToHexCoords(targetLat, targetLng);
+        return { x: q, y: r, shiftedZones: [] };
     }
 
-    if (!anchor) return { x: 0, y: 0, shiftedZones: [] };
+    // 3. Troviamo il membro del cluster geograficamente più vicino (usando location PostGIS)
+    const clusterWithCoords = cluster.map(z => ({
+        zone: { ...z }, // Copia per evitare mutazioni indesiderate durante il calcolo
+        coords: decodePostGISLocation(z.location)
+    }));
 
-    bearing = getBearing(anchor.lat, anchor.lng, targetLat, targetLng);
-    const hexDirIndex = bearingToHexDirectionIndex(bearing);
-    const dir = HEX_DIRECTIONS[hexDirIndex];
+    const sortedCluster = clusterWithCoords.sort((a, b) => {
+        const distA = getDistanceFromLatLonInKm(targetLat, targetLng, a.coords.lat, a.coords.lng);
+        const distB = getDistanceFromLatLonInKm(targetLat, targetLng, b.coords.lat, b.coords.lng);
+        return distA - distB;
+    });
 
-    const targetX = anchor.x + (dir.q * distanceBuffer);
-    const targetY = anchor.y + (dir.r * distanceBuffer);
-    const targetKey = `${targetX},${targetY}`;
+    const closest = sortedCluster[0];
+    
+    // 4. Calcoliamo la direzione ideale rispetto al membro più vicino
+    const bearing = getBearing(closest.coords.lat, closest.coords.lng, targetLat, targetLng);
+    const direction = bearingToHexDirection(bearing);
+    
+    const offset = hexOffsets[direction];
+    let targetX = closest.zone.x + offset.x;
+    let targetY = closest.zone.y + offset.y;
 
-    const occupierId = coordMap.get(targetKey);
-    if (occupierId) {
-        shiftZoneRecursively(occupierId, hexDirIndex, zoneMap, coordMap, modifiedZones);
+    // 5. Gestione inserimento con spostamento (Shifting)
+    // Se la posizione ideale è occupata, "spingiamo" la catena di esagoni in quella direzione
+    // per fare spazio alla nuova zona al centro (come richiesto dall'utente).
+    const shiftedZones: Zone[] = [];
+    const collision = currentZones.find(z => z.x === targetX && z.y === targetY);
+    
+    if (collision) {
+        // Spostiamo ricorsivamente tutto ciò che ostacola l'inserimento topologico
+        shiftZoneRecursively(targetX, targetY, direction, currentZones, shiftedZones);
     }
 
     return { 
         x: targetX, 
         y: targetY, 
-        shiftedZones: Array.from(modifiedZones.values()) 
+        shiftedZones 
     };
 };
