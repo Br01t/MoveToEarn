@@ -29,9 +29,6 @@ const findClosestZoneDiscovery = (lat: number, lng: number, zones: Zone[], maxRa
         console.log(`   📍 [DISCOVERY] Match trovato: ${best.zone.name} a ${best.distance.toFixed(4)}km`);
         return best.zone;
     }
-    if (best) {
-        console.log(`   ✨ [DISCOVERY] Nuova area rilevata. Il settore più vicino è ${best.zone.name} a ${best.distance.toFixed(4)}km.`);
-    }
     return null;
 };
 
@@ -93,7 +90,7 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction,
     const DETECTION_RADIUS = 0.8;
     const isLoop = getDistanceFromLatLonInKm(startPoint.lat, startPoint.lng, endPoint.lat, endPoint.lng) < 0.25;
 
-    console.group(`🔍 [DISCOVERY] Analisi per: ${data.fileName}`);
+    console.group(`🔍 [DISCOVERY] Analisi deterministica per: ${data.fileName}`);
     const zonesToCreate: { lat: number; lng: number; defaultName: string; type: 'START' | 'END' }[] = [];
 
     if (!findClosestZoneDiscovery(startPoint.lat, startPoint.lng, allZones, DETECTION_RADIUS, "Inizio")) {
@@ -101,7 +98,14 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction,
     }
 
     if (!isLoop && !findClosestZoneDiscovery(endPoint.lat, endPoint.lng, allZones, DETECTION_RADIUS, "Fine")) {
-        zonesToCreate.push({ lat: endPoint.lat, lng: endPoint.lng, defaultName: `Area ${Math.floor(endPoint.lat*100)},${Math.floor(endPoint.lng*100)}`, type: 'END' });
+        // Evitiamo di creare la stessa zona se start e end sono nello stesso settore virtuale
+        // Fix: Use x and y instead of q and r to match the return type of insertZoneAndShift
+        const { x: sq, y: sr } = insertZoneAndShift(startPoint.lat, startPoint.lng, "XX", []);
+        const { x: eq, y: er } = insertZoneAndShift(endPoint.lat, endPoint.lng, "XX", []);
+        
+        if (sq !== eq || sr !== er) {
+            zonesToCreate.push({ lat: endPoint.lat, lng: endPoint.lng, defaultName: `Area ${Math.floor(endPoint.lat*100)},${Math.floor(endPoint.lng*100)}`, type: 'END' });
+        }
     }
     console.groupEnd();
 
@@ -179,7 +183,7 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction,
           id: crypto.randomUUID(),
           x: placementResult.x, y: placementResult.y,
           lat: pendingZone.lat, lng: pendingZone.lng,
-          location: '', // Verrà popolata dal DB all'invio
+          location: '', 
           ownerId: user.id,
           name: customName,
           defenseLevel: 1,
