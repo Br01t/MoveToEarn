@@ -817,7 +817,7 @@ export const it = {
     "tutorial.nav_wallet.title": "Asset Digitali",
     "tutorial.nav_wallet.content": "Controlla il tuo saldo RUN e GOV. Qui puoi scambiare il potere di governance in liquidità operativa.",
     "tutorial.nav_profile.title": "Dossier Agente",
-    "tutorial.nav_profile.content": "Il tuo storico completo. Analizza le performance e personalizza la tua identità nel protocollo.",
+    "tutorial.nav_profile.content": "Il tuo storico completo. Analizza le performance e personalizza la tua identità nel protocollo. Ricordati di aggiornare la tua foto profilo e di impostare il tuo badge preferito per essere riconoscibile sulla mappa!",
     "tutorial.end.title": "Calibrazione Completata",
-    "tutorial.end.content": "Il sistema è pronto. Esci e inizia a correre. Il mondo attende il suo nuovo governatore.",
+    "tutorial.end.content": "Il sistema è pronto. Esci e inizia a correre. Il mondo attende il suo nuovo governatore. Puoi sempre rivedere questo tutorial dai link a fine pagina (non nella Mappa).",
 };

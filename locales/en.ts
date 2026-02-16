@@ -818,7 +818,7 @@ export const en = {
     "tutorial.nav_wallet.title": "Digital Assets",
     "tutorial.nav_wallet.content": "Check your RUN and GOV balance. Here you can swap governance power for operational liquidity.",
     "tutorial.nav_profile.title": "Agent Dossier",
-    "tutorial.nav_profile.content": "Your complete history. Analyze performance and customize your identity in the protocol.",
+    "tutorial.nav_profile.content": "Your complete history. Analyze performance and customize your identity in the protocol, remember to update your profile picture and set your preferred badge to be recognizable on the map!",
     "tutorial.end.title": "Calibration Complete",
-    "tutorial.end.content": "The system is ready. Go out and start running. The world awaits its new governor.",
+    "tutorial.end.content": "The system is ready. Go out and start running. The world awaits its new governor. You can always revisit this tutorial from the link at the bottom of the screen (not in the Map view) if you need a refresher on the mechanics or navigation.",
 };
