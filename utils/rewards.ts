@@ -1,5 +1,5 @@
 import { User, Zone, RunEntry, Mission, Badge, RunAnalysisData } from '../types';
-import { getDistanceFromLatLonInKm, decodePostGISLocation } from './geo';
+import { getDistanceFromLatLonInKm } from './geo';
 import { RUN_RATE_BASE, RUN_RATE_BOOST, REWARD_SPLIT_USER, REWARD_SPLIT_POOL } from '../constants';
 
 // --- STREAK CALCULATION ---
@@ -91,32 +91,18 @@ export const checkAchievement = (item: Mission | Badge, currentUser: User, curre
 };
 
 const findClosestZone = (lat: number, lng: number, zones: Zone[], maxRadius: number, label: string): Zone | null => {
-    console.log(`   🔎 [ANALISI_GEOGRAFICA] ${label} (${lat.toFixed(5)}, ${lng.toFixed(5)})`);
-    
     const candidates = zones.map(z => {
-        // DECISIONE: Usiamo ESCLUSIVAMENTE la decodifica del campo HEX location
-        const decoded = decodePostGISLocation(z.location);
         return {
             zone: z,
-            actualCoords: decoded,
-            distance: getDistanceFromLatLonInKm(lat, lng, decoded.lat, decoded.lng)
+            distance: getDistanceFromLatLonInKm(lat, lng, z.lat, z.lng)
         };
     }).sort((a, b) => a.distance - b.distance);
 
-    console.log(`      Top 5 Settori estratti dalla stringa HEX location:`);
-    candidates.slice(0, 5).forEach((c, i) => {
-        console.log(`      ${i+1}. ${c.zone.name}`);
-        console.log(`         📏 Distanza: ${c.distance.toFixed(4)}km`);
-        console.log(`         📍 Decoded Lat/Lng: (${c.actualCoords.lat.toFixed(6)}, ${c.actualCoords.lng.toFixed(6)})`);
-        console.log(`         🔗 Raw DB HEX: ${c.zone.location}`);
-    });
-
     const best = candidates[0];
     if (best && best.distance <= maxRadius) {
-        console.log(`   ✅ MATCH SETTORE: ${best.zone.name} (${best.distance.toFixed(4)}km)`);
+        console.log(`   ✅ [MATCH] ${label} -> ${best.zone.name} (${best.distance.toFixed(4)}km)`);
         return best.zone;
     }
-    console.log(`   ❌ NESSUNA AREA trovata nel raggio di ${maxRadius}km.`);
     return null;
 };
 
@@ -139,9 +125,6 @@ export const processRunRewards = (
     const DETECTION_RADIUS = 0.8; 
     const isLoop = getDistanceFromLatLonInKm(startPoint.lat, startPoint.lng, endPoint.lat, endPoint.lng) < 0.25; 
 
-    console.group(`💰 [PREMI] Processando ${totalKm.toFixed(2)}km`);
-    console.log(`🔄 Corsa: ${isLoop ? 'ANELLO' : 'PUNTO-PUNTO'}`);
-
     const zoneKmBuckets: Record<string, number> = {};
     if (isLoop) {
         const match = findClosestZone(startPoint.lat, startPoint.lng, allZones, DETECTION_RADIUS, "PUNTO_INIZIO");
@@ -149,6 +132,7 @@ export const processRunRewards = (
     } else {
         const startZone = findClosestZone(startPoint.lat, startPoint.lng, allZones, DETECTION_RADIUS, "PUNTO_INIZIO");
         const endZone = findClosestZone(endPoint.lat, endPoint.lng, allZones, DETECTION_RADIUS, "PUNTO_FINE");
+        
         if (startZone && endZone) {
             if (startZone.id === endZone.id) {
                 zoneKmBuckets[startZone.id] = totalKm;
@@ -178,14 +162,16 @@ export const processRunRewards = (
                 const rate = (zone.boostExpiresAt && zone.boostExpiresAt > Date.now()) ? RUN_RATE_BOOST : RUN_RATE_BASE;
                 const generatedReward = kmForThisZone * rate;
                 totalRunEarned += generatedReward * REWARD_SPLIT_USER;
-                zoneUpdates[zoneIdx] = { ...zone, totalKm: (zone.totalKm || 0) + kmForThisZone, interestPool: (zone.interestPool || 0) + (generatedReward * REWARD_SPLIT_POOL) };
+                
+                zoneUpdates[zoneIdx] = { 
+                    ...zone, 
+                    totalKm: (zone.totalKm || 0) + kmForThisZone, 
+                    interestPool: (zone.interestPool || 0) + (generatedReward * REWARD_SPLIT_POOL) 
+                };
                 if (zone.ownerId === user.id) isReinforced = true;
             }
         });
     }
-
-    console.log("💵 RUN GUADAGNATI:", totalRunEarned.toFixed(2));
-    console.groupEnd();
 
     return {
         totalRunEarned: parseFloat(totalRunEarned.toFixed(2)),

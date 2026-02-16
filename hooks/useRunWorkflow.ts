@@ -16,11 +16,11 @@ interface RunWorkflowProps {
 
 const findClosestZoneDiscovery = (lat: number, lng: number, zones: Zone[], maxRadius: number, label: string): Zone | null => {
     const sorted = zones.map(z => {
-        const decoded = decodePostGISLocation(z.location);
+        const dLat = z.lat;
+        const dLng = z.lng;
         return {
             zone: z,
-            actualCoords: decoded,
-            distance: getDistanceFromLatLonInKm(lat, lng, decoded.lat, decoded.lng)
+            distance: getDistanceFromLatLonInKm(lat, lng, dLat, dLng)
         };
     }).sort((a, b) => a.distance - b.distance);
 
@@ -90,7 +90,7 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction,
     const DETECTION_RADIUS = 0.8;
     const isLoop = getDistanceFromLatLonInKm(startPoint.lat, startPoint.lng, endPoint.lat, endPoint.lng) < 0.25;
 
-    console.group(`🔍 [DISCOVERY] Analisi deterministica per: ${data.fileName}`);
+    console.group(`🔍 [DISCOVERY] Analisi per: ${data.fileName}`);
     const zonesToCreate: { lat: number; lng: number; defaultName: string; type: 'START' | 'END' }[] = [];
 
     if (!findClosestZoneDiscovery(startPoint.lat, startPoint.lng, allZones, DETECTION_RADIUS, "Inizio")) {
@@ -98,8 +98,6 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction,
     }
 
     if (!isLoop && !findClosestZoneDiscovery(endPoint.lat, endPoint.lng, allZones, DETECTION_RADIUS, "Fine")) {
-        // Evitiamo di creare la stessa zona se start e end sono nello stesso settore virtuale
-        // Fix: Use x and y instead of q and r to match the return type of insertZoneAndShift
         const { x: sq, y: sr } = insertZoneAndShift(startPoint.lat, startPoint.lng, "XX", []);
         const { x: eq, y: er } = insertZoneAndShift(endPoint.lat, endPoint.lng, "XX", []);
         
@@ -118,9 +116,10 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction,
   };
 
   const finalizeRun = async (data: RunAnalysisData, currentUser: User, currentZones: Zone[]) => {
+      // Uniamo le zone attuali con quelle create nella sessione (importante!)
       const allZonesMap = new Map<string, Zone>();
       currentZones.forEach(z => allZonesMap.set(z.id, z));
-      sessionCreatedZonesRef.current.forEach(z => { if (!allZonesMap.has(z.id)) allZonesMap.set(z.id, z); });
+      sessionCreatedZonesRef.current.forEach(z => allZonesMap.set(z.id, z));
       
       const result = processRunRewards(data, currentUser, Array.from(allZonesMap.values()));
 
@@ -146,11 +145,7 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction,
       };
 
       if (recordRun) {
-          const modifiedZones = result.zoneUpdates.filter(u => {
-              const original = allZonesMap.get(u.id);
-              return !original || u !== original;
-          });
-          const dbResult = await recordRun(currentUser.id, newRun, modifiedZones);
+          const dbResult = await recordRun(currentUser.id, newRun, result.zoneUpdates);
           if (!dbResult.success) {
               setPendingRunsQueue([]);
               setPendingRunData(null);
@@ -176,14 +171,14 @@ export const useRunWorkflow = ({ user, zones, setUser, setZones, logTransaction,
       if (user.runBalance < MINT_COST) return { success: false, msg: "Insufficient funds" };
 
       const countryCode = customName.split(' - ').pop() || "XX";
-      const sessionZonesUnique = sessionCreatedZonesRef.current.filter(sz => !zones.some(z => z.id === sz.id));
-      const placementResult = insertZoneAndShift(pendingZone.lat, pendingZone.lng, countryCode, [...zones, ...sessionZonesUnique]);
+      const allPossibleZones = [...zones, ...sessionCreatedZonesRef.current];
+      const placementResult = insertZoneAndShift(pendingZone.lat, pendingZone.lng, countryCode, allPossibleZones);
 
       const newZone: Zone = {
           id: crypto.randomUUID(),
           x: placementResult.x, y: placementResult.y,
           lat: pendingZone.lat, lng: pendingZone.lng,
-          location: '', 
+          location: '',
           ownerId: user.id,
           name: customName,
           defenseLevel: 1,
