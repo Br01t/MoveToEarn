@@ -129,15 +129,16 @@ const AppContent: React.FC = () => {
   useEffect(() => {
     if (!loading && user && currentView === "DASHBOARD" && !isTutorialActive) {
         const hasDoneTutorial = localStorage.getItem('zr_onboarding_complete');
-        if (!hasDoneTutorial) {
+        if (!hasDoneTutorial && achievementSystem.achievementQueue.length === 0) {
             const timer = setTimeout(() => {
                 const stillNotDone = !localStorage.getItem('zr_onboarding_complete');
-                if (stillNotDone) startTutorial();
+                const noAchievements = achievementSystem.achievementQueue.length === 0;
+                if (stillNotDone && noAchievements) startTutorial();
             }, 1000);
             return () => clearTimeout(timer);
         }
     }
-  }, [user, loading, currentView, isTutorialActive, startTutorial]);
+  }, [user, loading, currentView, isTutorialActive, startTutorial, achievementSystem.achievementQueue.length]);
 
   useEffect(() => {
     if (!loading) {
