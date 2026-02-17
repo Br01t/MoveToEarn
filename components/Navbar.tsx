@@ -3,6 +3,7 @@ import { ViewState, User } from '../types';
 import { Map, ShoppingBag, Trophy, Wallet, LogOut, Package, User as UserIcon, Settings, Target, Volume2, VolumeX } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 import { useGlobalUI } from '../contexts/GlobalUIContext';
+import LanguageDropdown from './ui/LanguageDropdown';
 
 interface NavbarProps {
   currentView: ViewState;
@@ -12,7 +13,7 @@ interface NavbarProps {
 }
 
 const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, user, onLogout }) => {
-  const { toggleLanguage, language, t } = useLanguage();
+  const { t } = useLanguage();
   const { isMuted, toggleMute } = useGlobalUI();
 
   if (!user) return null;
@@ -46,59 +47,51 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, user, onLogout
 
   return (
     <>
-      {/* MOBILE TOP BAR */}
       <nav 
-        className="md:hidden bg-gray-950/95 backdrop-blur-md border-b border-gray-800 sticky top-0 z-50 h-16 flex items-center justify-between px-4"
+        className="md:hidden bg-gray-950/95 backdrop-blur-md border-b border-gray-800 sticky top-0 z-50 h-16 flex items-center justify-between px-3"
         role="banner"
         aria-label="Mobile Header"
       >
         <div 
-          className="text-xl font-black uppercase tracking-widest bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-500"
+          className="flex-1 min-w-0 mr-3"
           onClick={() => handleNavClick('DASHBOARD')}
-          role="link"
-          aria-label="ZoneRun Home"
         >
-          ZoneRun
+          <span className="text-lg font-black uppercase tracking-widest bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-500 truncate block">
+            ZoneRun
+          </span>
         </div>
         
-        <div className="flex items-center gap-2">
-            <button
-              onClick={toggleLanguage}
-              className="p-1.5 text-lg hover:scale-110 transition-transform bg-gray-900 rounded-lg border border-gray-800"
-              aria-label={`Switch to ${language === 'en' ? 'Italian' : 'English'}`}
-            >
-              {language === 'en' ? '🇮🇹' : '🇬🇧'}
-            </button>
+        <div className="flex items-center gap-1 shrink-0">
+            <LanguageDropdown align="right" isCompact={true} />
             
             <button
               onClick={toggleMute}
-              className={`p-1.5 transition-colors rounded-lg border ${isMuted ? 'text-red-400 border-red-500/20 bg-red-900/10' : 'text-gray-400 border-gray-800 bg-gray-900'}`}
+              className={`p-1 transition-colors rounded-lg border h-[32px] w-[32px] flex items-center justify-center ${isMuted ? 'text-red-400 border-red-500/20 bg-red-900/10' : 'text-gray-400 border-white/10 bg-gray-900'}`}
               aria-label={isMuted ? "Unmute sounds" : "Mute sounds"}
             >
-              {isMuted ? <VolumeX size={18} aria-hidden="true" /> : <Volume2 size={18} aria-hidden="true" />}
+              {isMuted ? <VolumeX size={14} aria-hidden="true" /> : <Volume2 size={14} aria-hidden="true" />}
             </button>
 
             {user.isAdmin && (
                 <button
                   onClick={() => handleNavClick('ADMIN')}
-                  className={`p-1.5 transition-colors rounded-lg border ${currentView === 'ADMIN' ? 'text-red-400 border-red-500/40 bg-red-900/20 shadow-[0_0_10px_rgba(239,68,68,0.2)]' : 'text-gray-500 border-gray-800 bg-gray-900 hover:text-red-400'}`}
+                  className={`p-1 transition-colors rounded-lg border h-[32px] w-[32px] flex items-center justify-center ${currentView === 'ADMIN' ? 'text-red-400 border-red-500/40 bg-red-900/20' : 'text-gray-500 border-white/10 bg-gray-900 hover:text-red-400'}`}
                   aria-label={t('nav.admin')}
                 >
-                  <Settings size={18} aria-hidden="true" />
+                  <Settings size={14} aria-hidden="true" />
                 </button>
             )}
 
             <button
               onClick={onLogout}
-              className="p-1.5 text-gray-500 hover:text-red-400 transition-colors"
+              className="p-1 text-gray-500 hover:text-red-400 transition-colors h-[32px] w-[32px] flex items-center justify-center"
               aria-label={t('nav.logout')}
             >
-              <LogOut size={18} aria-hidden="true" />
+              <LogOut size={14} aria-hidden="true" />
             </button>
         </div>
       </nav>
 
-      {/* DESKTOP TOP BAR */}
       <nav className="bg-gray-900 border-b border-gray-800 sticky top-0 z-50 h-16 hidden md:block" role="navigation" aria-label="Main Desktop Navigation">
         <div className="w-full h-full px-6 flex items-center justify-between">
           
@@ -130,21 +123,15 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, user, onLogout
             )}
           </div>
 
-          <div className="flex items-center justify-end shrink-0 min-w-[150px] gap-3">
-            <button
-              onClick={toggleLanguage}
-              className="p-2 text-xl hover:scale-110 transition-transform bg-gray-800 rounded-lg border border-gray-700 hover:border-gray-500"
-              aria-label={`Switch to ${language === 'en' ? 'Italian' : 'English'}`}
-            >
-              {language === 'en' ? '🇮🇹' : '🇬🇧'}
-            </button>
+          <div className="flex items-center justify-end shrink-0 min-w-[150px] gap-2">
+            <LanguageDropdown align="right" />
             
             <button
               onClick={toggleMute}
-              className={`p-2 transition-colors rounded-lg border ${isMuted ? 'text-red-400 border-red-500/30 bg-red-900/10' : 'text-gray-400 border-gray-700 bg-gray-800 hover:text-white'}`}
+              className={`p-2 transition-colors rounded-lg border h-[34px] w-[34px] flex items-center justify-center ${isMuted ? 'text-red-400 border-red-500/30 bg-red-900/10' : 'text-gray-400 border-white/10 bg-gray-800 hover:text-white'}`}
               aria-label={isMuted ? "Unmute sounds" : "Mute sounds"}
             >
-              {isMuted ? <VolumeX size={20} aria-hidden="true" /> : <Volume2 size={20} aria-hidden="true" />}
+              {isMuted ? <VolumeX size={16} aria-hidden="true" /> : <Volume2 size={16} aria-hidden="true" />}
             </button>
 
             <div className="w-px h-6 bg-gray-700 mx-1" aria-hidden="true"></div>
@@ -154,13 +141,12 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, user, onLogout
               className="p-2 text-gray-500 hover:text-red-400 transition-colors"
               aria-label={t('nav.logout')}
             >
-              <LogOut size={20} aria-hidden="true" />
+              <LogOut size={18} aria-hidden="true" />
             </button>
           </div>
         </div>
       </nav>
 
-      {/* MOBILE BOTTOM NAV BAR */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-gray-950/95 backdrop-blur-md border-t border-gray-800 z-50 pb-safe shadow-[0_-5px_20px_rgba(0,0,0,0.3)]" role="navigation" aria-label="Mobile Navigation Menu">
         <div className="flex flex-col w-full">
            <div className="grid grid-cols-3 w-full border-b border-gray-800/30">

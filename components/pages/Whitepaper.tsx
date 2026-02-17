@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   ArrowLeft, Scroll, Globe, Target, Scale, Activity, Map as MapIcon, 
@@ -7,6 +6,7 @@ import {
 } from 'lucide-react';
 import { ViewState } from '../../types';
 import { useLanguage } from '../../LanguageContext';
+import LanguageDropdown from '../ui/LanguageDropdown';
 
 interface WhitepaperProps {
   onBack?: () => void;
@@ -15,11 +15,10 @@ interface WhitepaperProps {
 }
 
 export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAuthenticated = false }) => {
-  const { t, tRich, language, toggleLanguage } = useLanguage();
+  const { t, tRich } = useLanguage();
   const [activeSection, setActiveSection] = useState<string>('intro');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Scroll Spy Logic
   useEffect(() => {
     const handleScroll = () => {
       const sections = document.querySelectorAll('section[id]');
@@ -39,7 +38,6 @@ export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAu
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
     if (element) {
-      // Offset for fixed header (larger offset if double header is present)
       const offset = isAuthenticated ? 160 : 100;
       const y = element.getBoundingClientRect().top + window.scrollY - offset;
       window.scrollTo({ top: y, behavior: 'smooth' });
@@ -50,7 +48,7 @@ export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAu
   const sections = [
     { id: 'intro', title: t('wp.nav.intro'), icon: Terminal },
     { id: 'overview', title: t('wp.nav.overview'), icon: Globe },
-    { id: 'roadmap', title: t('wp.nav.goals'), icon: Milestone }, // Changed ID from goals to roadmap
+    { id: 'roadmap', title: t('wp.nav.goals'), icon: Milestone }, 
     { id: 'tokenomics', title: t('wp.nav.tokenomics'), icon: Scale },
     { id: 'economy', title: t('wp.nav.economy'), icon: Activity },
     { id: 'gameplay', title: t('wp.nav.gameplay'), icon: Layers },
@@ -64,7 +62,6 @@ export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAu
   return (
     <div className="min-h-screen bg-gray-950 text-gray-300 font-sans selection:bg-emerald-500 selection:text-black">
       
-      {/* HEADER NAV (FIXED) */}
       <header className={`fixed left-0 right-0 h-16 bg-gray-900/90 backdrop-blur-md border-b border-gray-800 z-40 flex items-center justify-between px-4 md:px-8 transition-all duration-300 ${isAuthenticated ? 'top-16' : 'top-0'}`}>
         <div className="flex items-center gap-4">
           {onBack && (
@@ -78,15 +75,7 @@ export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAu
         </div>
         
         <div className="flex items-center gap-2">
-          {!isAuthenticated && (
-            <button
-              onClick={toggleLanguage}
-              className="p-2 text-xl hover:scale-110 transition-transform bg-gray-800 rounded-lg border border-gray-700 hover:border-gray-500 mr-2 shadow-lg"
-              title="Switch Language"
-            >
-              {language === 'en' ? '🇮🇹' : '🇬🇧'}
-            </button>
-          )}
+          {!isAuthenticated && <LanguageDropdown align="right" />}
           <button 
             className="md:hidden p-2 text-white"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -96,10 +85,8 @@ export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAu
         </div>
       </header>
 
-      {/* Main Container */}
       <div className={`pb-20 max-w-7xl mx-auto flex flex-col md:flex-row gap-8 px-4 md:px-8 transition-all duration-300 ${isAuthenticated ? 'pt-36' : 'pt-20'}`}>
         
-        {/* SIDEBAR NAVIGATION (Desktop) */}
         <aside className={`hidden md:block w-64 shrink-0 h-[calc(100vh-8rem)] overflow-y-auto pr-4 border-r border-gray-800 sticky transition-all duration-300 ${isAuthenticated ? 'top-40' : 'top-24'}`}>
           <nav className="space-y-1">
             {sections.map((section) => (
@@ -119,7 +106,6 @@ export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAu
           </nav>
         </aside>
 
-        {/* MOBILE NAVIGATION MENU */}
         {isMobileMenuOpen && (
           <div className={`fixed inset-0 z-30 bg-gray-950 px-6 overflow-y-auto md:hidden ${isAuthenticated ? 'pt-36' : 'pt-20'}`}>
             <nav className="space-y-2">
@@ -137,10 +123,7 @@ export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAu
           </div>
         )}
 
-        {/* MAIN CONTENT */}
         <main className="flex-1 max-w-4xl space-y-16">
-          
-          {/* 0. INTRODUZIONE */}
           <section id="intro" className="scroll-mt-36">
             <div className="bg-gradient-to-br from-gray-900 to-gray-800 p-8 rounded-3xl border border-gray-700 shadow-2xl relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none"><Terminal size={120} /></div>
@@ -155,7 +138,6 @@ export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAu
             </div>
           </section>
 
-          {/* 1. PANORAMICA */}
           <section id="overview" className="scroll-mt-36">
             <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3 pb-2 border-b border-gray-800">
               <Globe className="text-emerald-400" /> {t('wp.overview.title')}
@@ -173,14 +155,12 @@ export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAu
             </div>
           </section>
 
-          {/* 2. ROADMAP (New Structure) */}
           <section id="roadmap" className="scroll-mt-36">
             <h2 className="text-2xl font-bold text-white mb-8 flex items-center gap-3 pb-2 border-b border-gray-800">
               <Milestone className="text-emerald-400" /> {t('wp.roadmap.title')}
             </h2>
             
             <div className="relative pl-8 border-l-2 border-gray-800 space-y-12">
-              {/* Phase 1 */}
               <div className="relative">
                 <div className="absolute -left-[41px] top-0 w-5 h-5 rounded-full bg-emerald-500 border-4 border-gray-950 shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
                 <div className="bg-emerald-900/10 border border-emerald-500/30 p-6 rounded-xl relative">
@@ -192,7 +172,6 @@ export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAu
                 </div>
               </div>
 
-              {/* Phase 2 */}
               <div className="relative">
                 <div className="absolute -left-[41px] top-0 w-5 h-5 rounded-full bg-gray-700 border-4 border-gray-950"></div>
                 <div className="bg-gray-900/50 border border-gray-700 p-6 rounded-xl">
@@ -203,7 +182,6 @@ export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAu
                 </div>
               </div>
 
-              {/* Phase 3 */}
               <div className="relative">
                 <div className="absolute -left-[41px] top-0 w-5 h-5 rounded-full bg-gray-700 border-4 border-gray-950"></div>
                 <div className="bg-gray-900/50 border border-gray-700 p-6 rounded-xl">
@@ -214,7 +192,6 @@ export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAu
                 </div>
               </div>
 
-              {/* Phase 4 */}
               <div className="relative">
                 <div className="absolute -left-[41px] top-0 w-5 h-5 rounded-full bg-gray-700 border-4 border-gray-950"></div>
                 <div className="bg-gray-900/50 border border-gray-700 p-6 rounded-xl">
@@ -227,7 +204,6 @@ export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAu
             </div>
           </section>
 
-          {/* 3. TOKENOMICS */}
           <section id="tokenomics" className="scroll-mt-36">
             <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3 pb-2 border-b border-gray-800">
               <Scale className="text-emerald-400" /> {t('wp.tokenomics.title')}
@@ -238,7 +214,6 @@ export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAu
               <div className="text-4xl font-black text-white mt-2">1.000.000.000 <span className="text-cyan-400">GOV</span></div>
             </div>
 
-            {/* FAIR LAUNCH NOTE */}
             <div className="bg-gradient-to-r from-emerald-900/20 to-cyan-900/20 border border-emerald-500/30 p-6 rounded-xl mb-8">
                 <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
                     <Info size={18} className="text-emerald-400" /> {t('wp.tokenomics.note_title')}
@@ -274,7 +249,6 @@ export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAu
             </div>
           </section>
 
-          {/* 4. ECONOMIA */}
           <section id="economy" className="scroll-mt-36">
             <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3 pb-2 border-b border-gray-800">
               <Activity className="text-emerald-400" /> {t('wp.economy.title')}
@@ -299,7 +273,6 @@ export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAu
             </div>
           </section>
 
-          {/* 5. GAMEPLAY (UPDATED - STATIC) */}
           <section id="gameplay" className="scroll-mt-36">
             <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3 pb-2 border-b border-gray-800">
               <Layers className="text-emerald-400" /> {t('wp.gameplay.title')}
@@ -341,7 +314,6 @@ export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAu
             </div>
           </section>
 
-          {/* 6. SISTEMA ZONE */}
           <section id="zones" className="scroll-mt-36">
             <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3 pb-2 border-b border-gray-800">
               <MapIcon className="text-emerald-400" /> {t('wp.zones.title')}
@@ -423,7 +395,6 @@ export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAu
             </div>
           </section>
 
-          {/* 7. SWAP */}
           <section id="swap" className="scroll-mt-36">
             <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3 pb-2 border-b border-gray-800">
               <RefreshCw className="text-emerald-400" /> {t('wp.swap.title')}
@@ -439,7 +410,6 @@ export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAu
             </div>
           </section>
 
-          {/* 8. MISSIONI */}
           <section id="missions" className="scroll-mt-36">
             <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3 pb-2 border-b border-gray-800">
               <Award className="text-emerald-400" /> {t('wp.missions.title')}
@@ -468,7 +438,6 @@ export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAu
             </div>
           </section>
 
-          {/* 9. RE-BUY & SUSTAINABILITY */}
           <section id="rebuy" className="scroll-mt-36">
             <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3 pb-2 border-b border-gray-800">
               <Flame className="text-emerald-400" /> {t('wp.rebuy.title')}
@@ -479,8 +448,6 @@ export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAu
             </p>
 
             <div className="grid md:grid-cols-2 gap-8">
-                
-                {/* Phase 1 */}
                 <div className="bg-gray-900/50 border border-gray-700 rounded-xl overflow-hidden">
                     <div className="p-4 bg-gray-800 border-b border-gray-700">
                         <h3 className="font-bold text-white">{t('wp.rebuy.phase1_title')}</h3>
@@ -504,7 +471,6 @@ export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAu
                     </div>
                 </div>
 
-                {/* Phase 2 */}
                 <div className="bg-gray-900/50 border border-gray-700 rounded-xl overflow-hidden">
                     <div className="p-4 bg-gray-800 border-b border-gray-700">
                         <h3 className="font-bold text-white">{t('wp.rebuy.phase2_title')}</h3>
@@ -527,11 +493,9 @@ export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAu
                         </div>
                     </div>
                 </div>
-
             </div>
           </section>
 
-          {/* 10. DOWNLOAD */}
           <section id="download" className="scroll-mt-36">
             <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3 pb-2 border-b border-gray-800">
               <Download className="text-emerald-400" /> {t('wp.download.title')}
@@ -550,7 +514,6 @@ export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAu
                 <p className="text-xs text-gray-600 mt-2">Coming Soon</p>
             </div>
           </section>
-
         </main>
       </div>
     </div>

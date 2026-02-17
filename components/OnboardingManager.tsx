@@ -3,11 +3,12 @@ import { useOnboarding } from '../contexts/OnboardingContext';
 import { ChevronRight, ChevronLeft, X, Target, FastForward, Globe } from 'lucide-react';
 import { useGlobalUI } from '../contexts/GlobalUIContext';
 import { useLanguage } from '../LanguageContext';
+import LanguageDropdown from './ui/LanguageDropdown';
 
 const OnboardingManager: React.FC<{ currentView: string; onNavigate: (v: any) => void }> = ({ currentView, onNavigate }) => {
   const { isActive, currentStepIndex, steps, nextStep, prevStep, stopTutorial, skipTutorial } = useOnboarding();
   const { playSound } = useGlobalUI();
-  const { t, language, toggleLanguage } = useLanguage();
+  const { t } = useLanguage();
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const [tooltipStyle, setTooltipStyle] = useState<React.CSSProperties>({ opacity: 0 });
@@ -59,8 +60,8 @@ const OnboardingManager: React.FC<{ currentView: string; onNavigate: (v: any) =>
     const calculatePosition = () => {
         const padding = 12;
         const isMobile = window.innerWidth < 768;
-        const tooltipWidth = isMobile ? Math.min(window.innerWidth - (padding * 2), 280) : 340;
-        const tooltipHeight = isMobile ? 180 : 240; 
+        const tooltipWidth = isMobile ? Math.min(window.innerWidth - (padding * 2), 300) : 340;
+        const tooltipHeight = isMobile ? 220 : 260; 
 
         if (!targetRect || currentStep.targetId === 'root') {
             setTooltipStyle({
@@ -165,24 +166,19 @@ const OnboardingManager: React.FC<{ currentView: string; onNavigate: (v: any) =>
                 <span className="text-[12px] font-black uppercase tracking-[0.2em] text-emerald-400">{t('tutorial.controls.step')} {currentStepIndex + 1}/{steps.length}</span>
             </div>
             <div className="flex items-center gap-1.5">
-                <button 
-                  onClick={(e) => { e.stopPropagation(); playSound('CLICK'); toggleLanguage(); }}
-                  className="text-[12px] font-bold uppercase tracking-widest text-white hover:text-emerald-400 transition-colors flex items-center gap-1 bg-white/10 px-1.5 py-0.5 rounded-md border border-white/10"
-                >
-                  {language === 'en' ? '🇮🇹' : '🇬🇧'}
-                </button>
+                <LanguageDropdown align="right" isCompact={true} />
 
                 <button 
                   onClick={(e) => { e.stopPropagation(); playSound('CLICK'); skipTutorial(); }}
-                  className="text-[10px] font-bold uppercase tracking-widest text-gray-500 hover:text-emerald-400 transition-colors flex items-center gap-1 bg-white/5 px-1.5 py-0.5 rounded-md"
+                  className="text-[10px] font-bold uppercase tracking-widest text-gray-500 hover:text-emerald-400 transition-colors flex items-center gap-1 bg-white/5 px-2 py-1.5 rounded-xl border border-white/5"
                 >
                   <FastForward size={8} /> {t('tutorial.controls.skip')}
                 </button>
                 <button 
                   onClick={(e) => { e.stopPropagation(); playSound('CLICK'); stopTutorial(); }}
-                  className="text-gray-500 hover:text-white transition-colors p-0.5"
+                  className="text-gray-500 hover:text-white transition-colors p-1"
                 >
-                  <X size={14} />
+                  <X size={16} />
                 </button>
             </div>
           </div>

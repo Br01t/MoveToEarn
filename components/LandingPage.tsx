@@ -3,6 +3,7 @@ import { Activity, Shield, Coins, TrendingUp, Terminal, BookOpen, ChevronRight, 
 import { ViewState } from '../types';
 import { useLanguage } from '../LanguageContext';
 import { useGlobalUI } from '../contexts/GlobalUIContext';
+import LanguageDropdown from './ui/LanguageDropdown';
 
 interface LandingPageProps {
   onLogin: () => void;
@@ -12,7 +13,7 @@ interface LandingPageProps {
 type FeatureKey = 'earn_run' | 'earn_gov' | 'spend' | 'burn';
 
 const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
-  const { t, tRich, language, toggleLanguage } = useLanguage();
+  const { t, tRich } = useLanguage();
   const { isMuted, toggleMute, playSound } = useGlobalUI();
   const [activeFeature, setActiveFeature] = useState<FeatureKey | null>(null);
 
@@ -74,19 +75,14 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
         </div>
         
         <div className="flex items-center gap-3">
+            <LanguageDropdown align="right" />
+
             <button
                 onClick={toggleMute}
-                className={`p-2 rounded-lg glass-panel transition-all border ${isMuted ? 'text-red-400 border-red-500/30 bg-red-900/10' : 'text-gray-400 border-white/10 hover:text-white hover:border-white/30'}`}
+                className={`p-2 rounded-xl glass-panel transition-all border h-[42px] ${isMuted ? 'text-red-400 border-red-500/30 bg-red-900/10' : 'text-gray-400 border-white/10 hover:text-white hover:border-white/30'}`}
                 title={isMuted ? "Unmute" : "Mute"}
             >
                 {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
-            </button>
-
-            <button
-                onClick={() => handleActionClick(toggleLanguage)}
-                className="px-4 py-2 text-xs font-bold glass-panel text-gray-400 hover:text-white rounded-lg transition-all border border-white/10 hover:border-white/30"
-            >
-                {language === 'en' ? 'IT' : 'EN'}
             </button>
         </div>
       </header>

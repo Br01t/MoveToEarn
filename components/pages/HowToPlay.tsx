@@ -1,6 +1,7 @@
 import React from 'react';
 import { ArrowLeft, Download, Monitor, Smartphone, FileText, Database, CheckCircle, ExternalLink, Map, Activity, Zap, Apple, Watch } from 'lucide-react'; 
 import { useLanguage } from '../../LanguageContext';
+import LanguageDropdown from '../ui/LanguageDropdown';
 
 interface HowToPlayProps {
   onBack: () => void;
@@ -138,7 +139,7 @@ const AppFilters = () => (
 );
 
 const HowToPlay: React.FC<HowToPlayProps> = ({ onBack, isAuthenticated = false }) => {
-  const { t, tRich, language, toggleLanguage } = useLanguage();
+  const { t, tRich } = useLanguage();
 
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-8 space-y-8 pb-24">
@@ -150,15 +151,7 @@ const HowToPlay: React.FC<HowToPlayProps> = ({ onBack, isAuthenticated = false }
             <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" /> {t('htp.back')}
           </button>
 
-          {!isAuthenticated && (
-            <button
-                onClick={toggleLanguage}
-                className="p-2 text-xl hover:scale-110 transition-transform bg-gray-800 rounded-lg border border-gray-700 hover:border-gray-500 shadow-lg"
-                title="Switch Language"
-            >
-                {language === 'en' ? '🇮🇹' : '🇬🇧'}
-            </button>
-          )}
+          {!isAuthenticated && <LanguageDropdown align="right" />}
       </div>
 
       <div className="space-y-4">

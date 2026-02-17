@@ -2,6 +2,7 @@ import React from 'react';
 import { ArrowLeft, Terminal, Map as MapIcon, ShoppingBag, Package, Target, Trophy, Wallet, User as UserIcon, BookOpen, Activity, Swords, Zap, Coins, Download } from 'lucide-react';
 import { ViewState } from '../../types';
 import { useLanguage } from '../../LanguageContext';
+import LanguageDropdown from '../ui/LanguageDropdown';
 
 interface GameRulesProps {
   onBack?: () => void;
@@ -10,7 +11,7 @@ interface GameRulesProps {
 }
 
 export const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate, isAuthenticated = false }) => {
-  const { t, tRich, language, toggleLanguage } = useLanguage();
+  const { t, tRich } = useLanguage();
 
   const SectionHeader = ({ icon: Icon, title }: { icon: any, title: string }) => (
       <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 flex items-center gap-3 border-b border-gray-700/50 pb-4 mt-16 first:mt-0">
@@ -60,15 +61,7 @@ export const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate, isAuth
               </button>
             ) : <div></div>}
 
-            {!isAuthenticated && (
-              <button
-                onClick={toggleLanguage}
-                className="p-2 text-xl hover:scale-110 transition-transform bg-gray-800 rounded-lg border border-gray-700 hover:border-gray-500 shadow-xl"
-                title="Switch Language"
-              >
-                {language === 'en' ? '🇮🇹' : '🇬🇧'}
-              </button>
-            )}
+            {!isAuthenticated && <LanguageDropdown align="right" />}
         </div>
 
         <div className="text-center mb-16">
@@ -109,7 +102,6 @@ export const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate, isAuth
         </div>
 
         <div className="space-y-16">
-
             <section>
                 <SectionHeader icon={Activity} title={t('rules.gameplay.title')} />
                 
@@ -203,9 +195,7 @@ export const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate, isAuth
                     />
                 </div>
             </section>
-
         </div>
-
       </div>
     </div>
   );
