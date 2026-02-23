@@ -1,8 +1,9 @@
 import React from 'react';
 import { ViewState, User } from '../types';
-import { Map, ShoppingBag, Trophy, Wallet, LogOut, Package, User as UserIcon, Settings, Target, Volume2, VolumeX } from 'lucide-react';
+import { Map, ShoppingBag, Trophy, Wallet, LogOut, Package, User as UserIcon, Settings, Target, Volume2, VolumeX, HelpCircle, Info } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 import { useGlobalUI } from '../contexts/GlobalUIContext';
+import { useOnboarding } from '../contexts/OnboardingContext';
 import LanguageDropdown from './ui/LanguageDropdown';
 
 interface NavbarProps {
@@ -15,6 +16,7 @@ interface NavbarProps {
 const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, user, onLogout }) => {
   const { t } = useLanguage();
   const { isMuted, toggleMute } = useGlobalUI();
+  const { startTutorial } = useOnboarding();
 
   if (!user) return null;
 
@@ -62,6 +64,14 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, user, onLogout
         </div>
         
         <div className="flex items-center gap-1 shrink-0">
+            <button
+              onClick={startTutorial}
+              className="p-1 text-emerald-400 hover:text-emerald-300 transition-colors h-[32px] w-[32px] flex items-center justify-center border border-emerald-500/20 bg-emerald-900/10 rounded-lg"
+              aria-label="Start Tutorial"
+            >
+              <HelpCircle size={16} aria-hidden="true" />
+            </button>
+
             <LanguageDropdown align="right" isCompact={true} />
             
             <button
@@ -114,6 +124,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, user, onLogout
             <NavItem view="LEADERBOARD" icon={Trophy} label={t('nav.rank')} id="nav-item-LEADERBOARD" />
             <NavItem view="WALLET" icon={Wallet} label={t('nav.wallet')} id="nav-item-WALLET" />
             <NavItem view="PROFILE" icon={UserIcon} label={t('nav.profile')} id="nav-item-PROFILE" />
+            <NavItem view="INFO" icon={Info} label={t('nav.info')} id="nav-item-INFO" />
             
             {user.isAdmin && (
                 <>
@@ -124,6 +135,14 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, user, onLogout
           </div>
 
           <div className="flex items-center justify-end shrink-0 min-w-[150px] gap-2">
+            <button
+              onClick={startTutorial}
+              className="p-2 text-emerald-400 hover:text-emerald-300 transition-colors h-[34px] w-[34px] flex items-center justify-center border border-emerald-500/30 bg-emerald-900/10 rounded-lg"
+              aria-label="Start Tutorial"
+            >
+              <HelpCircle size={18} aria-hidden="true" />
+            </button>
+
             <LanguageDropdown align="right" />
             
             <button
@@ -154,11 +173,12 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, user, onLogout
                <NavItem view="MISSIONS" icon={Target} label={t('nav.missions')} compact={true} id="nav-item-MISSIONS-mobile" />
                <NavItem view="LEADERBOARD" icon={Trophy} label={t('nav.rank')} compact={true} id="nav-item-LEADERBOARD-mobile" />
            </div>
-           <div className="grid grid-cols-4 w-full">
+           <div className="grid grid-cols-5 w-full">
                <NavItem view="MARKETPLACE" icon={ShoppingBag} label={t('nav.market')} compact={true} id="nav-item-MARKETPLACE-mobile" />
                <NavItem view="PROFILE" icon={UserIcon} label={t('nav.profile')} compact={true} id="nav-item-PROFILE-mobile" />
                <NavItem view="INVENTORY" icon={Package} label={t('nav.inventory')} compact={true} id="nav-item-INVENTORY-mobile" />
                <NavItem view="WALLET" icon={Wallet} label={t('nav.wallet')} compact={true} id="nav-item-WALLET-mobile" />
+               <NavItem view="INFO" icon={Info} label={t('nav.info')} compact={true} id="nav-item-INFO-mobile" />
            </div>
         </div>
       </nav>

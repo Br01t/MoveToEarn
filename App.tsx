@@ -31,6 +31,7 @@ const Terms = React.lazy(() => import("./components/pages/Terms"));
 const Community = React.lazy(() => import("./components/pages/Community"));
 const ReportBug = React.lazy(() => import("./components/pages/ReportBug"));
 const SuggestionPage = React.lazy(() => import("./components/pages/SuggestionPage"));
+const InfoPage = React.lazy(() => import("./components/pages/InfoPage"));
 const Footer = React.lazy(() => import("./components/Footer"));
 
 import AchievementModal from "./components/AchievementModal";
@@ -165,6 +166,7 @@ const AppContent: React.FC = () => {
   const isLanding = currentView === "LANDING";
   const showNavbar = !isLanding && user;
   const isDashboard = currentView === "DASHBOARD";
+  const isInstallable = !!deferredPrompt || isIOS;
 
   const renderCurrentModal = () => {
     if (showLoginModal) {
@@ -225,6 +227,7 @@ const AppContent: React.FC = () => {
                   )}
                   {currentView === "REPORT_BUG" && <ReportBug onReport={gameState.reportBug} />}
                   {currentView === "SUGGESTION" && <SuggestionPage onSubmit={gameState.submitSuggestion} />}
+                  {currentView === "INFO" && <InfoPage onNavigate={setCurrentView} isAuthenticated={!!user} onInstall={installPWA} isInstallable={isInstallable} isStandalone={isStandalone} />}
                 </Suspense>
               )}
               <Suspense fallback={<LoadingFallback />}>
@@ -239,8 +242,6 @@ const AppContent: React.FC = () => {
           </main>
 
           {renderCurrentModal()}
-          
-          <Footer onNavigate={setCurrentView} currentView={currentView} isAuthenticated={!!user} />
       </div>
     </div>
   );
