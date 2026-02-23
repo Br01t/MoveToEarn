@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Zone, User, Badge, Rarity } from '../../types';
 import { X, Crown, Shield, Medal, Lock, Zap, Flag, Award, Mountain, Globe, Home, Landmark, Swords, Footprints, Rocket, Tent, Timer, Building2, Moon, Sun, ShieldCheck, Gem, Users, AlertTriangle, CheckCircle, Coins, Activity, Info, Clock, TrendingUp, AlertCircle, Loader2 } from 'lucide-react';
 import { useLanguage } from '../../LanguageContext';
@@ -25,13 +25,38 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
 }) => {
   const { t } = useLanguage();
   const { triggerParticles } = useGlobalUI();
+  const scrollRef = useRef<HTMLDivElement>(null);
   const [now, setNow] = useState(Date.now());
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [isScrollable, setIsScrollable] = useState(false);
   const [confirmAction, setConfirmAction] = useState<'BOOST' | 'SHIELD' | null>(null);
 
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(interval);
   }, []);
+
+  const handleScroll = () => {
+    if (scrollRef.current) {
+      window.requestAnimationFrame(() => {
+        if (!scrollRef.current) return;
+        const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
+        setIsScrollable(scrollHeight > clientHeight + 5); // 5px buffer
+        const maxScroll = scrollHeight - clientHeight;
+        if (maxScroll <= 0) {
+          setScrollProgress(0);
+        } else {
+          setScrollProgress((scrollTop / maxScroll) * 100);
+        }
+      });
+    }
+  };
+
+  useEffect(() => {
+    handleScroll();
+    window.addEventListener('resize', handleScroll);
+    return () => window.removeEventListener('resize', handleScroll);
+  }, [zoneLeaderboard, isLoadingLeaderboard]);
 
   const formatTimeRemaining = (expiry: number) => {
     const diff = expiry - now;
@@ -157,7 +182,22 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
 
         <h3 className={`font-bold text-xl text-white mb-4 pr-6 tracking-tight break-words uppercase shrink-0 ${isRipeForConquest || isTerritoryAtRisk ? 'mt-4' : ''}`}>{zone.name}</h3>
         
+        {isScrollable && (
+            <div className="absolute right-1.5 top-24 bottom-32 w-0.5 bg-white/5 rounded-full overflow-hidden pointer-events-none z-40">
+                <div 
+                    className="w-full bg-emerald-500/60 rounded-full absolute"
+                    style={{ 
+                        height: '20%', 
+                        transform: `translateY(${scrollProgress * 4}%)`, // 100% progress * 4 = 400% of height (which is 20% of container)
+                        top: 0
+                    }}
+                />
+            </div>
+        )}
+
         <div 
+          ref={scrollRef}
+          onScroll={handleScroll}
           className="overflow-y-auto flex-1 space-y-4 pr-1 overscroll-contain no-scrollbar md:scrollbar-thin"
           style={{ touchAction: 'pan-y' }}
           onPointerDown={stopEvent}

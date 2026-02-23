@@ -150,10 +150,10 @@ const ProfileAchievementsTab: React.FC<ProfileAchievementsTabProps> = ({ user, e
                                           </div>
                                       </div>
                                       <p className="text-[10px] text-gray-400 leading-tight mb-2 italic">"{badge.description}"</p>
-                                      {(badge.rewardRun || badge.rewardGov) && (
+                                      {( (badge.rewardRun ?? 0) > 0 || (badge.rewardGov ?? 0) > 0) && (
                                           <div className="flex gap-2 pt-2 border-t border-white/10">
-                                              {badge.rewardRun > 0 && <span className="text-[9px] font-mono font-bold text-emerald-400">+{badge.rewardRun} RUN</span>}
-                                              {badge.rewardGov > 0 && <span className="text-[9px] font-mono font-bold text-cyan-400">+{badge.rewardGov} GOV</span>}
+                                              {(badge.rewardRun ?? 0) > 0 && <span className="text-[9px] font-mono font-bold text-emerald-400">+{badge.rewardRun} RUN</span>}
+                                              {(badge.rewardGov ?? 0) > 0 && <span className="text-[9px] font-mono font-bold text-cyan-400">+{badge.rewardGov} GOV</span>}
                                           </div>
                                       )}
                                       <div className="absolute left-1/2 -bottom-1 w-2 h-2 bg-gray-900 border-r border-b border-gray-700 transform -translate-x-1/2 rotate-45"></div>
@@ -198,6 +198,7 @@ const ProfileAchievementsTab: React.FC<ProfileAchievementsTabProps> = ({ user, e
               <div className="space-y-2">
                   {currentCompletedMissions.map(m => (
                       <div key={m.id} className="relative group">
+                          {/* MISSION TOOLTIP */}
                           <div className="absolute bottom-full left-4 mb-2 w-64 p-4 glass-panel-heavy rounded-2xl shadow-2xl opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none z-[100] transform scale-95 group-hover:scale-100 origin-bottom-left">
                               <div className="flex items-center gap-2 mb-2">
                                   <div className={`p-1.5 rounded bg-white/5 ${getRarityText(m.rarity)}`}>
@@ -211,7 +212,7 @@ const ProfileAchievementsTab: React.FC<ProfileAchievementsTabProps> = ({ user, e
                                       <p className="text-[9px] text-gray-500 uppercase font-bold mb-1">Rewards Claimed</p>
                                       <div className="space-y-0.5">
                                           <p className="text-xs font-mono font-bold text-emerald-400">+{m.rewardRun} RUN</p>
-                                          {m.rewardGov > 0 && <p className="text-xs font-mono font-bold text-cyan-400">+{m.rewardGov} GOV</p>}
+                                          {(m.rewardGov ?? 0) > 0 && <p className="text-xs font-mono font-bold text-cyan-400">+{m.rewardGov} GOV</p>}
                                       </div>
                                   </div>
                                   <div>
