@@ -145,13 +145,6 @@ const InfoPage: React.FC<InfoPageProps> = ({
         className="max-w-5xl mx-auto px-6 py-20 pb-40"
       >
         <div className="text-center mb-24">
-          <motion.div 
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="inline-block px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10px] font-bold text-emerald-400 uppercase tracking-[0.3em] mb-8"
-          >
-            Protocol Resources
-          </motion.div>
           <h1 className="text-4xl sm:text-6xl md:text-8xl font-black text-white uppercase tracking-tighter leading-[0.9] mb-8">
             {t('info.title')}
           </h1>
