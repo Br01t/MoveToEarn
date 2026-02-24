@@ -240,12 +240,12 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
   const CompassArrow = ({ dir, isActive, icon: Icon, positionClasses, isMobile = false }: { dir: string, isActive: boolean, icon: any, positionClasses: string, isMobile?: boolean }) => {
       const showTooltip = activeTooltip === dir && isActive;
       const getFlexDir = () => (dir === 'north' && !isMobile) ? 'flex-col-reverse' : 'flex-col';
-      const getTooltipAlignment = () => isMobile ? 'left-0 origin-left' : (dir === 'west' ? 'left-2' : (dir === 'east' ? 'right-2' : 'left-1/2 -translate-x-1/2'));
-      const tooltipTopClass = isMobile ? 'bottom-11' : (dir === 'north' ? 'top-14' : 'bottom-14');
+      const getTooltipAlignment = () => isMobile ? 'left-1/2 -translate-x-1/2' : (dir === 'west' ? 'left-2' : (dir === 'east' ? 'right-2' : 'left-1/2 -translate-x-1/2'));
+      const tooltipTopClass = isMobile ? 'bottom-14' : (dir === 'north' ? 'top-14' : 'bottom-14');
 
       return (
           <div 
-              className={`absolute ${positionClasses} flex ${getFlexDir()} items-center group transition-all duration-300 ${isActive ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-20'} ${showTooltip ? 'z-[70]' : 'z-50'}`}
+              className={`${isMobile ? '' : 'absolute'} ${positionClasses} flex ${getFlexDir()} items-center group transition-all duration-300 ${isActive ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-40'} ${showTooltip ? 'z-[70]' : 'z-50'}`}
               onMouseEnter={() => isActive && setActiveTooltip(dir)}
               onMouseLeave={() => setActiveTooltip(null)}
               onClick={(e) => {
@@ -261,7 +261,7 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
                   </p>
               </div>
               <div className={`compass-plate ${isActive ? 'compass-active' : 'compass-base'}`}>
-                  <Icon className="w-4 h-4 md:w-6 md:h-6" strokeWidth={isActive ? 3 : 1.5} />
+                  <Icon className="w-5 h-5 md:w-6 md:h-6" strokeWidth={isActive ? 3 : 1.5} />
               </div>
           </div>
       );
@@ -312,17 +312,17 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
       />
 
       <div className="absolute inset-0 pointer-events-none z-40">
-          <div className="md:hidden absolute bottom-44 left-6 w-32 h-32 pointer-events-none">
-                <CompassArrow dir="north" isActive={compassState.north} icon={ChevronUp} positionClasses="top-0 left-1/2 -translate-x-1/2" isMobile={true} />
-                <CompassArrow dir="south" isActive={compassState.south} icon={ChevronDown} positionClasses="bottom-0 left-1/2 -translate-x-1/2" isMobile={true} />
-                <CompassArrow dir="east" isActive={compassState.east} icon={ChevronRight} positionClasses="right-0 top-1/2 -translate-y-1/2" isMobile={true} />
-                <CompassArrow dir="west" isActive={compassState.west} icon={ChevronLeft} positionClasses="left-0 top-1/2 -translate-y-1/2" isMobile={true} />
+          <div className="md:hidden absolute inset-0 pointer-events-none">
+                <CompassArrow dir="north" isActive={compassState.north} icon={ChevronUp} positionClasses="absolute bottom-72 left-1/2 -translate-x-1/2" isMobile={true} />
+                <CompassArrow dir="west" isActive={compassState.west} icon={ChevronLeft} positionClasses="absolute bottom-56 left-4" isMobile={true} />
+                <CompassArrow dir="east" isActive={compassState.east} icon={ChevronRight} positionClasses="absolute bottom-56 right-4" isMobile={true} />
+                <CompassArrow dir="south" isActive={compassState.south} icon={ChevronDown} positionClasses="absolute bottom-40 left-1/2 -translate-x-1/2" isMobile={true} />
           </div>
           <div className="hidden md:block absolute inset-0 pointer-events-none">
-                <CompassArrow dir="north" isActive={compassState.north} icon={ChevronUp} positionClasses="top-4 left-1/2 -translate-x-1/2" />
-                <CompassArrow dir="south" isActive={compassState.south} icon={ChevronDown} positionClasses="bottom-36 left-1/2 -translate-x-1/2" />
-                <CompassArrow dir="east" isActive={compassState.east} icon={ChevronRight} positionClasses="right-2 top-1/2 -translate-y-1/2" />
-                <CompassArrow dir="west" isActive={compassState.west} icon={ChevronLeft} positionClasses="left-2 top-1/2 -translate-y-1/2" isMobile={true} />
+                <CompassArrow dir="north" isActive={compassState.north} icon={ChevronUp} positionClasses="absolute top-4 left-1/2 -translate-x-1/2" />
+                <CompassArrow dir="south" isActive={compassState.south} icon={ChevronDown} positionClasses="absolute bottom-36 left-1/2 -translate-x-1/2" />
+                <CompassArrow dir="east" isActive={compassState.east} icon={ChevronRight} positionClasses="absolute right-2 top-1/2 -translate-y-1/2" />
+                <CompassArrow dir="west" isActive={compassState.west} icon={ChevronLeft} positionClasses="absolute left-2 top-1/2 -translate-y-1/2" isMobile={true} />
           </div>
       </div>
 
