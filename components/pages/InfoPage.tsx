@@ -119,7 +119,7 @@ const InfoPage: React.FC<InfoPageProps> = ({
         whileHover={{ scale: 1.02, backgroundColor: "rgba(255,255,255,0.05)" }}
         whileTap={{ scale: 0.98 }}
         onClick={onClick}
-        className="w-full flex items-center gap-5 p-5 rounded-3xl border border-white/5 bg-white/[0.02] text-left transition-all group"
+        className="w-full flex items-start gap-5 p-5 rounded-3xl border border-white/5 bg-white/[0.02] text-left transition-all group"
       >
         <div className={`p-3 rounded-2xl ${colors[color]} shrink-0 group-hover:scale-110 transition-transform`}>
           <Icon size={20} />
@@ -128,11 +128,11 @@ const InfoPage: React.FC<InfoPageProps> = ({
           <h4 className="font-bold text-white text-sm uppercase tracking-wide group-hover:text-emerald-400 transition-colors">
             {title}
           </h4>
-          <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">
+          <p className="text-xs text-gray-500 mt-0.5">
             {description}
           </p>
         </div>
-        <ChevronRight size={16} className="text-gray-700 group-hover:text-white transition-colors" />
+        <ChevronRight size={16} className="text-gray-700 group-hover:text-white transition-colors mt-1 shrink-0" />
       </motion.button>
     );
   };
@@ -144,7 +144,6 @@ const InfoPage: React.FC<InfoPageProps> = ({
         animate={{ opacity: 1, y: 0 }}
         className="max-w-5xl mx-auto px-6 py-20 pb-40"
       >
-        {/* Hero Section */}
         <div className="text-center mb-24">
           <motion.div 
             initial={{ scale: 0.9, opacity: 0 }}
@@ -153,16 +152,15 @@ const InfoPage: React.FC<InfoPageProps> = ({
           >
             Protocol Resources
           </motion.div>
-          <h1 className="text-6xl md:text-8xl font-black text-white uppercase tracking-tighter leading-[0.9] mb-8">
+          <h1 className="text-4xl sm:text-6xl md:text-8xl font-black text-white uppercase tracking-tighter leading-[0.9] mb-8">
             {t('info.title')}
           </h1>
-          <p className="text-xl text-gray-500 font-light max-w-2xl mx-auto leading-relaxed">
+          <p className="text-lg sm:text-xl text-gray-500 font-light max-w-2xl mx-auto leading-relaxed">
             {t('info.subtitle')}
           </p>
         </div>
 
         <div className="space-y-24">
-          {/* Highlighted Section */}
           <section>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <MainActionCard 
@@ -182,7 +180,6 @@ const InfoPage: React.FC<InfoPageProps> = ({
             </div>
           </section>
 
-          {/* Documentation & Support Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
             {/* Left Column: Docs */}
             <section>
@@ -214,12 +211,11 @@ const InfoPage: React.FC<InfoPageProps> = ({
               </div>
             </section>
 
-            {/* Right Column: Support & App */}
             <section className="space-y-12">
               {isAuthenticated && (
                 <div>
                   <SectionTitle title={t('info.group.support')} />
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="flex flex-col gap-3">
                     <CompactCard 
                       icon={Bug}
                       title={t('footer.report_bug')}
@@ -245,27 +241,26 @@ const InfoPage: React.FC<InfoPageProps> = ({
                     whileHover={{ scale: 1.01 }}
                     whileTap={{ scale: 0.99 }}
                     onClick={onInstall}
-                    className="w-full p-6 rounded-[2rem] bg-white text-black flex items-center justify-between group"
+                    className="w-full p-6 rounded-[2rem] bg-white text-black flex items-start justify-between group"
                   >
-                    <div className="flex items-center gap-4">
-                      <div className="p-3 bg-black/5 rounded-2xl">
+                    <div className="flex items-start gap-4">
+                      <div className="p-3 bg-black/5 rounded-2xl shrink-0">
                         <Download size={24} />
                       </div>
                       <div className="text-left">
-                        <span className="block font-black uppercase tracking-tight text-lg leading-none">
+                        <span className="block font-black uppercase tracking-tight text-lg leading-none mb-1">
                           {t('info.install.title')}
                         </span>
                         <span className="text-xs opacity-60 font-medium">Native Experience</span>
                       </div>
                     </div>
-                    <ChevronRight size={20} />
+                    <ChevronRight size={20} className="mt-2 shrink-0" />
                   </motion.button>
                 </div>
               )}
             </section>
           </div>
 
-          {/* Legal Section */}
           <section>
             <SectionTitle title={t('info.group.legal')} />
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -292,30 +287,8 @@ const InfoPage: React.FC<InfoPageProps> = ({
               />
             </div>
           </section>
-
-          {/* Social Section - Horizontal */}
-          <section className="pt-16 border-t border-white/5">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-8">
-              <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-600">
-                Protocol v0.1.0 // Genesis Phase
-              </div>
-              
-              <div className="flex gap-6">
-                {['Twitter', 'Discord', 'GitHub'].map((social) => (
-                  <a 
-                    key={social}
-                    href="#" 
-                    className="p-3 rounded-full bg-white/[0.03] border border-white/5 text-gray-500 hover:text-emerald-400 hover:border-emerald-500/30 transition-all"
-                  >
-                    <ExternalLink size={16} />
-                  </a>
-                ))}
-              </div>
-            </div>
-          </section>
         </div>
 
-        {/* Simple Footer */}
         <div className="mt-32 text-center text-[10px] font-mono text-gray-700 uppercase tracking-[0.4em]">
           &copy; {new Date().getFullYear()} ZoneRun Protocol // All Rights Reserved
         </div>
