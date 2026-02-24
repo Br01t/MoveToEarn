@@ -9,6 +9,7 @@ export const it = {
     "nav.admin": "Admin",
     "nav.logout": "Esci",
     "nav.info": "Info",
+    "nav.tutorial_tooltip": "Tutorial",
 
     "auth.title": "Identificazione Runner",
     "auth.subtitle": "Entra nella griglia. Sincronizza biometria.",

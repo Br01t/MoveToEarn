@@ -1,6 +1,6 @@
 import React from 'react';
 import { ViewState, User } from '../types';
-import { Map, ShoppingBag, Trophy, Wallet, LogOut, Package, User as UserIcon, Settings, Target, Volume2, VolumeX, HelpCircle, Info } from 'lucide-react';
+import { Map, ShoppingBag, Trophy, Wallet, LogOut, Package, User as UserIcon, Settings, Target, Volume2, VolumeX, HelpCircle, Info, UploadCloud } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 import { useGlobalUI } from '../contexts/GlobalUIContext';
 import { useOnboarding } from '../contexts/OnboardingContext';
@@ -11,9 +11,10 @@ interface NavbarProps {
   onNavigate: (view: ViewState) => void;
   user: User | null;
   onLogout: () => void;
+  onOpenSync?: () => void;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, user, onLogout }) => {
+const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, user, onLogout, onOpenSync }) => {
   const { t } = useLanguage();
   const { isMuted, toggleMute } = useGlobalUI();
   const { startTutorial } = useOnboarding();
@@ -40,7 +41,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, user, onLogout
         } ${isActive ? activeClass : inactiveClass}`}
       >
         <Icon size={compact ? 24 : 20} className={isActive ? 'stroke-2' : 'stroke-1'} aria-hidden="true" />
-        <span className={`${compact ? 'text-xs mt-1' : 'text-xs md:text-sm mt-1 md:mt-0'} font-bold uppercase tracking-wide truncate max-w-full leading-tight`}>
+        <span className={`${compact ? 'text-[11px] mt-1' : 'text-xs md:text-sm mt-1 md:mt-0'} font-bold uppercase tracking-wide max-w-full leading-tight text-center px-1`}>
             {mobileLabel || label}
         </span>
       </button>
@@ -103,7 +104,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, user, onLogout
       </nav>
 
       <nav className="bg-gray-900 border-b border-gray-800 sticky top-0 z-50 h-16 hidden md:block" role="navigation" aria-label="Main Desktop Navigation">
-        <div className="w-full h-full px-6 flex items-center justify-between">
+        <div className="w-full h-full px-3 flex items-center justify-between">
           
           <div className="flex items-center shrink-0 min-w-[150px]">
             <span 
@@ -116,7 +117,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, user, onLogout
             </span>
           </div>
           
-          <div className="flex-1 flex justify-center items-center space-x-1 lg:space-x-2">
+          <div className="flex-1 flex justify-end items-center space-x-1 lg:space-x-2">
             <NavItem view="DASHBOARD" icon={Map} label={t('nav.map')} id="nav-item-DASHBOARD" />
             <NavItem view="MARKETPLACE" icon={ShoppingBag} label={t('nav.market')} id="nav-item-MARKETPLACE" />
             <NavItem view="INVENTORY" icon={Package} label={t('nav.inventory')} id="nav-item-INVENTORY" />
@@ -135,13 +136,19 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, user, onLogout
           </div>
 
           <div className="flex items-center justify-end shrink-0 min-w-[150px] gap-2">
-            <button
-              onClick={startTutorial}
-              className="p-2 text-emerald-400 hover:text-emerald-300 transition-colors h-[34px] w-[34px] flex items-center justify-center border border-emerald-500/30 bg-emerald-900/10 rounded-lg"
-              aria-label="Start Tutorial"
-            >
-              <HelpCircle size={18} aria-hidden="true" />
-            </button>
+            <div className="relative group/tooltip">
+              <button
+                onClick={startTutorial}
+                className="p-2 text-emerald-400 hover:text-emerald-300 transition-colors h-[34px] w-[34px] flex items-center justify-center border border-emerald-500/30 bg-emerald-900/10 rounded-lg"
+                aria-label="Start Tutorial"
+              >
+                <HelpCircle size={18} aria-hidden="true" />
+              </button>
+              <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 px-3 py-2 bg-gray-900/95 backdrop-blur-xl border border-white/10 rounded-lg shadow-2xl opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none whitespace-nowrap text-[11px] font-bold text-emerald-400 z-50">
+                {t('nav.tutorial_tooltip')}
+                <div className="absolute -right-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-gray-900 border-r border-t border-white/10 rotate-45"></div>
+              </div>
+            </div>
 
             <LanguageDropdown align="right" />
             
@@ -168,7 +175,19 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, user, onLogout
 
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-gray-950/95 backdrop-blur-md border-t border-gray-800 z-50 pb-safe shadow-[0_-5px_20px_rgba(0,0,0,0.3)]" role="navigation" aria-label="Mobile Navigation Menu">
         <div className="flex flex-col w-full">
-           <div className="grid grid-cols-3 w-full border-b border-gray-800/30">
+           <div className="grid grid-cols-4 w-full border-b border-gray-800/30">
+               {onOpenSync && (
+                 <button
+                   onClick={onOpenSync}
+                   className="flex flex-col items-center justify-center py-2.5 w-full text-emerald-400 hover:text-emerald-300 transition-colors"
+                   aria-label={t('sync.title')}
+                 >
+                   <UploadCloud size={24} className="animate-pulse" aria-hidden="true" />
+                   <span className="text-[11px] mt-1 font-bold uppercase tracking-wide leading-tight text-center px-1">
+                     {t('dash.sync_btn_sub')}
+                   </span>
+                 </button>
+               )}
                <NavItem view="DASHBOARD" icon={Map} label={t('nav.map')} compact={true} id="nav-item-DASHBOARD-mobile" />
                <NavItem view="MISSIONS" icon={Target} label={t('nav.missions')} compact={true} id="nav-item-MISSIONS-mobile" />
                <NavItem view="LEADERBOARD" icon={Trophy} label={t('nav.rank')} compact={true} id="nav-item-LEADERBOARD-mobile" />

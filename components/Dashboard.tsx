@@ -270,7 +270,6 @@ const Dashboard: React.FC<DashboardProps> = ({
           {isSyncing && (
               <div className="bg-gray-900/90 backdrop-blur-md border border-emerald-500/50 px-3 py-1.5 rounded-full flex items-center gap-2 shadow-lg animate-pulse pointer-events-auto">
                   <RefreshCw size={14} className="text-emerald-400 animate-spin" />
-                  <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">Sincronizzazione Griglia...</span>
               </div>
           )}
           {syncError && !isSyncing && (
@@ -346,7 +345,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           </div>
       </div>
 
-      <div className="absolute bottom-44 right-4 md:bottom-10 md:left-1/2 md:right-auto md:transform md:-translate-x-1/2 z-30 flex items-center justify-center">
+      <div className="hidden md:flex absolute bottom-44 right-4 md:bottom-10 md:left-1/2 md:right-auto md:transform md:-translate-x-1/2 z-30 items-center justify-center">
             <div className="absolute inset-0 bg-emerald-500 rounded-full animate-ping opacity-20 duration-1000"></div>
             <div className="absolute inset-0 bg-emerald-400 rounded-full blur-xl opacity-40"></div>
             <button 

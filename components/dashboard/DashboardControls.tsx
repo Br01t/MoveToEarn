@@ -22,7 +22,7 @@ const DashboardControls: React.FC<DashboardControlsProps> = ({ onZoomIn, onZoomO
            <button 
              onClick={toggleLegend} 
              className={`w-10 h-10 flex items-center justify-center rounded-lg border shadow-lg transition-all duration-300 ${isLegendOpen ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50' : 'bg-gray-800/90 text-gray-400 border-gray-700 hover:text-white'}`}
-             title="Filtri Mappa"
+             title="Map Legend"
            >
                <Filter size={20} />
            </button>
