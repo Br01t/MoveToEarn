@@ -455,6 +455,10 @@ export const en = {
     "alert.season_reset": "Season Reset Complete.",
     "alert.swap_success": "Swap Successful!",
     "alert.confirm_swap": "Swap",
+    "alert.profile_pic_reminder.title": "Enhance Your Identity",
+    "alert.profile_pic_reminder.body": "You are still using a default avatar. Upload a custom profile picture to stand out in the grid and leaderboards!",
+    "alert.profile_pic_reminder.btn": "Go to Profile",
+    "alert.profile_pic_reminder.dont_show": "Don't show again",
 
     "app.funds.title": "Insufficient RUN",
     "app.funds.body": "You do not have enough RUN tokens to perform this action. Run more to earn or visit the market.",

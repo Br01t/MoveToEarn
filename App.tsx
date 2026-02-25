@@ -38,10 +38,11 @@ import AchievementModal from "./components/AchievementModal";
 import LoginModal from "./components/auth/LoginModal"; 
 const ZoneDiscoveryModal = React.lazy(() => import("./components/ZoneDiscoveryModal"));
 const RunSummaryModal = React.lazy(() => import("./components/RunSummaryModal"));
-const SyncModal = React.lazy(() => import("./components/dashboard/SyncModal"));
-const PWAInstallPrompt = React.lazy(() => import("./components/PWAInstallPrompt"));
-const CookieBanner = React.lazy(() => import("./components/privacy/CookieBanner"));
-const InsufficientFundsModal = React.lazy(() => import("./components/InsufficientFundsModal"));
+import SyncModal from "./components/dashboard/SyncModal";
+import PWAInstallPrompt from "./components/PWAInstallPrompt";
+import CookieBanner from "./components/privacy/CookieBanner";
+import InsufficientFundsModal from "./components/InsufficientFundsModal";
+import ProfilePicReminder from "./components/ui/ProfilePicReminder";
 
 const LoadingFallback = () => (
   <div className="flex-1 flex items-center justify-center min-h-[50vh]">
@@ -57,6 +58,7 @@ const AppContent: React.FC = () => {
   const [showSyncModal, setShowSyncModal] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showFundsModal, setShowFundsModal] = useState<{required: number, current: number} | null>(null);
+  const [showProfileReminder, setShowProfileReminder] = useState(false);
   
   const { deferredPrompt, isIOS, isStandalone, installPWA } = usePWA();
   const [forceShowPWA, setForceShowPWA] = useState(false);
@@ -142,6 +144,20 @@ const AppContent: React.FC = () => {
   }, [user, loading, currentView, isTutorialActive, startTutorial, achievementSystem.achievementQueue.length]);
 
   useEffect(() => {
+    if (!loading && user && !isTutorialActive && achievementSystem.achievementQueue.length === 0 && !showLoginModal && !showSyncModal && !showFundsModal && runWorkflow.zoneCreationQueue.length === 0 && !runWorkflow.runSummary) {
+      const isDefaultAvatar = user.avatar?.includes('dicebear.com');
+      const isHidden = localStorage.getItem(`zr_hide_avatar_reminder_${user.id}`) === 'true';
+      
+      if (isDefaultAvatar && !isHidden) {
+        const timer = setTimeout(() => {
+          setShowProfileReminder(true);
+        }, 1500);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [user, loading, isTutorialActive, achievementSystem.achievementQueue.length, showLoginModal, showSyncModal, showFundsModal, runWorkflow.zoneCreationQueue.length, runWorkflow.runSummary]);
+
+  useEffect(() => {
     if (!loading) {
         if (recoveryMode) {
             setCurrentView("LANDING");
@@ -189,6 +205,14 @@ const AppContent: React.FC = () => {
         )}
         {runWorkflow.runSummary && (
           <RunSummaryModal data={runWorkflow.runSummary} onClose={runWorkflow.closeSummary} />
+        )}
+        {showProfileReminder && user && (
+          <ProfilePicReminder 
+            user={user} 
+            isOpen={showProfileReminder} 
+            onClose={() => setShowProfileReminder(false)} 
+            onNavigate={setCurrentView} 
+          />
         )}
       </Suspense>
     );
