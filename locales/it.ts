@@ -499,7 +499,7 @@ export const it = {
     "page.comm.instagram": "Instagram",
     "page.comm.instagram_desc": "Log visivi dell'espansione della mappa mondiale e spotlight sui runner del mese.",
     "page.comm.footer_title": "Supporto Protocollo",
-    "page.comm.footer_desc": "Serve assistenza tecnica? Usa la funzione 'Segnala Bug' o scrivici via email.",
+    "page.comm.footer_desc": "Serve assistenza tecnica? Usa le funzioni 'Segnala Bug' e 'Suggerisci Idea' o scrivici via email.",
     // Cookie Banner
     "privacy.banner.title": "Protocollo Privacy",
     "privacy.banner.desc": "Utilizziamo tecnologie di tracciamento per verificare l'integrità del gioco (validazione GPS) e migliorare la tua esperienza. Puoi gestire le tue preferenze qui sotto.",

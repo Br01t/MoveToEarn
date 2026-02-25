@@ -512,7 +512,7 @@ export const en = {
     "page.comm.instagram": "Instagram",
     "page.comm.instagram_desc": "Visual logs of the world map expansion and runner of the month spotlights.",
     "page.comm.footer_title": "Protocol Support",
-    "page.comm.footer_desc": "Need technical assistance? Use the 'Report Bug' feature or reach out via email.",
+    "page.comm.footer_desc": "Need technical assistance? Use the 'Report Bug' and 'Suggest Idea' features or reach out via email.",
 
     // Cookie Banner
     "privacy.banner.title": "Privacy Protocol",
