@@ -1,6 +1,10 @@
 
 import { Item, User, Zone, Mission, Badge, AchievementCategory, Difficulty, Rarity, LeaderboardConfig, LevelConfig } from './types';
 
+// --- ASSETS ---
+export const OFFICIAL_LOGO_URL = 'https://fjvmeffshcivnoctaikj.supabase.co/storage/v1/object/public/images/logo.png';
+export const NAVBAR_LOGO_URL = 'https://fjvmeffshcivnoctaikj.supabase.co/storage/v1/object/public/images/logo_nobg%20(1).png';
+
 // --- ECONOMY COSTS & REWARDS ---
 export const MINT_COST = 150; 
 export const MINT_REWARD_GOV = 15; 
@@ -12,7 +16,7 @@ export const PREMIUM_COST = 50; // Cost in GOV
 
 export const ITEM_DURATION_SEC = 86400; // 24 Hours in seconds
 
-export const DEFAULT_ZONE_INTEREST_RATE = 2; // Default Yield % for new zones
+export const DEFAULT_ZONE_INTEREST_RATE = 2.0; // Default Yield % for new zones
 
 // --- ECONOMY RATES ---
 export const RUN_RATE_BASE = 12; // RUN per KM

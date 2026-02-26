@@ -4,6 +4,7 @@ import { Map, ShoppingBag, Trophy, Wallet, LogOut, Package, User as UserIcon, Se
 import { useLanguage } from '../LanguageContext';
 import { useGlobalUI } from '../contexts/GlobalUIContext';
 import { useOnboarding } from '../contexts/OnboardingContext';
+import { NAVBAR_LOGO_URL } from '../constants';
 import LanguageDropdown from './ui/LanguageDropdown';
 
 interface NavbarProps {
@@ -56,10 +57,11 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, user, onLogout
         aria-label="Mobile Header"
       >
         <div 
-          className="flex-1 min-w-0 mr-3"
+          className="flex-1 min-w-0 mr-3 flex items-center"
           onClick={() => handleNavClick('DASHBOARD')}
         >
-          <span className="text-lg font-black uppercase tracking-widest bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-500 truncate block">
+          <img src={NAVBAR_LOGO_URL} alt="Logo" className="w-12 h-12 object-contain" referrerPolicy="no-referrer" />
+          <span className="hidden text-lg font-black uppercase tracking-widest bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-500 truncate">
             ZoneRun
           </span>
         </div>
@@ -112,9 +114,10 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, user, onLogout
       <nav className="bg-gray-900 border-b border-gray-800 sticky top-0 z-50 h-16 hidden md:block" role="navigation" aria-label="Main Desktop Navigation">
         <div className="w-full h-full px-6 flex items-center justify-between">
           
-          <div className="flex items-center shrink-0 min-w-[150px]">
+          <div className="flex items-center shrink-0 min-w-[150px] gap-3">
+            <img src={NAVBAR_LOGO_URL} alt="Logo" className="w-12 h-12 object-contain" referrerPolicy="no-referrer" />
             <span 
-              className="text-3xl font-black uppercase tracking-widest bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-500 cursor-pointer" 
+              className="text-3xl font-black uppercase tracking-widest bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-400 cursor-pointer" 
               onClick={() => handleNavClick('DASHBOARD')}
               role="link"
               aria-label="ZoneRun Home"

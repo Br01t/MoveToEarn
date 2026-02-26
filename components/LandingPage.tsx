@@ -3,6 +3,7 @@ import { Activity, Shield, Coins, TrendingUp, Terminal, BookOpen, ChevronRight, 
 import { ViewState } from '../types';
 import { useLanguage } from '../LanguageContext';
 import { useGlobalUI } from '../contexts/GlobalUIContext';
+import { NAVBAR_LOGO_URL } from '../constants';
 import LanguageDropdown from './ui/LanguageDropdown';
 
 interface LandingPageProps {
@@ -62,14 +63,14 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
       <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-cyan-600/10 rounded-full blur-[100px] opacity-30 pointer-events-none" />
 
       <header className="relative z-50 px-6 py-6 flex justify-between items-center max-w-7xl mx-auto w-full">
-        <div className="flex items-center gap-3 cursor-pointer group" onClick={() => handleNavAction('LANDING')}>
+        <div className="flex items-center gap-0 sm:gap-3 cursor-pointer group" onClick={() => handleNavAction('LANDING')}>
           <div className="relative">
              <div className="absolute inset-0 bg-emerald-500 blur-md opacity-20 group-hover:opacity-40 transition-opacity rounded-lg"></div>
-             <div className="glass-panel p-2.5 rounded-lg border-white/10 group-hover:border-emerald-500/50 transition-colors relative z-10">
-                <Activity size={24} className="text-emerald-400" />
+             <div className="glass-panel p-2 rounded-xl border-white/10 group-hover:border-emerald-500/50 transition-colors relative z-10 overflow-hidden">
+                <img src={NAVBAR_LOGO_URL} alt="ZoneRun Logo" className="w-16 h-16 object-contain" referrerPolicy="no-referrer" />
              </div>
           </div>
-          <div className="text-2xl font-black text-white uppercase tracking-widest">
+          <div className="hidden sm:block text-2xl font-black text-white uppercase tracking-widest">
             ZONE<span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">RUN</span>
           </div>
         </div>
