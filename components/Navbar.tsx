@@ -151,7 +151,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, user, onLogout
                 <HelpCircle size={18} aria-hidden="true" />
               </button>
               <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 px-3 py-2 bg-gray-900/95 backdrop-blur-xl border border-white/10 rounded-lg shadow-2xl opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none whitespace-nowrap text-[11px] font-bold text-emerald-400 z-50">
-                {t('nav.tutorial_tooltip')}
+                {t('nav.tutorial_tooltip') || 'Start Tutorial'}
                 <div className="absolute -right-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-gray-900 border-r border-t border-white/10 rotate-45"></div>
               </div>
             </div>
@@ -184,6 +184,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, user, onLogout
            <div className="grid grid-cols-4 w-full border-b border-gray-800/30">
                {onOpenSync && (
                  <button
+                   id="sync-trigger-btn-mobile"
                    onClick={onOpenSync}
                    className="flex flex-col items-center justify-center py-2.5 w-full text-emerald-400 hover:text-emerald-300 transition-colors"
                    aria-label={t('sync.title')}

@@ -26,7 +26,7 @@ const OnboardingManager: React.FC<{ currentView: string; onNavigate: (v: any) =>
 
       const isMobile = window.innerWidth < 768;
       let finalId = currentStep.targetId;
-      if (finalId.startsWith('nav-item-') && isMobile) {
+      if ((finalId.startsWith('nav-item-') || finalId === 'sync-trigger-btn') && isMobile) {
           finalId = `${finalId}-mobile`;
       }
 
