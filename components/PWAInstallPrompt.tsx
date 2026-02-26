@@ -40,10 +40,26 @@ const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
         return;
     }
 
-    // Only show to authenticated users who aren't currently installed
-    if (isAuthenticated && !isStandalone) {
+    // Check for temporary dismissal cooldown (24 hours)
+    const dismissedAt = localStorage.getItem('zr_pwa_dismissed_at');
+    if (dismissedAt) {
+        const cooldown = 24 * 60 * 60 * 1000; // 24 hours
+        if (Date.now() - parseInt(dismissedAt) < cooldown) {
+            setShowPrompt(false);
+            return;
+        }
+    }
+
+    // Show on PC regardless of auth, or on mobile if authenticated (though mobile is usually forced)
+    const shouldShowOnPC = !isMobile && !isStandalone;
+    const shouldShowOnMobile = isMobile && isAuthenticated && !isStandalone;
+
+    if (shouldShowOnPC || shouldShowOnMobile) {
         const timer = setTimeout(() => {
-            if (deferredPrompt || isIOS) {
+            // On PC we might show it even without deferredPrompt as a "hint" 
+            // but the button will only work if deferredPrompt exists.
+            // However, to keep it clean, let's show it if it's installable or if we want to hint.
+            if (deferredPrompt || isIOS || !isMobile) {
                 setShowPrompt(true);
             }
         }, 3000);
@@ -51,7 +67,7 @@ const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
     } else {
         setShowPrompt(false);
     }
-  }, [isAuthenticated, isStandalone, deferredPrompt, isIOS, forceShow]);
+  }, [isAuthenticated, isStandalone, deferredPrompt, isIOS, isMobile, forceShow]);
 
   const handleClose = () => {
       setShowPrompt(false);
@@ -102,12 +118,19 @@ const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
               </p>
             </div>
           ) : (
-            <button
-              onClick={onInstall}
-              className="w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-900/20"
-            >
-              <Download size={18} /> {t('pwa.prompt.install_btn')}
-            </button>
+            <div className="space-y-2">
+              <button
+                onClick={onInstall}
+                disabled={!deferredPrompt && !isMobile}
+                className={`w-full py-3 font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg ${
+                  deferredPrompt || isMobile
+                    ? "bg-emerald-500 hover:bg-emerald-400 text-black shadow-emerald-900/20"
+                    : "bg-gray-800 text-gray-500 cursor-not-allowed border border-white/5"
+                }`}
+              >
+                <Download size={18} /> {t('pwa.prompt.install_btn')}
+              </button>
+            </div>
           )}
 
           <div className="flex items-center gap-2 px-1">

@@ -21,8 +21,7 @@ export const usePWA = () => {
     // 2. Detect iOS and Mobile
     const userAgent = window.navigator.userAgent.toLowerCase();
     const isIosDevice = /iphone|ipad|ipod/.test(userAgent) && !(/CriOS/i.test(userAgent));
-    const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent) || 
-                          (window.innerWidth <= 1024 && window.innerHeight <= 1366);
+    const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
     
     setIsIOS(isIosDevice);
     setIsMobile(isMobileDevice);

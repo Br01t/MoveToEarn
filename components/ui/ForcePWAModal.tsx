@@ -106,43 +106,25 @@ const ForcePWAModal: React.FC<ForcePWAModalProps> = ({ isIOS, onInstall, hasDefe
             </div>
           ) : (
             <div className="space-y-6">
-              {hasDeferredPrompt ? (
-                <div className="space-y-4">
-                  <button
-                    onClick={onInstall}
-                    className="w-full py-5 px-6 bg-emerald-500 hover:bg-emerald-400 text-gray-950 font-black rounded-2xl flex items-center justify-center gap-3 transition-all active:scale-[0.98] shadow-lg shadow-emerald-500/40 uppercase tracking-wider text-lg"
-                  >
-                    <Download size={24} />
-                    {t('pwa.force.android_btn')}
-                  </button>
-                  <p className="text-[10px] text-center text-slate-500 font-bold uppercase tracking-widest">
-                    Tap to start instant installation
-                  </p>
-                </div>
-              ) : (
-                <div className="bg-gray-800/50 rounded-2xl p-6 border border-white/5">
-                  <h3 className="text-emerald-400 font-bold mb-4 flex items-center gap-2 uppercase tracking-wider text-sm">
-                    <Download size={16} />
-                    {t('pwa.force.android_manual_title')}
-                  </h3>
-                  <div className="space-y-4 text-sm text-slate-300">
-                    <div className="flex items-start gap-3">
-                      <div className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center shrink-0 font-bold">1</div>
-                      <p className="flex items-center gap-2">
-                        {t('pwa.force.android_step1')} <span className="font-bold text-white text-lg leading-none">⋮</span>
-                      </p>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <div className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center shrink-0 font-bold">2</div>
-                      <p>{t('pwa.force.android_step2')}</p>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <div className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center shrink-0 font-bold">3</div>
-                      <p>{t('pwa.force.android_step3')}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
+              <div className="space-y-4">
+                <button
+                  onClick={onInstall}
+                  disabled={!hasDeferredPrompt}
+                  className={`w-full py-5 px-6 font-black rounded-2xl flex items-center justify-center gap-3 transition-all active:scale-[0.98] shadow-lg uppercase tracking-wider text-lg ${
+                    hasDeferredPrompt 
+                      ? "bg-emerald-500 hover:bg-emerald-400 text-gray-950 shadow-emerald-500/40" 
+                      : "bg-gray-800 text-slate-500 cursor-not-allowed border border-white/5"
+                  }`}
+                >
+                  <Download size={24} />
+                  {t('pwa.force.android_btn')}
+                </button>
+                <p className="text-[10px] text-center text-slate-500 font-bold uppercase tracking-widest">
+                  {hasDeferredPrompt 
+                    ? "Tap to start instant installation" 
+                    : "Waiting for system protocol..."}
+                </p>
+              </div>
 
               <div className="bg-emerald-500/5 rounded-2xl p-4 border border-emerald-500/10 text-center">
                 <p className="text-xs text-emerald-500/70 font-black uppercase tracking-wider">
