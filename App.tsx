@@ -43,6 +43,7 @@ import PWAInstallPrompt from "./components/PWAInstallPrompt";
 import CookieBanner from "./components/privacy/CookieBanner";
 import InsufficientFundsModal from "./components/InsufficientFundsModal";
 import ProfilePicReminder from "./components/ui/ProfilePicReminder";
+import ForcePWAModal from "./components/ui/ForcePWAModal";
 
 const LoadingFallback = () => (
   <div className="flex-1 flex items-center justify-center min-h-[50vh]">
@@ -60,7 +61,7 @@ const AppContent: React.FC = () => {
   const [showFundsModal, setShowFundsModal] = useState<{required: number, current: number} | null>(null);
   const [showProfileReminder, setShowProfileReminder] = useState(false);
   
-  const { deferredPrompt, isIOS, isStandalone, installPWA } = usePWA();
+  const { deferredPrompt, isIOS, isMobile, isStandalone, installPWA } = usePWA();
   const [forceShowPWA, setForceShowPWA] = useState(false);
 
   const { 
@@ -143,12 +144,14 @@ const AppContent: React.FC = () => {
     }
   }, [user, loading, currentView, isTutorialActive, startTutorial, achievementSystem.achievementQueue.length]);
 
+  // Profile Picture Reminder Logic
   useEffect(() => {
     if (!loading && user && !isTutorialActive && achievementSystem.achievementQueue.length === 0 && !showLoginModal && !showSyncModal && !showFundsModal && runWorkflow.zoneCreationQueue.length === 0 && !runWorkflow.runSummary) {
       const isDefaultAvatar = user.avatar?.includes('dicebear.com');
       const isHidden = localStorage.getItem(`zr_hide_avatar_reminder_${user.id}`) === 'true';
       
       if (isDefaultAvatar && !isHidden) {
+        // Delay slightly to ensure it doesn't pop up immediately after another modal closes
         const timer = setTimeout(() => {
           setShowProfileReminder(true);
         }, 1500);
@@ -184,9 +187,16 @@ const AppContent: React.FC = () => {
   const isDashboard = currentView === "DASHBOARD";
   const isInstallable = !!deferredPrompt || isIOS;
 
+  // Force PWA Check
+  const shouldForcePWA = user && isMobile && !isStandalone;
+
   const renderCurrentModal = () => {
     if (showLoginModal) {
       return <LoginModal onClose={() => { setShowLoginModal(false); gameState.setRecoveryMode(false); }} onLogin={gameState.login} onRegister={gameState.register} onResetPassword={gameState.resetPassword} onUpdatePassword={gameState.updatePassword} initialView={recoveryMode ? 'UPDATE_PASSWORD' : 'LOGIN'} />;
+    }
+
+    if (shouldForcePWA) {
+      return <ForcePWAModal isIOS={isIOS} onInstall={installPWA} hasDeferredPrompt={!!deferredPrompt} />;
     }
 
     return (
