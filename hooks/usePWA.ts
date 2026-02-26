@@ -7,6 +7,7 @@ export const usePWA = () => {
   const [isStandalone, setIsStandalone] = useState(false);
 
   useEffect(() => {
+    // 1. Robust Standalone Check
     const checkStandalone = () => {
       const isStandaloneMode = 
         window.matchMedia("(display-mode: standalone)").matches || 
@@ -17,21 +18,17 @@ export const usePWA = () => {
 
     checkStandalone();
 
+    // 2. Detect iOS and Mobile
     const userAgent = window.navigator.userAgent.toLowerCase();
     const isIosDevice = /iphone|ipad|ipod/.test(userAgent) && !(/CriOS/i.test(userAgent));
-    const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
+    const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent) || 
+                          (window.innerWidth <= 1024 && window.innerHeight <= 1366);
     
     setIsIOS(isIosDevice);
     setIsMobile(isMobileDevice);
 
+    // 3. Listen for Install Prompt (Android/PC)
     const handleBeforeInstallPrompt = (e: Event) => {
-      const dismissedAt = localStorage.getItem('zr_pwa_dismissed_at');
-      const now = Date.now();
-      
-      if (dismissedAt && (now - parseInt(dismissedAt)) < 7 * 24 * 60 * 60 * 1000) {
-        return;
-      }
-
       e.preventDefault();
       setDeferredPrompt(e);
     };

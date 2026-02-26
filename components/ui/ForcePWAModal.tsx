@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { Smartphone, Download, Share, PlusSquare, ExternalLink, Play } from 'lucide-react';
+import { Smartphone, Download, Share, PlusSquare, ExternalLink, Play, RefreshCw } from 'lucide-react';
 import { useLanguage } from '../../LanguageContext';
 import LanguageDropdown from './LanguageDropdown';
 
@@ -13,16 +13,32 @@ interface ForcePWAModalProps {
 const ForcePWAModal: React.FC<ForcePWAModalProps> = ({ isIOS, onInstall, hasDeferredPrompt }) => {
   const { t } = useLanguage();
 
+  const handleRefresh = () => {
+    window.location.reload();
+  };
+
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-gray-950/95 backdrop-blur-md overflow-y-auto">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-gray-950/98 backdrop-blur-xl overflow-y-auto">
       <motion.div
         initial={{ opacity: 0, scale: 0.9, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         className="relative w-full max-w-md bg-gray-900 border border-emerald-500/30 rounded-3xl overflow-hidden shadow-2xl shadow-emerald-500/20 my-auto"
       >
+        {/* Language Switcher */}
         <div className="absolute top-4 left-4 z-30">
           <LanguageDropdown align="left" />
         </div>
+
+        {/* Refresh Button */}
+        <button 
+          onClick={handleRefresh}
+          className="absolute top-4 right-4 z-30 p-2 bg-gray-800/50 hover:bg-gray-800 rounded-full border border-white/10 text-slate-400 hover:text-white transition-colors"
+          title="Refresh Page"
+        >
+          <RefreshCw size={18} />
+        </button>
+
+        {/* Header */}
         <div className="bg-emerald-500/10 p-8 flex flex-col items-center text-center border-b border-emerald-500/20">
           <div className="w-20 h-20 rounded-2xl bg-gray-800 border border-emerald-500/50 flex items-center justify-center mb-6 shadow-lg shadow-emerald-500/10">
             <Smartphone size={40} className="text-emerald-500" />
@@ -30,8 +46,14 @@ const ForcePWAModal: React.FC<ForcePWAModalProps> = ({ isIOS, onInstall, hasDefe
           <h2 className="text-2xl font-black text-white tracking-tight uppercase">
             {t('pwa.force.title')}
           </h2>
+          <div className="mt-2 px-3 py-1 bg-emerald-500/20 rounded-full border border-emerald-500/30">
+            <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">
+              Mobile Protocol Active
+            </span>
+          </div>
         </div>
 
+        {/* Content */}
         <div className="p-8 space-y-8">
           <p className="text-slate-400 text-center leading-relaxed font-medium">
             {t('pwa.force.body')}
@@ -64,6 +86,7 @@ const ForcePWAModal: React.FC<ForcePWAModalProps> = ({ isIOS, onInstall, hasDefe
                 </div>
               </div>
 
+              {/* Video Tutorial Placeholder */}
               <div className="space-y-3">
                 <p className="text-xs font-bold text-slate-500 uppercase tracking-widest text-center">
                   Video Tutorial
@@ -82,25 +105,50 @@ const ForcePWAModal: React.FC<ForcePWAModalProps> = ({ isIOS, onInstall, hasDefe
               </div>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-6">
               {hasDeferredPrompt ? (
-                <button
-                  onClick={onInstall}
-                  className="w-full py-4 px-6 bg-emerald-500 hover:bg-emerald-400 text-gray-950 font-black rounded-2xl flex items-center justify-center gap-3 transition-all active:scale-[0.98] shadow-lg shadow-emerald-500/20 uppercase tracking-wider"
-                >
-                  <Download size={20} />
-                  {t('pwa.force.android_btn')}
-                </button>
-              ) : (
-                <div className="bg-gray-800/50 rounded-2xl p-6 border border-white/5 text-center">
-                  <p className="text-slate-300 font-bold mb-4 uppercase tracking-wider text-sm">
-                    {t('pwa.force.open_app')}
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    If you already installed ZoneRun, please open it from your app drawer.
+                <div className="space-y-4">
+                  <button
+                    onClick={onInstall}
+                    className="w-full py-5 px-6 bg-emerald-500 hover:bg-emerald-400 text-gray-950 font-black rounded-2xl flex items-center justify-center gap-3 transition-all active:scale-[0.98] shadow-lg shadow-emerald-500/40 uppercase tracking-wider text-lg"
+                  >
+                    <Download size={24} />
+                    {t('pwa.force.android_btn')}
+                  </button>
+                  <p className="text-[10px] text-center text-slate-500 font-bold uppercase tracking-widest">
+                    Tap to start instant installation
                   </p>
                 </div>
+              ) : (
+                <div className="bg-gray-800/50 rounded-2xl p-6 border border-white/5">
+                  <h3 className="text-emerald-400 font-bold mb-4 flex items-center gap-2 uppercase tracking-wider text-sm">
+                    <Download size={16} />
+                    {t('pwa.force.android_manual_title')}
+                  </h3>
+                  <div className="space-y-4 text-sm text-slate-300">
+                    <div className="flex items-start gap-3">
+                      <div className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center shrink-0 font-bold">1</div>
+                      <p className="flex items-center gap-2">
+                        {t('pwa.force.android_step1')} <span className="font-bold text-white text-lg leading-none">⋮</span>
+                      </p>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center shrink-0 font-bold">2</div>
+                      <p>{t('pwa.force.android_step2')}</p>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center shrink-0 font-bold">3</div>
+                      <p>{t('pwa.force.android_step3')}</p>
+                    </div>
+                  </div>
+                </div>
               )}
+
+              <div className="bg-emerald-500/5 rounded-2xl p-4 border border-emerald-500/10 text-center">
+                <p className="text-xs text-emerald-500/70 font-black uppercase tracking-wider">
+                  {t('pwa.force.open_app_hint')}
+                </p>
+              </div>
             </div>
           )}
           
