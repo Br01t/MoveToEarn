@@ -1,7 +1,8 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { Smartphone, Download, Share, PlusSquare, ExternalLink } from 'lucide-react';
+import { Smartphone, Download, Share, PlusSquare, ExternalLink, Play } from 'lucide-react';
 import { useLanguage } from '../../LanguageContext';
+import LanguageDropdown from './LanguageDropdown';
 
 interface ForcePWAModalProps {
   isIOS: boolean;
@@ -17,8 +18,11 @@ const ForcePWAModal: React.FC<ForcePWAModalProps> = ({ isIOS, onInstall, hasDefe
       <motion.div
         initial={{ opacity: 0, scale: 0.9, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="w-full max-w-md bg-gray-900 border border-emerald-500/30 rounded-3xl overflow-hidden shadow-2xl shadow-emerald-500/20 my-auto"
+        className="relative w-full max-w-md bg-gray-900 border border-emerald-500/30 rounded-3xl overflow-hidden shadow-2xl shadow-emerald-500/20 my-auto"
       >
+        <div className="absolute top-4 left-4 z-30">
+          <LanguageDropdown align="left" />
+        </div>
         <div className="bg-emerald-500/10 p-8 flex flex-col items-center text-center border-b border-emerald-500/20">
           <div className="w-20 h-20 rounded-2xl bg-gray-800 border border-emerald-500/50 flex items-center justify-center mb-6 shadow-lg shadow-emerald-500/10">
             <Smartphone size={40} className="text-emerald-500" />
@@ -60,13 +64,20 @@ const ForcePWAModal: React.FC<ForcePWAModalProps> = ({ isIOS, onInstall, hasDefe
                 </div>
               </div>
 
-              <div className="aspect-video bg-gray-800 rounded-2xl border border-white/5 flex flex-col items-center justify-center text-slate-500 overflow-hidden relative group">
-                <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent"></div>
-                <div className="relative z-10 flex flex-col items-center">
-                  <div className="w-12 h-12 rounded-full bg-gray-900 border border-white/10 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
-                    <Smartphone size={20} className="text-emerald-500" />
+              <div className="space-y-3">
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest text-center">
+                  Video Tutorial
+                </p>
+                <div className="aspect-video bg-gray-800 rounded-2xl border border-white/5 flex flex-col items-center justify-center text-slate-500 overflow-hidden relative group cursor-pointer">
+                  <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-transparent opacity-50"></div>
+                  <div className="relative z-10 flex flex-col items-center">
+                    <div className="w-14 h-14 rounded-full bg-emerald-500/20 border border-emerald-500/50 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform shadow-lg shadow-emerald-500/10">
+                      <Play size={24} className="text-emerald-500 fill-emerald-500/20 ml-1" />
+                    </div>
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500/70">
+                      Watch Installation Guide
+                    </span>
                   </div>
-                  <span className="text-xs font-bold uppercase tracking-widest">Tutorial Video Placeholder</span>
                 </div>
               </div>
             </div>
