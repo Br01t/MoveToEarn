@@ -46,11 +46,6 @@ const ForcePWAModal: React.FC<ForcePWAModalProps> = ({ isIOS, onInstall, hasDefe
           <h2 className="text-2xl font-black text-white tracking-tight uppercase">
             {t('pwa.force.title')}
           </h2>
-          <div className="mt-2 px-3 py-1 bg-emerald-500/20 rounded-full border border-emerald-500/30">
-            <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">
-              Mobile Protocol Active
-            </span>
-          </div>
         </div>
 
         {/* Content */}
@@ -66,21 +61,24 @@ const ForcePWAModal: React.FC<ForcePWAModalProps> = ({ isIOS, onInstall, hasDefe
                   <Download size={16} />
                   {t('pwa.force.ios_title')}
                 </h3>
+                <p className="text-xs text-slate-400 mb-4 italic">
+                  {t('pwa.force.ios_guide')}
+                </p>
                 <div className="space-y-4 text-sm text-slate-300">
                   <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center shrink-0 font-bold">1</div>
+                    <div className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center shrink-0 font-bold text-xs">1</div>
                     <p className="flex items-center gap-2">
                       {t('pwa.force.ios_step1')} <Share size={16} className="text-emerald-500" />
                     </p>
                   </div>
                   <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center shrink-0 font-bold">2</div>
+                    <div className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center shrink-0 font-bold text-xs">2</div>
                     <p className="flex items-center gap-2">
                       {t('pwa.force.ios_step2')} <PlusSquare size={16} className="text-emerald-500" />
                     </p>
                   </div>
                   <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center shrink-0 font-bold">3</div>
+                    <div className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center shrink-0 font-bold text-xs">3</div>
                     <p>{t('pwa.force.ios_step3')}</p>
                   </div>
                 </div>
@@ -89,7 +87,7 @@ const ForcePWAModal: React.FC<ForcePWAModalProps> = ({ isIOS, onInstall, hasDefe
               {/* Video Tutorial Placeholder */}
               <div className="space-y-3">
                 <p className="text-xs font-bold text-slate-500 uppercase tracking-widest text-center">
-                  Video Tutorial
+                  {t('pwa.force.ios_video_title')}
                 </p>
                 <div className="aspect-video bg-gray-800 rounded-2xl border border-white/5 flex flex-col items-center justify-center text-slate-500 overflow-hidden relative group cursor-pointer">
                   <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-transparent opacity-50"></div>
@@ -101,6 +99,8 @@ const ForcePWAModal: React.FC<ForcePWAModalProps> = ({ isIOS, onInstall, hasDefe
                       Watch Installation Guide
                     </span>
                   </div>
+                  {/* Placeholder for actual video element */}
+                  {/* <video src="YOUR_VIDEO_URL" className="absolute inset-0 w-full h-full object-cover" controls /> */}
                 </div>
               </div>
             </div>

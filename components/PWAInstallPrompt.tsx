@@ -1,11 +1,13 @@
-
 import React, { useState, useEffect } from "react";
 import { Download, X, Share, PlusSquare } from "lucide-react";
+import { useLanguage } from "../LanguageContext";
+import { OFFICIAL_LOGO_URL } from "../constants";
 
 interface PWAInstallPromptProps {
   isAuthenticated: boolean;
   deferredPrompt: any;
   isIOS: boolean;
+  isMobile: boolean;
   isStandalone: boolean;
   onInstall: () => void;
   forceShow?: boolean;
@@ -13,9 +15,11 @@ interface PWAInstallPromptProps {
 }
 
 const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ 
-    isAuthenticated, deferredPrompt, isIOS, isStandalone, onInstall, forceShow, onCloseForce 
+    isAuthenticated, deferredPrompt, isIOS, isMobile, isStandalone, onInstall, forceShow, onCloseForce 
 }) => {
+  const { t } = useLanguage();
   const [showPrompt, setShowPrompt] = useState(false);
+  const [dontAskAgain, setDontAskAgain] = useState(false);
 
   useEffect(() => {
     if (forceShow) {
@@ -23,8 +27,15 @@ const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
         return;
     }
 
-    // Hide if already in standalone mode
-    if (isStandalone) {
+    // Hide if already in standalone mode or on mobile (where we force it)
+    if (isStandalone || isMobile) {
+        setShowPrompt(false);
+        return;
+    }
+
+    // Check if user has permanently dismissed it
+    const isPermanentlyDismissed = localStorage.getItem('zr_pwa_dismissed_forever') === 'true';
+    if (isPermanentlyDismissed) {
         setShowPrompt(false);
         return;
     }
@@ -44,12 +55,13 @@ const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
 
   const handleClose = () => {
       setShowPrompt(false);
-      // Save dismissal to localStorage via parent/hook if needed, 
-      // but here we just hide the current instance
       if (onCloseForce) onCloseForce();
       
-      // Persist dismissal
-      localStorage.setItem('zr_pwa_dismissed_at', Date.now().toString());
+      if (dontAskAgain) {
+          localStorage.setItem('zr_pwa_dismissed_forever', 'true');
+      } else {
+          localStorage.setItem('zr_pwa_dismissed_at', Date.now().toString());
+      }
   };
 
   if (!showPrompt) return null;
@@ -65,29 +77,28 @@ const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
         </button>
 
         <div className="flex items-start gap-4">
-          <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-cyan-600 rounded-xl shadow-lg flex items-center justify-center shrink-0">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" className="w-10 h-10 fill-white">
-              <polygon points="50,5 93.3,25 93.3,75 50,95 6.7,75 6.7,25" fillOpacity="0.2" />
-              <path d="M55 22 L62 22 L42 52 L58 52 L38 82 L38 82 L42 58 L28 58 Z" />
-            </svg>
+          <div className="w-14 h-14 bg-gray-800 rounded-xl shadow-lg flex items-center justify-center shrink-0 border border-white/10 overflow-hidden">
+            <img src={OFFICIAL_LOGO_URL} alt="ZoneRun Logo" className="w-10 h-10 object-contain" referrerPolicy="no-referrer" />
           </div>
 
           <div className="flex-1">
-            <h3 className="font-bold text-white text-lg leading-tight mb-1">ZoneRun App</h3>
+            <h3 className="font-bold text-white text-lg leading-tight mb-1">
+              {t('pwa.prompt.title')}
+            </h3>
             <p className="text-gray-400 text-xs leading-relaxed">
-              Installa l'app per un'esperienza a pieno schermo e accesso rapido dalla home.
+              {t('pwa.prompt.body')}
             </p>
           </div>
         </div>
 
-        <div className="mt-5">
+        <div className="mt-5 space-y-4">
           {isIOS ? (
             <div className="bg-black/30 rounded-xl p-3 border border-gray-700/50 text-sm text-gray-300">
               <p className="flex items-center gap-2 mb-2">
-                1. Tocca il tasto <Share size={16} className="text-blue-400" /> <strong>Condividi</strong>
+                1. {t('pwa.force.ios_step1')}
               </p>
               <p className="flex items-center gap-2">
-                2. Seleziona <PlusSquare size={16} className="text-white" /> <strong>Aggiungi alla Home</strong>
+                2. {t('pwa.force.ios_step2')}
               </p>
             </div>
           ) : (
@@ -95,9 +106,22 @@ const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
               onClick={onInstall}
               className="w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-900/20"
             >
-              <Download size={18} /> Installa Ora
+              <Download size={18} /> {t('pwa.prompt.install_btn')}
             </button>
           )}
+
+          <div className="flex items-center gap-2 px-1">
+            <input 
+              type="checkbox" 
+              id="dontAskAgain" 
+              checked={dontAskAgain}
+              onChange={(e) => setDontAskAgain(e.target.checked)}
+              className="w-4 h-4 rounded border-gray-700 bg-gray-800 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-gray-900"
+            />
+            <label htmlFor="dontAskAgain" className="text-xs text-gray-400 cursor-pointer">
+              {t('pwa.prompt.dont_ask')}
+            </label>
+          </div>
         </div>
       </div>
     </div>

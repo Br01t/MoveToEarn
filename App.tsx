@@ -241,7 +241,7 @@ const AppContent: React.FC = () => {
 
           <main className="flex-1 relative flex flex-col" role="main">
             <Suspense fallback={null}>
-                <PWAInstallPrompt isAuthenticated={!!user} deferredPrompt={deferredPrompt} isIOS={isIOS} isStandalone={isStandalone} onInstall={installPWA} forceShow={forceShowPWA} onCloseForce={() => setForceShowPWA(false)} />
+                <PWAInstallPrompt isAuthenticated={!!user} deferredPrompt={deferredPrompt} isIOS={isIOS} isMobile={isMobile} isStandalone={isStandalone} onInstall={installPWA} forceShow={forceShowPWA} onCloseForce={() => setForceShowPWA(false)} />
                 <CookieBanner onNavigate={setCurrentView} />
             </Suspense>
 
