@@ -27,20 +27,17 @@ const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
         return;
     }
 
-    // Hide if already in standalone mode or on mobile (where we force it)
-    if (isStandalone || isMobile) {
+    if (isStandalone || !isMobile) {
         setShowPrompt(false);
         return;
     }
 
-    // Check if user has permanently dismissed it
     const isPermanentlyDismissed = localStorage.getItem('zr_pwa_dismissed_forever') === 'true';
     if (isPermanentlyDismissed) {
         setShowPrompt(false);
         return;
     }
 
-    // Check for temporary dismissal cooldown (24 hours)
     const dismissedAt = localStorage.getItem('zr_pwa_dismissed_at');
     if (dismissedAt) {
         const cooldown = 24 * 60 * 60 * 1000; // 24 hours
@@ -50,16 +47,9 @@ const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
         }
     }
 
-    // Show on PC regardless of auth, or on mobile if authenticated (though mobile is usually forced)
-    const shouldShowOnPC = !isMobile && !isStandalone;
-    const shouldShowOnMobile = isMobile && isAuthenticated && !isStandalone;
-
-    if (shouldShowOnPC || shouldShowOnMobile) {
+    if (isMobile && !isStandalone) {
         const timer = setTimeout(() => {
-            // On PC we might show it even without deferredPrompt as a "hint" 
-            // but the button will only work if deferredPrompt exists.
-            // However, to keep it clean, let's show it if it's installable or if we want to hint.
-            if (deferredPrompt || isIOS || !isMobile) {
+            if (deferredPrompt || isIOS) {
                 setShowPrompt(true);
             }
         }, 3000);
