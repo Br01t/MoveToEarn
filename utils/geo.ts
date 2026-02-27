@@ -76,6 +76,10 @@ const MAP_SCALE_LAT = 111 / 0.85;
 const MAP_SCALE_LNG = (111 * Math.cos(deg2rad(45))) / 0.85;
 
 export const latLngToHexCoords = (lat: number, lng: number) => {
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+        console.warn("Invalid lat/lng passed to latLngToHexCoords, using origin.");
+        return { q: 0, r: 0 };
+    }
     const r = Math.round(lat * MAP_SCALE_LAT);
     const q = Math.round(lng * MAP_SCALE_LNG);
     return { q, r };
@@ -119,7 +123,17 @@ export const insertZoneAndShift = (
     countryCode: string, 
     currentZones: Zone[]
 ): { x: number, y: number, shiftedZones: Zone[] } => {
-    // 1. Identifichiamo il cluster di riferimento (stessa nazione)
+    // LOGICA DI POSIZIONAMENTO (Visione ZoneRun):
+    // 1. Nation Clustering: Le zone sono raggruppate per nazione (countryCode).
+    // 2. Geodesic Anchoring: Se una nazione non ha zone, la prima viene piazzata 
+    //    usando una proiezione deterministica (latLngToHexCoords) che garantisce 
+    //    la separazione geografica tra i cluster nazionali.
+    // 3. Topological Proximity: Le nuove zone di un cluster esistente vengono piazzate 
+    //    accanto al membro più vicino, mantenendo la coerenza locale.
+    // 4. Elastic Shifting: Se una posizione è occupata, la catena di zone viene 
+    //    spostata ricorsivamente per fare spazio, permettendo ai cluster di espandersi 
+    //    e "spingersi" a vicenda senza sovrapposizioni.
+
     const cluster = currentZones.filter(z => z.name.endsWith(` - ${countryCode}`));
 
     // 2. Se il cluster è vuoto, usiamo la proiezione deterministica come ancora
@@ -128,11 +142,23 @@ export const insertZoneAndShift = (
         return { x: q, y: r, shiftedZones: [] };
     }
 
-    // 3. Troviamo il membro del cluster geograficamente più vicino (usando location PostGIS)
-    const clusterWithCoords = cluster.map(z => ({
-        zone: { ...z }, // Copia per evitare mutazioni indesiderate durante il calcolo
-        coords: decodePostGISLocation(z.location)
-    }));
+    // 3. Troviamo il membro del cluster geograficamente più vicino
+    const clusterWithCoords = cluster.map(z => {
+        // Usiamo lat/lng se presenti e validi, altrimenti decodifichiamo la location PostGIS
+        let lat = z.lat;
+        let lng = z.lng;
+        
+        if (typeof lat !== 'number' || typeof lng !== 'number' || isNaN(lat) || isNaN(lng) || (lat === 0 && lng === 0)) {
+            const decoded = decodePostGISLocation(z.location);
+            lat = decoded.lat;
+            lng = decoded.lng;
+        }
+        
+        return {
+            zone: { ...z },
+            coords: { lat, lng }
+        };
+    });
 
     const sortedCluster = clusterWithCoords.sort((a, b) => {
         const distA = getDistanceFromLatLonInKm(targetLat, targetLng, a.coords.lat, a.coords.lng);
