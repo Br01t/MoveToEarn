@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import { motion } from 'motion/react';
-import { Smartphone, Download, Share, PlusSquare, ExternalLink, Play, RefreshCw } from 'lucide-react';
+import { Smartphone, Download, Share, PlusSquare, ExternalLink, Play, RefreshCw, Pause } from 'lucide-react';
 import { useLanguage } from '../../LanguageContext';
 import LanguageDropdown from './LanguageDropdown';
 
@@ -12,9 +12,18 @@ interface ForcePWAModalProps {
 
 const ForcePWAModal: React.FC<ForcePWAModalProps> = ({ isIOS, onInstall, hasDeferredPrompt }) => {
   const { t } = useLanguage();
+  const [videoStarted, setVideoStarted] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   const handleRefresh = () => {
     window.location.reload();
+  };
+
+  const handlePlayVideo = () => {
+    if (videoRef.current) {
+      videoRef.current.play();
+      setVideoStarted(true);
+    }
   };
 
   return (
@@ -89,17 +98,30 @@ const ForcePWAModal: React.FC<ForcePWAModalProps> = ({ isIOS, onInstall, hasDefe
                 <p className="text-xs font-bold text-slate-500 uppercase tracking-widest text-center">
                   {t('pwa.force.ios_video_title')}
                 </p>
-                <div className="aspect-video bg-gray-800 rounded-2xl border border-white/5 flex flex-col items-center justify-center text-slate-500 overflow-hidden relative group cursor-pointer">
-                  <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-transparent opacity-50"></div>
-                  <div className="relative z-10 flex flex-col items-center">
-                    <div className="w-14 h-14 rounded-full bg-emerald-500/20 border border-emerald-500/50 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform shadow-lg shadow-emerald-500/10">
-                      <Play size={24} className="text-emerald-500 fill-emerald-500/20 ml-1" />
-                    </div>
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500/70">
-                      Watch Installation Guide
-                    </span>
-                  </div>
-                  <video src="YOUR_VIDEO_URL" className="absolute inset-0 w-full h-full object-cover" controls />
+                <div 
+                  className="aspect-video bg-gray-800 rounded-2xl border border-white/5 flex flex-col items-center justify-center text-slate-500 overflow-hidden relative group cursor-pointer"
+                  onClick={handlePlayVideo}
+                >
+                  {!videoStarted && (
+                    <>
+                      <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-transparent opacity-50"></div>
+                      <div className="relative z-20 flex flex-col items-center">
+                        <div className="w-14 h-14 rounded-full bg-emerald-500/20 border border-emerald-500/50 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform shadow-lg shadow-emerald-500/10">
+                          <Play size={24} className="text-emerald-500 fill-emerald-500/20 ml-1" />
+                        </div>
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500/70">
+                          {t('pwa.force.ios_video_title') || "Watch Installation Guide"}
+                        </span>
+                      </div>
+                    </>
+                  )}
+                  <video 
+                    ref={videoRef}
+                    src="https://fjvmeffshcivnoctaikj.supabase.co/storage/v1/object/public/images/video_tutoria_pwa.mp4" 
+                    className={`absolute inset-0 w-full h-full object-cover ${videoStarted ? 'z-30' : 'z-10'}`} 
+                    controls={videoStarted}
+                    playsInline
+                  />
                 </div>
               </div>
             </div>
