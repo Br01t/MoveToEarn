@@ -195,10 +195,6 @@ const AppContent: React.FC = () => {
       return <LoginModal onClose={() => { setShowLoginModal(false); gameState.setRecoveryMode(false); }} onLogin={gameState.login} onRegister={gameState.register} onResetPassword={gameState.resetPassword} onUpdatePassword={gameState.updatePassword} initialView={recoveryMode ? 'UPDATE_PASSWORD' : 'LOGIN'} />;
     }
 
-    if (shouldForcePWA) {
-      return <ForcePWAModal isIOS={isIOS} onInstall={installPWA} hasDeferredPrompt={!!deferredPrompt} />;
-    }
-
     return (
       <Suspense fallback={null}>
         {showSyncModal && user && (
@@ -234,49 +230,55 @@ const AppContent: React.FC = () => {
           <div className="absolute inset-0 bg-gradient-to-b from-gray-900 via-gray-950 to-black"></div>
       </div>
 
-      <OnboardingManager currentView={currentView} onNavigate={setCurrentView} />
+      {shouldForcePWA ? (
+        <ForcePWAModal isIOS={isIOS} onInstall={installPWA} hasDeferredPrompt={!!deferredPrompt} />
+      ) : (
+        <>
+          <OnboardingManager currentView={currentView} onNavigate={setCurrentView} />
 
-      <div className={`relative z-10 flex flex-col min-h-screen ${showNavbar && !isDashboard ? "pb-40 md:pb-0" : ""}`}>
-          {showNavbar && <Navbar currentView={currentView} onNavigate={setCurrentView} user={user} onLogout={gameState.logout} onOpenSync={() => setShowSyncModal(true)} />}
+          <div className={`relative z-10 flex flex-col min-h-screen ${showNavbar && !isDashboard ? "pb-40 md:pb-0" : ""}`}>
+              {showNavbar && <Navbar currentView={currentView} onNavigate={setCurrentView} user={user} onLogout={gameState.logout} onOpenSync={() => setShowSyncModal(true)} />}
 
-          <main className="flex-1 relative flex flex-col" role="main">
-            <Suspense fallback={null}>
-                <PWAInstallPrompt isAuthenticated={!!user} deferredPrompt={deferredPrompt} isIOS={isIOS} isMobile={isMobile} isStandalone={isStandalone} onInstall={installPWA} forceShow={forceShowPWA} onCloseForce={() => setForceShowPWA(false)} />
-                <CookieBanner onNavigate={setCurrentView} />
-            </Suspense>
-
-            <div className="flex-1 relative">
-              {isLanding && <LandingPage onLogin={() => setShowLoginModal(true)} onNavigate={setCurrentView} />}
-              {!isLanding && user && (
-                <Suspense fallback={<LoadingFallback />}>
-                  {currentView === "DASHBOARD" && <Dashboard user={user} zones={zones} badges={badges} users={allUsers} isSyncing={isSyncing} syncError={syncError} onRefreshData={refreshData} onSyncRun={runWorkflow.startSync} onClaim={handleClaimZone} onBoost={handleBoostZone} onDefend={handleDefendZone} onNavigate={setCurrentView} onOpenSync={() => setShowSyncModal(true)} onGetZoneLeaderboard={gameState.fetchZoneLeaderboard} />}
-                  {currentView === "MARKETPLACE" && <Marketplace user={user} items={marketItems} onBuy={gameState.buyItem} />}
-                  {currentView === "WALLET" && <Wallet user={user} transactions={transactions} onBuyFiat={gameState.buyFiatGov} govToRunRate={govToRunRate} onSwapGovToRun={gameState.swapGovToRun} lastBurnTimestamp={lastBurnTimestamp} totalBurned={totalBurned} />}
-                  {currentView === "INVENTORY" && <Inventory user={user} zones={zones} onUseItem={gameState.useItem} />}
-                  {currentView === "LEADERBOARD" && <Leaderboard users={allUsers} currentUser={user} zones={zones} badges={badges} leaderboards={leaderboards} levels={levels} />}
-                  {currentView === "PROFILE" && <Profile user={user} zones={zones} missions={missions} badges={badges} levels={levels} leaderboards={leaderboards} bugReports={bugReports} suggestions={suggestions} allUsers={allUsers} onUpdateUser={gameState.updateUser} onUpgradePremium={gameState.upgradePremium} onClaim={handleClaimZone} onBoost={handleBoostZone} onDefend={handleDefendZone} onGetZoneLeaderboard={gameState.fetchZoneLeaderboard} />}
-                  {currentView === "MISSIONS" && <Missions user={user} zones={zones} missions={missions} badges={badges} />}
-                  {currentView === "ADMIN" && user.isAdmin && (
-                    <Admin marketItems={marketItems} missions={missions} badges={badges} zones={zones} govToRunRate={govToRunRate} bugReports={bugReports} suggestions={suggestions} leaderboards={leaderboards} levels={levels} allUsers={allUsers} lastBurnTimestamp={lastBurnTimestamp} onAddItem={gameState.addItem} onUpdateItem={gameState.updateItem} onRemoveItem={gameState.removeItem} onAddMission={gameState.addMission} onUpdateMission={gameState.updateMission} onRemoveMission={gameState.removeMission} onAddBadge={gameState.addBadge} onUpdateBadge={gameState.updateBadge} onRemoveBadge={gameState.removeBadge} onUpdateZone={gameState.updateZone} onDeleteZone={gameState.deleteZone} onTriggerBurn={gameState.triggerGlobalBurn} onTriggerMaintenance={gameState.triggerMaintenance} onTriggerUserMaintenance={gameState.triggerUserMaintenance} onDistributeRewards={gameState.distributeZoneRewards} onResetSeason={() => {}} onUpdateExchangeRate={gameState.setGovToRunRate} onRefreshData={refreshData} onRevokeUserAchievement={gameState.revokeUserAchievement} onAdjustBalance={gameState.adjustUserBalance} onUpdateBugStatus={gameState.updateBugStatus} onDeleteBugReport={gameState.deleteBugReport} onDeleteSuggestion={gameState.deleteSuggestion} onAddLeaderboard={gameState.addLeaderboard} onUpdateLeaderboard={gameState.updateLeaderboard} onDeleteLeaderboard={gameState.deleteLeaderboard} onResetLeaderboard={gameState.resetLeaderboard} onAddLevel={gameState.addLevel} onUpdateLevel={gameState.updateLevel} onDeleteLevel={gameState.deleteLevel} />
-                  )}
-                  {currentView === "REPORT_BUG" && <ReportBug onReport={gameState.reportBug} />}
-                  {currentView === "SUGGESTION" && <SuggestionPage onSubmit={gameState.submitSuggestion} />}
-                  {currentView === "INFO" && <InfoPage onNavigate={setCurrentView} isAuthenticated={!!user} onInstall={installPWA} isInstallable={isInstallable} isStandalone={isStandalone} />}
+              <main className="flex-1 relative flex flex-col" role="main">
+                <Suspense fallback={null}>
+                    <PWAInstallPrompt isAuthenticated={!!user} deferredPrompt={deferredPrompt} isIOS={isIOS} isMobile={isMobile} isStandalone={isStandalone} onInstall={installPWA} forceShow={forceShowPWA} onCloseForce={() => setForceShowPWA(false)} />
+                    <CookieBanner onNavigate={setCurrentView} />
                 </Suspense>
-              )}
-              <Suspense fallback={<LoadingFallback />}>
-                {currentView === "RULES" && <GameRules onBack={() => setCurrentView(user ? "DASHBOARD" : "LANDING")} onNavigate={setCurrentView} isAuthenticated={!!user} />}
-                {currentView === "WHITEPAPER" && <Whitepaper onBack={() => setCurrentView(user ? "DASHBOARD" : "LANDING")} onNavigate={setCurrentView} isAuthenticated={!!user} />}
-                {currentView === "HOW_TO_PLAY" && <HowToPlay onBack={() => setCurrentView(user ? "DASHBOARD" : "LANDING")} isAuthenticated={!!user} />}
-                {currentView === "PRIVACY" && <Privacy onNavigate={setCurrentView} />}
-                {currentView === "TERMS" && <Terms onNavigate={setCurrentView} />}
-                {currentView === "COMMUNITY" && <Community />}
-              </Suspense>
-            </div>
-          </main>
 
-          {renderCurrentModal()}
-      </div>
+                <div className="flex-1 relative">
+                  {isLanding && <LandingPage onLogin={() => setShowLoginModal(true)} onNavigate={setCurrentView} />}
+                  {!isLanding && user && (
+                    <Suspense fallback={<LoadingFallback />}>
+                      {currentView === "DASHBOARD" && <Dashboard user={user} zones={zones} badges={badges} users={allUsers} isSyncing={isSyncing} syncError={syncError} onRefreshData={refreshData} onSyncRun={runWorkflow.startSync} onClaim={handleClaimZone} onBoost={handleBoostZone} onDefend={handleDefendZone} onNavigate={setCurrentView} onOpenSync={() => setShowSyncModal(true)} onGetZoneLeaderboard={gameState.fetchZoneLeaderboard} />}
+                      {currentView === "MARKETPLACE" && <Marketplace user={user} items={marketItems} onBuy={gameState.buyItem} />}
+                      {currentView === "WALLET" && <Wallet user={user} transactions={transactions} onBuyFiat={gameState.buyFiatGov} govToRunRate={govToRunRate} onSwapGovToRun={gameState.swapGovToRun} lastBurnTimestamp={lastBurnTimestamp} totalBurned={totalBurned} />}
+                      {currentView === "INVENTORY" && <Inventory user={user} zones={zones} onUseItem={gameState.useItem} />}
+                      {currentView === "LEADERBOARD" && <Leaderboard users={allUsers} currentUser={user} zones={zones} badges={badges} leaderboards={leaderboards} levels={levels} />}
+                      {currentView === "PROFILE" && <Profile user={user} zones={zones} missions={missions} badges={badges} levels={levels} leaderboards={leaderboards} bugReports={bugReports} suggestions={suggestions} allUsers={allUsers} onUpdateUser={gameState.updateUser} onUpgradePremium={gameState.upgradePremium} onClaim={handleClaimZone} onBoost={handleBoostZone} onDefend={handleDefendZone} onGetZoneLeaderboard={gameState.fetchZoneLeaderboard} />}
+                      {currentView === "MISSIONS" && <Missions user={user} zones={zones} missions={missions} badges={badges} />}
+                      {currentView === "ADMIN" && user.isAdmin && (
+                        <Admin marketItems={marketItems} missions={missions} badges={badges} zones={zones} govToRunRate={govToRunRate} bugReports={bugReports} suggestions={suggestions} leaderboards={leaderboards} levels={levels} allUsers={allUsers} lastBurnTimestamp={lastBurnTimestamp} onAddItem={gameState.addItem} onUpdateItem={gameState.updateItem} onRemoveItem={gameState.removeItem} onAddMission={gameState.addMission} onUpdateMission={gameState.updateMission} onRemoveMission={gameState.removeMission} onAddBadge={gameState.addBadge} onUpdateBadge={gameState.updateBadge} onRemoveBadge={gameState.removeBadge} onUpdateZone={gameState.updateZone} onDeleteZone={gameState.deleteZone} onTriggerBurn={gameState.triggerGlobalBurn} onTriggerMaintenance={gameState.triggerMaintenance} onTriggerUserMaintenance={gameState.triggerUserMaintenance} onDistributeRewards={gameState.distributeZoneRewards} onResetSeason={() => {}} onUpdateExchangeRate={gameState.setGovToRunRate} onRefreshData={refreshData} onRevokeUserAchievement={gameState.revokeUserAchievement} onAdjustBalance={gameState.adjustUserBalance} onUpdateBugStatus={gameState.updateBugStatus} onDeleteBugReport={gameState.deleteBugReport} onDeleteSuggestion={gameState.deleteSuggestion} onAddLeaderboard={gameState.addLeaderboard} onUpdateLeaderboard={gameState.updateLeaderboard} onDeleteLeaderboard={gameState.deleteLeaderboard} onResetLeaderboard={gameState.resetLeaderboard} onAddLevel={gameState.addLevel} onUpdateLevel={gameState.updateLevel} onDeleteLevel={gameState.deleteLevel} />
+                      )}
+                      {currentView === "REPORT_BUG" && <ReportBug onReport={gameState.reportBug} />}
+                      {currentView === "SUGGESTION" && <SuggestionPage onSubmit={gameState.submitSuggestion} />}
+                      {currentView === "INFO" && <InfoPage onNavigate={setCurrentView} isAuthenticated={!!user} onInstall={installPWA} isInstallable={isInstallable} isStandalone={isStandalone} />}
+                    </Suspense>
+                  )}
+                  <Suspense fallback={<LoadingFallback />}>
+                    {currentView === "RULES" && <GameRules onBack={() => setCurrentView(user ? "DASHBOARD" : "LANDING")} onNavigate={setCurrentView} isAuthenticated={!!user} />}
+                    {currentView === "WHITEPAPER" && <Whitepaper onBack={() => setCurrentView(user ? "DASHBOARD" : "LANDING")} onNavigate={setCurrentView} isAuthenticated={!!user} />}
+                    {currentView === "HOW_TO_PLAY" && <HowToPlay onBack={() => setCurrentView(user ? "DASHBOARD" : "LANDING")} isAuthenticated={!!user} />}
+                    {currentView === "PRIVACY" && <Privacy onNavigate={setCurrentView} />}
+                    {currentView === "TERMS" && <Terms onNavigate={setCurrentView} />}
+                    {currentView === "COMMUNITY" && <Community />}
+                  </Suspense>
+                </div>
+              </main>
+
+              {renderCurrentModal()}
+          </div>
+        </>
+      )}
     </div>
   );
 };
