@@ -34,6 +34,14 @@ const Footer: React.FC<FooterProps> = ({ onNavigate, currentView, isAuthenticate
         </div>
         
         <div className="flex flex-wrap justify-center gap-6 font-medium items-center">
+           {isAuthenticated && (
+               <button 
+                onClick={startTutorial} 
+                className="flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 transition-colors font-bold"
+               >
+                 <HelpCircle size={14} /> {t('footer.tutorial')}
+               </button>
+           )}
            <button onClick={() => onNavigate('WHITEPAPER')} className="hover:text-cyan-400 transition-colors">{t('footer.whitepaper')}</button>
            <button onClick={() => onNavigate('RULES')} className="hover:text-emerald-400 transition-colors">{t('footer.rules')}</button>
            <button onClick={() => onNavigate('HOW_TO_PLAY')} className="hover:text-emerald-400 transition-colors">{t('footer.export_guide')}</button>
@@ -51,21 +59,12 @@ const Footer: React.FC<FooterProps> = ({ onNavigate, currentView, isAuthenticate
                </>
            )}
 
-           {isAuthenticated && (
-               <button 
-                onClick={startTutorial} 
-                className="flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 transition-colors font-bold"
-               >
-                 <HelpCircle size={14} /> Tutorial
-               </button>
-           )}
-
            {isInstallable && !isStandalone && onInstall && (
                <button 
                    onClick={onInstall} 
                    className="flex items-center gap-1.5 text-white bg-gray-800 hover:bg-emerald-500/20 hover:text-emerald-400 px-3 py-1.5 rounded-lg border border-gray-700 transition-all font-bold text-xs uppercase tracking-wider ml-2"
                >
-                   <Download size={14} /> Download App
+                   <Download size={14} /> {t('footer.download')}
                </button>
            )}
         </div>

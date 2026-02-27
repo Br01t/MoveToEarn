@@ -275,6 +275,19 @@ const AppContent: React.FC = () => {
                 </div>
               </main>
 
+              {isLanding && !user && (
+                <Suspense fallback={null}>
+                  <Footer 
+                    onNavigate={setCurrentView} 
+                    currentView={currentView} 
+                    isAuthenticated={false} 
+                    onInstall={installPWA}
+                    isInstallable={isInstallable}
+                    isStandalone={isStandalone}
+                  />
+                </Suspense>
+              )}
+
               {renderCurrentModal()}
           </div>
         </>
