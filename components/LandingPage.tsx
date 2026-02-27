@@ -50,7 +50,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
       {/* Background Elements */}
       <div className="fixed inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-gray-900 via-black to-black z-0" />
       <div 
-        className="fixed inset-0 z-0 opacity-20 pointer-events-none"
+        className="fixed inset-0 z-0 opacity-40 pointer-events-none"
         style={{
             backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='98' viewBox='0 0 56 98'%3E%3Cpath d='M28 66L0 50L0 16L28 0L56 16L56 50L28 66L28 100' fill='none' stroke='%2310b981' stroke-width='1' stroke-opacity='0.3'/%3E%3C/svg%3E")`,
             backgroundSize: '56px 98px'
@@ -166,7 +166,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
 
       {/* Community Section - Moved Up */}
       <section className="relative py-24 px-6 overflow-hidden">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-cyan-500/5 blur-[150px] rounded-full pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full blur-[150px] rounded-full pointer-events-none" />
         
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="glass-panel-heavy rounded-[3rem] p-12 md:p-20 border border-white/10 overflow-hidden relative">
@@ -343,8 +343,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
           </div>
       )}
 
-      {/* Final Spacer to ensure visibility above footer */}
-      <div className="h-20 bg-black relative z-10" />
     </div>
   );
 };
