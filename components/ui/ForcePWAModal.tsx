@@ -99,8 +99,7 @@ const ForcePWAModal: React.FC<ForcePWAModalProps> = ({ isIOS, onInstall, hasDefe
                       Watch Installation Guide
                     </span>
                   </div>
-                  {/* Placeholder for actual video element */}
-                  {/* <video src="YOUR_VIDEO_URL" className="absolute inset-0 w-full h-full object-cover" controls /> */}
+                  <video src="YOUR_VIDEO_URL" className="absolute inset-0 w-full h-full object-cover" controls />
                 </div>
               </div>
             </div>

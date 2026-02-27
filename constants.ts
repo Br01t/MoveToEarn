@@ -4,6 +4,7 @@ import { Item, User, Zone, Mission, Badge, AchievementCategory, Difficulty, Rari
 // --- ASSETS ---
 export const OFFICIAL_LOGO_URL = 'https://fjvmeffshcivnoctaikj.supabase.co/storage/v1/object/public/images/logo.png';
 export const NAVBAR_LOGO_URL = 'https://fjvmeffshcivnoctaikj.supabase.co/storage/v1/object/public/images/logo_nobg%20(1).png';
+export const YOUR_VIDEO_URL = 'https://fjvmeffshcivnoctaikj.supabase.co/storage/v1/object/public/images/video_tutoria_pwa.mp4';
 
 // --- ECONOMY COSTS & REWARDS ---
 export const MINT_COST = 150; 
