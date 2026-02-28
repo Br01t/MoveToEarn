@@ -180,8 +180,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
                 <h2 className="text-4xl md:text-5xl lg:text-7xl font-black text-white uppercase tracking-tight mb-6 md:mb-8 leading-none">
                   {t('landing.community_title')}
                 </h2>
-                <p className="text-lg lg:text-xl text-gray-400 mb-8 md:mb-10 leading-relaxed font-medium">
+                <p className="text-lg lg:text-xl text-gray-400 mb-2 md:mb-4 leading-relaxed font-medium">
                   {t('landing.community_subtitle')}
+                </p>
+                <p className="text-lg lg:text-xl text-gray-400 mb-8 md:mb-10 leading-relaxed font-medium">
+                  {t('landing.community_subtitle_2')}
                 </p>
                 
                 <div className="flex flex-wrap gap-4">
