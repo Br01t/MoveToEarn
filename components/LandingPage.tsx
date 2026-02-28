@@ -47,7 +47,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
   return (
     <div className="relative w-full bg-black flex flex-col overflow-x-hidden font-sans selection:bg-emerald-500 selection:text-black">
       
-      {/* Background Elements */}
       <div className="fixed inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-gray-900 via-black to-black z-0" />
       <div 
         className="fixed inset-0 z-0 opacity-40 pointer-events-none"
@@ -57,7 +56,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
         }}
       />
       
-      {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-[100] px-4 lg:px-6 py-3 lg:py-4 backdrop-blur-md bg-black/40 border-b border-white/5">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <motion.div 
@@ -96,7 +94,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
         </div>
       </header>
 
-      {/* Hero Section */}
       <section className="relative min-h-screen flex flex-col items-center justify-center px-4 pt-20 overflow-hidden">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full max-w-4xl max-h-4xl bg-emerald-500/5 blur-[120px] rounded-full pointer-events-none" />
         
@@ -165,25 +162,25 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
         </motion.div>
       </section>
 
-      {/* Community Section - Moved Up */}
       <section className="relative py-16 md:py-24 px-4 md:px-6 overflow-hidden">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full blur-[150px] rounded-full pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-cyan-500/5 blur-[150px] rounded-full pointer-events-none" />
         
         <div className="max-w-7xl mx-auto relative z-10">
-          <div className="glass-panel-heavy rounded-[2rem] md:rounded-[3rem] p-8 md:p-20 border border-white/10 overflow-hidden relative">
-            <div className="absolute top-0 right-0 p-6 md:p-10 opacity-10 hidden sm:block">
-              <Users size={200} className="text-cyan-400" />
+          <div className="glass-panel-heavy rounded-[2rem] md:rounded-[3rem] p-8 md:p-20 border border-white/10 overflow-hidden relative group">
+            <div className="absolute top-0 right-0 p-6 md:p-10 opacity-10 group-hover:opacity-20 transition-opacity duration-700">
+              <Globe size={300} className="text-cyan-400 animate-pulse" />
             </div>
 
-            <div className="max-w-2xl">
+            <div className="max-w-2xl relative z-10">
               <motion.div {...fadeInUp}>
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-[10px] font-mono font-bold tracking-[0.2em] uppercase mb-4 md:mb-6">
+                  <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
                   {t('landing.community_tag')}
                 </div>
                 <h2 className="text-4xl md:text-5xl lg:text-7xl font-black text-white uppercase tracking-tight mb-6 md:mb-8 leading-none">
                   {t('landing.community_title')}
                 </h2>
-                <p className="text-lg lg:text-xl text-gray-400 mb-8 md:mb-10 leading-relaxed">
+                <p className="text-lg lg:text-xl text-gray-400 mb-8 md:mb-10 leading-relaxed font-medium">
                   {t('landing.community_subtitle')}
                 </p>
                 
@@ -191,7 +188,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
                   <motion.button
                     whileHover={{ scale: 1.05, x: 5 }}
                     onClick={() => handleNavAction('COMMUNITY')}
-                    className="px-8 py-4 bg-cyan-500 hover:bg-cyan-400 text-black font-black rounded-2xl transition-all flex items-center gap-3 uppercase tracking-wider"
+                    className="px-8 py-4 bg-cyan-500 hover:bg-cyan-400 text-black font-black rounded-2xl shadow-[0_0_20px_rgba(6,182,212,0.3)] transition-all flex items-center gap-3 uppercase tracking-wider"
                   >
                     {t('landing.community_btn')} <ArrowRight size={20} />
                   </motion.button>
@@ -202,7 +199,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
         </div>
       </section>
 
-      {/* The Vision Section - Relevant Info */}
       <section className="relative py-16 md:py-32 border-t border-white/5 overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 md:px-6 grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-20 items-center">
           <motion.div {...fadeInUp}>
@@ -242,7 +238,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
         </div>
       </section>
 
-      {/* Mechanics Section - Redesigned: Technical Editorial Style */}
       <section className="relative py-16 md:py-32 border-t border-white/5">
         <div className="max-w-7xl mx-auto px-4 md:px-6">
           <div className="flex flex-col md:flex-row justify-between items-center md:items-end gap-8 mb-16 md:mb-24">
@@ -298,7 +293,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
         </div>
       </section>
 
-      {/* Modal for Feature Details */}
       {activeFeature && activeContent && (
           <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/95 backdrop-blur-xl p-4 animate-fade-in overflow-y-auto" onClick={() => setActiveFeature(null)}>
               <motion.div 
