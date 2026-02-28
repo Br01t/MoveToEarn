@@ -349,17 +349,24 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
 
 const MechanicRow = ({ num, title, desc, icon, color, onClick }: { num: string, title: string, desc: React.ReactNode, icon: any, color: string, onClick: () => void }) => {
   const colorClasses = {
-    emerald: 'group-hover:text-emerald-400',
-    cyan: 'group-hover:text-cyan-400',
-    blue: 'group-hover:text-blue-400',
-    red: 'group-hover:text-red-400',
+    emerald: 'text-emerald-400 group-hover:text-emerald-300',
+    cyan: 'text-cyan-400 group-hover:text-cyan-300',
+    blue: 'text-blue-400 group-hover:text-blue-300',
+    red: 'text-red-400 group-hover:text-red-300',
   };
 
   const bgClasses = {
-    emerald: 'group-hover:bg-emerald-500/5',
-    cyan: 'group-hover:bg-cyan-500/5',
-    blue: 'group-hover:bg-blue-500/5',
-    red: 'group-hover:bg-red-500/5',
+    emerald: 'bg-emerald-500/5 group-hover:bg-emerald-500/10',
+    cyan: 'bg-cyan-500/5 group-hover:bg-cyan-500/10',
+    blue: 'bg-blue-500/5 group-hover:bg-blue-500/10',
+    red: 'bg-red-500/5 group-hover:bg-red-500/10',
+  };
+
+  const borderClasses = {
+    emerald: 'border-emerald-500/10 group-hover:border-emerald-500/30',
+    cyan: 'border-cyan-500/10 group-hover:border-cyan-500/30',
+    blue: 'border-blue-500/10 group-hover:border-blue-500/30',
+    red: 'border-red-500/10 group-hover:border-red-500/30',
   };
 
   return (
@@ -368,13 +375,13 @@ const MechanicRow = ({ num, title, desc, icon, color, onClick }: { num: string, 
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       onClick={onClick}
-      className={`group flex flex-col md:flex-row items-center gap-8 p-10 md:p-16 bg-black transition-all duration-500 cursor-pointer ${bgClasses[color as keyof typeof bgClasses]}`}
+      className={`group flex flex-col md:flex-row items-center gap-8 p-10 md:p-16 transition-all duration-500 cursor-pointer border-b border-white/5 last:border-0 ${bgClasses[color as keyof typeof bgClasses]}`}
     >
       <div className="font-mono text-4xl md:text-6xl font-black text-white/10 group-hover:text-white/20 transition-colors shrink-0">
         {num}
       </div>
       
-      <div className={`p-4 rounded-2xl bg-white/5 border border-white/10 transition-all duration-500 ${colorClasses[color as keyof typeof colorClasses]} group-hover:scale-110 group-hover:rotate-3`}>
+      <div className={`p-4 rounded-2xl bg-black/40 border transition-all duration-500 ${borderClasses[color as keyof typeof borderClasses]} ${colorClasses[color as keyof typeof colorClasses]} group-hover:scale-110 group-hover:rotate-3 shadow-lg`}>
         {icon}
       </div>
 
@@ -382,13 +389,13 @@ const MechanicRow = ({ num, title, desc, icon, color, onClick }: { num: string, 
         <h3 className="text-2xl md:text-4xl font-black text-white uppercase tracking-tight mb-2 group-hover:translate-x-2 transition-transform duration-500">
           {title}
         </h3>
-        <div className="text-gray-500 group-hover:text-gray-300 transition-colors duration-500 text-lg max-w-2xl">
+        <div className="text-gray-400 group-hover:text-gray-200 transition-colors duration-500 text-lg max-w-2xl">
           {desc}
         </div>
       </div>
 
-      <div className="hidden md:block opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-        <ArrowRight size={32} className={colorClasses[color as keyof typeof colorClasses]} />
+      <div className={`transition-all duration-500 transform group-hover:translate-x-2 ${colorClasses[color as keyof typeof colorClasses]}`}>
+        <ArrowRight size={32} />
       </div>
     </motion.div>
   );
