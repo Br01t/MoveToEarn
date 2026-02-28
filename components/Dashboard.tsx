@@ -260,7 +260,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   return (
     <div 
       ref={containerRef}
-      className="relative w-full h-[calc(100vh-56px)] md:h-[calc(100vh-64px)] overflow-hidden bg-transparent shadow-inner"
+      className="relative w-full h-[calc(100vh-56px)] lg:h-[calc(100vh-64px)] overflow-hidden bg-transparent shadow-inner"
     >
       <div id="dashboard-hud-balances">
         <DashboardHUD runBalance={user.runBalance} govBalance={user.govBalance} />
@@ -345,18 +345,18 @@ const Dashboard: React.FC<DashboardProps> = ({
           </div>
       </div>
 
-      <div className="hidden md:flex absolute bottom-44 right-4 md:bottom-10 md:left-1/2 md:right-auto md:transform md:-translate-x-1/2 z-30 items-center justify-center">
+      <div className="hidden lg:flex absolute bottom-44 right-4 lg:bottom-10 lg:left-1/2 lg:right-auto lg:transform lg:-translate-x-1/2 z-30 items-center justify-center">
             <div className="absolute inset-0 bg-emerald-500 rounded-full animate-ping opacity-20 duration-1000"></div>
             <div className="absolute inset-0 bg-emerald-400 rounded-full blur-xl opacity-40"></div>
             <button 
               id="sync-trigger-btn"
               onClick={onOpenSync}
-              className="relative group flex items-center gap-2 md:gap-3 px-4 py-2.5 md:px-8 md:py-4 bg-gray-900/90 backdrop-blur-xl border-2 border-emerald-400 rounded-full shadow-[0_0_30px_rgba(16,185,129,0.4)] hover:shadow-[0_0_50px_rgba(16,185,129,0.7)] hover:border-emerald-300 hover:scale-105 transition-all duration-300 pointer-events-auto"
+              className="relative group flex items-center gap-2 lg:gap-3 px-4 py-2.5 lg:px-8 lg:py-4 bg-gray-900/90 backdrop-blur-xl border-2 border-emerald-400 rounded-full shadow-[0_0_30px_rgba(16,185,129,0.4)] hover:shadow-[0_0_50px_rgba(16,185,129,0.7)] hover:border-emerald-300 hover:scale-105 transition-all duration-300 pointer-events-auto"
             >
-                <div className="bg-emerald-500 text-black p-1.5 md:p-2 rounded-full shrink-0"><UploadCloud size={20} className="md:w-6 md:h-6 animate-pulse" /></div>
+                <div className="bg-emerald-500 text-black p-1.5 lg:p-2 rounded-full shrink-0"><UploadCloud size={20} className="lg:w-6 lg:h-6 animate-pulse" /></div>
                 <div className="flex flex-col items-start min-w-0">
-                   <span className="hidden md:block text-emerald-400 font-black text-xs uppercase tracking-widest leading-none mb-0.5">{t('dash.sync_btn_sub')}</span>
-                   <span className="text-white font-bold text-sm md:text-lg leading-none truncate whitespace-nowrap">{t('dash.sync_btn_main')}</span>
+                   <span className="hidden lg:block text-emerald-400 font-black text-xs uppercase tracking-widest leading-none mb-0.5">{t('dash.sync_btn_sub')}</span>
+                   <span className="text-white font-bold text-sm lg:text-lg leading-none truncate whitespace-nowrap">{t('dash.sync_btn_main')}</span>
                 </div>
             </button>
       </div>

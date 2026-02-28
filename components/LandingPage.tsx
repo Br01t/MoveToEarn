@@ -58,36 +58,37 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
       />
       
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-[100] px-6 py-4 backdrop-blur-md bg-black/40 border-b border-white/5">
+      <header className="fixed top-0 left-0 right-0 z-[100] px-4 lg:px-6 py-3 lg:py-4 backdrop-blur-md bg-black/40 border-b border-white/5">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <motion.div 
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="flex items-center gap-3 cursor-pointer group" 
+            className="flex items-center gap-2 lg:gap-3 cursor-pointer group" 
             onClick={() => handleNavAction('LANDING')}
           >
             <div className="relative">
                <div className="absolute inset-0 bg-emerald-500 blur-md opacity-20 group-hover:opacity-40 transition-opacity rounded-lg"></div>
-               <div className="glass-panel p-1.5 rounded-xl border-white/10 group-hover:border-emerald-500/50 transition-colors relative z-10">
-                  <img src={NAVBAR_LOGO_URL} alt="ZoneRun Logo" className="w-10 h-10 object-contain" referrerPolicy="no-referrer" />
+               <div className="glass-panel p-1 rounded-xl border-white/10 group-hover:border-emerald-500/50 transition-colors relative z-10">
+                  <img src={NAVBAR_LOGO_URL} alt="ZoneRun Logo" className="w-8 h-8 lg:w-10 lg:h-10 object-contain" referrerPolicy="no-referrer" />
                </div>
             </div>
-            <div className="text-xl font-black text-white uppercase tracking-widest">
+            <div className="text-lg lg:text-xl font-black text-white uppercase tracking-widest">
               ZONE<span className="text-emerald-400">RUN</span>
             </div>
           </motion.div>
           
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 lg:gap-4">
               <LanguageDropdown align="right" />
               <button
                   onClick={toggleMute}
-                  className={`p-2 rounded-xl glass-panel transition-all border ${isMuted ? 'text-red-400 border-red-500/30 bg-red-900/10' : 'text-gray-400 border-white/10 hover:text-white hover:border-white/30'}`}
+                  className={`p-1.5 lg:p-2 rounded-xl glass-panel transition-all border ${isMuted ? 'text-red-400 border-red-500/30 bg-red-900/10' : 'text-gray-400 border-white/10 hover:text-white hover:border-white/30'}`}
               >
-                  {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+                  {isMuted ? <VolumeX size={16} className="lg:hidden" /> : <Volume2 size={16} className="lg:hidden" />}
+                  {isMuted ? <VolumeX size={18} className="hidden lg:block" /> : <Volume2 size={18} className="hidden lg:block" />}
               </button>
               <button 
                 onClick={() => handleActionClick(onLogin)}
-                className="hidden sm:block px-5 py-2 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-lg transition-all text-sm uppercase tracking-wider"
+                className="hidden sm:block px-4 lg:px-5 py-2 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-lg transition-all text-xs lg:text-sm uppercase tracking-wider"
               >
                 {t('auth.login')}
               </button>
@@ -106,14 +107,14 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
           className="relative z-10 text-center space-y-8 max-w-4xl"
         >
 
-          <h1 className="text-6xl md:text-8xl font-black text-white tracking-tighter uppercase leading-[0.85]">
+          <h1 className="text-4xl sm:text-6xl lg:text-8xl font-black text-white tracking-tighter uppercase leading-[0.9] lg:leading-[0.85]">
             {t('landing.hero_title_1')} {t('landing.hero_title_2')} <br/>
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-cyan-300 to-emerald-400">
               {tRich('landing.title_suffix')}
             </span>
           </h1>
           
-          <p className="text-xl md:text-2xl text-gray-400 max-w-2xl mx-auto leading-relaxed font-medium">
+          <p className="text-lg lg:text-2xl text-gray-400 max-w-2xl mx-auto leading-relaxed font-medium px-4">
             {tRich('landing.subtitle')}
           </p>
           
@@ -165,24 +166,24 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
       </section>
 
       {/* Community Section - Moved Up */}
-      <section className="relative py-24 px-6 overflow-hidden">
+      <section className="relative py-16 md:py-24 px-4 md:px-6 overflow-hidden">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full blur-[150px] rounded-full pointer-events-none" />
         
         <div className="max-w-7xl mx-auto relative z-10">
-          <div className="glass-panel-heavy rounded-[3rem] p-12 md:p-20 border border-white/10 overflow-hidden relative">
-            <div className="absolute top-0 right-0 p-10 opacity-10">
+          <div className="glass-panel-heavy rounded-[2rem] md:rounded-[3rem] p-8 md:p-20 border border-white/10 overflow-hidden relative">
+            <div className="absolute top-0 right-0 p-6 md:p-10 opacity-10 hidden sm:block">
               <Users size={200} className="text-cyan-400" />
             </div>
 
             <div className="max-w-2xl">
               <motion.div {...fadeInUp}>
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-[10px] font-mono font-bold tracking-[0.2em] uppercase mb-6">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-[10px] font-mono font-bold tracking-[0.2em] uppercase mb-4 md:mb-6">
                   {t('landing.community_tag')}
                 </div>
-                <h2 className="text-5xl md:text-7xl font-black text-white uppercase tracking-tight mb-8 leading-none">
+                <h2 className="text-4xl md:text-5xl lg:text-7xl font-black text-white uppercase tracking-tight mb-6 md:mb-8 leading-none">
                   {t('landing.community_title')}
                 </h2>
-                <p className="text-xl text-gray-400 mb-10 leading-relaxed">
+                <p className="text-lg lg:text-xl text-gray-400 mb-8 md:mb-10 leading-relaxed">
                   {t('landing.community_subtitle')}
                 </p>
                 
@@ -202,14 +203,14 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
       </section>
 
       {/* The Vision Section - Relevant Info */}
-      <section className="relative py-32 border-t border-white/5 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-20 items-center">
+      <section className="relative py-16 md:py-32 border-t border-white/5 overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-20 items-center">
           <motion.div {...fadeInUp}>
-            <span className="font-mono text-emerald-500 text-sm tracking-[0.3em] uppercase mb-6 block">{t('landing.vision_tag')}</span>
-            <h2 className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter leading-[0.9] mb-8">
+            <span className="font-mono text-emerald-500 text-sm tracking-[0.3em] uppercase mb-4 md:mb-6 block">{t('landing.vision_tag')}</span>
+            <h2 className="text-4xl md:text-5xl lg:text-7xl font-black text-white uppercase tracking-tighter leading-[0.9] mb-6 md:mb-8">
               {t('landing.vision_title')}
             </h2>
-            <div className="space-y-6 text-xl text-gray-400 font-medium leading-relaxed">
+            <div className="space-y-4 md:space-y-6 text-lg lg:text-xl text-gray-400 font-medium leading-relaxed">
               <p>
                 {t('landing.vision_p1')}
               </p>
@@ -223,17 +224,18 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
             initial={{ opacity: 0, scale: 0.8 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
-            className="relative aspect-square"
+            className="relative aspect-square max-w-md mx-auto w-full"
           >
             <div className="absolute inset-0 bg-emerald-500/20 blur-[100px] rounded-full animate-pulse" />
-            <div className="relative z-10 w-full h-full glass-panel-heavy rounded-[4rem] border border-white/10 flex items-center justify-center overflow-hidden">
+            <div className="relative z-10 w-full h-full glass-panel-heavy rounded-[2rem] md:rounded-[4rem] border border-white/10 flex items-center justify-center overflow-hidden">
                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20" />
-               <div className="relative flex flex-col items-center text-center p-12">
-                  <div className="w-24 h-24 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center mb-8">
-                    <Globe size={48} className="text-emerald-400" />
+               <div className="relative flex flex-col items-center text-center p-8 md:p-12">
+                  <div className="w-16 h-16 md:w-24 md:h-24 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center mb-6 md:mb-8">
+                    <Globe size={32} className="text-emerald-400 md:hidden" />
+                    <Globe size={48} className="text-emerald-400 hidden md:block" />
                   </div>
-                  <span className="text-3xl font-black text-white uppercase tracking-widest mb-2">{t('landing.vision_card_title')}</span>
-                  <span className="text-emerald-500 font-mono font-bold tracking-widest">{t('landing.vision_card_subtitle')}</span>
+                  <span className="text-2xl md:text-3xl font-black text-white uppercase tracking-widest mb-2">{t('landing.vision_card_title')}</span>
+                  <span className="text-emerald-500 font-mono font-bold tracking-widest text-sm md:text-base">{t('landing.vision_card_subtitle')}</span>
                </div>
             </div>
           </motion.div>
@@ -241,25 +243,25 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
       </section>
 
       {/* Mechanics Section - Redesigned: Technical Editorial Style */}
-      <section className="relative py-32 border-t border-white/5">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="flex flex-col md:flex-row justify-between items-end gap-8 mb-24">
-            <motion.div {...fadeInUp} className="max-w-2xl">
+      <section className="relative py-16 md:py-32 border-t border-white/5">
+        <div className="max-w-7xl mx-auto px-4 md:px-6">
+          <div className="flex flex-col md:flex-row justify-between items-center md:items-end gap-8 mb-16 md:mb-24">
+            <motion.div {...fadeInUp} className="max-w-2xl text-center md:text-left">
               <span className="font-mono text-emerald-500 text-sm tracking-[0.3em] uppercase mb-4 block">{t('landing.mechanics_system_tag')}</span>
-              <h2 className="text-5xl md:text-8xl font-black text-white uppercase tracking-tighter leading-none">
+              <h2 className="text-4xl md:text-6xl lg:text-8xl font-black text-white uppercase tracking-tighter leading-none">
                 {t('landing.mechanics_main_title').split(' ')[0]} <span className="italic serif text-emerald-500/80">{t('landing.mechanics_main_title').split(' ').slice(1).join(' ')}</span>
               </h2>
             </motion.div>
             <motion.p 
               {...fadeInUp} 
               transition={{ delay: 0.2 }}
-              className="text-gray-500 max-w-sm text-right font-medium leading-relaxed"
+              className="text-gray-500 max-w-sm text-center md:text-right font-medium leading-relaxed"
             >
               {t('landing.mechanics_subtitle')}
             </motion.p>
           </div>
 
-          <div className="space-y-px bg-white/5 border border-white/5 rounded-[2rem] overflow-hidden">
+          <div className="space-y-px bg-white/5 border border-white/5 rounded-[1.5rem] md:rounded-[2rem] overflow-hidden">
             <MechanicRow 
               num="01"
               title={t('landing.card.earn_run')}
@@ -298,42 +300,47 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
 
       {/* Modal for Feature Details */}
       {activeFeature && activeContent && (
-          <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/95 backdrop-blur-xl p-4 animate-fade-in" onClick={() => setActiveFeature(null)}>
+          <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/95 backdrop-blur-xl p-4 animate-fade-in overflow-y-auto" onClick={() => setActiveFeature(null)}>
               <motion.div 
                   initial={{ opacity: 0, scale: 0.9, y: 20 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
-                  className="glass-panel-heavy rounded-[3rem] w-full max-w-2xl overflow-hidden shadow-2xl relative border border-white/10" 
+                  className="glass-panel-heavy rounded-[2rem] md:rounded-[3rem] w-full max-w-2xl overflow-hidden shadow-2xl relative border border-white/10 my-auto" 
                   onClick={(e) => e.stopPropagation()}
               >
-                  <div className={`h-40 w-full bg-gradient-to-br ${
+                  <div className={`h-32 md:h-40 w-full bg-gradient-to-br ${
                       activeFeature === 'earn_run' ? 'from-emerald-900/40 to-black' :
                       activeFeature === 'earn_gov' ? 'from-cyan-900/40 to-black' :
                       activeFeature === 'spend' ? 'from-blue-900/40 to-black' :
                       'from-red-900/40 to-black'
-                  } relative flex items-center px-12 border-b border-white/5`}>
-                      <button onClick={() => { playSound('CLICK'); setActiveFeature(null); }} className="absolute top-6 right-6 bg-white/5 hover:bg-white/10 p-2 rounded-full text-white transition-colors border border-white/10">
-                          <X size={24} />
+                  } relative flex items-center px-6 md:px-12 border-b border-white/5`}>
+                      <button onClick={() => { playSound('CLICK'); setActiveFeature(null); }} className="absolute top-4 md:top-6 right-4 md:right-6 bg-white/5 hover:bg-white/10 p-2 rounded-full text-white transition-colors border border-white/10 z-20">
+                          <X size={20} className="md:hidden" />
+                          <X size={24} className="hidden md:block" />
                       </button>
-                      <div className="flex items-center gap-6">
-                          <div className="p-5 bg-black/60 rounded-3xl border border-white/10 shadow-xl">
-                              {activeFeature === 'earn_run' && <Activity size={32} className="text-emerald-400" />}
-                              {activeFeature === 'earn_gov' && <TrendingUp size={32} className="text-cyan-400" />}
-                              {activeFeature === 'spend' && <Shield size={32} className="text-blue-400" />}
-                              {activeFeature === 'burn' && <Coins size={32} className="text-red-400" />}
+                      <div className="flex items-center gap-4 md:gap-6">
+                          <div className="p-3 md:p-5 bg-black/60 rounded-2xl md:rounded-3xl border border-white/10 shadow-xl shrink-0">
+                              {activeFeature === 'earn_run' && <Activity size={24} className="text-emerald-400 md:hidden" />}
+                              {activeFeature === 'earn_run' && <Activity size={32} className="text-emerald-400 hidden md:block" />}
+                              {activeFeature === 'earn_gov' && <TrendingUp size={24} className="text-cyan-400 md:hidden" />}
+                              {activeFeature === 'earn_gov' && <TrendingUp size={32} className="text-cyan-400 hidden md:block" />}
+                              {activeFeature === 'spend' && <Shield size={24} className="text-blue-400 md:hidden" />}
+                              {activeFeature === 'spend' && <Shield size={32} className="text-blue-400 hidden md:block" />}
+                              {activeFeature === 'burn' && <Coins size={24} className="text-red-400 md:hidden" />}
+                              {activeFeature === 'burn' && <Coins size={32} className="text-red-400 hidden md:block" />}
                           </div>
-                          <h3 className="text-4xl font-black text-white tracking-tighter uppercase">{activeContent.title}</h3>
+                          <h3 className="text-2xl md:text-4xl font-black text-white tracking-tighter uppercase">{activeContent.title}</h3>
                       </div>
                   </div>
 
-                  <div className="p-12">
-                      <div className="text-xl text-gray-300 leading-relaxed font-medium">
+                  <div className="p-6 md:p-12 max-h-[60vh] overflow-y-auto custom-scrollbar">
+                      <div className="text-lg md:text-xl text-gray-300 leading-relaxed font-medium">
                           {activeContent.body}
                       </div>
                       
-                      <div className="mt-12 pt-8 border-t border-white/5 flex justify-end">
+                      <div className="mt-8 md:mt-12 pt-6 md:pt-8 border-t border-white/5 flex justify-end">
                           <button 
                               onClick={() => { playSound('CLICK'); setActiveFeature(null); }}
-                              className="px-10 py-4 bg-white text-black font-black uppercase tracking-widest rounded-2xl hover:bg-gray-200 transition-all hover:scale-105 active:scale-95"
+                              className="px-8 md:px-10 py-3 md:py-4 bg-white text-black font-black uppercase tracking-widest rounded-xl md:rounded-2xl hover:bg-gray-200 transition-all hover:scale-105 active:scale-95 text-sm md:text-base"
                           >
                               {t('landing.close')}
                           </button>
@@ -375,27 +382,28 @@ const MechanicRow = ({ num, title, desc, icon, color, onClick }: { num: string, 
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       onClick={onClick}
-      className={`group flex flex-col md:flex-row items-center gap-8 p-10 md:p-16 transition-all duration-500 cursor-pointer border-b border-white/5 last:border-0 ${bgClasses[color as keyof typeof bgClasses]}`}
+      className={`group flex flex-col md:flex-row items-center gap-6 md:gap-8 p-8 md:p-16 transition-all duration-500 cursor-pointer border-b border-white/5 last:border-0 ${bgClasses[color as keyof typeof bgClasses]}`}
     >
-      <div className="font-mono text-4xl md:text-6xl font-black text-white/10 group-hover:text-white/20 transition-colors shrink-0">
+      <div className="font-mono text-3xl md:text-6xl font-black text-white/10 group-hover:text-white/20 transition-colors shrink-0">
         {num}
       </div>
       
-      <div className={`p-4 rounded-2xl bg-black/40 border transition-all duration-500 ${borderClasses[color as keyof typeof borderClasses]} ${colorClasses[color as keyof typeof colorClasses]} group-hover:scale-110 group-hover:rotate-3 shadow-lg`}>
+      <div className={`p-3 md:p-4 rounded-xl md:rounded-2xl bg-black/40 border transition-all duration-500 ${borderClasses[color as keyof typeof borderClasses]} ${colorClasses[color as keyof typeof colorClasses]} group-hover:scale-110 group-hover:rotate-3 shadow-lg`}>
         {icon}
       </div>
 
       <div className="flex-1 text-center md:text-left">
-        <h3 className="text-2xl md:text-4xl font-black text-white uppercase tracking-tight mb-2 group-hover:translate-x-2 transition-transform duration-500">
+        <h3 className="text-xl md:text-4xl font-black text-white uppercase tracking-tight mb-2 group-hover:translate-x-2 transition-transform duration-500">
           {title}
         </h3>
-        <div className="text-gray-400 group-hover:text-gray-200 transition-colors duration-500 text-lg max-w-2xl">
+        <div className="text-gray-400 group-hover:text-gray-200 transition-colors duration-500 text-base md:text-lg max-w-2xl">
           {desc}
         </div>
       </div>
 
       <div className={`transition-all duration-500 transform group-hover:translate-x-2 ${colorClasses[color as keyof typeof colorClasses]}`}>
-        <ArrowRight size={32} />
+        <ArrowRight size={24} className="md:hidden" />
+        <ArrowRight size={32} className="hidden md:block" />
       </div>
     </motion.div>
   );

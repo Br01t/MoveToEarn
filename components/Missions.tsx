@@ -29,7 +29,7 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
   const badgeScrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-      const checkMobile = () => setIsMobile(window.innerWidth < 768);
+      const checkMobile = () => setIsMobile(window.innerWidth < 1024);
       checkMobile();
       window.addEventListener('resize', checkMobile);
       return () => window.removeEventListener('resize', checkMobile);
@@ -256,7 +256,7 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
   const handleBadgeFilterChange = (filter: 'ALL' | Rarity) => { setBadgeFilter(filter); setBadgePage(1); };
 
   const FilterGroup = ({ currentFilter, onFilterChange }: { currentFilter: 'ALL' | Rarity, onFilterChange: (f: 'ALL' | Rarity) => void }) => (
-      <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
+      <div className="flex gap-2 overflow-x-auto pb-2 lg:pb-0 scrollbar-hide">
         {['ALL', 'COMMON', 'RARE', 'EPIC', 'LEGENDARY'].map(f => {
             const style = f === 'ALL' ? getRarityStyles('COMMON' as any) : getRarityStyles(f as Rarity); 
             const isAll = f === 'ALL';
@@ -306,7 +306,7 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
   };
 
   const ScrollProgressBar = ({ progress, colorClass = 'bg-emerald-500' }: { progress: number, colorClass?: string }) => (
-    <div className="md:hidden w-full max-w-[200px] mx-auto h-1 bg-gray-800 rounded-full mt-2 overflow-hidden">
+    <div className="lg:hidden w-full max-w-[200px] mx-auto h-1 bg-gray-800 rounded-full mt-2 overflow-hidden">
         <div className={`h-full transition-all duration-200 ${colorClass}`} style={{ width: `${progress}%` }}></div>
     </div>
   );
@@ -341,7 +341,7 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
 
   return (
     <div className="max-w-6xl mx-auto p-4 space-y-8">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-4">
          <div>
             <h1 className="text-2xl font-bold text-white mb-1 flex items-center gap-2"><Target className="text-emerald-400" size={28} /> {t('miss.title')}</h1>
             <p className="text-gray-400 text-sm">{t('miss.subtitle')}</p>
@@ -351,10 +351,10 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
       <div>
         <div className="flex flex-col gap-4 mb-4">
             <h2 className="text-lg font-bold text-white border-l-4 border-emerald-500 pl-3">{t('miss.log')}</h2>
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="flex items-center gap-3 w-full md:w-auto">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                <div className="flex items-center gap-3 w-full lg:w-auto">
                     <StatusToggle type="MISSION" current={missionStatus} onChange={(val) => { setMissionStatus(val); setMissionPage(1); }} />
-                    <div className="relative flex-1 md:w-64">
+                    <div className="relative flex-1 lg:w-64">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" size={16} />
                         <input type="text" placeholder={t('miss.search_missions')} value={missionSearch} onChange={(e) => { setMissionSearch(e.target.value); setMissionPage(1); }} className="w-full glass-panel rounded-lg pl-9 pr-3 py-2 text-xs text-white focus:border-emerald-500 focus:outline-none placeholder-gray-500" />
                     </div>
@@ -373,12 +373,12 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
               <div 
                 ref={missionScrollRef}
                 onScroll={() => handleScroll(missionScrollRef, setMissionScrollProgress)}
-                className="flex overflow-x-auto md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-4 md:pb-0 no-scrollbar snap-x snap-mandatory"
+                className="flex overflow-x-auto lg:grid lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-4 lg:pb-0 no-scrollbar snap-x snap-mandatory"
               >
                   {missionsToRender.map(mission => {
                       const style = getRarityStyles(mission.rarity);
                       return (
-                          <div key={mission.id} className={`rounded-lg p-4 flex flex-col justify-between relative transition-all min-w-[85%] md:min-w-0 snap-center ${mission.isCompleted ? `glass-panel ${style.border} opacity-60` : 'glass-panel'}`}>
+                          <div key={mission.id} className={`rounded-lg p-4 flex flex-col justify-between relative transition-all min-w-[85%] lg:min-w-0 snap-center ${mission.isCompleted ? `glass-panel ${style.border} opacity-60` : 'glass-panel'}`}>
                               <div className="flex justify-between items-start mb-2">
                                   <h3 className={`font-bold text-sm pr-2 ${mission.isCompleted ? 'text-white' : 'text-gray-200'}`}>{mission.title}</h3>
                                   <div className="flex flex-col items-end gap-1 shrink-0">
@@ -405,7 +405,7 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
               <ScrollProgressBar progress={missionScrollProgress} />
             </>
         )}
-        <div className="hidden md:block">
+        <div className="hidden lg:block">
             <Pagination currentPage={missionPage} totalPages={totalMissionPages} onPageChange={setMissionPage} />
         </div>
       </div>
@@ -413,10 +413,10 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
       <div>
         <div className="flex flex-col gap-4 mb-4">
             <h2 className="text-lg font-bold text-white border-l-4 border-yellow-500 pl-3">{t('miss.gallery')}</h2>
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="flex items-center gap-3 w-full md:w-auto">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                <div className="flex items-center gap-3 w-full lg:w-auto">
                     <StatusToggle type="BADGE" current={badgeStatus} onChange={(val) => { setBadgeStatus(val); setBadgePage(1); }} />
-                    <div className="relative flex-1 md:w-64">
+                    <div className="relative flex-1 lg:w-64">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" size={16} />
                         <input type="text" placeholder={t('miss.search_badges')} value={badgeSearch} onChange={(e) => { setBadgeSearch(e.target.value); setBadgePage(1); }} className="w-full glass-panel rounded-lg pl-9 pr-3 py-2 text-xs text-white focus:border-yellow-500 focus:outline-none placeholder-gray-500" />
                     </div>
@@ -435,7 +435,7 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
               <div 
                 ref={badgeScrollRef}
                 onScroll={() => handleScroll(badgeScrollRef, setBadgeScrollProgress)}
-                className="flex overflow-x-auto md:grid md:grid-cols-4 lg:grid-cols-6 gap-3 pb-4 md:pb-0 no-scrollbar snap-x snap-mandatory"
+                className="flex overflow-x-auto lg:grid lg:grid-cols-6 gap-3 pb-4 lg:pb-0 no-scrollbar snap-x snap-mandatory"
               >
                   {badgesToRender.map(badge => {
                       const style = getRarityStyles(badge.rarity);
@@ -452,7 +452,7 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
                                     else setHoveredBadge({ badge, rect: e.currentTarget.getBoundingClientRect(), element: e.currentTarget });
                                 }
                             }}
-                            className={`aspect-square rounded-xl flex flex-col items-center justify-between p-3 text-center transition-all relative group min-w-[140px] md:min-w-0 snap-center ${badge.isUnlocked ? `glass-panel ${style.border}` : 'glass-panel opacity-60'} ${isCurrentlyHovered ? 'z-[100] border-white/40' : ''}`}
+                            className={`aspect-square rounded-xl flex flex-col items-center justify-between p-3 text-center transition-all relative group min-w-[140px] lg:min-w-0 snap-center ${badge.isUnlocked ? `glass-panel ${style.border}` : 'glass-panel opacity-60'} ${isCurrentlyHovered ? 'z-[100] border-white/40' : ''}`}
                           >
                               {badge.isUnlocked && (badge.rarity === 'LEGENDARY' || badge.rarity === 'EPIC') && (
                                   <div className={`absolute top-0 left-0 w-full h-full opacity-10 bg-gradient-to-br ${badge.rarity === 'LEGENDARY' ? 'from-yellow-500' : 'from-purple-500'} to-transparent rounded-xl`}></div>
@@ -476,7 +476,7 @@ const Missions: React.FC<MissionsProps> = ({ user, zones, missions, badges }) =>
               <ScrollProgressBar progress={badgeScrollProgress} colorClass="bg-yellow-500" />
             </>
         )}
-        <div className="hidden md:block pt-4">
+        <div className="hidden lg:block pt-4">
             <Pagination currentPage={badgePage} totalPages={totalBadgePages} onPageChange={setBadgePage} />
         </div>
       </div>

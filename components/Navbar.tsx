@@ -38,11 +38,11 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, user, onLogout
         aria-current={isActive ? 'page' : undefined}
         aria-label={label}
         className={`flex flex-col items-center justify-center rounded-lg transition-colors ${
-          compact ? 'py-2.5 w-full' : 'py-2 px-1.5 md:flex-row md:space-x-1'
+          compact ? 'py-2.5 w-full' : 'py-2 px-1.5 lg:flex-row lg:space-x-1'
         } ${isActive ? activeClass : inactiveClass}`}
       >
         <Icon size={compact ? 24 : 20} className={isActive ? 'stroke-2' : 'stroke-1'} aria-hidden="true" />
-        <span className={`${compact ? 'text-[11px] mt-1' : 'text-xs md:text-sm mt-1 md:mt-0'} font-bold uppercase tracking-wide max-w-full leading-tight text-center px-1`}>
+        <span className={`${compact ? 'text-[11px] mt-1' : 'text-xs lg:text-sm mt-1 lg:mt-0'} font-bold uppercase tracking-wide max-w-full leading-tight text-center px-1`}>
             {mobileLabel || label}
         </span>
       </button>
@@ -52,7 +52,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, user, onLogout
   return (
     <>
       <nav 
-        className="md:hidden bg-gray-950/95 backdrop-blur-md border-b border-gray-800 sticky top-0 z-50 h-16 flex items-center justify-between px-3"
+        className="lg:hidden bg-gray-950/95 backdrop-blur-md border-b border-gray-800 sticky top-0 z-50 h-16 flex items-center justify-between px-3"
         role="banner"
         aria-label="Mobile Header"
       >
@@ -111,7 +111,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, user, onLogout
         </div>
       </nav>
 
-      <nav className="bg-gray-900 border-b border-gray-800 sticky top-0 z-50 h-16 hidden md:block" role="navigation" aria-label="Main Desktop Navigation">
+      <nav className="bg-gray-900 border-b border-gray-800 sticky top-0 z-50 h-16 hidden lg:block" role="navigation" aria-label="Main Desktop Navigation">
         <div className="w-full h-full px-6 flex items-center justify-between">
           
           <div className="flex items-center shrink-0 min-w-[150px] gap-3">
@@ -182,7 +182,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, user, onLogout
         </div>
       </nav>
 
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-gray-950/95 backdrop-blur-md border-t border-gray-800 z-50 pb-safe shadow-[0_-5px_20px_rgba(0,0,0,0.3)]" role="navigation" aria-label="Mobile Navigation Menu">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-gray-950/95 backdrop-blur-md border-t border-gray-800 z-50 pb-safe shadow-[0_-5px_20px_rgba(0,0,0,0.3)]" role="navigation" aria-label="Mobile Navigation Menu">
         <div className="flex flex-col w-full">
            <div className="grid grid-cols-4 w-full border-b border-gray-800/30">
                {onOpenSync && (

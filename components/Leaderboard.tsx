@@ -274,7 +274,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
   };
 
   const hasDataForFindMe = useMemo(() => {
-      if (isZoneRanking) return (filteredRankings as any[]).some(item => item.ownerId === currentUser.id);
+      if (isZoneRanking) return (filteredRankings as any[]).some(item => (item as any).ownerId === currentUser.id);
       return filteredRankings.some(item => item.id === currentUser.id);
   }, [isZoneRanking, filteredRankings, currentUser.id]);
 
@@ -348,7 +348,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
               </div>
               
               <div className="flex flex-col gap-2">
-                  <div className={`space-y-2 ${mobileCategory === 'USER' ? 'block' : 'hidden md:block'}`}>
+                  <div className={`space-y-2 ${mobileCategory === 'USER' ? 'block' : 'hidden lg:block'}`}>
                       <div className="hidden lg:block py-2 px-1">
                           <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-cyan-500/60 mb-1">
                              <Trophy size={20} className="text-yellow-400" />{t('leader.career')}
@@ -376,7 +376,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
                       </div>
                   </div>
 
-                  <div className={`space-y-2 lg:mt-4 ${mobileCategory === 'ZONE' ? 'block' : 'hidden md:block'}`}>
+                  <div className={`space-y-2 lg:mt-4 ${mobileCategory === 'ZONE' ? 'block' : 'hidden lg:block'}`}>
                       <div className="hidden lg:block py-4 px-1">
                           <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-cyan-500/60 mb-1">
                              <MapPin size={20} className="text-cyan-500"/> {t('leader.territorial')}
@@ -566,7 +566,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
                       </thead>
                       <tbody className="divide-y divide-gray-700/50">
                         {paginatedRankings.map((item) => {
-                          const isMe = isZoneRanking ? (item.ownerId === currentUser.id) : (item.id === currentUser.id);
+                          const isMe = isZoneRanking ? ((item as any).ownerId === currentUser.id) : (item.id === currentUser.id);
                           const isHighlighted = highlightedId === item.id;
 
                           let rankIcon = null;
@@ -574,9 +574,9 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
                           else if (item.rank === 2) rankIcon = <Medal className="text-gray-300 fill-gray-300/20" size={18} />;
                           else if (item.rank === 3) rankIcon = <Medal className="text-amber-600 fill-amber-600/20" size={18} />;
 
-                          const owner = isZoneRanking ? (item.ownerId ? (users[item.ownerId] || currentUser) : null) : null;
+                          const owner = isZoneRanking ? ((item as any).ownerId ? (users[(item as any).ownerId] || currentUser) : null) : null;
                           const userBadge = !isZoneRanking && (item as any).badgeId ? badges.find(b => b.id === (item as any).badgeId) : null;
-                          const canClick = isZoneRanking ? !!item.ownerId : true;
+                          const canClick = isZoneRanking ? !!(item as any).ownerId : true;
 
                           const hasDecimals = heading.unit === 'KM' || heading.label === 'SALDO';
 
@@ -586,7 +586,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
                                 key={item.id} 
                                 onClick={() => {
                                     if (isZoneRanking) {
-                                        if (item.ownerId) setSelectedUserId(item.ownerId);
+                                        if ((item as any).ownerId) setSelectedUserId((item as any).ownerId);
                                     } else {
                                         setSelectedUserId(item.id);
                                     }
@@ -605,7 +605,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, zones, ba
                                         alt={item.name} 
                                         className={`w-8 h-8 md:w-12 md:h-12 rounded-lg md:rounded-full bg-gray-600 object-cover ring-1 md:ring-2 ring-gray-700/50 group-hover:ring-${isZoneRanking ? 'cyan' : 'emerald'}-500 transition-colors`} 
                                       />
-                                      {isZoneRanking && item.ownerId && <Crown size={10} className="absolute -top-1 -right-1 text-yellow-500 fill-yellow-500 bg-gray-900 rounded-full" />}
+                                      {isZoneRanking && (item as any).ownerId && <Crown size={10} className="absolute -top-1 -right-1 text-yellow-500 fill-yellow-500 bg-gray-900 rounded-full" />}
                                   </div>
                                   
                                   <div className="flex flex-col min-w-0">

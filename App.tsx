@@ -236,7 +236,7 @@ const AppContent: React.FC = () => {
         <>
           <OnboardingManager currentView={currentView} onNavigate={setCurrentView} />
 
-          <div className={`relative z-10 flex flex-col min-h-screen ${showNavbar && !isDashboard ? "pb-40 md:pb-0" : ""}`}>
+          <div className={`relative z-10 flex flex-col min-h-screen ${showNavbar && !isDashboard ? "pb-40 lg:pb-0" : ""}`}>
               {showNavbar && <Navbar currentView={currentView} onNavigate={setCurrentView} user={user} onLogout={gameState.logout} onOpenSync={() => setShowSyncModal(true)} />}
 
               <main className="flex-1 relative flex flex-col" role="main">
