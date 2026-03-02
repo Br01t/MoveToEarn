@@ -260,7 +260,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   return (
     <div 
       ref={containerRef}
-      className="relative w-full h-[calc(100vh-56px)] lg:h-[calc(100vh-64px)] overflow-hidden bg-transparent shadow-inner"
+      className="relative w-full h-[calc(100vh-56px)] lg:h-[calc(100vh-64px)] overflow-hidden bg-gray-950 shadow-inner"
     >
       <div id="dashboard-hud-balances">
         <DashboardHUD runBalance={user.runBalance} govBalance={user.govBalance} />

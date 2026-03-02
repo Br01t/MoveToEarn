@@ -125,7 +125,7 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
     <div 
       className={`fixed bottom-[130px] md:bottom-24 md:right-6 md:left-auto left-4 right-4 md:w-80 glass-panel-heavy rounded-2xl md:rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.9)] overflow-hidden animate-slide-up z-[60] max-h-[60vh] md:max-h-[75vh] flex flex-col border pointer-events-auto transition-all duration-500 ${
         isRipeForConquest ? 'border-yellow-500/50 animate-opportunity-pulse' : 
-        isTerritoryAtRisk ? 'border-red-500/50 animate-danger-pulse' : 
+        isTerritoryAtRisk ? 'border-slate-500/50 animate-danger-pulse' : 
         'border-white/20'
       }`}
       onPointerDown={stopEvent}
@@ -143,7 +143,7 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
         )}
 
         {isTerritoryAtRisk && (
-            <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-red-600 to-red-500 py-1 px-4 flex items-center justify-center gap-2 z-20 shadow-lg">
+            <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-slate-600 to-slate-500 py-1 px-4 flex items-center justify-center gap-2 z-20 shadow-lg">
                 <AlertCircle size={20} className="text-white animate-pulse" />
             </div>
         )}
@@ -203,7 +203,7 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
           onPointerDown={stopEvent}
         >
             {ownerDetails && (
-                <div className={`glass-panel p-3 rounded-xl flex items-center gap-3 shrink-0 border transition-colors ${isTerritoryAtRisk ? 'border-red-500/40 bg-red-950/20' : 'border-white/5'}`}>
+                <div className={`glass-panel p-3 rounded-xl flex items-center gap-3 shrink-0 border transition-colors ${isTerritoryAtRisk ? 'border-slate-500/40 bg-slate-950/20' : 'border-white/5'}`}>
                     <div className="relative shrink-0">
                         <img 
                             src={ownerDetails.avatar || `https://ui-avatars.com/api/?name=${ownerDetails.name}&background=10b981&color=fff`} 
@@ -217,7 +217,7 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
                     <div className="min-w-0">
                         <div className="text-xs text-gray-400 uppercase font-bold tracking-wider">{t('zone.owner_info')}</div>
                         <div className="flex items-center gap-2">
-                           <div className={`font-bold text-base truncate ${zone.ownerId === user.id ? (isTerritoryAtRisk ? 'text-red-400' : 'text-emerald-400') : 'text-white'}`}>
+                           <div className={`font-bold text-base truncate ${zone.ownerId === user.id ? (isTerritoryAtRisk ? 'text-slate-400' : 'text-emerald-400') : 'text-white'}`}>
                                 {ownerDetails.name} {zone.ownerId === user.id && t('zone.you')}
                            </div>
                            {ownerDetails.badge && (
@@ -239,7 +239,7 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
                 </div>
                 <div className="bg-black/30 p-2 rounded-lg border border-white/5 text-center backdrop-blur-sm">
                      <div className="text-xs text-gray-400 uppercase font-bold tracking-wider">{t('zone.status')}</div>
-                     <div className={`font-bold text-xs uppercase pt-1 tracking-wide ${isOwner ? (isTerritoryAtRisk ? 'text-red-500' : 'text-emerald-500') : 'text-red-500'}`}>
+                     <div className={`font-bold text-xs uppercase pt-1 tracking-wide ${isOwner ? (isTerritoryAtRisk ? 'text-slate-500' : 'text-emerald-500') : 'text-slate-500'}`}>
                          {isOwner ? t('zone.occupied') : t('zone.hostile')}
                      </div>
                 </div>
@@ -323,7 +323,7 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
            {isOwner ? (
                 <div className="flex flex-col gap-2">
                     {isTerritoryAtRisk && (
-                        <div className="bg-red-500/20 text-red-400 text-[10px] font-bold py-1 px-2 rounded mb-1 flex items-center justify-center gap-1 animate-pulse border border-red-500/30">
+                        <div className="bg-slate-500/20 text-slate-400 text-[10px] font-bold py-1 px-2 rounded mb-1 flex items-center justify-center gap-1 animate-pulse border border-slate-500/30">
                             <AlertTriangle size={20} />
                         </div>
                     )}
@@ -366,8 +366,8 @@ const ZoneDetails: React.FC<ZoneDetailsProps> = ({
                         </button>
                      </div>
                  ) : (
-                     <div className="bg-red-900/20 border border-red-500/30 p-3 rounded-lg text-center backdrop-blur-sm">
-                         <div className="text-red-400 font-bold text-xs uppercase mb-1 flex items-center justify-center gap-2 tracking-wider">
+                     <div className="bg-slate-900/20 border border-slate-500/30 p-3 rounded-lg text-center backdrop-blur-sm">
+                         <div className="text-slate-400 font-bold text-xs uppercase mb-1 flex items-center justify-center gap-2 tracking-wider">
                             <Lock size={12}/> {t('zone.locked')}
                          </div>
                          <p className="text-gray-400 text-xs leading-tight">

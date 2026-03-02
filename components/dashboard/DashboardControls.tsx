@@ -29,7 +29,7 @@ const DashboardControls: React.FC<DashboardControlsProps> = ({ onZoomIn, onZoomO
            {isLegendOpen && (
                <div className="absolute right-full mr-2 top-0 bg-gray-900/95 backdrop-blur-xl p-4 rounded-xl border border-gray-700 text-[10px] text-white flex flex-col gap-3 w-40 animate-fade-in z-50 shadow-2xl">
                     <span className="flex items-center gap-2"><div className="w-2.5 h-2.5 bg-emerald-400 rounded-sm shadow-[0_0_5px_#10b981]"></div> {t('dash.legend.my_zones')}</span>
-                    <span className="flex items-center gap-2"><div className="w-2.5 h-2.5 bg-red-500 rounded-sm shadow-[0_0_5px_#ef4444]"></div> {t('dash.legend.enemy')}</span>
+                    <span className="flex items-center gap-2"><div className="w-2.5 h-2.5 bg-slate-500 rounded-sm shadow-[0_0_5px_#64748b]"></div> {t('dash.legend.enemy')}</span>
                     <span className="flex items-center gap-2"><div className="w-2.5 h-2.5 bg-amber-400 rounded-sm shadow-[0_0_5px_#fbbf24]"></div> {t('dash.legend.boosted')}</span>
                     <span className="flex items-center gap-2"><div className="w-2.5 h-2.5 bg-cyan-400 rounded-sm shadow-[0_0_5px_#22d3ee]"></div> {t('dash.legend.shielded')}</span>
                     

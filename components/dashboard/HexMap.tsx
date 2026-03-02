@@ -326,12 +326,18 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
           </div>
       </div>
 
-      <svg ref={ref} width="100%" height="100%" className="touch-none select-none">
+      <svg ref={ref} width="100%" height="100%" className="absolute inset-0 z-10 touch-none select-none">
         <defs>
           <pattern id="tech-dots" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1" fill="rgba(255,255,255,0.15)" /></pattern>
           <filter id="glow-flight-strong" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="6" result="blur" /><feComposite in="SourceGraphic" in2="blur" operator="over" /></filter>
-          <radialGradient id="grad-my-zone" cx="50%" cy="50%" r="70%" fx="50%" fy="50%"><stop offset="40%" style={{ stopColor: '#059669', stopOpacity: 1 }} /><stop offset="100%" style={{ stopColor: '#064e3b', stopOpacity: 1 }} /></radialGradient>
-          <radialGradient id="grad-enemy-zone" cx="50%" cy="50%" r="70%" fx="50%" fy="50%"><stop offset="40%" style={{ stopColor: '#b91c1c', stopOpacity: 1 }} /><stop offset="100%" style={{ stopColor: '#450a0a', stopOpacity: 1 }} /></radialGradient>
+          <radialGradient id="grad-my-zone" cx="50%" cy="50%" r="100%" fx="50%" fy="50%">
+            <stop offset="0%" stopColor="#10b981" stopOpacity="1" />
+            <stop offset="100%" stopColor="#064e3b" stopOpacity="1" />
+          </radialGradient>
+          <radialGradient id="grad-enemy-zone" cx="50%" cy="50%" r="100%" fx="50%" fy="50%">
+            <stop offset="0%" stopColor="#64748b" stopOpacity="1" />
+            <stop offset="100%" stopColor="#1e293b" stopOpacity="1" />
+          </radialGradient>
           <clipPath id="hex-clip"><polygon points={getHexPoints()} /></clipPath>
         </defs>
 
@@ -371,7 +377,7 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
               const displayCity = city.length > 16 ? city.substring(0, 14) + '..' : city;
               const displayDetails = details.length > 22 ? details.substring(0, 20) + '..' : details;
               
-              let strokeColor = isMine ? '#34d399' : '#7f1d1d'; 
+              let strokeColor = isMine ? '#34d399' : '#475569'; 
               let strokeWidth = isMine ? 2 : 1;
               if (boosted) { strokeColor = '#fbbf24'; strokeWidth = 3; }
               else if (shielded) { strokeColor = '#06b6d4'; strokeWidth = 3; }
@@ -392,7 +398,10 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
                   transform={`translate(${pos.x},${pos.y})`}
                   onClick={(e) => { e.stopPropagation(); onZoneClick(zone); }}
                   className="transition-all duration-500"
-                  style={{ opacity: isMatch ? (dimMode ? 0.2 : 1) : 0.05, filter: dimMode ? 'grayscale(100%)' : 'none' }}
+                  style={{ 
+                    filter: !isMatch ? 'brightness(0.1) saturate(0)' : (dimMode ? 'grayscale(100%) brightness(0.3)' : 'none'),
+                    cursor: isMatch ? 'pointer' : 'default'
+                  }}
                 >
 
                   {/* {atRisk && !isSelected && (
@@ -415,7 +424,15 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
 
                   <polygon
                     points={getHexPoints()}
+                    fill="#000000"
+                    fillOpacity="1"
+                    pointerEvents="none"
+                  />
+                  
+                  <polygon
+                    points={getHexPoints()}
                     fill={getFillId(zone)}
+                    fillOpacity="1"
                     stroke={strokeColor}
                     strokeWidth={strokeWidth}
                     strokeLinejoin="round"
@@ -427,8 +444,7 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
                     <g clipPath="url(#hex-clip)"><rect x="-100" y="-100" width="200" height="20" fill="rgba(255,255,255,0.2)" className="scan-laser" style={{ filter: 'blur(8px)' }} /></g>
                   )}
 
-                  <polygon points={getHexPoints()} fill="url(#tech-dots)" opacity="0.3" pointerEvents="none" transform="scale(0.95)" />
-                  <polygon points={getHexPoints()} fill="none" stroke={innerStroke} strokeWidth={isInnerColored ? 6 : 3} opacity={isInnerColored ? 0.95 : 0.35} transform="scale(0.88)" className="inner-glow-path" style={{ filter: isInnerColored ? `drop-shadow(0 0 12px ${innerStroke})` : 'none' }} />
+                  <polygon points={getHexPoints()} fill="none" stroke={innerStroke} strokeWidth={isInnerColored ? 6 : 3} strokeOpacity={isInnerColored ? 1 : 0.5} transform="scale(0.88)" className="inner-glow-path" style={{ filter: isInnerColored ? `drop-shadow(0 0 12px ${innerStroke})` : 'none' }} />
                   
                   <g pointerEvents="none">
                       <text 
@@ -442,9 +458,9 @@ const HexMapComponent = forwardRef<SVGSVGElement, HexMapProps>(({
 
                       {!dimMode && (
                         <g transform="translate(-40, -5)">
-                            <rect x="0" y="0" width="80" height="44" rx="8" fill="rgba(0,0,0,0.7)" stroke={isMine ? 'rgba(52, 211, 153, 0.6)' : 'rgba(239, 68, 68, 0.6)'} strokeWidth="1.5" />
+                            <rect x="0" y="0" width="80" height="44" rx="8" fill="rgba(0,0,0,0.7)" stroke={isMine ? 'rgba(52, 211, 153, 0.6)' : 'rgba(148, 163, 184, 0.6)'} strokeWidth="1.5" />
                             <text x="40" y="16" textAnchor="middle" fill="rgba(200, 210, 255, 0.7)" fontSize="14" fontWeight="bold" style={{ fontFamily: 'monospace' }}>{(zone.totalKm || 0).toFixed(1)} km</text>
-                            <text x="40" y="34" textAnchor="middle" fill={isMine ? '#34d399' : '#fca5a5'} fontSize="12" fontWeight="bold" style={{ fontFamily: 'monospace', textShadow: '0 1px 2px black' }}>{(zone.interestPool || 0).toFixed(2)}</text>
+                            <text x="40" y="34" textAnchor="middle" fill={isMine ? '#34d399' : '#cbd5e1'} fontSize="12" fontWeight="bold" style={{ fontFamily: 'monospace', textShadow: '0 1px 2px black' }}>{(zone.interestPool || 0).toFixed(2)}</text>
                         </g>
                       )}
 

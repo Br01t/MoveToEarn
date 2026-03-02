@@ -93,7 +93,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
                   <div className="flex gap-1">
                       <button onClick={() => setFilterMode('ALL')} className={`flex-1 py-1.5 text-[10px] font-bold rounded border ${filterMode === 'ALL' ? 'bg-gray-600 text-white border-gray-500' : 'bg-black/30 text-gray-400 border-transparent hover:border-gray-600'}`}>{t('dash.filter.all')}</button>
                       <button onClick={() => setFilterMode('MINE')} className={`flex-1 py-1.5 text-[10px] font-bold rounded border ${filterMode === 'MINE' ? 'bg-emerald-900/50 text-emerald-400 border-emerald-500/50' : 'bg-black/30 text-gray-400 border-transparent hover:border-emerald-500/30'}`}>{t('dash.filter.mine')}</button>
-                      <button onClick={() => setFilterMode('ENEMY')} className={`flex-1 py-1.5 text-[10px] font-bold rounded border ${filterMode === 'ENEMY' ? 'bg-red-900/50 text-red-400 border-red-500/50' : 'bg-black/30 text-gray-400 border-transparent hover:border-red-500/30'}`}>{t('dash.filter.enemy')}</button>
+                      <button onClick={() => setFilterMode('ENEMY')} className={`flex-1 py-1.5 text-[10px] font-bold rounded border ${filterMode === 'ENEMY' ? 'bg-slate-800/50 text-slate-400 border-slate-500/50' : 'bg-black/30 text-gray-400 border-transparent hover:border-slate-500/30'}`}>{t('dash.filter.enemy')}</button>
                   </div>
               </div>
           )}
