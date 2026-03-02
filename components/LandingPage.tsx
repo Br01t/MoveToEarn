@@ -94,7 +94,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
         </div>
       </header>
 
-      <section className="relative min-h-screen flex flex-col items-center justify-center px-4 pt-20 overflow-hidden">
+      <section className="relative min-h-screen flex flex-col items-center justify-center px-4 overflow-hidden">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full max-w-4xl max-h-4xl bg-emerald-500/5 blur-[120px] rounded-full pointer-events-none" />
         
         <motion.div 
