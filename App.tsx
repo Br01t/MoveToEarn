@@ -96,6 +96,10 @@ const AppContent: React.FC = () => {
 
   useEffect(() => {
     if (!loading) {
+      // Ignore static files
+      if (location.pathname.includes('.') || location.pathname.endsWith('.xml') || location.pathname.endsWith('.txt')) {
+        return;
+      }
       const targetView = pathToView(location.pathname, !!user);
       if (targetView !== currentView) {
         setCurrentView(targetView);
@@ -105,6 +109,10 @@ const AppContent: React.FC = () => {
 
   useEffect(() => {
     if (!loading) {
+      // Ignore static files
+      if (location.pathname.includes('.') || location.pathname.endsWith('.xml') || location.pathname.endsWith('.txt')) {
+        return;
+      }
       const targetPath = viewToPath(currentView);
       if (location.pathname !== targetPath) {
         navigate(targetPath);
@@ -271,8 +279,8 @@ const AppContent: React.FC = () => {
   return (
     <div className="min-h-screen font-sans flex flex-col relative text-slate-200">
       <Helmet>
-        <title>ZoneRun - Move-to-Earn Strategy Game</title>
-        <meta name="description" content="Play ZoneRun, the first real-world map-based strategy game where you run, conquer territories, and earn rewards." />
+        <title>ZoneRun</title>
+        <meta name="description" content="Corri, conquista territori e guadagna premi in ZoneRun, il primo gioco di strategia basato sulla mappa del mondo reale." />
       </Helmet>
       <div className="fixed inset-0 z-[-1] bg-gray-950 pointer-events-none" aria-hidden="true">
           <div className="absolute inset-0 bg-gradient-to-b from-gray-900 via-gray-950 to-black"></div>
