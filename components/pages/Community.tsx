@@ -1,8 +1,15 @@
 import React from 'react';
-import { Users, MessageCircle, Twitter, Instagram, Send, Mail, Copy, Check, ExternalLink } from 'lucide-react';
+import { Helmet } from 'react-helmet-async';
+import { Users, MessageCircle, Twitter, Instagram, Send, Mail, Copy, Check, ExternalLink, ArrowLeft } from 'lucide-react';
 import { useLanguage } from '../../LanguageContext';
+import { ViewState } from '../../types';
 
-const Community: React.FC = () => {
+interface CommunityProps {
+  onBack?: () => void;
+  isAuthenticated?: boolean;
+}
+
+const Community: React.FC<CommunityProps> = ({ onBack, isAuthenticated = false }) => {
   const { t } = useLanguage();
   const [copied, setCopied] = React.useState(false);
   const email = 'zonerun.team@gmail.com';
@@ -31,7 +38,25 @@ const Community: React.FC = () => {
   );
 
   return (
-    <div className="max-w-5xl mx-auto p-4 md:p-8 space-y-12 pb-24">
+    <div className="max-w-5xl mx-auto p-4 md:p-8 space-y-12 pb-24 pt-24 lg:pt-32">
+      <Helmet>
+        <title>{t('page.comm.title')} | ZoneRun Community</title>
+        <meta name="description" content={t('page.comm.subtitle')} />
+      </Helmet>
+
+      {/* Navigation */}
+      <div className="flex justify-start items-center mb-8">
+          {onBack && (
+            <button 
+              onClick={onBack}
+              className="group flex items-center gap-2 text-gray-400 hover:text-white transition-colors bg-gray-900/80 px-4 py-2 rounded-lg border border-gray-700 hover:border-emerald-500 backdrop-blur-sm"
+            >
+              <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" /> 
+              <span className="font-bold text-sm">{t('rules.back')}</span>
+            </button>
+          )}
+      </div>
+
       <div className="text-center space-y-6 mb-16">
         <div className="inline-flex p-4 glass-panel rounded-full mb-2 shadow-[0_0_20px_rgba(16,185,129,0.1)]">
             <Users className="text-emerald-400" size={48} />

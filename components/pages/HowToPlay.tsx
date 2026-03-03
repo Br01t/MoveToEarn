@@ -1,7 +1,6 @@
 import React from 'react';
 import { ArrowLeft, Download, Monitor, Smartphone, FileText, Database, CheckCircle, ExternalLink, Map, Activity, Zap, Apple, Watch } from 'lucide-react'; 
 import { useLanguage } from '../../LanguageContext';
-import LanguageDropdown from '../ui/LanguageDropdown';
 
 interface HowToPlayProps {
   onBack: () => void;
@@ -142,16 +141,15 @@ const HowToPlay: React.FC<HowToPlayProps> = ({ onBack, isAuthenticated = false }
   const { t, tRich } = useLanguage();
 
   return (
-    <div className="max-w-5xl mx-auto p-4 md:p-8 space-y-8 pb-24">
-      <div className="flex justify-between items-center mb-4">
+    <div className="max-w-5xl mx-auto p-4 md:p-8 space-y-8 pb-24 pt-24 lg:pt-32">
+      <div className="flex justify-start items-center mb-4">
           <button 
             onClick={onBack}
-            className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors group"
+            className="group flex items-center gap-2 text-gray-400 hover:text-white transition-colors bg-gray-900/80 px-4 py-2 rounded-lg border border-gray-700 hover:border-emerald-500 backdrop-blur-sm"
           >
-            <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" /> {t('htp.back')}
+            <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" /> 
+            <span className="font-bold text-sm">{t('rules.back')}</span>
           </button>
-
-          {!isAuthenticated && <LanguageDropdown align="right" />}
       </div>
 
       <div className="space-y-4">

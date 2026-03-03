@@ -1,11 +1,11 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { Activity, Shield, Coins, TrendingUp, Terminal, BookOpen, Zap, Volume2, VolumeX, Users, ArrowRight, Globe, Trophy, Cpu, X } from 'lucide-react';
+import { Helmet } from 'react-helmet-async';
+import { Activity, Shield, Coins, TrendingUp, Terminal, BookOpen, Zap, Users, ArrowRight, Globe, Trophy, Cpu, X } from 'lucide-react';
 import { ViewState } from '../types';
 import { useLanguage } from '../LanguageContext';
 import { useGlobalUI } from '../contexts/GlobalUIContext';
 import { NAVBAR_LOGO_URL } from '../constants';
-import LanguageDropdown from './ui/LanguageDropdown';
 
 interface LandingPageProps {
   onLogin: () => void;
@@ -14,7 +14,7 @@ interface LandingPageProps {
 
 const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
   const { t, tRich } = useLanguage();
-  const { isMuted, toggleMute, playSound } = useGlobalUI();
+  const { playSound } = useGlobalUI();
   const [activeFeature, setActiveFeature] = React.useState<string | null>(null);
 
   const handleActionClick = (action: () => void) => {
@@ -46,6 +46,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
 
   return (
     <div className="relative w-full bg-black flex flex-col overflow-x-hidden font-sans selection:bg-emerald-500 selection:text-black">
+      <Helmet>
+        <title>ZoneRun - Move-to-Earn Strategy Game</title>
+        <meta name="description" content="Run, conquer territories and earn rewards in ZoneRun, the first real-world map-based strategy game. Join the global community of runners." />
+      </Helmet>
       
       <div className="fixed inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-gray-900 via-black to-black z-0" />
       <div 
@@ -56,52 +60,14 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
         }}
       />
       
-      <header className="fixed top-0 left-0 right-0 z-[100] px-4 lg:px-6 py-3 lg:py-4 backdrop-blur-md bg-black/40 border-b border-white/5">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <motion.div 
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="flex items-center gap-2 lg:gap-3 cursor-pointer group" 
-            onClick={() => handleNavAction('LANDING')}
-          >
-            <div className="relative">
-               <div className="absolute inset-0 bg-emerald-500 blur-md opacity-20 group-hover:opacity-40 transition-opacity rounded-lg"></div>
-               <div className="glass-panel p-1 rounded-xl border-white/10 group-hover:border-emerald-500/50 transition-colors relative z-10">
-                  <img src={NAVBAR_LOGO_URL} alt="ZoneRun Logo" className="w-8 h-8 lg:w-10 lg:h-10 object-contain" referrerPolicy="no-referrer" />
-               </div>
-            </div>
-            <div className="text-lg lg:text-xl font-black text-white uppercase tracking-widest">
-              ZONE<span className="text-emerald-400">RUN</span>
-            </div>
-          </motion.div>
-          
-          <div className="flex items-center gap-2 lg:gap-4">
-              <LanguageDropdown align="right" />
-              <button
-                  onClick={toggleMute}
-                  className={`p-1.5 lg:p-2 rounded-xl glass-panel transition-all border ${isMuted ? 'text-red-400 border-red-500/30 bg-red-900/10' : 'text-gray-400 border-white/10 hover:text-white hover:border-white/30'}`}
-              >
-                  {isMuted ? <VolumeX size={16} className="lg:hidden" /> : <Volume2 size={16} className="lg:hidden" />}
-                  {isMuted ? <VolumeX size={18} className="hidden lg:block" /> : <Volume2 size={18} className="hidden lg:block" />}
-              </button>
-              <button 
-                onClick={() => handleActionClick(onLogin)}
-                className="hidden sm:block px-4 lg:px-5 py-2 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-lg transition-all text-xs lg:text-sm uppercase tracking-wider"
-              >
-                {t('auth.login')}
-              </button>
-          </div>
-        </div>
-      </header>
-
-      <section className="relative min-h-screen flex flex-col items-center justify-center px-4 overflow-hidden">
+      <section className="relative min-h-screen flex flex-col items-center justify-start px-4 overflow-hidden pt-24 lg:pt-28">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full max-w-4xl max-h-4xl bg-emerald-500/5 blur-[120px] rounded-full pointer-events-none" />
         
         <motion.div 
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8 }}
-          className="relative z-10 text-center space-y-8 max-w-4xl"
+          className="relative z-10 text-center space-y-6 max-w-4xl pt-20"
         >
 
           <h1 className="text-4xl sm:text-6xl lg:text-8xl font-black text-white tracking-tighter uppercase leading-[0.9] lg:leading-[0.85]">
@@ -115,7 +81,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
             {tRich('landing.subtitle')}
           </p>
           
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -151,13 +117,13 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.5, duration: 1 }}
-          className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-gray-500"
+          className="absolute bottom-4 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-gray-500"
         >
           <span className="text-[10px] uppercase tracking-[0.3em] font-bold">{t('landing.scroll_hint')}</span>
           <motion.div 
-            animate={{ y: [0, 10, 0] }}
+            animate={{ y: [0, 5, 0] }}
             transition={{ repeat: Infinity, duration: 2 }}
-            className="w-px h-12 bg-gradient-to-b from-emerald-500 to-transparent"
+            className="w-px h-8 bg-gradient-to-b from-emerald-500 to-transparent"
           />
         </motion.div>
       </section>

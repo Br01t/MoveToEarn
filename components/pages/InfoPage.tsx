@@ -142,7 +142,7 @@ const InfoPage: React.FC<InfoPageProps> = ({
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-5xl mx-auto px-6 py-20 pb-40"
+        className="max-w-5xl mx-auto px-6 pt-32 pb-40"
       >
         <div className="text-center mb-24">
           <h1 className="text-4xl sm:text-6xl md:text-8xl font-black text-white uppercase tracking-tighter leading-[0.9] mb-8">

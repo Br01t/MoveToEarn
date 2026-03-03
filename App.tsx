@@ -1,13 +1,16 @@
 import React, { useState, useEffect, useRef, Suspense } from "react";
 import Navbar from "./components/Navbar";
+import PublicNavbar from "./components/PublicNavbar";
 import LandingPage from "./components/LandingPage";
 import Dashboard from "./components/Dashboard";
 import { ViewState, Zone } from "./types";
 import { Layers, CheckCircle, AlertTriangle, X, ShoppingBag, Loader2 } from "lucide-react";
+import { BrowserRouter, useNavigate, useLocation } from 'react-router-dom';
 import { LanguageProvider, useLanguage } from "./LanguageContext";
 import { GlobalUIProvider, useGlobalUI } from "./contexts/GlobalUIContext";
 import { PrivacyProvider } from "./contexts/PrivacyContext";
 import { OnboardingProvider, useOnboarding } from "./contexts/OnboardingContext";
+import { HelmetProvider, Helmet } from 'react-helmet-async';
 import OnboardingManager from "./components/OnboardingManager";
 import { MINT_COST, MINT_REWARD_GOV, CONQUEST_COST } from "./constants";
 
@@ -55,6 +58,8 @@ const AppContent: React.FC = () => {
   const { t } = useLanguage();
   const { showToast, playSound } = useGlobalUI(); 
   const { startTutorial, isActive: isTutorialActive } = useOnboarding();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [currentView, setCurrentView] = useState<ViewState>("LANDING");
   const [showSyncModal, setShowSyncModal] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -70,6 +75,42 @@ const AppContent: React.FC = () => {
     missions, badges, bugReports, suggestions, leaderboards,
     levels, allUsers, isSyncing, syncError, refreshData, ...gameState
   } = useGameState();
+
+  const viewToPath = (view: ViewState): string => {
+    if (view === "LANDING" || view === "DASHBOARD") return "/";
+    return `/${view.toLowerCase().replace(/_/g, '-')}`;
+  };
+
+  const pathToView = (path: string, isAuthenticated: boolean): ViewState => {
+    const cleanPath = path === "/" || path === "" ? "/" : path;
+    if (cleanPath === "/") return isAuthenticated ? "DASHBOARD" : "LANDING";
+    
+    const viewStr = cleanPath.substring(1).toUpperCase().replace(/-/g, '_');
+    const validViews: ViewState[] = ["LANDING", "DASHBOARD", "MARKETPLACE", "WALLET", "INVENTORY", "LEADERBOARD", "PROFILE", "ADMIN", "MISSIONS", "RULES", "WHITEPAPER", "HOW_TO_PLAY", "PRIVACY", "TERMS", "COMMUNITY", "REPORT_BUG", "SUGGESTION", "INFO"];
+    
+    if (validViews.includes(viewStr as ViewState)) {
+        return viewStr as ViewState;
+    }
+    return isAuthenticated ? "DASHBOARD" : "LANDING";
+  };
+
+  useEffect(() => {
+    if (!loading) {
+      const targetView = pathToView(location.pathname, !!user);
+      if (targetView !== currentView) {
+        setCurrentView(targetView);
+      }
+    }
+  }, [location.pathname, loading, !!user]);
+
+  useEffect(() => {
+    if (!loading) {
+      const targetPath = viewToPath(currentView);
+      if (location.pathname !== targetPath) {
+        navigate(targetPath);
+      }
+    }
+  }, [currentView, loading]);
 
   const runWorkflow = useRunWorkflow({ 
       user, zones, setUser, setZones, 
@@ -180,6 +221,10 @@ const AppContent: React.FC = () => {
     }
   }, [user, loading, currentView, recoveryMode]);
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [currentView]);
+
   if (loading) return <LoadingFallback />;
 
   const isLanding = currentView === "LANDING";
@@ -187,7 +232,6 @@ const AppContent: React.FC = () => {
   const isDashboard = currentView === "DASHBOARD";
   const isInstallable = !!deferredPrompt || isIOS;
 
-  // Force PWA Check
   const shouldForcePWA = user && isMobile && !isStandalone;
 
   const renderCurrentModal = () => {
@@ -226,6 +270,10 @@ const AppContent: React.FC = () => {
 
   return (
     <div className="min-h-screen font-sans flex flex-col relative text-slate-200">
+      <Helmet>
+        <title>ZoneRun - Move-to-Earn Strategy Game</title>
+        <meta name="description" content="Play ZoneRun, the first real-world map-based strategy game where you run, conquer territories, and earn rewards." />
+      </Helmet>
       <div className="fixed inset-0 z-[-1] bg-gray-950 pointer-events-none" aria-hidden="true">
           <div className="absolute inset-0 bg-gradient-to-b from-gray-900 via-gray-950 to-black"></div>
       </div>
@@ -237,7 +285,11 @@ const AppContent: React.FC = () => {
           <OnboardingManager currentView={currentView} onNavigate={setCurrentView} />
 
           <div className={`relative z-10 flex flex-col min-h-screen ${showNavbar && !isDashboard ? "pb-40 lg:pb-0" : ""}`}>
-              {showNavbar && <Navbar currentView={currentView} onNavigate={setCurrentView} user={user} onLogout={gameState.logout} onOpenSync={() => setShowSyncModal(true)} />}
+              {user ? (
+                <Navbar currentView={currentView} onNavigate={setCurrentView} user={user} onLogout={gameState.logout} onOpenSync={() => setShowSyncModal(true)} />
+              ) : (
+                <PublicNavbar onLogin={() => setShowLoginModal(true)} onNavigate={setCurrentView} />
+              )}
 
               <main className="flex-1 relative flex flex-col" role="main">
                 <Suspense fallback={null}>
@@ -265,12 +317,12 @@ const AppContent: React.FC = () => {
                     </Suspense>
                   )}
                   <Suspense fallback={<LoadingFallback />}>
-                    {currentView === "RULES" && <GameRules onBack={() => setCurrentView(user ? "DASHBOARD" : "LANDING")} onNavigate={setCurrentView} isAuthenticated={!!user} />}
-                    {currentView === "WHITEPAPER" && <Whitepaper onBack={() => setCurrentView(user ? "DASHBOARD" : "LANDING")} onNavigate={setCurrentView} isAuthenticated={!!user} />}
-                    {currentView === "HOW_TO_PLAY" && <HowToPlay onBack={() => setCurrentView(user ? "DASHBOARD" : "LANDING")} isAuthenticated={!!user} />}
-                    {currentView === "PRIVACY" && <Privacy onNavigate={setCurrentView} />}
-                    {currentView === "TERMS" && <Terms onNavigate={setCurrentView} />}
-                    {currentView === "COMMUNITY" && <Community />}
+                    {currentView === "RULES" && <GameRules onBack={() => setCurrentView(user ? "INFO" : "LANDING")} onNavigate={setCurrentView} isAuthenticated={!!user} />}
+                    {currentView === "WHITEPAPER" && <Whitepaper onBack={() => setCurrentView(user ? "INFO" : "LANDING")} onNavigate={setCurrentView} isAuthenticated={!!user} />}
+                    {currentView === "HOW_TO_PLAY" && <HowToPlay onBack={() => setCurrentView(user ? "INFO" : "LANDING")} isAuthenticated={!!user} />}
+                    {currentView === "PRIVACY" && <Privacy onBack={() => setCurrentView(user ? "INFO" : "LANDING")} onNavigate={setCurrentView} />}
+                    {currentView === "TERMS" && <Terms onBack={() => setCurrentView(user ? "INFO" : "LANDING")} onNavigate={setCurrentView} />}
+                    {currentView === "COMMUNITY" && <Community onBack={() => setCurrentView(user ? "INFO" : "LANDING")} isAuthenticated={!!user} />}
                   </Suspense>
                 </div>
               </main>
@@ -297,15 +349,19 @@ const AppContent: React.FC = () => {
 };
 
 const App: React.FC = () => (
-    <LanguageProvider>
-      <GlobalUIProvider>
-        <PrivacyProvider>
-          <OnboardingProvider>
-            <AppContent />
-          </OnboardingProvider>
-        </PrivacyProvider>
-      </GlobalUIProvider>
-    </LanguageProvider>
+    <BrowserRouter>
+      <HelmetProvider>
+          <LanguageProvider>
+            <GlobalUIProvider>
+              <PrivacyProvider>
+                <OnboardingProvider>
+                  <AppContent />
+                </OnboardingProvider>
+              </PrivacyProvider>
+            </GlobalUIProvider>
+          </LanguageProvider>
+      </HelmetProvider>
+    </BrowserRouter>
 );
 
 export default App;

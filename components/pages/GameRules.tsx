@@ -1,8 +1,8 @@
 import React from 'react';
+import { Helmet } from 'react-helmet-async';
 import { ArrowLeft, Terminal, Map as MapIcon, ShoppingBag, Package, Target, Trophy, Wallet, User as UserIcon, BookOpen, Activity, Swords, Zap, Coins, Download } from 'lucide-react';
 import { ViewState } from '../../types';
 import { useLanguage } from '../../LanguageContext';
-import LanguageDropdown from '../ui/LanguageDropdown';
 
 interface GameRulesProps {
   onBack?: () => void;
@@ -33,6 +33,10 @@ export const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate, isAuth
 
   return (
     <div className="min-h-screen bg-gray-950 relative overflow-hidden pb-24 font-sans selection:bg-emerald-500 selection:text-black">
+      <Helmet>
+        <title>{t('rules.title')} | ZoneRun</title>
+        <meta name="description" content={t('rules.subtitle')} />
+      </Helmet>
       
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-gray-900 via-gray-950 to-black z-0" />
       
@@ -48,7 +52,7 @@ export const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate, isAuth
       <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-emerald-500/10 rounded-full blur-[100px] opacity-30 pointer-events-none" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-cyan-600/10 rounded-full blur-[100px] opacity-30 pointer-events-none" />
       
-      <div className="max-w-5xl mx-auto p-6 md:p-8 relative z-10">
+      <div className="max-w-5xl mx-auto p-6 md:p-8 relative z-10 pt-24 lg:pt-32">
         
         <div className="mb-12 flex justify-between items-center">
             {onBack ? (
@@ -60,8 +64,6 @@ export const GameRules: React.FC<GameRulesProps> = ({ onBack, onNavigate, isAuth
                 <span className="font-bold text-sm">{t('rules.back')}</span>
               </button>
             ) : <div></div>}
-
-            {!isAuthenticated && <LanguageDropdown align="right" />}
         </div>
 
         <div className="text-center mb-16">

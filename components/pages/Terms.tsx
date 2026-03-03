@@ -1,31 +1,42 @@
-
 import React from 'react';
-import { FileText, ShieldAlert, Activity, AlertTriangle, Scale, Lock, Users, Ban } from 'lucide-react';
+import { FileText, ShieldAlert, Activity, AlertTriangle, Scale, Lock, Users, Ban, ArrowLeft } from 'lucide-react';
 import { useLanguage } from '../../LanguageContext';
 import { ViewState } from '../../types';
 
 interface TermsProps {
+  onBack?: () => void;
   onNavigate?: (view: ViewState) => void;
 }
 
-const Terms: React.FC<TermsProps> = ({ onNavigate }) => {
+const Section = ({ title, icon: Icon, children }: React.PropsWithChildren<{ title: string; icon: any }>) => (
+  <div className="border-b border-gray-700/50 pb-8 last:border-0">
+    <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+      <Icon className="text-emerald-500" size={24} /> {title}
+    </h3>
+    <div className="text-gray-400 text-sm leading-relaxed space-y-4 text-justify">
+      {children}
+    </div>
+  </div>
+);
+
+const Terms: React.FC<TermsProps> = ({ onBack, onNavigate }) => {
   const { t, tRich } = useLanguage();
 
-  const Section = ({ title, icon: Icon, children }: { title: string; icon: any; children: React.ReactNode }) => (
-    <div className="border-b border-gray-700/50 pb-8 last:border-0">
-      <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-        <Icon className="text-emerald-500" size={24} /> {title}
-      </h3>
-      <div className="text-gray-400 text-sm leading-relaxed space-y-4 text-justify">
-        {children}
-      </div>
-    </div>
-  );
-
   return (
-    <div className="max-w-5xl mx-auto p-4 md:p-8 space-y-8 pb-24">
+    <div className="max-w-5xl mx-auto p-4 md:p-8 space-y-8 pb-24 pt-24 lg:pt-32">
       
-      {/* Header */}
+      <div className="flex justify-start items-center mb-4">
+          {onBack && (
+            <button 
+              onClick={onBack}
+              className="group flex items-center gap-2 text-gray-400 hover:text-white transition-colors bg-gray-900/80 px-4 py-2 rounded-lg border border-gray-700 hover:border-emerald-500 backdrop-blur-sm"
+            >
+              <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" /> 
+              <span className="font-bold text-sm">{t('rules.back')}</span>
+            </button>
+          )}
+      </div>
+
       <div className="text-center space-y-4 mb-12">
         <div className="inline-flex p-4 glass-panel rounded-full mb-2">
             <FileText className="text-emerald-400" size={48} />
@@ -33,10 +44,9 @@ const Terms: React.FC<TermsProps> = ({ onNavigate }) => {
         <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight uppercase">
           {t('page.terms.title')}
         </h1>
-        <p className="text-gray-500">{t('page.terms.last_updated')}: <span className="text-emerald-400 font-mono">December 1, 2025</span></p>
+        <p className="text-gray-500">{t('page.terms.last_updated')}: <span className="text-emerald-400 font-mono">January 15, 2025</span></p>
       </div>
 
-      {/* Critical Disclaimer Banner */}
       <div className="bg-red-900/20 border border-red-500/50 p-6 rounded-2xl flex items-start gap-4 backdrop-blur-sm">
           <AlertTriangle className="text-red-500 shrink-0 mt-1" size={24} />
           <div>
@@ -47,7 +57,6 @@ const Terms: React.FC<TermsProps> = ({ onNavigate }) => {
           </div>
       </div>
 
-      {/* Main Content */}
       <div className="glass-panel rounded-2xl p-8 space-y-8 shadow-2xl">
         
         <Section title={t('page.terms.sec1.title')} icon={Scale}>

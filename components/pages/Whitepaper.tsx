@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { 
   ArrowLeft, Scroll, Globe, Target, Scale, Activity, Map as MapIcon, 
   RefreshCw, Award, Flame, Menu, X, Terminal, Cpu, Layers, MousePointerClick,
-  Download, FileDown, Info, Milestone, Zap, ShieldAlert, Crosshair
+  Download, FileDown, Info, Milestone, Zap, ShieldAlert, Crosshair, ChevronRight
 } from 'lucide-react';
 import { ViewState } from '../../types';
 import { useLanguage } from '../../LanguageContext';
-import LanguageDropdown from '../ui/LanguageDropdown';
 
 interface WhitepaperProps {
   onBack?: () => void;
@@ -61,33 +61,62 @@ export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAu
 
   return (
     <div className="min-h-screen bg-gray-950 text-gray-300 font-sans selection:bg-emerald-500 selection:text-black">
+      <Helmet>
+        <title>Whitepaper | ZoneRun Protocol</title>
+        <meta name="description" content="Technical and philosophical documentation of the ZoneRun Protocol. Discover the tokenomics, game economy, and long-term vision." />
+      </Helmet>
       
-      <header className={`fixed left-0 right-0 h-16 bg-gray-900/90 backdrop-blur-md border-b border-gray-800 z-40 flex items-center justify-between px-4 md:px-8 transition-all duration-300 ${isAuthenticated ? 'top-16' : 'top-0'}`}>
-        <div className="flex items-center gap-4">
-          {onBack && (
-            <button onClick={onBack} className="p-2 hover:bg-gray-800 rounded-lg transition-colors text-gray-400 hover:text-white">
-              <ArrowLeft size={20} />
+      {isAuthenticated && (
+        <header className={`fixed left-0 right-0 h-16 bg-gray-900/90 backdrop-blur-md border-b border-gray-800 z-40 flex items-center justify-between px-4 md:px-8 transition-all duration-300 top-16`}>
+          <div className="flex items-center gap-4">
+            {onBack && (
+              <button onClick={onBack} className="p-2 hover:bg-gray-800 rounded-lg transition-colors text-gray-400 hover:text-white">
+                <ArrowLeft size={20} />
+              </button>
+            )}
+            <span className="font-bold text-white tracking-wider flex items-center gap-2">
+              <Scroll size={20} className="text-emerald-400" /> <span className="hidden md:inline">ZoneRun Protocol</span> Whitepaper
+            </span>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <button 
+              className="md:hidden p-2 text-white"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          </div>
+        </header>
+      )}
+
+      <div className={`pb-20 max-w-7xl mx-auto flex flex-col md:flex-row gap-8 px-4 md:px-8 transition-all duration-300 ${isAuthenticated ? 'pt-36' : 'pt-32'}`}>
+        
+        {!isAuthenticated && (
+          <div className="md:hidden mb-4">
+            <button 
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="w-full flex items-center justify-between p-4 glass-panel rounded-xl border-emerald-500/20 text-emerald-400 font-bold"
+            >
+              <div className="flex items-center gap-2">
+                <Menu size={20} />
+                <span>{t('whitepaper.index') || 'Index'}</span>
+              </div>
+              <ChevronRight className={`transition-transform ${isMobileMenuOpen ? 'rotate-90' : ''}`} />
+            </button>
+          </div>
+        )}
+
+        <aside className={`${isMobileMenuOpen ? 'block' : 'hidden'} md:block w-full md:w-64 shrink-0 h-auto md:h-[calc(100vh-8rem)] overflow-y-auto pr-4 border-r border-gray-800 sticky transition-all duration-300 ${isAuthenticated ? 'top-40' : 'top-24'}`}>
+          {!isAuthenticated && onBack && (
+            <button 
+              onClick={onBack}
+              className="group flex items-center gap-2 text-gray-400 hover:text-white transition-colors bg-gray-900/80 px-4 py-2 rounded-lg border border-gray-700 hover:border-emerald-500 backdrop-blur-sm mb-6 w-full"
+            >
+              <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" /> 
+              <span className="font-bold text-sm">{t('rules.back')}</span>
             </button>
           )}
-          <span className="font-bold text-white tracking-wider flex items-center gap-2">
-            <Scroll size={20} className="text-emerald-400" /> <span className="hidden md:inline">ZoneRun Protocol</span> Whitepaper
-          </span>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          {!isAuthenticated && <LanguageDropdown align="right" />}
-          <button 
-            className="md:hidden p-2 text-white"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          >
-            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
-        </div>
-      </header>
-
-      <div className={`pb-20 max-w-7xl mx-auto flex flex-col md:flex-row gap-8 px-4 md:px-8 transition-all duration-300 ${isAuthenticated ? 'pt-36' : 'pt-20'}`}>
-        
-        <aside className={`hidden md:block w-64 shrink-0 h-[calc(100vh-8rem)] overflow-y-auto pr-4 border-r border-gray-800 sticky transition-all duration-300 ${isAuthenticated ? 'top-40' : 'top-24'}`}>
           <nav className="space-y-1">
             {sections.map((section) => (
               <button
@@ -421,7 +450,7 @@ export const Whitepaper: React.FC<WhitepaperProps> = ({ onBack, onNavigate, isAu
                 </p>
             </div>
 
-            <p className="text-gray-400 mb-4">Example.</p>
+            <p className="text-gray-400 mb-4">Esempio.</p>
             <div className="space-y-4 text-sm text-gray-400">
                 <div className="flex justify-between items-center bg-gray-900 p-3 rounded-lg border border-gray-800">
                     <span>{t('wp.missions.first_zone')}</span>
