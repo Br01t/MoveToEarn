@@ -13,14 +13,17 @@ async function startServer() {
   // 1. Servire esplicitamente i file statici dalla cartella public PRIMA del fallback SPA
   const publicPath = path.join(__dirname, "public");
   
-  // Rotte esplicite per i file SEO con Content-Type forzato
+  // Rotte esplicite per i file SEO con Content-Type forzato e permessi ampi
   app.get("/sitemap.xml", (req, res) => {
     res.header("Content-Type", "application/xml");
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("X-Content-Type-Options", "nosniff");
     res.sendFile(path.join(publicPath, "sitemap.xml"));
   });
 
   app.get("/robots.txt", (req, res) => {
     res.header("Content-Type", "text/plain");
+    res.header("Access-Control-Allow-Origin", "*");
     res.sendFile(path.join(publicPath, "robots.txt"));
   });
 
