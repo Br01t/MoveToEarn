@@ -177,19 +177,55 @@ export const insertZoneAndShift = (
     let targetY = closest.zone.y + offset.y;
 
     // 5. Gestione inserimento con spostamento (Shifting)
-    // Se la posizione ideale è occupata, "spingiamo" la catena di esagoni in quella direzione
-    // per fare spazio alla nuova zona al centro (come richiesto dall'utente).
+    // Logica di "Repulsione Elastica":
+    // Per mantenere i cluster separati (non devono mai toccarsi se di nazioni diverse),
+    // controlliamo non solo l'occupazione della cella target, ma anche i suoi vicini.
+    // Se un'espansione nazionale "preme" contro un altro cluster, quest'ultimo viene 
+    // spostato interamente per preservare il gap di sicurezza.
     const shiftedZones: Zone[] = [];
-    const collision = currentZones.find(z => z.x === targetX && z.y === targetY);
     
-    if (collision) {
-        // Spostiamo ricorsivamente tutto ciò che ostacola l'inserimento topologico
-        shiftZoneRecursively(targetX, targetY, direction, currentZones, shiftedZones);
+    let hasConflict = true;
+    let safety = 0;
+    while (hasConflict && safety < 100) {
+        safety++;
+        hasConflict = false;
+
+        // A. Controllo occupazione esatta (qualsiasi nazione)
+        const occupant = currentZones.find(z => z.x === targetX && z.y === targetY);
+        if (occupant) {
+            shiftZoneRecursively(targetX, targetY, direction, currentZones, shiftedZones);
+            hasConflict = true;
+            continue;
+        }
+
+        // B. Controllo vicini di altre nazioni (Separazione)
+        // Se un vicino appartiene a un'altra nazione, lo "spingiamo" via.
+        for (const off of hexOffsets) {
+            const nx = targetX + off.x;
+            const ny = targetY + off.y;
+            const neighbor = currentZones.find(z => z.x === nx && z.y === ny);
+            
+            if (neighbor && !neighbor.name.endsWith(` - ${countryCode}`)) {
+                // Trovata zona di un'altra nazione troppo vicina!
+                // La spingiamo nella direzione di espansione per mantenere il gap.
+                shiftZoneRecursively(nx, ny, direction, currentZones, shiftedZones);
+                hasConflict = true;
+                break; 
+            }
+        }
     }
+
+    // Rimuoviamo i duplicati dai risultati degli spostamenti (tenendo l'ultima posizione nota)
+    const uniqueShifted = Array.from(
+        shiftedZones.reduce((map, z) => {
+            map.set(z.id, { ...z }); 
+            return map;
+        }, new Map<string, Zone>()).values()
+    );
 
     return { 
         x: targetX, 
         y: targetY, 
-        shiftedZones 
+        shiftedZones: uniqueShifted 
     };
 };

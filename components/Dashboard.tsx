@@ -121,15 +121,18 @@ const Dashboard: React.FC<DashboardProps> = ({
   }, [selectedZone, onGetZoneLeaderboard]);
 
   const calculateDistributionCenter = (currentZones: Zone[], currentScale: number) => {
-      if (currentZones.length === 0) return null;
+      const zonesToUse = currentZones;
+      
+      if (zonesToUse.length === 0) return null;
+      
       let sumX = 0, sumY = 0;
-      currentZones.forEach(z => {
+      zonesToUse.forEach(z => {
           const pixelPos = getHexPixelPosition(z.x, z.y, HEX_SIZE);
           sumX += pixelPos.x;
           sumY += pixelPos.y;
       });
-      const avgX = sumX / currentZones.length;
-      const avgY = sumY / currentZones.length;
+      const avgX = sumX / zonesToUse.length;
+      const avgY = sumY / zonesToUse.length;
       return { 
           x: Math.round((window.innerWidth / 2) - (avgX * currentScale)), 
           y: Math.round((window.innerHeight / 2) - (avgY * currentScale)) 
@@ -142,11 +145,15 @@ const Dashboard: React.FC<DashboardProps> = ({
         if (center) setView(v => ({ ...v, x: center.x, y: center.y }));
     }
     else if (zones.length > prevZonesLengthRef.current) {
-        const newZone = zones[zones.length - 1];
-        const pos = getHexPixelPosition(newZone.x, newZone.y, HEX_SIZE);
-        const newX = Math.round(window.innerWidth / 2 - pos.x * view.scale);
-        const newY = Math.round(window.innerHeight / 2 - pos.y * view.scale);
-        setView(v => ({ ...v, x: newX, y: newY }));
+        const newZones = zones.slice(prevZonesLengthRef.current);
+        const lastRealZone = [...newZones].reverse()[0];
+        
+        if (lastRealZone) {
+            const pos = getHexPixelPosition(lastRealZone.x, lastRealZone.y, HEX_SIZE);
+            const newX = Math.round(window.innerWidth / 2 - pos.x * view.scale);
+            const newY = Math.round(window.innerHeight / 2 - pos.y * view.scale);
+            setView(v => ({ ...v, x: newX, y: newY }));
+        }
     }
     prevZonesLengthRef.current = zones.length;
   }, [zones, view.scale]);

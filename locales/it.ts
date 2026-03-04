@@ -42,9 +42,9 @@ export const it = {
     "auth.session_security": "Sessione di sicurezza attiva",
     "auth.error": "Connessione Fallita",
 
-    "landing.title_suffix": "Crea.",
-    "landing.subtitle": "Il primo protocollo <b>Move-to-Earn</b> giocato su una mappa reale. Trasforma la tua attività fisica in un contributo vitale per la griglia globale: corri, reclama territori e <b>costruiamo insieme un mondo condiviso</b>.",
-    "landing.hero_title_1": "Traccia le tue corse.",
+    "landing.title_suffix": "ad ogni tuo passo.",
+    "landing.subtitle": "Il primo protocollo <b>Move-to-Earn</b> giocato su una mappa reale. Trasforma la tua attività fisica in un contributo vitale per la griglia globale sincronizzando le tue tracce GPS: corri, reclama territori e <b>costruiamo insieme un mondo condiviso</b>.",
+    "landing.hero_title_1": "Dai un nuovo valore",
     "landing.hero_title_2": "Sincronizza.",
     "landing.start_btn": "Inizia a Correre",
     "landing.rules_btn": "Whitepaper",

@@ -42,10 +42,9 @@ export const en = {
     "auth.session_security": "Security session active",
     "auth.error": "Connection Failed",
 
-    "landing.title_suffix": "Create.",
-    "landing.subtitle": "The first <b>Move-to-Earn</b> protocol played on a real-world based map. Transform your physical activity into a vital contribution to the global grid: run, claim territories, and <b>build a shared world together</b>.",
-    "landing.hero_title_1": "Track your runs.",
-    "landing.hero_title_2": "Sync.",
+    "landing.title_suffix": "a new purpose.",
+    "landing.subtitle": "The first <b>Move-to-Earn</b> protocol played on a real-world based map. Transform your physical activity into a vital contribution to the global grid by syncing your GPS tracks: run, claim territories, and <b>build a shared world together</b>.",
+    "landing.hero_title_1": "Give your steps",
     "landing.start_btn": "Start Running",
     "landing.game_guide_btn": "Game Guide",
     "landing.rules_btn": "Whitepaper",

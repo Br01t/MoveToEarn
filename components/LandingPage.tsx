@@ -71,7 +71,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onNavigate }) => {
         >
 
           <h1 className="text-4xl sm:text-6xl lg:text-8xl font-black text-white tracking-tighter uppercase leading-[0.9] lg:leading-[0.85]">
-            {t('landing.hero_title_1')} {t('landing.hero_title_2')} <br/>
+            {t('landing.hero_title_1')}<br/>
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-cyan-300 to-emerald-400">
               {tRich('landing.title_suffix')}
             </span>

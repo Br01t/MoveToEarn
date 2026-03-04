@@ -76,28 +76,30 @@ export const useGameData = () => {
           if (badgesRes.data) setBadges(badgesRes.data.map((b: any) => ({ ...b, rewardRun: b.reward_run, rewardGov: b.reward_gov, logicId: b.logic_id, conditionType: b.condition_type, conditionValue: b.condition_value })));
           if (itemsRes.data) setMarketItems(itemsRes.data.map((i: any) => ({ ...i, priceRun: i.price_run, effectValue: i.effect_value })));
 
-          if (zonesRes.data) {
-              setZones(zonesRes.data.map((z: any) => {
-                  const decoded = decodePostGISLocation(z.location);
-                  return {
-                      id: z.id,
-                      name: z.name || 'Unknown Zone',
-                      ownerId: z.owner_id,
-                      x: z.x, y: z.y,
-                      lat: decoded.lat,
-                      lng: decoded.lng,
-                      location: z.location,
-                      defenseLevel: z.defense_level || 1,
-                      recordKm: Number(z.record_km) || 0,
-                      totalKm: Number(z.total_km) || Number(z.record_km) || 0,
-                      interestRate: z.interest_rate || 2.0,
-                      interestPool: Number(z.interest_pool) || 0,
-                      lastDistributionTime: z.last_distribution_time,
-                      boostExpiresAt: z.boost_expires_at,
-                      shieldExpiresAt: z.shield_expires_at
-                  };
-              }));
-          }
+              if (zonesRes.data) {
+                  const dbZones = zonesRes.data.map((z: any) => {
+                      const decoded = decodePostGISLocation(z.location);
+                      return {
+                          id: z.id,
+                          name: z.name || 'Unknown Zone',
+                          ownerId: z.owner_id,
+                          x: z.x, y: z.y,
+                          lat: decoded.lat,
+                          lng: decoded.lng,
+                          location: z.location,
+                          defenseLevel: z.defense_level || 1,
+                          recordKm: Number(z.record_km) || 0,
+                          totalKm: Number(z.total_km) || Number(z.record_km) || 0,
+                          interestRate: z.interest_rate || 2.0,
+                          interestPool: Number(z.interest_pool) || 0,
+                          lastDistributionTime: z.last_distribution_time,
+                          boostExpiresAt: z.boost_expires_at,
+                          shieldExpiresAt: z.shield_expires_at
+                      };
+                  });
+                  
+                  setZones(dbZones);
+              }
 
           if (leaderboardsRes.data) setLeaderboards(leaderboardsRes.data.map((l: any) => ({ ...l, startTime: l.start_time, endTime: l.end_time, rewardPool: l.reward_pool, rewardCurrency: l.reward_currency, lastResetTimestamp: l.last_reset_timestamp })));
           if (levelsRes.data) setLevels(levelsRes.data.map((l: any) => ({ ...l, minKm: l.min_km })));
