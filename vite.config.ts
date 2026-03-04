@@ -20,6 +20,7 @@ export default defineConfig(({ mode }) => {
           workbox: {
             globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,xml,txt}'],
             cleanupOutdatedCaches: true,
+            navigateFallbackDenylist: [/^\/sitemap\.xml$/, /^\/robots\.txt$/],
           },
           manifest: {
             name: 'ZoneRun',
