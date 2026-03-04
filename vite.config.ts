@@ -17,10 +17,11 @@ export default defineConfig(({ mode }) => {
         VitePWA({
           registerType: 'autoUpdate',
           injectRegister: 'auto',
+          includeAssets: ['sitemap.xml', 'robots.txt'],
           workbox: {
-            globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,xml,txt}'],
+            globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
             cleanupOutdatedCaches: true,
-            navigateFallbackDenylist: [/^\/sitemap\.xml$/, /^\/robots\.txt$/],
+            navigateFallbackDenylist: [/sitemap\.xml$/, /robots\.txt$/],
           },
           manifest: {
             name: 'ZoneRun',

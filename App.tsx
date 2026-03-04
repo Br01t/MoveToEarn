@@ -97,7 +97,7 @@ const AppContent: React.FC = () => {
   useEffect(() => {
     if (!loading) {
       // Ignore static files
-      if (location.pathname.includes('.') || location.pathname.endsWith('.xml') || location.pathname.endsWith('.txt')) {
+      if (location.pathname.endsWith('.xml') || location.pathname.endsWith('.txt') || location.pathname.includes('sitemap')) {
         return;
       }
       const targetView = pathToView(location.pathname, !!user);
@@ -110,7 +110,7 @@ const AppContent: React.FC = () => {
   useEffect(() => {
     if (!loading) {
       // Ignore static files
-      if (location.pathname.includes('.') || location.pathname.endsWith('.xml') || location.pathname.endsWith('.txt')) {
+      if (location.pathname.endsWith('.xml') || location.pathname.endsWith('.txt') || location.pathname.includes('sitemap')) {
         return;
       }
       const targetPath = viewToPath(currentView);
