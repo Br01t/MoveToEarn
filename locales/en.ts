@@ -167,7 +167,7 @@ export const en = {
     "sync.error.timestamp": "Missing timestamp data in GPX file.",
     "sync.error.points": "Insufficient GPS points in track.",
     "sync.bulk.title": "Bulk Upload",
-    "sync.bulk.info": "ZIP files are automatically decompressed. Only activities from the last 7 days relative to file date will be imported.",
+    "sync.bulk.info": "ZIP files are automatically decompressed. Only activities from the last 14 days relative to file date will be imported.",
     "sync.error.7days": "All valid activities are older than 14 days.",
     "sync.error.bulk_duplicates": "All files were duplicates or already present.",
 
