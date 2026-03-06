@@ -335,7 +335,7 @@ const AppContent: React.FC = () => {
                 </div>
               </main>
 
-              {isLanding && !user && (
+              {!user && (
                 <Suspense fallback={null}>
                   <Footer 
                     onNavigate={setCurrentView} 
