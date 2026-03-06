@@ -281,6 +281,7 @@ const AppContent: React.FC = () => {
       <Helmet>
         <title>ZoneRun</title>
         <meta name="description" content="Corri, conquista territori e guadagna premi in ZoneRun, il primo gioco di strategia basato sulla mappa del mondo reale." />
+        <link rel="canonical" href={`https://zonerun.xyz${location.pathname === '/' ? '' : location.pathname}`} />
       </Helmet>
       <div className="fixed inset-0 z-[-1] bg-gray-950 pointer-events-none" aria-hidden="true">
           <div className="absolute inset-0 bg-gradient-to-b from-gray-900 via-gray-950 to-black"></div>

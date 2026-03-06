@@ -10,6 +10,25 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
+  // Middleware per il redirect canonico (HTTPS e non-WWW)
+  app.use((req, res, next) => {
+    const host = req.headers.host || "";
+    const protocol = req.headers["x-forwarded-proto"] || req.protocol;
+    
+    // Se l'host inizia con 'www.' o se il protocollo non è 'https' (e non siamo in locale)
+    const isWww = host.startsWith("www.");
+    const isNotHttps = protocol !== "https";
+    const isNotLocal = !host.includes("localhost") && !host.includes("0.0.0.0");
+
+    if ((isWww || isNotHttps) && isNotLocal) {
+      const newHost = isWww ? host.slice(4) : host;
+      const newUrl = `https://${newHost}${req.url}`;
+      console.log(`[SEO] Redirecting to canonical: ${newUrl}`);
+      return res.redirect(301, newUrl);
+    }
+    next();
+  });
+
   // 1. Servire esplicitamente i file statici dalla cartella public PRIMA del fallback SPA
   const publicPath = path.join(__dirname, "public");
   
