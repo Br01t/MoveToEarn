@@ -2,31 +2,31 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://zonerun.xyz/</loc>
-    <lastmod>2026-03-03</lastmod>
-    <changefreq>weekly</changefreq>
+    <lastmod>2026-03-06</lastmod>
+    <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://zonerun.xyz/rules</loc>
-    <lastmod>2026-03-03</lastmod>
+    <lastmod>2026-03-06</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://zonerun.xyz/whitepaper</loc>
-    <lastmod>2026-03-03</lastmod>
+    <lastmod>2026-03-06</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://zonerun.xyz/how-to-play</loc>
-    <lastmod>2026-03-03</lastmod>
+    <lastmod>2026-03-06</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://zonerun.xyz/community</loc>
-    <lastmod>2026-03-03</lastmod>
+    <lastmod>2026-03-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>

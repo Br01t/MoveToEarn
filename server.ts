@@ -15,16 +15,30 @@ async function startServer() {
   
   // Rotte esplicite per i file SEO con Content-Type forzato e permessi ampi
   app.get("/sitemap.xml", (req, res) => {
-    res.header("Content-Type", "application/xml");
+    console.log(`[SEO] Sitemap requested by ${req.headers["user-agent"]}`);
+    res.header("Content-Type", "application/xml; charset=utf-8");
     res.header("Access-Control-Allow-Origin", "*");
     res.header("X-Content-Type-Options", "nosniff");
-    res.sendFile(path.join(publicPath, "sitemap.xml"));
+    res.header("Cache-Control", "public, max-age=0, must-revalidate");
+    res.sendFile(path.join(publicPath, "sitemap.xml"), (err) => {
+      if (err) {
+        console.error("[SEO] Error sending sitemap.xml:", err);
+        res.status(404).end();
+      }
+    });
   });
 
   app.get("/robots.txt", (req, res) => {
-    res.header("Content-Type", "text/plain");
+    console.log(`[SEO] Robots.txt requested by ${req.headers["user-agent"]}`);
+    res.header("Content-Type", "text/plain; charset=utf-8");
     res.header("Access-Control-Allow-Origin", "*");
-    res.sendFile(path.join(publicPath, "robots.txt"));
+    res.header("Cache-Control", "public, max-age=0, must-revalidate");
+    res.sendFile(path.join(publicPath, "robots.txt"), (err) => {
+      if (err) {
+        console.error("[SEO] Error sending robots.txt:", err);
+        res.status(404).end();
+      }
+    });
   });
 
   // 2. Servire altri file statici (immagini, icone, etc.)
