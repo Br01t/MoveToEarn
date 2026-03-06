@@ -22,20 +22,31 @@ const Community: React.FC<CommunityProps> = ({ onBack, isAuthenticated = false }
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const CommunityCard = ({ icon: Icon, title, desc, colorClass, link }: { icon: any, title: string, desc: string, colorClass: string, link?: string }) => (
-    <div className={`glass-panel p-8 rounded-2xl border border-white/5 hover:border-${colorClass}/50 transition-all cursor-pointer group flex flex-col h-full shadow-lg`}>
-       <div className={`text-${colorClass} mb-4 group-hover:scale-110 transition-transform`}>
-          <Icon size={48} />
-       </div>
-       <h3 className="text-2xl font-bold text-white mb-2 uppercase tracking-tight">{title}</h3>
-       <p className="text-gray-400 text-sm leading-relaxed flex-1 font-medium">{desc}</p>
-       {link && (
-         <div className={`mt-4 text-xs font-bold uppercase tracking-widest text-${colorClass} opacity-0 group-hover:opacity-100 transition-opacity`}>
-           Connect Now →
-         </div>
-       )}
-    </div>
-  );
+  const CommunityCard = ({ icon: Icon, title, desc, colorClass, link }: { icon: any, title: string, desc: string, colorClass: string, link?: string }) => {
+    const colorMap: Record<string, { text: string, border: string, hoverBorder: string }> = {
+      'indigo-400': { text: 'text-indigo-400', border: 'border-indigo-400', hoverBorder: 'hover:border-indigo-400/50' },
+      'sky-400': { text: 'text-sky-400', border: 'border-sky-400', hoverBorder: 'hover:border-sky-400/50' },
+      'white': { text: 'text-white', border: 'border-white', hoverBorder: 'hover:border-white/50' },
+      'pink-500': { text: 'text-pink-500', border: 'border-pink-500', hoverBorder: 'hover:border-pink-500/50' },
+    };
+
+    const colors = colorMap[colorClass] || colorMap['white'];
+
+    return (
+      <div className={`glass-panel p-8 rounded-2xl border border-white/5 ${colors.hoverBorder} transition-all cursor-pointer group flex flex-col h-full shadow-lg`}>
+        <div className={`${colors.text} mb-4 group-hover:scale-110 transition-transform`}>
+            <Icon size={48} />
+        </div>
+        <h3 className="text-2xl font-bold text-white mb-2 uppercase tracking-tight">{title}</h3>
+        <p className="text-gray-400 text-sm leading-relaxed flex-1 font-medium">{desc}</p>
+        {link && (
+          <div className={`mt-4 text-xs font-bold uppercase tracking-widest ${colors.text} opacity-0 group-hover:opacity-100 transition-opacity`}>
+            Connect Now →
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-8 space-y-12 pb-24 pt-24 lg:pt-32">
@@ -105,33 +116,47 @@ const Community: React.FC<CommunityProps> = ({ onBack, isAuthenticated = false }
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <CommunityCard 
-            icon={MessageCircle} 
-            title={t('page.comm.discord')} 
-            desc={t('page.comm.discord_desc')} 
-            colorClass="indigo-400"
-          />
+          <a href="https://discord.gg/2a4tspVK8y" target="_blank" rel="noopener noreferrer" className="block h-full">
+            <CommunityCard 
+              icon={MessageCircle} 
+              title={t('page.comm.discord')} 
+              desc={t('page.comm.discord_desc')} 
+              colorClass="indigo-400"
+              link="https://discord.gg/2a4tspVK8y"
+            />
+          </a>
 
-          <CommunityCard 
-            icon={Send} 
-            title={t('page.comm.telegram')} 
-            desc={t('page.comm.telegram_desc')} 
-            colorClass="sky-400"
-          />
+          {/* 
+          <a href="https://t.me/zonerun" target="_blank" rel="noopener noreferrer" className="block h-full">
+            <CommunityCard 
+              icon={Send} 
+              title={t('page.comm.telegram')} 
+              desc={t('page.comm.telegram_desc')} 
+              colorClass="sky-400"
+              link="https://t.me/zonerun"
+            />
+          </a>
+          */}
 
-          <CommunityCard 
-            icon={Twitter} 
-            title={t('page.comm.twitter')} 
-            desc={t('page.comm.twitter_desc')} 
-            colorClass="white"
-          />
+          <a href="https://www.instagram.com/zonerun_team/" target="_blank" rel="noopener noreferrer" className="block h-full">
+            <CommunityCard 
+              icon={Instagram} 
+              title={t('page.comm.instagram')} 
+              desc={t('page.comm.instagram_desc')} 
+              colorClass="pink-500"
+              link="https://www.instagram.com/zonerun_team/"
+            />
+          </a>
 
-          <CommunityCard 
-            icon={Instagram} 
-            title={t('page.comm.instagram')} 
-            desc={t('page.comm.instagram_desc')} 
-            colorClass="pink-500"
-          />
+          <a href="https://x.com/ZoneRun_team" target="_blank" rel="noopener noreferrer" className="block h-full">
+            <CommunityCard 
+              icon={Twitter} 
+              title={t('page.comm.twitter')} 
+              desc={t('page.comm.twitter_desc')} 
+              colorClass="white"
+              link="https://x.com/ZoneRun_team"
+            />
+          </a>
       </div>
 
       <div className="mt-20 glass-panel p-10 rounded-3xl border-emerald-500/20 text-center relative overflow-hidden group shadow-2xl">
